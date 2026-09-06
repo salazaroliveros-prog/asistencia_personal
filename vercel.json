@@ -1,0 +1,13 @@
+{
+  "framework": null,
+  "buildCommand": null,
+  "outputDirectory": ".",
+  "devCommand": null,
+  "installCommand": null,
+  "git": {
+    "deploymentEnabled": {
+      "main": true
+    }
+  },
+  "crons": []
+}

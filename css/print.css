@@ -1,0 +1,351 @@
+/* ═══════════════════════════════════════════════════════════════════════════
+   CONTROL PERSONAL CAMPO — print.css
+   Estilos para impresión: reportes, carnés y vistas previas
+   Media: print + clase .print-only
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   OCULTAR ELEMENTOS DE UI EN IMPRESIÓN
+   ───────────────────────────────────────────────────────────────────────────── */
+@media print {
+  /* Ocultar toda la app shell */
+  .glass-sidebar,
+  .glass-topbar,
+  .topbar,
+  #toast-container,
+  #splash-screen,
+  .sidebar-overlay,
+  .modal-overlay,
+  .tabs,
+  .section-header,
+  .table-toolbar,
+  .section-actions,
+  .btn,
+  .reporte-actions,
+  .preview-controls,
+  #alerts-btn,
+  #refresh-btn,
+  #menu-toggle,
+  .scanner-controls,
+  .no-print {
+    display: none !important;
+  }
+
+  /* Reset del layout */
+  body {
+    background: #fff !important;
+    color: #000 !important;
+    font-family: 'Arial', 'Helvetica', sans-serif !important;
+    font-size: 10pt;
+    margin: 0;
+    padding: 0;
+  }
+
+  .app-wrapper {
+    display: block !important;
+  }
+
+  .main-content {
+    margin-left: 0 !important;
+    padding: 0 !important;
+  }
+
+  .pages-container {
+    padding: 0 !important;
+  }
+
+  /* Asegurar que solo se imprima el área de reporte */
+  .page {
+    display: none !important;
+  }
+
+  .print-report-area {
+    display: block !important;
+  }
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   ÁREA DE IMPRESIÓN DEL REPORTE
+   ───────────────────────────────────────────────────────────────────────────── */
+.print-report-area {
+  display: none; /* Solo se muestra al imprimir o en modo print-preview */
+  font-family: 'Arial', 'Helvetica', sans-serif;
+  color: #000;
+  background: #fff;
+  padding: 15mm;
+  max-width: 210mm; /* A4 */
+  margin: 0 auto;
+}
+
+@media print {
+  .print-report-area {
+    display: block !important;
+    padding: 0;
+    max-width: none;
+  }
+
+  @page {
+    size: A4 portrait;
+    margin: 15mm;
+  }
+
+  @page landscape {
+    size: A4 landscape;
+    margin: 12mm;
+  }
+
+  .print-landscape @page {
+    size: A4 landscape;
+  }
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   MEMBRETE INSTITUCIONAL
+   ───────────────────────────────────────────────────────────────────────────── */
+.print-header {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+  padding-bottom: 12px;
+  border-bottom: 3px solid #007EA7;
+  margin-bottom: 16px;
+}
+
+.print-logo {
+  width: 70px;
+  height: 70px;
+  object-fit: contain;
+  flex-shrink: 0;
+}
+
+.print-logo-placeholder {
+  width: 70px;
+  height: 70px;
+  background: #007EA7;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.print-title-block {
+  flex: 1;
+}
+
+.print-app-name {
+  font-size: 8pt;
+  text-transform: uppercase;
+  letter-spacing: 0.15em;
+  color: #007EA7;
+  font-weight: 700;
+  margin: 0 0 4px 0;
+}
+
+.print-report-name {
+  font-size: 16pt;
+  font-weight: 900;
+  color: #003459;
+  margin: 0 0 4px 0;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.print-obra-name {
+  font-size: 10pt;
+  color: #555;
+  margin: 0;
+}
+
+.print-meta-block {
+  text-align: right;
+  min-width: 160px;
+}
+
+.print-meta-item {
+  font-size: 8pt;
+  color: #666;
+  margin-bottom: 3px;
+}
+
+.print-meta-item strong {
+  color: #003459;
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   RESUMEN DE DATOS (BLOQUE GRIS)
+   ───────────────────────────────────────────────────────────────────────────── */
+.print-summary {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.print-summary-item {
+  background: #f0f4f8;
+  border: 1px solid #d0dce8;
+  border-radius: 6px;
+  padding: 8px 10px;
+  text-align: center;
+}
+
+.print-summary-label {
+  font-size: 7pt;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #666;
+  display: block;
+  margin-bottom: 3px;
+}
+
+.print-summary-value {
+  font-size: 16pt;
+  font-weight: 900;
+  color: #003459;
+  display: block;
+  line-height: 1;
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   TABLA DE DATOS PARA IMPRESIÓN
+   ───────────────────────────────────────────────────────────────────────────── */
+.print-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 16px;
+  font-size: 8pt;
+}
+
+.print-table thead tr {
+  background: #007EA7;
+}
+
+.print-table thead th {
+  color: #fff;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  font-size: 7pt;
+  padding: 8px 6px;
+  text-align: left;
+  border: 1px solid #005F7A;
+  white-space: nowrap;
+}
+
+.print-table tbody tr:nth-child(even) {
+  background: #f7fbff;
+}
+
+.print-table tbody tr:nth-child(odd) {
+  background: #fff;
+}
+
+.print-table tbody tr {
+  border-bottom: 1px solid #dde9f2;
+  page-break-inside: avoid;
+}
+
+.print-table tbody td {
+  padding: 6px;
+  color: #222;
+  vertical-align: middle;
+  border: 1px solid #dde9f2;
+  font-size: 8pt;
+}
+
+/* Colores de estado en tabla impresa */
+.print-estado-tiempo     { color: #2A9D8F; font-weight: 700; }
+.print-estado-tolerancia { color: #D4901C; font-weight: 700; }
+.print-estado-atraso     { color: #CC2936; font-weight: 700; }
+.print-estado-ausencia   { color: #CC2936; font-weight: 700; }
+.print-estado-activo     { color: #2A9D8F; font-weight: 700; }
+.print-estado-inactivo   { color: #888; }
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   PIE DE PÁGINA IMPRESIÓN
+   ───────────────────────────────────────────────────────────────────────────── */
+.print-footer {
+  margin-top: 20px;
+  padding-top: 10px;
+  border-top: 1px solid #ccc;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  font-size: 7pt;
+  color: #888;
+}
+
+.print-signature-line {
+  border-top: 1px solid #333;
+  width: 180px;
+  padding-top: 4px;
+  text-align: center;
+  font-size: 8pt;
+  color: #333;
+}
+
+.print-pagination {
+  font-size: 7pt;
+  color: #aaa;
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   CARNÉ DE IDENTIFICACIÓN PARA IMPRESIÓN
+   ───────────────────────────────────────────────────────────────────────────── */
+@media print {
+  /* Cuando se imprime el carné */
+  body.print-carne * {
+    visibility: hidden;
+  }
+
+  body.print-carne #carne-print-area,
+  body.print-carne #carne-print-area * {
+    visibility: visible;
+  }
+
+  body.print-carne #carne-print-area {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 85.6mm;  /* Tamaño estándar carné */
+    min-height: 54mm;
+    border-radius: 8pt;
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+  }
+
+  @page print-carne {
+    size: 90mm 60mm;
+    margin: 0;
+  }
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   VISTA PREVIA (EN PANTALLA, SIMULA HOJA)
+   ───────────────────────────────────────────────────────────────────────────── */
+.reporte-preview-content {
+  background: #1a2a3a;
+  padding: var(--space-4);
+  border-radius: var(--radius-md);
+  overflow: auto;
+}
+
+.print-preview-sheet {
+  background: #fff;
+  color: #000;
+  padding: 20mm 15mm;
+  margin: 0 auto;
+  max-width: 210mm;
+  min-height: 297mm;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+  border-radius: 4px;
+  font-family: 'Arial', 'Helvetica', sans-serif;
+}
+
+.print-preview-sheet.landscape {
+  max-width: 297mm;
+  min-height: 210mm;
+  padding: 15mm 12mm;
+}
