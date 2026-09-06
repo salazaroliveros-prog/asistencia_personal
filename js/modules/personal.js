@@ -663,11 +663,19 @@ const ModuloPersonal = (() => {
   /** Abre el modal de cámara e inicia el stream de video. */
   async function _abrirCamara() {
     const modal = document.getElementById('modal-camera');
-    if (!modal) return;
+    if (!modal) {
+      console.error('[Cámara] Modal no encontrado');
+      Alerts.error('No se encontró el modal de cámara. Contacte al soporte técnico.');
+      return;
+    }
 
     _capturedPhotoData = '';
     _mostrarEstadoCamara('live');
     modal.hidden = false;
+    
+    // Forzar reflow para asegurar que el modal sea visible antes de iniciar la cámara
+    modal.offsetHeight;
+    
     await _iniciarStream();
   }
 
@@ -698,7 +706,10 @@ const ModuloPersonal = (() => {
       if (videoEl) {
         videoEl.srcObject = _cameraStream;
         videoEl.onloadedmetadata = () => {
-          videoEl.play().catch(() => {});
+          videoEl.play().catch((playErr) => {
+            console.error('[Cámara] Error al reproducir video:', playErr);
+            _mostrarErrorCamara('No se pudo reproducir el video de la cámara.');
+          });
           if (statusLabel) {
             const label = _cameraStream.getVideoTracks()[0]?.label || 'Cámara activa';
             statusLabel.textContent = label.length > 42 ? label.substring(0, 39) + '...' : label;
@@ -706,6 +717,7 @@ const ModuloPersonal = (() => {
         };
       }
     } catch (err) {
+      console.error('[Cámara] Error al acceder a la cámara:', err);
       let msg = 'No se pudo acceder a la cámara.';
       if (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError') {
         msg = 'Permiso de cámara denegado. Habilítalo en la configuración del navegador.';
@@ -741,7 +753,17 @@ const ModuloPersonal = (() => {
     const videoEl = document.getElementById('camera-video');
     const canvas  = document.getElementById('camera-canvas');
     const preview = document.getElementById('camera-captured-img');
-    if (!videoEl || !canvas) return;
+    if (!videoEl || !canvas) {
+      console.error('[Cámara] Elementos de captura no encontrados');
+      Alerts.error('Error al capturar foto. Elementos no disponibles.');
+      return;
+    }
+
+    if (!_cameraStream) {
+      console.error('[Cámara] No hay stream activo para capturar');
+      Alerts.error('No hay stream de cámara activo. Inicia la cámara primero.');
+      return;
+    }
 
     const w = videoEl.videoWidth  || 640;
     const h = videoEl.videoHeight || 480;
@@ -756,11 +778,16 @@ const ModuloPersonal = (() => {
     }
     ctx.drawImage(videoEl, 0, 0, w, h);
 
-    _capturedPhotoData = canvas.toDataURL('image/jpeg', 0.88);
-    if (preview) preview.src = _capturedPhotoData;
+    try {
+      _capturedPhotoData = canvas.toDataURL('image/jpeg', 0.88);
+      if (preview) preview.src = _capturedPhotoData;
 
-    _detenerStream();
-    _mostrarEstadoCamara('preview');
+      _detenerStream();
+      _mostrarEstadoCamara('preview');
+    } catch (err) {
+      console.error('[Cámara] Error al capturar foto:', err);
+      Alerts.error('Error al capturar la foto. Intenta nuevamente.');
+    }
   }
 
   /** Alterna cámara frontal ↔ trasera. */

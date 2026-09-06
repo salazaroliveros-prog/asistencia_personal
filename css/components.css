@@ -2137,6 +2137,7 @@ input[type="month"].input-glass {
   border-radius: var(--radius-md);
   overflow: hidden;
   border: 2px solid var(--glass-border);
+  min-height: 300px;
 }
 
 .camera-video {
@@ -2144,6 +2145,7 @@ input[type="month"].input-glass {
   height: 100%;
   object-fit: cover;
   display: block;
+  background: #000;
 }
 
 /* Guía de encuadre ovalada */
