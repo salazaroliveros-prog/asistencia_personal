@@ -301,6 +301,8 @@ const ModuloPersonal = (() => {
     _resetForm();
     document.getElementById('modal-personal-title').textContent = 'Registrar Nuevo Trabajador';
     _abrirModal('modal-personal');
+    // Activar cámara automáticamente al registrar nuevo trabajador
+    setTimeout(() => _abrirCamara(), 300);
   }
 
   function _abrirModalEditar(id) {
