@@ -1,0 +1,43 @@
+{
+  "name": "Control Personal Campo",
+  "short_name": "CtrlCampo",
+  "description": "Sistema de gestión y asistencia de personal en obra",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#003459",
+  "theme_color": "#003459",
+  "orientation": "portrait-primary",
+  "lang": "es",
+  "icons": [
+    {
+      "src": "assets/icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "assets/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "screenshots": [],
+  "categories": ["productivity", "business"],
+  "shortcuts": [
+    {
+      "name": "Marcar Asistencia",
+      "short_name": "Asistencia",
+      "description": "Ir directamente al escáner QR",
+      "url": "/#asistencia",
+      "icons": [{ "src": "assets/icons/icon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Dashboard",
+      "short_name": "Dashboard",
+      "description": "Ver panel de control",
+      "url": "/#dashboard",
+      "icons": [{ "src": "assets/icons/icon-192.png", "sizes": "192x192" }]
+    }
+  ]
+}

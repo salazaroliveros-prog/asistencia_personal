@@ -1,0 +1,560 @@
+/* ═══════════════════════════════════════════════════════════════════════════
+   CONTROL PERSONAL CAMPO — main.css
+   Reset, variables CSS, tipografía y estilos base
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   RESET Y BOX-SIZING
+   ───────────────────────────────────────────────────────────────────────────── */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  scroll-behavior: smooth;
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
+body {
+  min-height: 100vh;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+img, video {
+  max-width: 100%;
+  height: auto;
+  display: block;
+}
+
+input, button, textarea, select {
+  font: inherit;
+  color: inherit;
+}
+
+button {
+  cursor: pointer;
+  border: none;
+  background: none;
+}
+
+ul, ol {
+  list-style: none;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+table {
+  border-collapse: collapse;
+  width: 100%;
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   VARIABLES CSS — TOKENS DE DISEÑO
+   ───────────────────────────────────────────────────────────────────────────── */
+:root {
+  /* Colores primarios (paleta azul celeste / obra) */
+  --color-primary:        #007EA7;
+  --color-primary-dark:   #005F7A;
+  --color-primary-light:  #00A8E8;
+  --color-secondary:      #00A8E8;
+  --color-dark:           #003459;
+  --color-darker:         #00253E;
+  --color-light:          #F4F9F9;
+
+  /* Acentos */
+  --color-accent-amber:   #FFB703;
+  --color-accent-red:     #E63946;
+  --color-accent-green:   #2A9D8F;
+  --color-accent-green-light: #40C9BB;
+
+  /* Texto */
+  --color-text-primary:   #FFFFFF;
+  --color-text-secondary: rgba(255, 255, 255, 0.75);
+  --color-text-muted:     rgba(255, 255, 255, 0.50);
+  --color-text-disabled:  rgba(255, 255, 255, 0.30);
+
+  /* Glassmorphism — ajustado para el nuevo fondo más oscuro */
+  --glass-bg:             rgba(255, 255, 255, 0.08);
+  --glass-bg-hover:       rgba(255, 255, 255, 0.14);
+  --glass-bg-active:      rgba(255, 255, 255, 0.20);
+  --glass-border:         rgba(255, 255, 255, 0.22);
+  --glass-border-light:   rgba(255, 255, 255, 0.12);
+  --glass-shadow:         0 8px 32px 0 rgba(0, 20, 50, 0.35);
+  --glass-shadow-hover:   0 16px 48px 0 rgba(0, 20, 50, 0.50);
+  --glass-blur:           16px;
+
+  /* ─── NUEVO FONDO GLASSMORPHISM OPTIMIZADO ───────────────────────────────
+   * Paleta de 4 stops para máxima profundidad y contraste con glass cards:
+   *   #0A1628 — Azul noche profundo   (fondo base, ancla de oscuridad)
+   *   #0D2E50 — Azul marino saturado  (transición media-baja)
+   *   #0B6E9E — Azul medio vibrante   (zona de mayor contraste glass)
+   *   #0FA3D4 — Celeste cielo         (destello luminoso en esquina)
+   *
+   * Ángulo 145° (↘): la luz entra desde arriba-izquierda hacia abajo-derecha,
+   * iluminando el borde superior de las cards (donde está el highlight glass)
+   * y creando sombra natural en la parte inferior. Maximiza la percepción de
+   * profundidad y hace que el blur/noise de las cards sean más visibles.
+   * ─────────────────────────────────────────────────────────────────────── */
+  --gradient-bg:
+    linear-gradient(
+      145deg,
+      #0A1628 0%,
+      #0D2E50 30%,
+      #0B6E9E 68%,
+      #0FA3D4 100%
+    );
+
+  /* Radios de borde */
+  --radius-xs:    4px;
+  --radius-sm:    8px;
+  --radius-md:    12px;
+  --radius-lg:    16px;
+  --radius-xl:    24px;
+  --radius-full:  9999px;
+
+  /* Espaciados */
+  --space-1:   4px;
+  --space-2:   8px;
+  --space-3:   12px;
+  --space-4:   16px;
+  --space-5:   20px;
+  --space-6:   24px;
+  --space-8:   32px;
+  --space-10:  40px;
+  --space-12:  48px;
+  --space-16:  64px;
+
+  /* Tipografía */
+  --font-main:   'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --font-mono:   'JetBrains Mono', 'Fira Code', 'Consolas', monospace;
+
+  --text-xs:    0.75rem;    /* 12px */
+  --text-sm:    0.875rem;   /* 14px */
+  --text-base:  1rem;       /* 16px */
+  --text-md:    1.125rem;   /* 18px */
+  --text-lg:    1.25rem;    /* 20px */
+  --text-xl:    1.5rem;     /* 24px */
+  --text-2xl:   1.875rem;   /* 30px */
+  --text-3xl:   2.25rem;    /* 36px */
+
+  /* Transiciones */
+  --transition-fast:   0.15s ease;
+  --transition-base:   0.25s ease;
+  --transition-slow:   0.4s ease;
+
+  /* Z-index */
+  --z-base:      1;
+  --z-dropdown:  100;
+  --z-sticky:    200;
+  --z-modal:     1000;
+  --z-toast:     2000;
+  --z-splash:    3000;
+
+  /* Layout */
+  --sidebar-width:       260px;
+  --sidebar-collapsed:   72px;
+  --topbar-height:       64px;
+  --content-max-width:   1400px;
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   FONDO GLOBAL — Glassmorphism optimizado
+   ───────────────────────────────────────────────────────────────────────────── */
+body {
+  background: var(--gradient-bg);
+  background-attachment: fixed;
+  font-family: var(--font-main);
+  color: var(--color-text-primary);
+  font-size: var(--text-base);
+  overflow-x: hidden;
+}
+
+/* Capa de ruido granulado + orbes de luz ambiental sobre el fondo.
+ * El noise (fractalNoise SVG embebido) añade textura que hace que el
+ * backdrop-filter blur de las cards sea visualmente más rico.
+ * Los orbes simulan fuentes de luz difusa que enriquecen la profundidad. */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+
+  /* Ruido granulado sutil encima del degradado */
+  background-image:
+    /* Orbe de luz superior-izquierdo (frío, celeste) */
+    radial-gradient(
+      ellipse 60% 50% at 15% 10%,
+      rgba(15, 163, 212, 0.18) 0%,
+      transparent 70%
+    ),
+    /* Orbe de luz central-derecho (cálido, azul medio) */
+    radial-gradient(
+      ellipse 50% 60% at 85% 40%,
+      rgba(11, 110, 158, 0.22) 0%,
+      transparent 65%
+    ),
+    /* Orbe inferior profundo (muy oscuro, ancla las sombras) */
+    radial-gradient(
+      ellipse 70% 40% at 40% 95%,
+      rgba(10, 22, 40, 0.45) 0%,
+      transparent 70%
+    ),
+    /* Textura noise SVG — aumenta granularidad para potenciar el efecto glass */
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='300' height='300' filter='url(%23n)' opacity='0.045'/%3E%3C/svg%3E");
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   TIPOGRAFÍA
+   ───────────────────────────────────────────────────────────────────────────── */
+h1, h2, h3, h4, h5, h6 {
+  font-weight: 700;
+  line-height: 1.2;
+  color: var(--color-text-primary);
+}
+
+h1 { font-size: var(--text-3xl); }
+h2 { font-size: var(--text-2xl); }
+h3 { font-size: var(--text-xl); }
+h4 { font-size: var(--text-lg); }
+h5 { font-size: var(--text-md); }
+h6 { font-size: var(--text-base); }
+
+p {
+  color: var(--color-text-secondary);
+  line-height: 1.6;
+}
+
+.text-muted  { color: var(--color-text-muted) !important; }
+.text-xs     { font-size: var(--text-xs); }
+.text-sm     { font-size: var(--text-sm); }
+.text-center { text-align: center; }
+.text-right  { text-align: right; }
+.font-bold   { font-weight: 700; }
+.font-medium { font-weight: 500; }
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   LAYOUT PRINCIPAL (SPA Shell)
+   ───────────────────────────────────────────────────────────────────────────── */
+.app-wrapper {
+  display: flex;
+  min-height: 100vh;
+  position: relative;
+}
+
+/* Cuando el sidebar está abierto en desktop */
+.main-content {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  margin-left: var(--sidebar-width);
+  transition: margin-left var(--transition-base);
+}
+
+/* Cuando sidebar está colapsado */
+.sidebar-collapsed .main-content {
+  margin-left: var(--sidebar-collapsed);
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   TOPBAR
+   ───────────────────────────────────────────────────────────────────────────── */
+.topbar {
+  height: var(--topbar-height);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 var(--space-6);
+  position: sticky;
+  top: 0;
+  z-index: var(--z-sticky);
+  gap: var(--space-4);
+}
+
+.topbar-left {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  min-width: 0;
+}
+
+.topbar-right {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  flex-shrink: 0;
+}
+
+.page-title {
+  font-size: var(--text-xl);
+  font-weight: 700;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.page-breadcrumb {
+  font-size: var(--text-xs);
+  color: var(--color-text-muted);
+  white-space: nowrap;
+}
+
+.topbar-clock {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  font-size: var(--text-sm);
+  color: var(--color-text-muted);
+  font-family: var(--font-mono);
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   PÁGINAS CONTENEDOR
+   ───────────────────────────────────────────────────────────────────────────── */
+.pages-container {
+  flex: 1;
+  padding: var(--space-6);
+  overflow-y: auto;
+  max-width: var(--content-max-width);
+  width: 100%;
+  position: relative; /* Necesario para animaciones page-exit (position:absolute) */
+}
+
+.page {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+  width: 100%;
+}
+
+/* El atributo [hidden] debe siempre ocultar la página, incluso con display:flex */
+.page[hidden] {
+  display: none !important;
+}
+
+.page.active {
+  /* La animación de entrada se maneja desde JS/CSS con las clases de transición */
+}
+
+/* Animación simple de fallback para carga inicial */
+@keyframes fadeInPage {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   SECTION HEADER (Encabezado de sección)
+   ───────────────────────────────────────────────────────────────────────────── */
+.section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: var(--space-4);
+}
+
+.section-header h2 {
+  font-size: var(--text-2xl);
+}
+
+.section-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  flex-wrap: wrap;
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   SPLASH SCREEN
+   ───────────────────────────────────────────────────────────────────────────── */
+.splash-screen {
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-splash);
+  background: var(--gradient-bg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.splash-content {
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-4);
+}
+
+.splash-logo {
+  width: 96px;
+  height: 96px;
+  border-radius: var(--radius-xl);
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  backdrop-filter: blur(var(--glass-blur));
+}
+
+.splash-logo svg {
+  width: 52px;
+  height: 52px;
+  color: var(--color-secondary);
+}
+
+.splash-title {
+  font-size: var(--text-3xl);
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  color: #fff;
+  margin: 0;
+}
+
+.splash-subtitle {
+  font-size: var(--text-xl);
+  font-weight: 300;
+  letter-spacing: 0.3em;
+  color: var(--color-secondary);
+  margin: 0;
+}
+
+.splash-loader {
+  width: 220px;
+  height: 4px;
+  background: var(--glass-border);
+  border-radius: var(--radius-full);
+  overflow: hidden;
+}
+
+.loader-bar {
+  height: 100%;
+  background: linear-gradient(90deg, var(--color-primary), var(--color-secondary));
+  border-radius: var(--radius-full);
+  animation: splashLoad 1.8s ease-in-out forwards;
+  width: 0;
+}
+
+@keyframes splashLoad {
+  0%   { width: 0%; }
+  60%  { width: 80%; }
+  100% { width: 100%; }
+}
+
+.splash-version {
+  font-size: var(--text-xs);
+  color: var(--color-text-muted);
+  margin: 0;
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   ACCESIBILIDAD
+   ───────────────────────────────────────────────────────────────────────────── */
+.visually-hidden {
+  position: absolute !important;
+  width: 1px !important;
+  height: 1px !important;
+  padding: 0 !important;
+  margin: -1px !important;
+  overflow: hidden !important;
+  clip: rect(0, 0, 0, 0) !important;
+  white-space: nowrap !important;
+  border: 0 !important;
+}
+
+:focus-visible {
+  outline: 2px solid var(--color-secondary);
+  outline-offset: 3px;
+  border-radius: var(--radius-sm);
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   SCROLLBAR PERSONALIZADO
+   ───────────────────────────────────────────────────────────────────────────── */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.20);
+  border-radius: var(--radius-full);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.35);
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   UTILIDADES
+   ───────────────────────────────────────────────────────────────────────────── */
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-10) var(--space-6);
+  color: var(--color-text-muted);
+}
+
+.empty-state svg {
+  width: 48px;
+  height: 48px;
+  opacity: 0.4;
+}
+
+.empty-state p {
+  font-size: var(--text-sm);
+  color: var(--color-text-muted);
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   RESPONSIVE — MÓVIL (< 768px)
+   ───────────────────────────────────────────────────────────────────────────── */
+@media (max-width: 768px) {
+  .main-content {
+    margin-left: 0;
+  }
+
+  .pages-container {
+    padding: var(--space-4);
+  }
+
+  .topbar {
+    padding: 0 var(--space-4);
+  }
+
+  .section-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .topbar-clock {
+    display: none;
+  }
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   RESPONSIVE — TABLET (768px - 1024px)
+   ───────────────────────────────────────────────────────────────────────────── */
+@media (min-width: 768px) and (max-width: 1024px) {
+  :root {
+    --sidebar-width: 220px;
+  }
+}

@@ -1,0 +1,1307 @@
+<!DOCTYPE html>
+<html lang="es" dir="ltr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="description" content="CONTROL PERSONAL CAMPO — Sistema Inteligente de Gestión y Asistencia de Personal en Obra" />
+  <meta name="theme-color" content="#003459" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="Control Campo" />
+  <link rel="manifest" href="manifest.json" />
+  <link rel="apple-touch-icon" href="assets/icons/icon-192.png" />
+  <title>CONTROL PERSONAL CAMPO</title>
+
+  <!-- ═══════════════════ FUENTES ═══════════════════ -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+
+  <!-- ═══════════════════ ICONOS ═══════════════════ -->
+  <!-- Lucide Icons (via unpkg) -->
+  <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+
+  <!-- ═══════════════════ QR CODE - Generación ═══════════════════ -->
+  <!-- qrcode.js para generar QR -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"
+    integrity="sha512-CNgIRecGo7nphbeZ04Sc13ka07paqdeTu0WR1IM4kNcpmBAUSHSQX0FslNhTDadL4O5SAGapGt4FodqL8My0mA=="
+    crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+
+  <!-- ═══════════════════ QR CODE - Lectura/Escáner ═══════════════════ -->
+  <!-- html5-qrcode para escanear con cámara -->
+  <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+
+  <!-- ═══════════════════ MAPA (Leaflet.js) ═══════════════════ -->
+  <!-- Leaflet CSS y JS para visualización de mapas -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" 
+        integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" 
+        crossorigin=""/>
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" 
+          integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" 
+          crossorigin=""></script>
+
+  <!-- ═══════════════════ CHART.JS - Gráficas ═══════════════════ -->
+  <!-- Chart.js local (vendor) con fallback CDN -->
+  <script src="assets/vendor/chart.umd.min.js"></script>
+  <script>
+    if (typeof window.Chart === 'undefined') {
+      document.write('<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"><\/script>');
+    }
+  </script>
+
+  <!-- ═══════════════════ HTML2CANVAS - Captura de pantalla ═══════════════════ -->
+  <script src="assets/vendor/html2canvas.min.js"></script>
+  <script>
+    if (typeof window.html2canvas === 'undefined') {
+      document.write('<script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"><\/script>');
+    }
+  </script>
+
+  <!-- ═══════════════════ PDF - Exportación ═══════════════════ -->
+  <!-- jsPDF + jsPDF AutoTable para reportes PDF (local + CDN fallback) -->
+  <script src="assets/vendor/jspdf.umd.min.js"></script>
+  <script>
+    if (typeof window.jspdf === 'undefined') {
+      document.write('<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"><\/script>');
+    }
+  </script>
+  <script src="assets/vendor/jspdf.plugin.autotable.min.js"></script>
+  <script>
+    if (typeof window.jspdf === 'undefined' || !window.jspdf.jsPDF) {
+      document.write('<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"><\/script>');
+    }
+  </script>
+
+  <!-- ═══════════════════ ESTILOS PROPIOS ═══════════════════ -->
+  <link rel="stylesheet" href="css/main.css" />
+  <link rel="stylesheet" href="css/glassmorphism.css" />
+  <link rel="stylesheet" href="css/components.css" />
+  <link rel="stylesheet" media="print" href="css/print.css" />
+</head>
+<body>
+
+  <!-- ═══════════════════════════════════════════════════════════════
+       TOAST NOTIFICATIONS CONTAINER
+  ═══════════════════════════════════════════════════════════════ -->
+  <div id="toast-container" role="alert" aria-live="polite" aria-atomic="true"></div>
+
+  <!-- ═══════════════════════════════════════════════════════════════
+       PANTALLA DE CARGA INICIAL
+  ═══════════════════════════════════════════════════════════════ -->
+  <div id="splash-screen" class="splash-screen" role="status" aria-label="Cargando aplicación">
+    <div class="splash-content">
+      <div class="splash-logo">
+        <i data-lucide="hard-hat" aria-hidden="true"></i>
+      </div>
+      <h1 class="splash-title">CONTROL PERSONAL</h1>
+      <p class="splash-subtitle">CAMPO</p>
+      <div class="splash-loader" aria-hidden="true">
+        <div class="loader-bar"></div>
+      </div>
+      <p class="splash-version">v1.0.0</p>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════════════════
+       WRAPPER PRINCIPAL DE LA SPA
+  ═══════════════════════════════════════════════════════════════ -->
+  <div id="app" class="app-wrapper" hidden>
+
+    <!-- ─────────────────── SIDEBAR DE NAVEGACIÓN ─────────────────── -->
+    <nav id="sidebar" class="sidebar glass-sidebar" role="navigation" aria-label="Menú principal">
+      <div class="sidebar-header">
+        <div class="sidebar-brand">
+          <i data-lucide="hard-hat" aria-hidden="true" class="brand-icon"></i>
+          <div class="brand-text">
+            <span class="brand-name">CONTROL</span>
+            <span class="brand-sub">PERSONAL CAMPO</span>
+          </div>
+        </div>
+        <button id="sidebar-toggle" class="sidebar-toggle" aria-label="Cerrar menú" aria-expanded="true">
+          <i data-lucide="x" aria-hidden="true"></i>
+        </button>
+      </div>
+
+      <ul class="sidebar-nav" role="list">
+        <li class="nav-item">
+          <a href="#dashboard" class="nav-link active" data-page="dashboard" role="button" aria-current="page">
+            <i data-lucide="layout-dashboard" aria-hidden="true"></i>
+            <span>Dashboard</span>
+          </a>
+        </li>
+        <li class="nav-item">
+          <a href="#personal" class="nav-link" data-page="personal" role="button">
+            <i data-lucide="users" aria-hidden="true"></i>
+            <span>Personal</span>
+          </a>
+        </li>
+        <li class="nav-item">
+          <a href="#asistencia" class="nav-link" data-page="asistencia" role="button">
+            <i data-lucide="scan-line" aria-hidden="true"></i>
+            <span>Asistencia</span>
+          </a>
+        </li>
+        <li class="nav-item">
+          <a href="#reportes" class="nav-link" data-page="reportes" role="button">
+            <i data-lucide="file-text" aria-hidden="true"></i>
+            <span>Reportes</span>
+          </a>
+        </li>
+        <li class="nav-item">
+          <a href="#ajustes" class="nav-link" data-page="ajustes" role="button">
+            <i data-lucide="settings" aria-hidden="true"></i>
+            <span>Ajustes</span>
+          </a>
+        </li>
+      </ul>
+
+      <!-- Indicador de conexión en sidebar -->
+      <div class="sidebar-footer">
+        <div id="connection-badge" class="connection-badge" role="status" aria-label="Estado de conexión">
+          <span class="connection-dot disconnected" aria-hidden="true"></span>
+          <span id="connection-text">Sin conexión</span>
+        </div>
+        <p class="sidebar-version">v1.0.0</p>
+      </div>
+    </nav>
+
+    <!-- ─────────────────── OVERLAY PARA MÓVIL ─────────────────── -->
+    <div id="sidebar-overlay" class="sidebar-overlay" aria-hidden="true"></div>
+
+    <!-- ─────────────────── ÁREA PRINCIPAL ─────────────────── -->
+    <main id="main-content" class="main-content" role="main">
+
+      <!-- TOPBAR -->
+      <header class="topbar glass-topbar" role="banner">
+        <div class="topbar-left">
+          <button id="menu-toggle" class="menu-toggle" aria-label="Abrir menú" aria-controls="sidebar" aria-expanded="false">
+            <i data-lucide="menu" aria-hidden="true"></i>
+          </button>
+          <div class="page-title-area">
+            <h1 id="page-title" class="page-title">Dashboard</h1>
+            <p id="page-breadcrumb" class="page-breadcrumb">
+              <span id="current-date-display"></span>
+            </p>
+          </div>
+        </div>
+        <div class="topbar-right">
+          <!-- Indicador offline / sync -->
+          <div id="sync-indicator" class="sync-indicator" hidden aria-live="polite">
+            <span id="sync-offline-badge" class="sync-badge sync-offline" hidden>
+              <i data-lucide="wifi-off" aria-hidden="true"></i>
+              <span id="sync-queue-count">0</span> pendiente(s)
+            </span>
+            <button id="btn-sync-now" class="btn btn-ghost btn-sm sync-btn" hidden aria-label="Sincronizar ahora">
+              <i data-lucide="upload-cloud" aria-hidden="true"></i> Sincronizar
+            </button>
+            <span id="sync-last-time" class="sync-last" hidden></span>
+          </div>
+          <!-- Indicador de alertas -->
+          <button id="alerts-btn" class="topbar-btn" aria-label="Ver alertas pendientes">
+            <i data-lucide="bell" aria-hidden="true"></i>
+            <span id="alerts-badge" class="badge badge-red" hidden>0</span>
+          </button>
+          <!-- Actualizar datos -->
+          <button id="refresh-btn" class="topbar-btn" aria-label="Actualizar datos">
+            <i data-lucide="refresh-cw" aria-hidden="true"></i>
+          </button>
+          <!-- Fecha/Hora actual -->
+          <div class="topbar-clock" aria-live="off">
+            <i data-lucide="clock" aria-hidden="true"></i>
+            <span id="live-clock">--:--:--</span>
+          </div>
+        </div>
+      </header>
+
+      <!-- BANNER MODO DEMO (se oculta desde JS si no hay demo-data cargado) -->
+      <div id="demo-banner" class="demo-banner" role="status" aria-label="Modo demostración activo" hidden>
+        <i data-lucide="flask-conical" aria-hidden="true"></i>
+        <span><strong>MODO DEMO</strong> — Datos de prueba cargados. Conecta tu Google Apps Script en
+          <a href="#ajustes" class="demo-link">Ajustes</a> para usar datos reales.
+        </span>
+        <button id="btn-close-demo-banner" class="demo-banner-close" aria-label="Cerrar banner demo">
+          <i data-lucide="x" aria-hidden="true"></i>
+        </button>
+      </div>
+
+      <!-- ─────────────────── CONTENEDOR DE PÁGINAS (Router SPA) ─────────────────── -->
+      <div id="pages-container" class="pages-container">
+
+        <!-- ══════════════════════════════════════════
+             PÁGINA: DASHBOARD
+        ══════════════════════════════════════════ -->
+        <section id="page-dashboard" class="page active" data-page="dashboard" aria-label="Panel de control">
+          <div class="section-header">
+            <h2>Panel de Control</h2>
+            <div class="section-actions">
+              <input type="date" id="dashboard-date" class="input-glass" aria-label="Seleccionar fecha" />
+              <button id="btn-refresh-dashboard" class="btn btn-secondary btn-sm">
+                <i data-lucide="refresh-cw" aria-hidden="true"></i> Actualizar
+              </button>
+            </div>
+          </div>
+
+          <!-- KPI Cards -->
+          <div class="kpi-grid" role="list" aria-label="Indicadores clave">
+            <div class="kpi-card glass-card" role="listitem">
+              <div class="kpi-icon kpi-blue" aria-hidden="true">
+                <i data-lucide="users"></i>
+              </div>
+              <div class="kpi-info">
+                <span class="kpi-label">Personal Activo</span>
+                <span id="kpi-total" class="kpi-value">--</span>
+              </div>
+            </div>
+            <div class="kpi-card glass-card" role="listitem">
+              <div class="kpi-icon kpi-green" aria-hidden="true">
+                <i data-lucide="user-check"></i>
+              </div>
+              <div class="kpi-info">
+                <span class="kpi-label">Asistencia Hoy</span>
+                <span id="kpi-asistencia" class="kpi-value">--%</span>
+              </div>
+            </div>
+            <div class="kpi-card glass-card" role="listitem">
+              <div class="kpi-icon kpi-amber" aria-hidden="true">
+                <i data-lucide="alert-triangle"></i>
+              </div>
+              <div class="kpi-info">
+                <span class="kpi-label">Tardanzas / Omisiones</span>
+                <span id="kpi-tardanzas" class="kpi-value">--</span>
+              </div>
+            </div>
+            <div class="kpi-card glass-card" role="listitem">
+              <div class="kpi-icon kpi-red" aria-hidden="true">
+                <i data-lucide="user-x"></i>
+              </div>
+              <div class="kpi-info">
+                <span class="kpi-label">Ausencias Hoy</span>
+                <span id="kpi-ausencias" class="kpi-value">--</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Calendario + Lista Hoy -->
+          <div class="dashboard-grid">
+            <!-- Calendario interactivo -->
+            <div class="glass-card calendar-card">
+              <div class="card-header">
+                <h3><i data-lucide="calendar" aria-hidden="true"></i> Calendario de Asistencia</h3>
+                <div class="calendar-controls">
+                  <button id="cal-prev" class="btn btn-ghost btn-sm" aria-label="Mes anterior">
+                    <i data-lucide="chevron-left" aria-hidden="true"></i>
+                  </button>
+                  <span id="cal-month-year" class="cal-month-title" aria-live="polite"></span>
+                  <button id="cal-next" class="btn btn-ghost btn-sm" aria-label="Mes siguiente">
+                    <i data-lucide="chevron-right" aria-hidden="true"></i>
+                  </button>
+                </div>
+              </div>
+              <div id="calendar-grid" class="calendar-grid" role="grid" aria-label="Calendario mensual"></div>
+              <div class="calendar-legend" aria-label="Leyenda del calendario">
+                <span class="legend-item"><span class="legend-dot green" aria-hidden="true"></span>&gt;90% asistencia</span>
+                <span class="legend-item"><span class="legend-dot amber" aria-hidden="true"></span>75-89%</span>
+                <span class="legend-item"><span class="legend-dot red" aria-hidden="true"></span>&lt;75%</span>
+              </div>
+            </div>
+
+            <!-- Lista de asistencia hoy -->
+            <div class="glass-card attendance-today-card">
+              <div class="card-header">
+                <h3><i data-lucide="list-checks" aria-hidden="true"></i> Asistencia de Hoy</h3>
+                <span id="today-count" class="badge badge-blue">0</span>
+              </div>
+              <div id="attendance-today-list" class="attendance-list" role="list" aria-label="Listado asistencia hoy">
+                <div class="empty-state">
+                  <i data-lucide="inbox" aria-hidden="true"></i>
+                  <p>Sin marcaciones hoy</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- ── Gráficas de Tendencias ── -->
+          <div class="dashboard-charts-grid">
+            <!-- Gráfica: Asistencia últimos 7 días -->
+            <div class="glass-card chart-card">
+              <div class="card-header">
+                <h3><i data-lucide="bar-chart-2" aria-hidden="true"></i> Asistencia — Últimos 7 Días</h3>
+                <span class="badge badge-blue" id="chart-semana-label">Esta semana</span>
+              </div>
+              <div class="chart-wrapper">
+                <canvas id="chart-semana" aria-label="Gráfica de asistencia semanal" role="img"></canvas>
+              </div>
+            </div>
+
+            <!-- Gráfica: Tendencia del mes -->
+            <div class="glass-card chart-card">
+              <div class="card-header">
+                <h3><i data-lucide="trending-up" aria-hidden="true"></i> Tendencia Mensual</h3>
+                <span class="badge badge-blue" id="chart-mes-label">Este mes</span>
+              </div>
+              <div class="chart-wrapper">
+                <canvas id="chart-mes" aria-label="Gráfica de tendencia mensual" role="img"></canvas>
+              </div>
+            </div>
+          </div>
+
+          <!-- ── Panel ¿Quién está en obra? ── -->
+          <div class="glass-card turno-card">
+            <div class="card-header">
+              <h3><i data-lucide="hard-hat" aria-hidden="true"></i> ¿Quién está en obra ahora?</h3>
+              <div style="display:flex;align-items:center;gap:var(--space-3)">
+                <span id="turno-last-update" class="text-muted" style="font-size:var(--text-xs)"></span>
+                <button id="btn-refresh-turno" class="btn btn-ghost btn-sm" aria-label="Actualizar estado de turno">
+                  <i data-lucide="refresh-cw" aria-hidden="true"></i>
+                </button>
+              </div>
+            </div>
+            <div class="turno-tabs" role="tablist" aria-label="Filtrar por estado de turno">
+              <button class="turno-tab active" data-turno="en-obra" role="tab" aria-selected="true">
+                <span class="turno-dot green"></span> En Obra
+                <span id="turno-count-en-obra" class="badge badge-green">0</span>
+              </button>
+              <button class="turno-tab" data-turno="receso" role="tab" aria-selected="false">
+                <span class="turno-dot amber"></span> En Receso
+                <span id="turno-count-receso" class="badge badge-amber">0</span>
+              </button>
+              <button class="turno-tab" data-turno="salio" role="tab" aria-selected="false">
+                <span class="turno-dot red"></span> Ya Salió
+                <span id="turno-count-salio" class="badge badge-red">0</span>
+              </button>
+              <button class="turno-tab" data-turno="sin-marcar" role="tab" aria-selected="false">
+                <span class="turno-dot gray"></span> Sin Marcar
+                <span id="turno-count-sin-marcar" class="badge">0</span>
+              </button>
+            </div>
+            <div id="turno-lista" class="turno-lista" role="list" aria-label="Estado de turno del personal">
+              <div class="empty-state">
+                <i data-lucide="hard-hat" aria-hidden="true"></i>
+                <p>Sin datos de turno hoy</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Alertas recientes -->
+          <div class="glass-card">
+            <div class="card-header">
+              <h3><i data-lucide="bell-ring" aria-hidden="true"></i> Alertas Recientes</h3>
+              <button id="btn-clear-alerts" class="btn btn-ghost btn-sm">Marcar todas revisadas</button>
+            </div>
+            <div id="alerts-list" class="alerts-list" role="list" aria-label="Alertas recientes">
+              <div class="empty-state">
+                <i data-lucide="check-circle-2" aria-hidden="true"></i>
+                <p>No hay alertas pendientes</p>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- ══════════════════════════════════════════
+             PÁGINA: PERSONAL
+        ══════════════════════════════════════════ -->
+        <section id="page-personal" class="page" data-page="personal" aria-label="Gestión de personal" hidden>
+          <div class="section-header">
+            <h2>Gestión de Personal</h2>
+            <div class="section-actions">
+              <div class="search-box">
+                <i data-lucide="search" aria-hidden="true"></i>
+                <input type="search" id="personal-search" class="input-glass" placeholder="Buscar por nombre, DPI o puesto..." aria-label="Buscar personal" />
+              </div>
+              <button id="btn-nuevo-personal" class="btn btn-primary">
+                <i data-lucide="user-plus" aria-hidden="true"></i> Nuevo Trabajador
+              </button>
+            </div>
+          </div>
+
+          <!-- Tabla de personal -->
+          <div class="glass-card table-card">
+            <div class="table-toolbar">
+              <div class="table-filters">
+                <select id="filter-puesto" class="input-glass" aria-label="Filtrar por puesto">
+                  <option value="">Todos los puestos</option>
+                  <option value="Albañil">Albañil</option>
+                  <option value="Maestro de Obra">Maestro de Obra</option>
+                  <option value="Armador">Armador</option>
+                  <option value="Carpintero">Carpintero</option>
+                  <option value="Electricista">Electricista</option>
+                  <option value="Operador">Operador</option>
+                  <option value="Residente">Residente</option>
+                  <option value="Bodeguero">Bodeguero</option>
+                </select>
+                <select id="filter-estado-personal" class="input-glass" aria-label="Filtrar por estado">
+                  <option value="Activo">Activos</option>
+                  <option value="Inactivo">Inactivos</option>
+                  <option value="">Todos</option>
+                </select>
+              </div>
+              <span id="personal-count" class="table-count">0 trabajadores</span>
+            </div>
+            <div class="table-responsive" role="region" aria-label="Tabla de personal" tabindex="0">
+              <table id="personal-table" class="data-table" aria-label="Lista de trabajadores">
+                <thead>
+                  <tr>
+                    <th scope="col">Foto</th>
+                    <th scope="col">ID</th>
+                    <th scope="col">Nombre Completo</th>
+                    <th scope="col">DPI / CUI</th>
+                    <th scope="col">Puesto</th>
+                    <th scope="col">Teléfono</th>
+                    <th scope="col">Estado</th>
+                    <th scope="col" class="actions-col">Acciones</th>
+                  </tr>
+                </thead>
+                <tbody id="personal-tbody">
+                  <tr class="empty-row">
+                    <td colspan="8" class="text-center">
+                      <div class="empty-state">
+                        <i data-lucide="users" aria-hidden="true"></i>
+                        <p>No hay trabajadores registrados</p>
+                      </div>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <!-- ══════════════════════════════════════════
+             PÁGINA: ASISTENCIA
+        ══════════════════════════════════════════ -->
+        <section id="page-asistencia" class="page" data-page="asistencia" aria-label="Control de asistencia" hidden>
+          <div class="section-header">
+            <h2>Control de Asistencia</h2>
+            <div class="section-actions">
+              <span id="asistencia-date-display" class="date-display"></span>
+            </div>
+          </div>
+
+          <!-- Tabs: QR Scanner / Manual -->
+          <div class="tabs-container glass-card">
+            <div class="tabs" role="tablist" aria-label="Método de marcación">
+              <button class="tab active" data-tab="qr-scanner" role="tab" aria-selected="true" aria-controls="tab-qr-scanner" id="tab-btn-qr">
+                <i data-lucide="qr-code" aria-hidden="true"></i> Escáner QR
+              </button>
+              <button class="tab" data-tab="manual" role="tab" aria-selected="false" aria-controls="tab-manual" id="tab-btn-manual">
+                <i data-lucide="pencil-line" aria-hidden="true"></i> Marcación Manual
+              </button>
+            </div>
+
+            <!-- Tab: QR Scanner -->
+            <div id="tab-qr-scanner" class="tab-content active" role="tabpanel" aria-labelledby="tab-btn-qr">
+              <div class="qr-scanner-container">
+                <div class="qr-video-wrapper">
+                  <div id="qr-reader" aria-label="Visor de cámara para escaneo QR"></div>
+                  <div class="qr-overlay" aria-hidden="true">
+                    <div class="qr-frame"></div>
+                  </div>
+                </div>
+                <div class="scanner-controls">
+                  <button id="btn-start-scan" class="btn btn-primary btn-lg">
+                    <i data-lucide="camera" aria-hidden="true"></i> Iniciar Cámara
+                  </button>
+                  <button id="btn-stop-scan" class="btn btn-danger btn-lg" hidden>
+                    <i data-lucide="camera-off" aria-hidden="true"></i> Detener Cámara
+                  </button>
+                </div>
+
+                <!-- Resultado del escaneo -->
+                <div id="scan-result" class="scan-result glass-card" hidden aria-live="polite">
+                  <div class="scan-result-photo">
+                    <img id="scan-worker-photo" src="" alt="Foto del trabajador escaneado" />
+                  </div>
+                  <div class="scan-result-info">
+                    <h3 id="scan-worker-name">--</h3>
+                    <p id="scan-worker-id" class="text-muted">--</p>
+                    <p id="scan-worker-puesto" class="badge badge-blue">--</p>
+                  </div>
+                  <div class="scan-marcacion-btns">
+                    <button class="btn btn-marcacion btn-entrada" data-tipo="Entrada" data-hora="07:00">
+                      <i data-lucide="log-in" aria-hidden="true"></i> Entrada
+                    </button>
+                    <button class="btn btn-marcacion btn-receso" data-tipo="Salida_Receso" data-hora="10:00">
+                      <i data-lucide="coffee" aria-hidden="true"></i> Salida Receso
+                    </button>
+                    <button class="btn btn-marcacion btn-regreso" data-tipo="Regreso_Receso" data-hora="10:30">
+                      <i data-lucide="arrow-left-right" aria-hidden="true"></i> Regreso Receso
+                    </button>
+                    <button class="btn btn-marcacion btn-salida" data-tipo="Salida_Obra" data-hora="17:00">
+                      <i data-lucide="log-out" aria-hidden="true"></i> Salida Obra
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Tab: Manual -->
+            <div id="tab-manual" class="tab-content" role="tabpanel" aria-labelledby="tab-btn-manual" hidden>
+              <div class="manual-marcacion">
+                <div class="search-trabajador">
+                  <label for="manual-worker-search" class="form-label">Buscar Trabajador</label>
+                  <div class="autocomplete-wrapper">
+                    <input type="search" id="manual-worker-search" class="input-glass" placeholder="Escribe nombre o DPI..." autocomplete="off" aria-label="Buscar trabajador para marcación manual" aria-autocomplete="list" aria-controls="autocomplete-list" />
+                    <ul id="autocomplete-list" class="autocomplete-list glass-card" role="listbox" aria-label="Sugerencias de trabajadores" hidden></ul>
+                  </div>
+                </div>
+
+                <!-- Trabajador seleccionado -->
+                <div id="manual-worker-selected" class="worker-selected glass-card" hidden>
+                  <img id="manual-worker-photo" src="" alt="Foto del trabajador" />
+                  <div class="worker-info">
+                    <h3 id="manual-worker-name">--</h3>
+                    <p id="manual-worker-id" class="text-muted">--</p>
+                    <p id="manual-worker-puesto" class="badge badge-blue">--</p>
+                  </div>
+                  <div class="manual-marcacion-btns">
+                    <button class="btn btn-marcacion btn-entrada" data-tipo="Entrada" data-hora="07:00">
+                      <i data-lucide="log-in" aria-hidden="true"></i> Entrada
+                    </button>
+                    <button class="btn btn-marcacion btn-receso" data-tipo="Salida_Receso" data-hora="10:00">
+                      <i data-lucide="coffee" aria-hidden="true"></i> Salida Receso
+                    </button>
+                    <button class="btn btn-marcacion btn-regreso" data-tipo="Regreso_Receso" data-hora="10:30">
+                      <i data-lucide="arrow-left-right" aria-hidden="true"></i> Regreso Receso
+                    </button>
+                    <button class="btn btn-marcacion btn-salida" data-tipo="Salida_Obra" data-hora="17:00">
+                      <i data-lucide="log-out" aria-hidden="true"></i> Salida Obra
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Tabla de marcaciones del día -->
+          <div class="glass-card table-card">
+            <div class="card-header">
+              <h3><i data-lucide="table-2" aria-hidden="true"></i> Marcaciones del Día</h3>
+              <div class="section-actions">
+                <input type="date" id="asistencia-filter-date" class="input-glass" aria-label="Filtrar por fecha" />
+                <button id="btn-view-map" class="btn btn-secondary btn-sm" title="Ver mapa de ubicaciones">
+                  <i data-lucide="map" aria-hidden="true"></i> Mapa
+                </button>
+              </div>
+            </div>
+            <div class="table-responsive" role="region" aria-label="Tabla de marcaciones" tabindex="0">
+              <table id="asistencia-table" class="data-table" aria-label="Marcaciones registradas">
+                <thead>
+                  <tr>
+                    <th scope="col">Trabajador</th>
+                    <th scope="col">Tipo</th>
+                    <th scope="col">H. Programada</th>
+                    <th scope="col">H. Real</th>
+                    <th scope="col">Estado</th>
+                    <th scope="col">Método</th>
+                    <th scope="col">H. Extra</th>
+                    <th scope="col">Ubicación</th>
+                  </tr>
+                </thead>
+                <tbody id="asistencia-tbody">
+                  <tr class="empty-row">
+                    <td colspan="8" class="text-center">
+                      <div class="empty-state">
+                        <i data-lucide="clock" aria-hidden="true"></i>
+                        <p>No hay marcaciones para esta fecha</p>
+                      </div>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <!-- ══════════════════════════════════════════
+             PÁGINA: REPORTES
+        ══════════════════════════════════════════ -->
+        <section id="page-reportes" class="page" data-page="reportes" aria-label="Reportes e impresión" hidden>
+          <div class="section-header">
+            <h2>Reportes e Impresión</h2>
+          </div>
+
+          <div class="reportes-grid">
+            <!-- Reporte Diario -->
+            <div class="glass-card reporte-card">
+              <div class="reporte-icon" aria-hidden="true">
+                <i data-lucide="calendar-check"></i>
+              </div>
+              <h3>Reporte Diario</h3>
+              <p>Desglose de asistencia por trabajador para una fecha específica.</p>
+              <div class="reporte-form">
+                <label for="reporte-fecha-diario" class="form-label">Fecha</label>
+                <input type="date" id="reporte-fecha-diario" class="input-glass" aria-label="Fecha del reporte diario" />
+              </div>
+              <div class="reporte-actions">
+                <button id="btn-preview-diario" class="btn btn-secondary">
+                  <i data-lucide="eye" aria-hidden="true"></i> Vista Previa
+                </button>
+                <button id="btn-pdf-diario" class="btn btn-primary">
+                  <i data-lucide="download" aria-hidden="true"></i> Exportar PDF
+                </button>
+                <button id="btn-csv-diario" class="btn btn-ghost">
+                  <i data-lucide="table" aria-hidden="true"></i> CSV
+                </button>
+              </div>
+            </div>
+
+            <!-- Reporte Semanal -->
+            <div class="glass-card reporte-card">
+              <div class="reporte-icon" aria-hidden="true">
+                <i data-lucide="calendar-range"></i>
+              </div>
+              <h3>Reporte Semanal</h3>
+              <p>Consolidado de días trabajados, tardanzas y horas extra para nómina.</p>
+              <div class="reporte-form">
+                <label for="reporte-semana-inicio" class="form-label">Semana del</label>
+                <input type="date" id="reporte-semana-inicio" class="input-glass" aria-label="Inicio de semana" />
+                <label for="reporte-semana-fin" class="form-label">Al</label>
+                <input type="date" id="reporte-semana-fin" class="input-glass" aria-label="Fin de semana" />
+              </div>
+              <div class="reporte-actions">
+                <button id="btn-preview-semanal" class="btn btn-secondary">
+                  <i data-lucide="eye" aria-hidden="true"></i> Vista Previa
+                </button>
+                <button id="btn-pdf-semanal" class="btn btn-primary">
+                  <i data-lucide="download" aria-hidden="true"></i> Exportar PDF
+                </button>
+                <button id="btn-csv-semanal" class="btn btn-ghost">
+                  <i data-lucide="table" aria-hidden="true"></i> CSV
+                </button>
+              </div>
+            </div>
+
+            <!-- Reporte Mensual -->
+            <div class="glass-card reporte-card">
+              <div class="reporte-icon" aria-hidden="true">
+                <i data-lucide="bar-chart-3"></i>
+              </div>
+              <h3>Reporte Mensual</h3>
+              <p>Informe completo del mes para administración y nómina.</p>
+              <div class="reporte-form">
+                <label for="reporte-mes" class="form-label">Mes / Año</label>
+                <input type="month" id="reporte-mes" class="input-glass" aria-label="Mes y año del reporte" />
+              </div>
+              <div class="reporte-actions">
+                <button id="btn-preview-mensual" class="btn btn-secondary">
+                  <i data-lucide="eye" aria-hidden="true"></i> Vista Previa
+                </button>
+                <button id="btn-pdf-mensual" class="btn btn-primary">
+                  <i data-lucide="download" aria-hidden="true"></i> Exportar PDF
+                </button>
+                <button id="btn-csv-mensual" class="btn btn-ghost">
+                  <i data-lucide="table" aria-hidden="true"></i> CSV
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Vista previa de tabla -->
+          <div id="reporte-preview-card" class="glass-card" hidden>
+            <div class="card-header">
+              <h3 id="preview-title"><i data-lucide="file-text" aria-hidden="true"></i> Vista Previa</h3>
+              <div class="preview-controls">
+                <select id="preview-orientation" class="input-glass" aria-label="Orientación de impresión">
+                  <option value="portrait">Vertical (Portrait)</option>
+                  <option value="landscape">Horizontal (Landscape)</option>
+                </select>
+                <button id="btn-print-preview" class="btn btn-secondary btn-sm">
+                  <i data-lucide="printer" aria-hidden="true"></i> Imprimir
+                </button>
+              </div>
+            </div>
+            <div id="reporte-preview-content" class="reporte-preview-content" role="region" aria-label="Vista previa del reporte"></div>
+          </div>
+        </section>
+
+        <!-- ══════════════════════════════════════════
+             PÁGINA: AJUSTES
+        ══════════════════════════════════════════ -->
+        <section id="page-ajustes" class="page" data-page="ajustes" aria-label="Configuración del sistema" hidden>
+          <div class="section-header">
+            <h2>Ajustes y Configuración</h2>
+          </div>
+
+          <div class="ajustes-grid">
+            <!-- Conexión Google Apps Script -->
+            <div class="glass-card ajuste-card">
+              <div class="card-header">
+                <h3><i data-lucide="link" aria-hidden="true"></i> Conexión con Google Sheets</h3>
+              </div>
+              <div class="form-group">
+                <label for="gas-url" class="form-label">URL del Web App (Apps Script)</label>
+                <div class="input-with-action">
+                  <input type="url" id="gas-url" class="input-glass" placeholder="https://script.google.com/macros/s/.../exec" aria-label="URL de Google Apps Script" />
+                  <button id="btn-test-connection" class="btn btn-secondary">
+                    <i data-lucide="plug" aria-hidden="true"></i> Probar
+                  </button>
+                </div>
+                <div id="connection-status-detail" class="connection-status-detail" role="status" aria-live="polite"></div>
+              </div>
+              <button id="btn-save-url" class="btn btn-primary btn-block">
+                <i data-lucide="save" aria-hidden="true"></i> Guardar URL
+              </button>
+            </div>
+
+            <!-- General -->
+            <div class="glass-card ajuste-card">
+              <div class="card-header">
+                <h3><i data-lucide="building-2" aria-hidden="true"></i> General</h3>
+              </div>
+              <div class="form-group">
+                <label for="cfg-nombre-obra" class="form-label">Nombre de la Obra / Empresa</label>
+                <input type="text" id="cfg-nombre-obra" class="input-glass" placeholder="Ej: Construcciones Ramsa" aria-label="Nombre de la obra o empresa" />
+              </div>
+              <div class="form-group">
+                <label for="cfg-encargado" class="form-label">Encargado / Administrador</label>
+                <input type="text" id="cfg-encargado" class="input-glass" placeholder="Nombre del encargado" aria-label="Nombre del encargado" />
+              </div>
+              <div class="form-group">
+                <label for="cfg-tolerancia" class="form-label">Tolerancia de Marcación (minutos)</label>
+                <input type="number" id="cfg-tolerancia" class="input-glass" min="0" max="60" value="15" aria-label="Minutos de tolerancia" />
+              </div>
+              <button id="btn-save-general" class="btn btn-primary btn-block">
+                <i data-lucide="save" aria-hidden="true"></i> Guardar Configuración General
+              </button>
+            </div>
+
+            <!-- Horarios -->
+            <div class="glass-card ajuste-card">
+              <div class="card-header">
+                <h3><i data-lucide="clock-4" aria-hidden="true"></i> Horarios de Obra</h3>
+              </div>
+              <div class="horarios-grid">
+                <div class="form-group">
+                  <label for="cfg-hora-entrada" class="form-label">Entrada</label>
+                  <input type="time" id="cfg-hora-entrada" class="input-glass" value="07:00" aria-label="Hora de entrada" />
+                </div>
+                <div class="form-group">
+                  <label for="cfg-hora-salida-receso" class="form-label">Salida Receso</label>
+                  <input type="time" id="cfg-hora-salida-receso" class="input-glass" value="10:00" aria-label="Hora de salida a receso" />
+                </div>
+                <div class="form-group">
+                  <label for="cfg-hora-regreso-receso" class="form-label">Regreso Receso</label>
+                  <input type="time" id="cfg-hora-regreso-receso" class="input-glass" value="10:30" aria-label="Hora de regreso de receso" />
+                </div>
+                <div class="form-group">
+                  <label for="cfg-hora-salida-obra" class="form-label">Salida Obra</label>
+                  <input type="time" id="cfg-hora-salida-obra" class="input-glass" value="17:00" aria-label="Hora de salida de obra" />
+                </div>
+              </div>
+              <button id="btn-save-horarios" class="btn btn-primary btn-block">
+                <i data-lucide="save" aria-hidden="true"></i> Guardar Horarios
+              </button>
+            </div>
+
+            <!-- GPS y Geocercas -->
+            <div class="glass-card ajuste-card">
+              <div class="card-header">
+                <h3><i data-lucide="map-pin" aria-hidden="true"></i> GPS y Geocercas</h3>
+              </div>
+              <div class="form-group">
+                <label class="form-label">
+                  <input type="checkbox" id="cfg-gps-habilitado" checked />
+                  Habilitar GPS en marcaciones
+                </label>
+                <p class="text-muted text-sm">Captura ubicación al registrar asistencia</p>
+              </div>
+              <div class="form-group">
+                <label class="form-label">
+                  <input type="checkbox" id="cfg-gps-requerir" />
+                  Requerir ubicación obligatoria
+                </label>
+                <p class="text-muted text-sm">Bloquea marcaciones sin GPS</p>
+              </div>
+              <div class="form-group">
+                <label for="cfg-gps-centro-lat" class="form-label">Latitud del Centro de Obra</label>
+                <div class="input-with-action">
+                  <input type="number" id="cfg-gps-centro-lat" class="input-glass" step="any" placeholder="14.634915" aria-label="Latitud del centro de obra" />
+                  <button id="btn-capturar-ubicacion" class="btn btn-secondary" title="Capturar ubicación actual">
+                    <i data-lucide="crosshair" aria-hidden="true"></i>
+                  </button>
+                </div>
+              </div>
+              <div class="form-group">
+                <label for="cfg-gps-centro-lon" class="form-label">Longitud del Centro de Obra</label>
+                <input type="number" id="cfg-gps-centro-lon" class="input-glass" step="any" placeholder="-90.506894" aria-label="Longitud del centro de obra" />
+              </div>
+              <div class="form-group">
+                <label for="cfg-gps-radio" class="form-label">Radio de Geocerca (metros)</label>
+                <input type="number" id="cfg-gps-radio" class="input-glass" min="10" max="10000" value="200" aria-label="Radio de geocerca en metros" />
+                <p class="text-muted text-sm">Distancia máxima permitida del centro</p>
+              </div>
+              <div id="gps-status" class="gps-status" role="status" aria-live="polite"></div>
+              <button id="btn-save-gps" class="btn btn-primary btn-block">
+                <i data-lucide="save" aria-hidden="true"></i> Guardar Configuración GPS
+              </button>
+            </div>
+
+            <!-- Logo personalizado -->
+            <div class="glass-card ajuste-card">
+              <div class="card-header">
+                <h3><i data-lucide="image" aria-hidden="true"></i> Logo de la Empresa</h3>
+              </div>
+              <div class="logo-upload-area" id="logo-drop-area" role="button" tabindex="0" aria-label="Área para subir logo">
+                <img id="logo-preview" src="" alt="Logo de la empresa" class="logo-preview" hidden />
+                <div id="logo-placeholder" class="logo-placeholder">
+                  <i data-lucide="upload-cloud" aria-hidden="true"></i>
+                  <p>Arrastra tu logo aquí o haz click</p>
+                  <span class="text-muted">PNG, JPG - Máx. 500KB</span>
+                </div>
+                <input type="file" id="logo-input" accept="image/*" class="visually-hidden" aria-label="Seleccionar logo" />
+              </div>
+              <button id="btn-save-logo" class="btn btn-primary btn-block">
+                <i data-lucide="save" aria-hidden="true"></i> Guardar Logo
+              </button>
+            </div>
+
+            <!-- Copia de Seguridad -->
+            <div class="glass-card ajuste-card">
+              <div class="card-header">
+                <h3><i data-lucide="archive" aria-hidden="true"></i> Copia de Seguridad</h3>
+              </div>
+              <p class="text-muted">Exporta la configuración local del sistema a un archivo JSON.</p>
+              <div class="backup-actions">
+                <button id="btn-export-backup" class="btn btn-secondary">
+                  <i data-lucide="download-cloud" aria-hidden="true"></i> Exportar Configuración
+                </button>
+                <button id="btn-import-backup" class="btn btn-ghost">
+                  <i data-lucide="upload-cloud" aria-hidden="true"></i> Importar Configuración
+                </button>
+                <input type="file" id="import-backup-input" accept=".json" class="visually-hidden" aria-label="Archivo de configuración JSON" />
+              </div>
+            </div>
+          </div>
+        </section>
+
+      </div><!-- /pages-container -->
+    </main>
+  </div><!-- /app -->
+
+  <!-- ═══════════════════════════════════════════════════════════════
+       MODAL: HISTORIAL DE MARCACIONES POR TRABAJADOR
+  ═══════════════════════════════════════════════════════════════ -->
+  <div id="modal-historial" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="modal-historial-title" hidden>
+    <div class="modal glass-modal modal-lg">
+      <div class="modal-header">
+        <div>
+          <h2 id="modal-historial-title">Historial de Marcaciones</h2>
+          <p id="modal-historial-sub" class="text-muted" style="font-size:var(--text-sm);margin:0"></p>
+        </div>
+        <button class="modal-close" aria-label="Cerrar modal" data-modal="modal-historial">
+          <i data-lucide="x" aria-hidden="true"></i>
+        </button>
+      </div>
+      <div class="modal-body">
+        <!-- Filtros de rango de fechas -->
+        <div class="historial-filtros glass-card" style="padding:var(--space-4);margin-bottom:var(--space-5)">
+          <div style="display:flex;gap:var(--space-3);flex-wrap:wrap;align-items:flex-end">
+            <div class="form-group" style="margin:0;flex:1;min-width:140px">
+              <label class="form-label">Desde</label>
+              <input type="date" id="historial-fecha-inicio" class="input-glass" aria-label="Fecha inicio historial" />
+            </div>
+            <div class="form-group" style="margin:0;flex:1;min-width:140px">
+              <label class="form-label">Hasta</label>
+              <input type="date" id="historial-fecha-fin" class="input-glass" aria-label="Fecha fin historial" />
+            </div>
+            <button id="btn-buscar-historial" class="btn btn-primary">
+              <i data-lucide="search" aria-hidden="true"></i> Buscar
+            </button>
+          </div>
+        </div>
+
+        <!-- Resumen del trabajador -->
+        <div id="historial-resumen" class="historial-resumen" hidden>
+          <div class="historial-stat-card">
+            <span class="historial-stat-value" id="hstat-dias">0</span>
+            <span class="historial-stat-label">Días Trabajados</span>
+          </div>
+          <div class="historial-stat-card">
+            <span class="historial-stat-value" id="hstat-tardanzas">0</span>
+            <span class="historial-stat-label">Tardanzas</span>
+          </div>
+          <div class="historial-stat-card">
+            <span class="historial-stat-value" id="hstat-horas-extra">0h</span>
+            <span class="historial-stat-label">Horas Extra</span>
+          </div>
+          <div class="historial-stat-card">
+            <span class="historial-stat-value" id="hstat-ausencias">0</span>
+            <span class="historial-stat-label">Ausencias</span>
+          </div>
+        </div>
+
+        <!-- Timeline de marcaciones -->
+        <div id="historial-content">
+          <div class="empty-state" style="padding:var(--space-10)">
+            <i data-lucide="clock" aria-hidden="true"></i>
+            <p>Selecciona un rango de fechas y haz click en Buscar</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════════════════
+       MODAL: TRABAJADOR (Crear / Editar)
+  ═══════════════════════════════════════════════════════════════ -->
+  <div id="modal-personal" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="modal-personal-title" hidden>
+    <div class="modal glass-modal">
+      <div class="modal-header">
+        <h2 id="modal-personal-title">Registrar Trabajador</h2>
+        <button class="modal-close" aria-label="Cerrar modal" data-modal="modal-personal">
+          <i data-lucide="x" aria-hidden="true"></i>
+        </button>
+      </div>
+      <div class="modal-body">
+        <form id="form-personal" novalidate aria-label="Formulario de trabajador">
+          <input type="hidden" id="personal-id" />
+
+          <!-- Foto -->
+          <div class="photo-upload-section">
+            <div class="photo-preview-wrapper" id="photo-preview-wrapper">
+              <img id="foto-preview" src="" alt="Vista previa de fotografía" class="foto-preview" hidden />
+              <div id="foto-placeholder" class="foto-placeholder">
+                <i data-lucide="user-circle-2" aria-hidden="true"></i>
+              </div>
+              <!-- Botón para eliminar foto, visible solo cuando hay foto -->
+              <button id="btn-eliminar-foto" class="foto-delete-btn" type="button" aria-label="Eliminar foto" hidden>
+                <i data-lucide="x" aria-hidden="true"></i>
+              </button>
+            </div>
+            <div class="photo-upload-controls">
+              <!-- Tomar foto con cámara del dispositivo -->
+              <button id="btn-tomar-foto" type="button" class="btn btn-secondary btn-sm">
+                <i data-lucide="camera" aria-hidden="true"></i> Tomar Foto
+              </button>
+              <!-- Subir desde galería/archivo -->
+              <label for="foto-input" class="btn btn-ghost btn-sm">
+                <i data-lucide="image" aria-hidden="true"></i> Subir Foto
+              </label>
+              <input type="file" id="foto-input" accept="image/*" class="visually-hidden" aria-label="Seleccionar fotografía desde galería" />
+              <span class="text-muted" style="font-size:var(--text-xs)">JPG/PNG · Se comprime automáticamente</span>
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group form-col-2">
+              <label for="p-nombre" class="form-label">Nombre Completo <span class="required" aria-hidden="true">*</span></label>
+              <input type="text" id="p-nombre" class="input-glass" required aria-required="true" aria-describedby="p-nombre-error" placeholder="Ej: Juan Carlos Pérez García" />
+              <span id="p-nombre-error" class="field-error" role="alert" hidden></span>
+            </div>
+            <div class="form-group form-col-1">
+              <label for="p-dpi" class="form-label">DPI / CUI <span class="required" aria-hidden="true">*</span></label>
+              <input type="text" id="p-dpi" class="input-glass" required aria-required="true" maxlength="13" pattern="\d{13}" aria-describedby="p-dpi-error p-dpi-hint" placeholder="0000 00000 0101" />
+              <span id="p-dpi-hint" class="field-hint">13 dígitos numéricos</span>
+              <span id="p-dpi-error" class="field-error" role="alert" hidden></span>
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group form-col-1">
+              <label for="p-puesto" class="form-label">Puesto de Trabajo <span class="required" aria-hidden="true">*</span></label>
+              <select id="p-puesto" class="input-glass" required aria-required="true" aria-describedby="p-puesto-error">
+                <option value="">Seleccionar puesto...</option>
+                <option value="Albañil">Albañil</option>
+                <option value="Maestro de Obra">Maestro de Obra</option>
+                <option value="Armador">Armador</option>
+                <option value="Carpintero">Carpintero</option>
+                <option value="Electricista">Electricista</option>
+                <option value="Operador">Operador</option>
+                <option value="Residente">Residente</option>
+                <option value="Bodeguero">Bodeguero</option>
+                <option value="Plomero">Plomero</option>
+                <option value="Soldador">Soldador</option>
+              </select>
+              <span id="p-puesto-error" class="field-error" role="alert" hidden></span>
+            </div>
+            <div class="form-group form-col-1">
+              <label for="p-jefe" class="form-label">Jefe Inmediato</label>
+              <input type="text" id="p-jefe" class="input-glass" placeholder="Nombre del jefe o supervisor" aria-label="Jefe inmediato" />
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group form-col-1">
+              <label for="p-telefono" class="form-label">Teléfono Móvil</label>
+              <input type="tel" id="p-telefono" class="input-glass" placeholder="+502 5555-1234" aria-label="Teléfono móvil" />
+            </div>
+            <div class="form-group form-col-1">
+              <label for="p-whatsapp" class="form-label">WhatsApp</label>
+              <input type="tel" id="p-whatsapp" class="input-glass" placeholder="+502 5555-1234" aria-label="Número de WhatsApp" />
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="p-direccion" class="form-label">Dirección (Departamento / Municipio)</label>
+            <input type="text" id="p-direccion" class="input-glass" placeholder="Ej: Guatemala, Villa Nueva" aria-label="Dirección domiciliar" />
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-ghost" data-modal="modal-personal">Cancelar</button>
+        <button id="btn-guardar-personal" class="btn btn-primary">
+          <i data-lucide="save" aria-hidden="true"></i> Guardar Trabajador
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════════════════
+       MODAL: CARNÉ DE IDENTIFICACIÓN QR
+  ═══════════════════════════════════════════════════════════════ -->
+  <div id="modal-carne" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="modal-carne-title" hidden>
+    <div class="modal glass-modal modal-carne">
+      <div class="modal-header">
+        <h2 id="modal-carne-title">Carné de Identificación</h2>
+        <button class="modal-close" aria-label="Cerrar modal" data-modal="modal-carne">
+          <i data-lucide="x" aria-hidden="true"></i>
+        </button>
+      </div>
+      <div class="modal-body carne-body">
+        <!-- Carné imprimible -->
+        <div id="carne-print-area" class="carne-card">
+          <div class="carne-header">
+            <img id="carne-logo" src="" alt="Logo empresa" class="carne-logo" hidden />
+            <div class="carne-empresa-info">
+              <h4 id="carne-empresa-nombre">CONTROL PERSONAL CAMPO</h4>
+              <p id="carne-obra-nombre" class="text-muted">Obra Principal</p>
+            </div>
+          </div>
+          <div class="carne-body-content">
+            <div class="carne-foto-wrapper">
+              <img id="carne-foto" src="" alt="Foto del trabajador" class="carne-foto" />
+              <div id="carne-foto-placeholder" class="carne-foto-placeholder" hidden>
+                <span id="carne-foto-iniciales"></span>
+              </div>
+            </div>
+            <div class="carne-datos">
+              <h3 id="carne-nombre">Juan Pérez García</h3>
+              <p id="carne-puesto" class="carne-puesto-badge">Albañil</p>
+              <p class="carne-label">ID Trabajador</p>
+              <p id="carne-id" class="carne-id">TRAB-XXXXXXXX</p>
+              <p class="carne-label">DPI / CUI</p>
+              <p id="carne-dpi">0000 00000 0101</p>
+            </div>
+          </div>
+          <div id="carne-qr-container" class="carne-qr" aria-label="Código QR del trabajador"></div>
+          <div class="carne-footer">
+            <p>Portación obligatoria en obra</p>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-ghost" data-modal="modal-carne">Cerrar</button>
+        <button id="btn-descargar-carne-png" class="btn btn-secondary">
+          <i data-lucide="image-down" aria-hidden="true"></i> Descargar PNG
+        </button>
+        <button id="btn-imprimir-carne" class="btn btn-primary">
+          <i data-lucide="printer" aria-hidden="true"></i> Imprimir Carné
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════════════════
+       MODAL: DETALLE DÍA CALENDARIO
+  ═══════════════════════════════════════════════════════════════ -->
+  <div id="modal-dia-calendario" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="modal-dia-title" hidden>
+    <div class="modal glass-modal">
+      <div class="modal-header">
+        <h2 id="modal-dia-title">Detalle del Día</h2>
+        <button class="modal-close" aria-label="Cerrar modal" data-modal="modal-dia-calendario">
+          <i data-lucide="x" aria-hidden="true"></i>
+        </button>
+      </div>
+      <div class="modal-body" id="modal-dia-content">
+        <!-- Contenido dinámico -->
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════════════════
+       MODAL: HORAS EXTRA MANUAL
+  ═══════════════════════════════════════════════════════════════ -->
+  <div id="modal-horas-extra" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="modal-horas-title" hidden>
+    <div class="modal glass-modal modal-sm">
+      <div class="modal-header">
+        <h2 id="modal-horas-title">Registrar Horas Extra</h2>
+        <button class="modal-close" aria-label="Cerrar modal" data-modal="modal-horas-extra">
+          <i data-lucide="x" aria-hidden="true"></i>
+        </button>
+      </div>
+      <div class="modal-body">
+        <p id="horas-extra-worker-name" class="text-muted"></p>
+        <div class="form-group">
+          <label for="horas-extra-valor" class="form-label">Horas Extra Aprobadas</label>
+          <input type="number" id="horas-extra-valor" class="input-glass" min="0.5" max="12" step="0.5" value="0.5" aria-label="Horas extra aprobadas" />
+          <span class="field-hint">En bloques de 0.5 horas</span>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-ghost" data-modal="modal-horas-extra">Cancelar</button>
+        <button id="btn-confirmar-horas-extra" class="btn btn-primary">
+          <i data-lucide="check" aria-hidden="true"></i> Confirmar
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════════════════
+       MODAL: CÁMARA — Captura de Foto de Trabajador
+  ═══════════════════════════════════════════════════════════════ -->
+  <div id="modal-camera" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="modal-camera-title" hidden>
+    <div class="modal glass-modal modal-camera">
+      <div class="modal-header">
+        <h2 id="modal-camera-title">
+          <i data-lucide="camera" aria-hidden="true"></i> Tomar Foto
+        </h2>
+        <button class="modal-close" aria-label="Cerrar cámara" data-modal="modal-camera" id="btn-camera-close">
+          <i data-lucide="x" aria-hidden="true"></i>
+        </button>
+      </div>
+      <div class="modal-body camera-modal-body">
+
+        <!-- Selector de cámara (frente/trasera) -->
+        <div class="camera-controls-top">
+          <button id="btn-flip-camera" class="btn btn-ghost btn-sm" type="button" aria-label="Cambiar cámara">
+            <i data-lucide="flip-horizontal-2" aria-hidden="true"></i> Voltear
+          </button>
+          <span id="camera-status-label" class="text-muted" style="font-size:var(--text-xs)">Iniciando cámara...</span>
+        </div>
+
+        <!-- Visor de video -->
+        <div class="camera-viewer-wrapper">
+          <video id="camera-video" class="camera-video" autoplay playsinline muted
+                 aria-label="Vista de la cámara en tiempo real"></video>
+          <!-- Guía de encuadre -->
+          <div class="camera-guide-overlay" aria-hidden="true">
+            <div class="camera-guide-frame"></div>
+          </div>
+          <!-- Canvas oculto para captura -->
+          <canvas id="camera-canvas" class="visually-hidden" aria-hidden="true"></canvas>
+        </div>
+
+        <!-- Preview de foto capturada -->
+        <div id="camera-preview-section" class="camera-preview-section" hidden>
+          <img id="camera-captured-img" src="" alt="Foto capturada" class="camera-captured-img" />
+        </div>
+
+        <!-- Mensaje de error de cámara -->
+        <div id="camera-error-msg" class="camera-error-msg" hidden role="alert">
+          <i data-lucide="camera-off" aria-hidden="true"></i>
+          <p id="camera-error-text">No se pudo acceder a la cámara.</p>
+          <p class="text-muted" style="font-size:var(--text-xs)">Verifica los permisos del navegador o sube la foto desde la galería.</p>
+        </div>
+
+      </div>
+      <div class="modal-footer camera-modal-footer">
+        <!-- Estado: viendo el video en vivo -->
+        <div id="camera-footer-live" class="camera-footer-state">
+          <button class="btn btn-ghost" type="button" data-modal="modal-camera">Cancelar</button>
+          <button id="btn-capturar-foto" class="btn btn-primary" type="button">
+            <i data-lucide="aperture" aria-hidden="true"></i> Capturar
+          </button>
+        </div>
+        <!-- Estado: revisando foto capturada -->
+        <div id="camera-footer-preview" class="camera-footer-state" hidden>
+          <button id="btn-retomar-foto" class="btn btn-ghost" type="button">
+            <i data-lucide="rotate-ccw" aria-hidden="true"></i> Retomar
+          </button>
+          <button id="btn-usar-foto" class="btn btn-primary" type="button">
+            <i data-lucide="check" aria-hidden="true"></i> Usar esta foto
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════════════════
+       MODAL: MAPA DE UBICACIONES
+  ═══════════════════════════════════════════════════════════════ -->
+  <div id="modal-map" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="modal-map-title" hidden>
+    <div class="modal glass-modal modal-lg modal-map-dialog">
+      <div class="modal-header">
+        <h2 id="modal-map-title">Mapa de Ubicaciones</h2>
+        <button class="modal-close" aria-label="Cerrar modal" data-modal="modal-map">
+          <i data-lucide="x" aria-hidden="true"></i>
+        </button>
+      </div>
+      <div class="modal-body">
+        <div id="map-container" class="map-container" role="application" aria-label="Mapa de ubicaciones de asistencia"></div>
+        <div id="map-legend" class="map-legend">
+          <div class="legend-item">
+            <span class="legend-dot green"></span>
+            <span>Dentro de geocerca</span>
+          </div>
+          <div class="legend-item">
+            <span class="legend-dot amber"></span>
+            <span>Fuera de geocerca</span>
+          </div>
+          <div class="legend-item">
+            <span class="legend-dot blue"></span>
+            <span>Centro de obra</span>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-ghost" data-modal="modal-map">Cerrar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════════════════
+       MODAL: CONFIRMACIÓN CUSTOM (reemplaza window.confirm)
+  ═══════════════════════════════════════════════════════════════ -->
+  <div id="modal-confirm" class="modal-overlay modal-confirm-overlay" role="alertdialog" aria-modal="true" aria-labelledby="modal-confirm-title" aria-describedby="modal-confirm-message" hidden>
+    <div class="modal glass-modal modal-sm modal-confirm-dialog">
+      <div class="modal-header">
+        <div class="confirm-icon-wrap" id="confirm-icon-wrap" aria-hidden="true">
+          <i data-lucide="alert-triangle" id="confirm-icon"></i>
+        </div>
+        <h2 id="modal-confirm-title">Confirmar acción</h2>
+      </div>
+      <div class="modal-body">
+        <p id="modal-confirm-message" class="confirm-message"></p>
+      </div>
+      <div class="modal-footer">
+        <button id="btn-confirm-cancel" class="btn btn-ghost">Cancelar</button>
+        <button id="btn-confirm-ok" class="btn btn-danger">
+          <i data-lucide="check" aria-hidden="true"></i>
+          <span id="confirm-ok-label">Confirmar</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════════════════
+       SCRIPTS MÓDULOS (orden de carga)
+  ═══════════════════════════════════════════════════════════════ -->
+  <script src="js/config.js"></script>
+  <script src="js/api.js"></script>
+  <script src="js/utils/alerts.js"></script>
+  <script src="js/utils/qr-generator.js"></script>
+  <script src="js/utils/pdf-builder.js"></script>
+  <script src="js/utils/gps.js"></script>
+  <script src="js/utils/map-viewer.js"></script>
+  <script src="js/modules/personal.js"></script>
+  <script src="js/modules/asistencia.js"></script>
+  <script src="js/modules/dashboard.js"></script>
+  <script src="js/modules/reportes.js"></script>
+  <script src="js/modules/ajustes.js"></script>
+  <!-- ═══════════════════ DATOS DE DEMOSTRACIÓN (quitar en producción) ═══════════════════ -->
+  <!-- <script src="js/demo-data.js"></script> -->
+  <script src="js/app.js"></script>
+
+  <!-- ═══════════════════ SERVICE WORKER (PWA) ═══════════════════ -->
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/service-worker.js')
+          .then(reg => console.log('[PWA] Service Worker registrado:', reg.scope))
+          .catch(err => console.warn('[PWA] Service Worker no registrado:', err.message));
+      });
+    }
+  </script>
+</body>
+</html>
