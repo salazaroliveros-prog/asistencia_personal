@@ -70,6 +70,7 @@ function _initModules() {
   ModuloDashboard.init();
   ModuloReportes.init();
   ModuloAjustes.init();
+  GASAssistant.init();
 }
 
 // ─────────────────────────────────────────────────────────────────────────────

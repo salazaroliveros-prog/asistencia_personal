@@ -111,6 +111,7 @@
   <script src="js/modules/asistencia.js"></script>
   <script src="js/modules/reportes.js"></script>
   <script src="js/modules/ajustes.js"></script>
+  <script src="js/modules/gas-assistant.js"></script>
   <script src="js/app.js"></script>
 </head>
 <body>
@@ -778,6 +779,19 @@
               </button>
             </div>
 
+            <!-- Asistente de Configuración -->
+            <div class="glass-card ajuste-card assistant-card">
+              <div class="card-header">
+                <h3><i data-lucide="zap" aria-hidden="true"></i> Asistente de Configuración Automática</h3>
+              </div>
+              <div class="assistant-intro">
+                <p class="text-muted">Configura automáticamente Google Sheets y Google Apps Script en unos minutos.</p>
+                <button id="btn-start-assistant" class="btn btn-primary btn-block">
+                  <i data-lucide="play-circle" aria-hidden="true"></i> Iniciar Asistente de Configuración
+                </button>
+              </div>
+            </div>
+
             <!-- General -->
             <div class="glass-card ajuste-card">
               <div class="card-header">
@@ -1177,6 +1191,286 @@
         <button id="btn-confirmar-horas-extra" class="btn btn-primary">
           <i data-lucide="check" aria-hidden="true"></i> Confirmar
         </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════════════════
+       MODAL: ASISTENTE DE CONFIGURACIÓN GAS
+  ═══════════════════════════════════════════════════════════════ -->
+  <div id="modal-gas-assistant" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="modal-gas-assistant-title" hidden>
+    <div class="modal glass-modal modal-gas-assistant">
+      <div class="modal-header">
+        <h2 id="modal-gas-assistant-title">
+          <i data-lucide="zap" aria-hidden="true"></i> Asistente de Configuración Automática
+        </h2>
+        <button class="modal-close" aria-label="Cerrar asistente" data-modal="modal-gas-assistant" id="btn-gas-assistant-close">
+          <i data-lucide="x" aria-hidden="true"></i>
+        </button>
+      </div>
+      <div class="modal-body gas-assistant-body">
+        
+        <!-- Paso 1: Bienvenida -->
+        <div id="gas-step-1" class="gas-step active">
+          <div class="gas-step-content">
+            <div class="gas-icon-large">
+              <i data-lucide="cloud" aria-hidden="true"></i>
+            </div>
+            <h3>Configuración Automática de Google Sheets</h3>
+            <p class="text-muted">Este asistente te guiará paso a paso para configurar automáticamente Google Sheets y Google Apps Script.</p>
+            
+            <div class="gas-steps-preview">
+              <div class="gas-step-preview-item">
+                <span class="gas-step-number">1</span>
+                <span>Crear Google Sheet</span>
+              </div>
+              <div class="gas-step-preview-item">
+                <span class="gas-step-number">2</span>
+                <span>Configurar Apps Script</span>
+              </div>
+              <div class="gas-step-preview-item">
+                <span class="gas-step-number">3</span>
+                <span>Desplegar Web App</span>
+              </div>
+              <div class="gas-step-preview-item">
+                <span class="gas-step-number">4</span>
+                <span>Conectar con tu App</span>
+              </div>
+            </div>
+
+            <div class="gas-info-box">
+              <p><strong>🔒 Seguridad:</strong> Solo necesitas tu correo y contraseña de Google. No guardamos tus credenciales.</p>
+              <p><strong>⏱️ Tiempo estimado:</strong> 5-10 minutos</p>
+            </div>
+
+            <button id="gas-start-step-2" class="btn btn-primary btn-block">
+              <i data-lucide="arrow-right" aria-hidden="true"></i> Comenzar Configuración
+            </button>
+          </div>
+        </div>
+
+        <!-- Paso 2: Credenciales -->
+        <div id="gas-step-2" class="gas-step" hidden>
+          <div class="gas-step-content">
+            <div class="gas-step-indicator">
+              <span class="gas-step-number">2</span>
+              <span class="gas-step-label">Iniciar Sesión en Google</span>
+            </div>
+            
+            <p class="text-muted">Ingresa tu correo de Google para crear el proyecto de Apps Script.</p>
+            
+            <div class="form-group">
+              <label for="gas-email" class="form-label">Correo de Google</label>
+              <input type="email" id="gas-email" class="input-glass" placeholder="tu.correo@gmail.com" aria-label="Correo de Google" />
+            </div>
+
+            <div class="gas-info-box info-box-amber">
+              <p><strong>ℹ️ Nota:</strong> Solo necesitamos tu correo para generar el enlace de configuración. La autenticación se hace directamente en Google.</p>
+            </div>
+
+            <div class="gas-buttons">
+              <button id="gas-back-step-1" class="btn btn-ghost">
+                <i data-lucide="arrow-left" aria-hidden="true"></i> Atrás
+              </button>
+              <button id="gas-start-step-3" class="btn btn-primary">
+                <i data-lucide="arrow-right" aria-hidden="true"></i> Continuar
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Paso 3: Instrucciones -->
+        <div id="gas-step-3" class="gas-step" hidden>
+          <div class="gas-step-content">
+            <div class="gas-step-indicator">
+              <span class="gas-step-number">3</span>
+              <span class="gas-step-label">Crear Proyecto Apps Script</span>
+            </div>
+            
+            <p class="text-muted">Sigue estos pasos para crear el proyecto de Google Apps Script:</p>
+            
+            <div class="gas-instructions">
+              <div class="gas-instruction-step">
+                <span class="gas-instruction-number">1</span>
+                <div class="gas-instruction-content">
+                  <p><strong>Haz clic en este enlace para crear el proyecto:</strong></p>
+                  <a id="gas-create-link" href="#" target="_blank" class="btn btn-secondary">
+                    <i data-lucide="external-link" aria-hidden="true"></i> Crear Proyecto Apps Script
+                  </a>
+                </div>
+              </div>
+              
+              <div class="gas-instruction-step">
+                <span class="gas-instruction-number">2</span>
+                <div class="gas-instruction-content">
+                  <p><strong>En Google Apps Script:</strong></p>
+                  <ul>
+                    <li>Copia el código que aparece abajo</li>
+                    <li>Pégalo en el archivo <code>Code.gs</code></li>
+                    <li>Ejecuta la función <code>setupCompleto</code></li>
+                  </ul>
+                </div>
+              </div>
+
+              <div class="gas-code-block">
+                <div class="gas-code-header">
+                  <span>Código para Code.gs</span>
+                  <button id="gas-copy-code" class="btn btn-sm btn-ghost">
+                    <i data-lucide="copy" aria-hidden="true"></i> Copiar
+                  </button>
+                </div>
+                <pre id="gas-code-content"></pre>
+              </div>
+            </div>
+
+            <div class="gas-buttons">
+              <button id="gas-back-step-2" class="btn btn-ghost">
+                <i data-lucide="arrow-left" aria-hidden="true"></i> Atrás
+              </button>
+              <button id="gas-step-3-confirm" class="btn btn-primary">
+                <i data-lucide="check" aria-hidden="true"></i> Completé estos pasos
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Paso 4: Despliegue -->
+        <div id="gas-step-4" class="gas-step" hidden>
+          <div class="gas-step-content">
+            <div class="gas-step-indicator">
+              <span class="gas-step-number">4</span>
+              <span class="gas-step-label">Desplegar Web App</span>
+            </div>
+            
+            <p class="text-muted">Despliega el proyecto como Web App para conectar con tu aplicación:</p>
+            
+            <div class="gas-instructions">
+              <div class="gas-instruction-step">
+                <span class="gas-instruction-number">1</span>
+                <div class="gas-instruction-content">
+                  <p><strong>En Google Apps Script:</strong></p>
+                  <ul>
+                    <li>Clic en "Implementar" → "Nueva implementación"</li>
+                    <li>Selecciona "Aplicación web"</li>
+                    <li>Configuración:</li>
+                    <ul>
+                      <li>Descripción: "Backend Control Personal Campo"</li>
+                      <li>Ejecutar como: "Yo"</li>
+                      <li>Quién tiene acceso: "Cualquier persona"</li>
+                    </ul>
+                    <li>Clic en "Implementar"</li>
+                  </ul>
+                </div>
+              </div>
+              
+              <div class="gas-instruction-step">
+                <span class="gas-instruction-number">2</span>
+                <div class="gas-instruction-content">
+                  <p><strong>Copia la URL de la Web App:</strong></p>
+                  <p class="text-muted">La URL termina en <code>/exec</code>, no en <code>/dev</code></p>
+                  <div class="form-group">
+                    <label for="gas-webapp-url" class="form-label">URL de la Web App</label>
+                    <input type="url" id="gas-webapp-url" class="input-glass" placeholder="https://script.google.com/macros/s/.../exec" aria-label="URL de la Web App" />
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="gas-buttons">
+              <button id="gas-back-step-3" class="btn btn-ghost">
+                <i data-lucide="arrow-left" aria-hidden="true"></i> Atrás
+              </button>
+              <button id="gas-step-4-confirm" class="btn btn-primary">
+                <i data-lucide="check" aria-hidden="true"></i> Completé estos pasos
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Paso 5: Conexión Final -->
+        <div id="gas-step-5" class="gas-step" hidden>
+          <div class="gas-step-content">
+            <div class="gas-step-indicator">
+              <span class="gas-step-number">5</span>
+              <span class="gas-step-label">Conectar con tu Aplicación</span>
+            </div>
+            
+            <p class="text-muted">Conecta la Web App con tu aplicación de control de asistencia:</p>
+            
+            <div class="gas-instructions">
+              <div class="gas-instruction-step">
+                <span class="gas-instruction-number">1</span>
+                <div class="gas-instruction-content">
+                  <p><strong>La URL de la Web App se guardará automáticamente:</strong></p>
+                  <div class="gas-url-preview">
+                    <label>URL que se guardará:</label>
+                    <code id="gas-url-preview">https://script.google.com/macros/s/...</code>
+                  </div>
+                </div>
+              </div>
+              
+              <div class="gas-instruction-step">
+                <span class="gas-instruction-number">2</span>
+                <div class="gas-instruction-content">
+                  <p><strong>Prueba la conexión:</strong></p>
+                  <button id="gas-test-connection" class="btn btn-secondary">
+                    <i data-lucide="refresh-cw" aria-hidden="true"></i> Probar Conexión
+                  </button>
+                  <div id="gas-connection-status" class="gas-connection-status"></div>
+                </div>
+              </div>
+            </div>
+
+            <div class="gas-buttons">
+              <button id="gas-back-step-4" class="btn btn-ghost">
+                <i data-lucide="arrow-left" aria-hidden="true"></i> Atrás
+              </button>
+              <button id="gas-finalize-setup" class="btn btn-primary">
+                <i data-lucide="check-circle" aria-hidden="true"></i> Finalizar Configuración
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Paso 6: Completado -->
+        <div id="gas-step-6" class="gas-step" hidden>
+          <div class="gas-step-content gas-step-success">
+            <div class="gas-icon-large success">
+              <i data-lucide="check-circle" aria-hidden="true"></i>
+            </div>
+            <h3>¡Configuración Completada!</h3>
+            <p class="text-muted">Tu sistema de control de asistencia está conectado con Google Sheets.</p>
+            
+            <div class="gas-success-items">
+              <div class="gas-success-item">
+                <i data-lucide="check" aria-hidden="true"></i>
+                <span>Google Sheets configurado</span>
+              </div>
+              <div class="gas-success-item">
+                <i data-lucide="check" aria-hidden="true"></i>
+                <span>Google Apps Script desplegado</span>
+              </div>
+              <div class="gas-success-item">
+                <i data-lucide="check" aria-hidden="true"></i>
+                <span>Web App conectada</span>
+              </div>
+              <div class="gas-success-item">
+                <i data-lucide="check" aria-hidden="true"></i>
+                <span>Conexión probada exitosamente</span>
+              </div>
+            </div>
+
+            <div class="gas-info-box info-box-green">
+              <p><strong>🎉 ¡Listo para usar!</strong></p>
+              <p>Puedes empezar a registrar trabajadores y controlar asistencia ahora mismo.</p>
+            </div>
+
+            <button id="gas-close-assistant" class="btn btn-primary btn-block">
+              <i data-lucide="x" aria-hidden="true"></i> Cerrar Asistente
+            </button>
+          </div>
+        </div>
+
       </div>
     </div>
   </div>
