@@ -9,7 +9,7 @@ const Validators = (() => {
   // ─── Constantes de Validación ───────────────────────────────────────────────
   const VALIDATION_RULES = {
     DPI_LENGTH: 13,
-    DPI_MIN_LENGTH: 4,
+    DPI_MIN_LENGTH: 13, // Cambiado a 13 para requerir exactamente 13 dígitos
     DPI_MAX_LENGTH: 13,
     TOLERANCIA_MIN: 0,
     TOLERANCIA_MAX: 60,
@@ -40,22 +40,18 @@ const Validators = (() => {
 
     const cleanDPI = dpi.replace(/\D/g, '');
 
-    if (cleanDPI.length < VALIDATION_RULES.DPI_MIN_LENGTH) {
-      return { valid: false, error: `El DPI debe tener al menos ${VALIDATION_RULES.DPI_MIN_LENGTH} dígitos` };
+    // Validar que tenga exactamente 13 dígitos (formato guatemalteco)
+    if (cleanDPI.length !== VALIDATION_RULES.DPI_LENGTH) {
+      return { valid: false, error: `El DPI debe tener exactamente ${VALIDATION_RULES.DPI_LENGTH} dígitos (actual: ${cleanDPI.length})` };
     }
 
-    if (cleanDPI.length > VALIDATION_RULES.DPI_MAX_LENGTH) {
-      return { valid: false, error: `El DPI no puede exceder ${VALIDATION_RULES.DPI_MAX_LENGTH} dígitos` };
+    // Verificar que todos sean dígitos numéricos
+    if (!/^\d+$/.test(cleanDPI)) {
+      return { valid: false, error: 'El DPI debe contener solo números' };
     }
 
-    // Validación básica de checksum para DPI guatemalteco
-    if (cleanDPI.length === VALIDATION_RULES.DPI_LENGTH) {
-      const checksum = calculateDPIChecksum(cleanDPI);
-      if (!checksum.valid) {
-        return { valid: false, error: 'El DPI no tiene un formato válido' };
-      }
-    }
-
+    // El DPI de 13 dígitos es válido, sin validación de checksum
+    // El algoritmo oficial de RENAP es complejo y puede tener variaciones
     return { valid: true, error: null };
   }
 

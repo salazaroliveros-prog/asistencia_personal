@@ -974,7 +974,12 @@ const ModuloPersonal = (() => {
   function _validateDPI(dpi) {
     const clean = (dpi || '').replace(/\D/g, '');
     if (clean.length !== 13) {
-      _showError('p-dpi-error', 'El DPI/CUI debe tener exactamente 13 dígitos');
+      _showError('p-dpi-error', `El DPI/CUI debe tener exactamente 13 dígitos (actual: ${clean.length})`);
+      return false;
+    }
+    // Validación básica de que sea numérico
+    if (!/^\d+$/.test(clean)) {
+      _showError('p-dpi-error', 'El DPI debe contener solo números');
       return false;
     }
     _clearError('p-dpi-error');
