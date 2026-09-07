@@ -82,13 +82,13 @@
   <!-- ═══════════════════ CSP PARA SEGURIDAD ═══════════════════ -->
   <meta http-equiv="Content-Security-Policy" content="
     default-src 'self';
-    script-src 'self' 'unsafe-inline' 'unsafe-eval' 
+    script-src 'self' 'unsafe-inline' 'unsafe-eval' blob:
       https://unpkg.com 
       https://cdnjs.cloudflare.com 
       https://cdn.jsdelivr.net;
-    style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;
+    style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://unpkg.com;
     font-src 'self' https://fonts.gstatic.com;
-    img-src 'self' data: https: blob:;
+    img-src 'self' data: https: blob: https://unpkg.com;
     connect-src 'self' https://script.google.com https://*.googleapis.com https://unpkg.com;
     frame-src 'self';
     base-uri 'self';
@@ -1603,25 +1603,8 @@
   </div>
 
   <!-- ═══════════════════════════════════════════════════════════════
-       SCRIPTS MÓDULOS (orden de carga)
+       SERVICE WORKER (PWA)
   ═══════════════════════════════════════════════════════════════ -->
-  <script src="js/config.js"></script>
-  <script src="js/utils/constants.js"></script>
-  <script src="js/utils/validators.js"></script>
-  <script src="js/api.js"></script>
-  <script src="js/utils/alerts.js"></script>
-  <script src="js/utils/qr-generator.js"></script>
-  <script src="js/utils/pdf-builder.js"></script>
-  <script src="js/utils/gps.js"></script>
-  <script src="js/utils/map-viewer.js"></script>
-  <script src="js/modules/personal.js"></script>
-  <script src="js/modules/asistencia.js"></script>
-  <script src="js/modules/dashboard.js"></script>
-  <script src="js/modules/reportes.js"></script>
-  <script src="js/modules/ajustes.js"></script>
-  <!-- ═══════════════════ DATOS DE DEMOSTRACIÓN (quitar en producción) ═══════════════════ -->
-  <!-- <script src="js/demo-data.js"></script> -->
-  <script src="js/app.js"></script>
 
   <!-- ═══════════════════ SERVICE WORKER (PWA) ═══════════════════ -->
   <script>
