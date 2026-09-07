@@ -209,6 +209,28 @@ const AppState = (() => {
     /** Actualizar una propiedad y notificar listeners */
     set(key, value) {
       const prev = _state[key];
+      
+      // Validación básica de tipos para propiedades críticas
+      if (key === 'gasUrl' && value !== null && typeof value !== 'string') {
+        console.warn('[AppState] gasUrl debe ser string, recibido:', typeof value);
+        return;
+      }
+      
+      if (key === 'connected' && typeof value !== 'boolean') {
+        console.warn('[AppState] connected debe ser boolean, recibido:', typeof value);
+        return;
+      }
+      
+      if (key === 'personal' && value !== null && !Array.isArray(value)) {
+        console.warn('[AppState] personal debe ser array, recibido:', typeof value);
+        return;
+      }
+      
+      if (key === 'config' && value !== null && typeof value !== 'object') {
+        console.warn('[AppState] config debe ser object, recibido:', typeof value);
+        return;
+      }
+      
       _state[key] = value;
       if (_listeners[key]) {
         _listeners[key].forEach(fn => {

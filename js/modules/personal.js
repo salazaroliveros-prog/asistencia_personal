@@ -450,6 +450,14 @@ const ModuloPersonal = (() => {
       fotografia: _fotoBase64,
     };
 
+    // Validar usando el módulo de validaciones compartido
+    const validation = Validators.validateTrabajador(payload);
+    if (!validation.valid) {
+      const firstError = validation.errors[0];
+      Alerts.error(firstError.error, 'Error de validación');
+      return;
+    }
+
     // Construir link de WhatsApp si se proporcionó número
     if (payload.whatsapp) {
       const numWA = payload.whatsapp.replace(/\D/g, '');

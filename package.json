@@ -1,12 +1,31 @@
 {
   "name": "control_asistencia_app",
   "version": "1.0.0",
-  "description": "",
+  "description": "Sistema de Control de Asistencia Personal con GPS y QR",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "node __tests__/e2e-qa-test.js",
+    "test:e2e": "node __tests__/e2e-qa-test.js",
+    "test:verify": "node __tests__/verify-html.js",
+    "test:server": "node __tests__/check-server.js",
+    "test:vercel": "node __tests__/check-vercel.js",
+    "screenshots": "node __tests__/take-screenshots.js",
+    "verify:demo": "node __tests__/verify-demo.js",
+    "verify:empty": "node __tests__/verify-empty-state.js",
+    "lint": "echo \"Linting no configurado - instalar ESLint para verificación de código\"",
+    "format": "echo \"Formateo no configurado - instalar Prettier para formateo de código\"",
+    "dev": "echo \"Para desarrollo: abrir index.html directamente en navegador\"",
+    "build": "echo \"No requiere build - es una SPA estática\""
   },
-  "keywords": [],
+  "keywords": [
+    "asistencia",
+    "control",
+    "personal",
+    "gps",
+    "qr",
+    "construction",
+    "pwa"
+  ],
   "author": "",
   "license": "ISC",
   "type": "commonjs",

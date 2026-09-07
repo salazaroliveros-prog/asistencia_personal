@@ -493,25 +493,11 @@ const ModuloAjustes = (() => {
       GPS_Radio_Metros:       document.getElementById('cfg-gps-radio')?.value || 200,
     };
 
-    // Validar coordenadas si se proporcionan
-    if (payload.GPS_Centro_Lat || payload.GPS_Centro_Lon) {
-      const lat = parseFloat(payload.GPS_Centro_Lat);
-      const lon = parseFloat(payload.GPS_Centro_Lon);
-      
-      if (isNaN(lat) || lat < -90 || lat > 90) {
-        Alerts.error('Latitud inválida. Debe estar entre -90 y 90.');
-        return;
-      }
-      if (isNaN(lon) || lon < -180 || lon > 180) {
-        Alerts.error('Longitud inválida. Debe estar entre -180 y 180.');
-        return;
-      }
-    }
-
-    // Validar radio
-    const radio = parseInt(payload.GPS_Radio_Metros);
-    if (isNaN(radio) || radio < 10 || radio > 10000) {
-      Alerts.error('El radio debe estar entre 10 y 10000 metros.');
+    // Validar usando el módulo de validaciones compartido
+    const validation = Validators.validateConfigGPS(payload);
+    if (!validation.valid) {
+      const firstError = validation.errors[0];
+      Alerts.error(firstError.error, 'Error de validación GPS');
       return;
     }
 

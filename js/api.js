@@ -51,7 +51,12 @@ const API = (() => {
       clearTimeout(timeoutId);
 
       if (!response.ok) {
-        throw new Error(`Error HTTP ${response.status}: ${response.statusText}`);
+        const errorDetails = {
+          status: response.status,
+          statusText: response.statusText,
+          url: url
+        };
+        throw new Error(`Error HTTP ${response.status}: ${response.statusText} al conectar con ${url}`);
       }
 
       const text = await response.text();
@@ -59,7 +64,7 @@ const API = (() => {
       try {
         data = JSON.parse(text);
       } catch {
-        throw new Error(`Respuesta inválida del servidor: ${text.substring(0, 100)}`);
+        throw new Error(`Respuesta inválida del servidor. Se esperaba JSON pero se recibió: ${text.substring(0, 100)}`);
       }
 
       return data;
@@ -68,13 +73,13 @@ const API = (() => {
       clearTimeout(timeoutId);
 
       if (err.name === 'AbortError') {
-        throw new Error('La solicitud tardó demasiado. Verifica tu conexión a internet.');
+        throw new Error(`Tiempo de espera agotado (${TIMEOUT_MS}ms). Verifica tu conexión a internet o la URL del servidor.`);
       }
 
       // Reintento en error de red (no de aplicación)
       if (retries > 0 && (err.message.includes('fetch') || err.message.includes('network') || err.message.includes('Failed'))) {
-        console.warn(`[API] Reintentando... (${RETRY_COUNT - retries + 1}/${RETRY_COUNT})`);
-        await _sleep(800);
+        console.warn(`[API] Error de red detectado, reintentando... (${RETRY_COUNT - retries + 1}/${RETRY_COUNT})`);
+        await _sleep(800); // Usar valor directo hasta que CONSTANTS esté disponible
         return _post(body, retries - 1);
       }
 
