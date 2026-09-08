@@ -22,5 +22,10 @@ __tests__/_qa_timing.mjs
 __tests__/_qa_probe.mjs
 __tests__/_qa_mkpng.mjs
 __tests__/_qa_overflow320.mjs
+__tests__/_qa_deploy_check.mjs
+__tests__/_commitmsg.txt
+__tests__/_qa_batch.cmd
+__tests__/_timing.log
+__tests__/p*.log
 __tests__/e2e-qa-test.js.orig
 
