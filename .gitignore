@@ -1,3 +1,26 @@
 .env*
 node_modules/
 .vercel
+
+# ── Artefactos y temporales de QA (no son código) ──
+__tests__/*.log
+__tests__/pw_install.*
+__tests__/results/
+__tests__/screenshots/
+__tests__/_qa_state.json
+
+# ── Scripts auxiliares desechables del harness QA ──
+__tests__/_apply_fix.mjs
+__tests__/_marker.cmd
+__tests__/_netcheck.mjs
+__tests__/_pw_install.cmd
+__tests__/_pwcheck.mjs
+__tests__/_trylaunch.mjs
+__tests__/_qa_smoke.mjs
+__tests__/_qa_compile.mjs
+__tests__/_qa_timing.mjs
+__tests__/_qa_probe.mjs
+__tests__/_qa_mkpng.mjs
+__tests__/_qa_overflow320.mjs
+__tests__/e2e-qa-test.js.orig
+

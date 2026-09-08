@@ -643,3 +643,29 @@ p {
     padding: var(--space-5);
   }
 }
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   RESPONSIVE — PANTALLAS MUY ANGOSTAS (≤ 380px): evita desbordes horizontales
+   ───────────────────────────────────────────────────────────────────────────── */
+@media (max-width: 380px) {
+  .topbar-right {
+    flex-shrink: 1;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    min-width: 0;
+    row-gap: var(--space-1);
+  }
+
+  .topbar-right > * {
+    flex-shrink: 1;
+    min-width: 0;
+  }
+
+  .scanner-controls {
+    flex-wrap: wrap;
+  }
+
+  .scanner-controls .btn {
+    white-space: normal;
+  }
+}
