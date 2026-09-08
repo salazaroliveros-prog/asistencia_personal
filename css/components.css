@@ -570,6 +570,82 @@ input[type="month"].input-glass {
   min-width: 640px;
 }
 
+/* ─────────────────────────────────────────────────────────────────────────────
+   VISTA DE CARDS PARA TABLAS EN MÓVIL (< 640px)
+   ───────────────────────────────────────────────────────────────────────────── */
+@media (max-width: 640px) {
+  .table-responsive {
+    overflow-x: visible;
+  }
+
+  .data-table {
+    min-width: auto;
+    display: block;
+  }
+
+  .data-table thead {
+    display: none;
+  }
+
+  .data-table tbody {
+    display: block;
+  }
+
+  .data-table tbody tr {
+    display: block;
+    background: var(--glass-bg);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--radius-md);
+    margin-bottom: var(--space-3);
+    padding: var(--space-4);
+  }
+
+  .data-table tbody tr:last-child {
+    margin-bottom: 0;
+  }
+
+  .data-table tbody td {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: var(--space-2) 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    font-size: var(--text-sm);
+  }
+
+  .data-table tbody td:last-child {
+    border-bottom: none;
+  }
+
+  .data-table tbody td::before {
+    content: attr(data-label);
+    font-weight: 600;
+    color: var(--color-text-muted);
+    margin-right: var(--space-3);
+    min-width: 100px;
+  }
+
+  .data-table tbody td.actions-col {
+    justify-content: flex-end;
+    border-bottom: none;
+    padding-top: var(--space-3);
+  }
+
+  .data-table tbody td.actions-col::before {
+    display: none;
+  }
+
+  .data-table tbody tr.empty-row td {
+    display: block;
+    text-align: center;
+    padding: var(--space-6);
+  }
+
+  .data-table tbody tr.empty-row td::before {
+    display: none;
+  }
+}
+
 .data-table thead th {
   background: rgba(0, 34, 58, 0.5);
   color: var(--color-text-muted);
@@ -1084,6 +1160,42 @@ input[type="month"].input-glass {
   pointer-events: none;
 }
 
+/* Optimización del calendario para móviles pequeños */
+@media (max-width: 360px) {
+  .calendar-card {
+    min-height: 320px;
+  }
+
+  .calendar-controls {
+    gap: var(--space-2);
+  }
+
+  .cal-month-title {
+    font-size: var(--text-sm);
+    min-width: 120px;
+  }
+
+  .calendar-grid {
+    gap: 1px;
+  }
+
+  .cal-day-header {
+    font-size: 8px;
+    padding: var(--space-1) 0;
+    letter-spacing: 0.05em;
+  }
+
+  .cal-day {
+    font-size: 10px;
+    border-radius: 2px;
+  }
+
+  .cal-dot {
+    width: 4px;
+    height: 4px;
+  }
+}
+
 .cal-day.other-month {
   opacity: 0.3;
 }
@@ -1541,10 +1653,19 @@ input[type="month"].input-glass {
 @media (max-width: 640px) {
   .form-row {
     grid-template-columns: 1fr;
+    gap: var(--space-3);
   }
 
   .form-col-2 {
     grid-column: span 1;
+  }
+
+  .form-group {
+    gap: var(--space-1);
+  }
+
+  .input-glass {
+    padding: var(--space-2) var(--space-3);
   }
 
   .scan-marcacion-btns,
@@ -1560,6 +1681,53 @@ input[type="month"].input-glass {
     right: var(--space-4);
     left: var(--space-4);
     max-width: none;
+  }
+
+  .glass-card {
+    padding: var(--space-4);
+  }
+
+  .card-header {
+    margin-bottom: var(--space-4);
+  }
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   OPTIMIZACIÓN PARA MÓVILES MUY PEQUEÑOS (< 360px)
+   ───────────────────────────────────────────────────────────────────────────── */
+@media (max-width: 360px) {
+  .btn-marcacion {
+    min-width: auto;
+    padding: var(--space-2) var(--space-3);
+    font-size: 11px;
+  }
+
+  .btn-marcacion svg {
+    width: 18px;
+    height: 18px;
+  }
+
+  .btn-marcacion span {
+    display: none; /* Ocultar texto en móviles muy pequeños */
+  }
+
+  .btn-marcacion::after {
+    content: attr(data-tipo-text);
+    display: block;
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+
+  .scan-marcacion-btns,
+  .manual-marcacion-btns {
+    gap: var(--space-2);
+  }
+
+  .search-box .input-glass {
+    min-width: auto;
+    width: 100%;
   }
 }
 
@@ -1663,6 +1831,39 @@ input[type="month"].input-glass {
   border-bottom: 1px solid var(--glass-border);
   margin: 0 calc(var(--space-5) * -1);
   padding-bottom: 0;
+}
+
+/* Scroll horizontal para tabs de turno en móvil */
+@media (max-width: 768px) {
+  .turno-tabs {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    overflow-y: hidden;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: thin;
+    padding-right: var(--space-3);
+  }
+
+  .turno-tabs::-webkit-scrollbar {
+    height: 4px;
+  }
+
+  .turno-tabs::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  .turno-tabs::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.20);
+    border-radius: var(--radius-full);
+  }
+
+  .turno-tabs::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.35);
+  }
+
+  .turno-tab {
+    flex-shrink: 0;
+  }
 }
 
 .turno-tab {

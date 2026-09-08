@@ -660,19 +660,19 @@ const ModuloAsistencia = (() => {
 
       return `
         <tr>
-          <td><strong>${_escHtml(m.Nombre_Trabajador || '--')}</strong></td>
-          <td><span class="badge badge-blue">${_escHtml(tipoLabel[m.Tipo_Marcacion] || m.Tipo_Marcacion || '--')}</span></td>
-          <td>${_escHtml(m.Hora_Programada || '--')}</td>
-          <td style="font-family:var(--font-mono)">${_escHtml(m.Hora_Real ? m.Hora_Real.substring(0, 5) : '--')}</td>
-          <td><span class="${estadoClase}">${_escHtml(m.Estado_Marcacion || '--')}</span></td>
-          <td>
+          <td data-label="Trabajador"><strong>${_escHtml(m.Nombre_Trabajador || '--')}</strong></td>
+          <td data-label="Tipo"><span class="badge badge-blue">${_escHtml(tipoLabel[m.Tipo_Marcacion] || m.Tipo_Marcacion || '--')}</span></td>
+          <td data-label="Programada">${_escHtml(m.Hora_Programada || '--')}</td>
+          <td data-label="Real" style="font-family:var(--font-mono)">${_escHtml(m.Hora_Real ? m.Hora_Real.substring(0, 5) : '--')}</td>
+          <td data-label="Estado"><span class="${estadoClase}">${_escHtml(m.Estado_Marcacion || '--')}</span></td>
+          <td data-label="Método">
             ${m.Metodo === 'Escaneo_QR'
               ? '<span class="badge badge-green"><i data-lucide="qr-code" style="width:10px;height:10px"></i> QR</span>'
               : '<span class="badge badge-gray">Manual</span>'
             }
           </td>
-          <td>${parseFloat(m.Horas_Extra || 0) > 0 ? `<strong style="color:var(--color-accent-amber)">${m.Horas_Extra}h</strong>` : '—'}</td>
-          <td>${locationDisplay}</td>
+          <td data-label="Horas Extra">${parseFloat(m.Horas_Extra || 0) > 0 ? `<strong style="color:var(--color-accent-amber)">${m.Horas_Extra}h</strong>` : '—'}</td>
+          <td data-label="Ubicación">${locationDisplay}</td>
         </tr>
       `;
     }).join('');

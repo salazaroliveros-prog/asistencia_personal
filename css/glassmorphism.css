@@ -580,6 +580,14 @@
   .modal-body {
     padding: var(--space-4);
   }
+
+  .modal-header {
+    padding: var(--space-4);
+  }
+
+  .modal-footer {
+    padding: var(--space-3) var(--space-4);
+  }
 }
 
 /* ─────────────────────────────────────────────────────────────────────────────

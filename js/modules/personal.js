@@ -225,7 +225,7 @@ const ModuloPersonal = (() => {
       const col = colorPorPuesto(p.Puesto);
       return `
       <tr data-id="${_escHtml(p.ID_Trabajador)}">
-        <td>
+        <td data-label="Foto">
           ${p.Fotografia_URL
             ? `<img src="${_escHtml(p.Fotografia_URL)}"
                    alt="Foto de ${_escHtml(p.Nombre_Completo)}"
@@ -237,26 +237,26 @@ const ModuloPersonal = (() => {
             : `<div class="worker-photo-placeholder" style="border-color:${col};color:${col};font-size:var(--text-xs);font-weight:700;">${ini}</div>`
           }
         </td>
-        <td>
+        <td data-label="ID">
           <code style="font-family:var(--font-mono);font-size:var(--text-xs);color:var(--color-secondary)">
             ${_escHtml(p.ID_Trabajador)}
           </code>
         </td>
-        <td><strong>${_escHtml(p.Nombre_Completo)}</strong></td>
-        <td style="font-family:var(--font-mono)">${_escHtml(p.DPI_CUI)}</td>
-        <td><span class="badge badge-blue">${_escHtml(p.Puesto)}</span></td>
-        <td>
+        <td data-label="Nombre"><strong>${_escHtml(p.Nombre_Completo)}</strong></td>
+        <td data-label="DPI/CUI" style="font-family:var(--font-mono)">${_escHtml(p.DPI_CUI)}</td>
+        <td data-label="Puesto"><span class="badge badge-blue">${_escHtml(p.Puesto)}</span></td>
+        <td data-label="Teléfono">
           ${p.Telefono
             ? `<a href="tel:${_escHtml(p.Telefono)}" style="color:var(--color-secondary)">${_escHtml(p.Telefono)}</a>`
             : '<span class="text-muted">—</span>'
           }
         </td>
-        <td>
+        <td data-label="Estado">
           <span class="${p.Estado === 'Activo' ? 'estado-activo' : 'estado-inactivo'}">
             ${_escHtml(p.Estado)}
           </span>
         </td>
-        <td>
+        <td class="actions-col" data-label="Acciones">
           <div class="table-actions">
             <button class="table-action-btn qr"       data-action="qr"       data-id="${_escHtml(p.ID_Trabajador)}" title="Ver/Imprimir QR" aria-label="Ver QR de ${_escHtml(p.Nombre_Completo)}">
               <i data-lucide="qr-code"></i>

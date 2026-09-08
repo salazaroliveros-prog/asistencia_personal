@@ -543,10 +543,15 @@ p {
   .section-header {
     flex-direction: column;
     align-items: flex-start;
+    gap: var(--space-3);
   }
 
   .topbar-clock {
     display: none;
+  }
+
+  .page {
+    gap: var(--space-4);
   }
 }
 
