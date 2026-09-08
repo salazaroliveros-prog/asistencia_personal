@@ -12,8 +12,25 @@ const API = (() => {
 
   // ─── Helpers privados ────────────────────────────────────────────────────
 
+  function _isVercel() {
+    try {
+      return typeof window !== 'undefined' && /vercel\.app$/.test(window.location.hostname);
+    } catch {
+      return false;
+    }
+  }
+
+  function _useProxy() {
+    try {
+      return typeof window !== 'undefined' && /vercel\.app$/.test(window.location.hostname);
+    } catch {
+      return false;
+    }
+  }
+
   /**
    * Obtiene la URL actual del Web App de Google Apps Script.
+   * En Vercel devuelve el proxy local del mismo origen para evitar CORS y CSP.
    * @returns {string} URL del endpoint
    * @throws {Error} Si no hay URL configurada
    */
@@ -22,7 +39,16 @@ const API = (() => {
     if (!url) {
       throw new Error('URL de Google Apps Script no configurada. Ve a Ajustes para configurarla.');
     }
+    if (_useProxy()) {
+      return '/api/gas';
+    }
     return url;
+  }
+
+  function _gasUrlHeader() {
+    const url = AppState.get('gasUrl');
+    if (!url) return {};
+    return _useProxy() ? { 'X-GAS-URL': url } : {};
   }
 
   /**
@@ -40,7 +66,7 @@ const API = (() => {
     try {
       const response = await fetch(url, {
         method:  'POST',
-        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+        headers: { 'Content-Type': 'text/plain;charset=utf-8', ..._gasUrlHeader() },
         body:    JSON.stringify(body),
         signal:  controller.signal,
         mode:    'cors',
@@ -69,29 +95,10 @@ const API = (() => {
         throw new Error(`Tiempo de espera agotado (${TIMEOUT_MS}ms). Verifica tu conexión a internet o la URL del servidor.`);
       }
 
-      // Reintento en error de red (no de aplicación)
       if (retries > 0 && (err.message.includes('fetch') || err.message.includes('network') || err.message.includes('Failed'))) {
         console.warn(`[API] Error de red detectado, reintentando... (${RETRY_COUNT - retries + 1}/${RETRY_COUNT})`);
         await _sleep(800);
         return _post(body, retries - 1);
-      }
-
-      // Si es error CORS, reintentar con no-cors como último recurso
-      if (err.message.includes('Access to fetch') || err.message.includes('CORS') || err.message.includes('has been blocked')) {
-        console.warn('[API] Error CORS detectado, reintentando con no-cors...');
-        try {
-          const noCorsResponse = await fetch(url, {
-            method:  'POST',
-            headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-            body:    JSON.stringify(body),
-            mode:    'no-cors',
-          });
-          // En no-cors no podemos leer el cuerpo, pero si la petición no lanzó error,
-          // asumimos que llegó al servidor.
-          return { success: true, noCors: true, message: 'Petición enviada (modo no-cors)' };
-        } catch (noCorsErr) {
-          throw new Error('Error CORS persistente. Verifica que el Web App de Google Apps Script esté desplegado como "Anyone" y tenga headers CORS configurados.');
-        }
       }
 
       throw err;
@@ -105,7 +112,7 @@ const API = (() => {
   async function _get(action, params = {}) {
     const url = _getUrl();
     const queryParams = new URLSearchParams({ action, ...params });
-    const fullUrl = `${url}?${queryParams.toString()}`;
+    const fullUrl = `${url}${url.includes('?') ? '&' : '?'}${queryParams.toString()}`;
 
     const controller = new AbortController();
     const timeoutId  = setTimeout(() => controller.abort(), TIMEOUT_MS);
@@ -114,6 +121,7 @@ const API = (() => {
       const response = await fetch(fullUrl, {
         method: 'GET',
         signal: controller.signal,
+        headers: _gasUrlHeader(),
       });
 
       clearTimeout(timeoutId);
