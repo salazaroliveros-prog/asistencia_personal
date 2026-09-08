@@ -126,6 +126,8 @@ const ModuloAjustes = (() => {
     const urlInput = document.getElementById('gas-url');
     const url      = urlInput?.value.trim();
 
+    console.log('[Ajustes] _testConexion inicio', { url, stored: AppState.get('gasUrl') });
+
     if (!url) {
       Alerts.error('Ingresa la URL de tu Web App de Google Apps Script.');
       return;
@@ -151,7 +153,9 @@ const ModuloAjustes = (() => {
     }
 
     try {
+      console.log('[Ajustes] Llamando API.ping desde', typeof window !== 'undefined' ? window.location.hostname : 'server');
       const result = await API.ping();
+      console.log('[Ajustes] API.ping resultado', result);
 
       if (result.success) {
         if (statusEl) {
@@ -164,8 +168,10 @@ const ModuloAjustes = (() => {
           statusEl.className = 'connection-status-detail error';
           statusEl.textContent = `❌ Error: ${result.error || 'Respuesta inesperada del servidor'}`;
         }
+        console.warn('[Ajustes] Ping fallido', result);
       }
     } catch (err) {
+      console.warn('[Ajustes] Error en prueba de conexión', err);
       if (statusEl) {
         statusEl.className = 'connection-status-detail error';
         statusEl.textContent = `❌ Error de conexión: ${err.message}`;

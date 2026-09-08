@@ -64,9 +64,12 @@ const API = (() => {
     const timeoutId  = setTimeout(() => controller.abort(), TIMEOUT_MS);
 
     try {
+      const headers = { 'Content-Type': 'text/plain;charset=utf-8', ..._gasUrlHeader() };
+      console.log('[API] POST destino', url, { action: body && body.action, headers });
+
       const response = await fetch(url, {
         method:  'POST',
-        headers: { 'Content-Type': 'text/plain;charset=utf-8', ..._gasUrlHeader() },
+        headers,
         body:    JSON.stringify(body),
         signal:  controller.signal,
         mode:    'cors',

@@ -43,6 +43,7 @@ export default async function handler(req, res) {
     const headerGasUrl = (req.headers['x-gas-url'] || req.headers['X-GAS-URL'] || '').trim();
 
     if (!headerGasUrl || !_isGoogleAppsScriptUrl(headerGasUrl)) {
+      console.warn('[api/gas] Falta header X-GAS-URL o URL inválida');
       return res.status(400).json({
         success: false,
         error: 'Falta el header X-GAS-URL con la URL del Web App de Google Apps Script.'
@@ -53,6 +54,8 @@ export default async function handler(req, res) {
     const headers = new Headers(req.headers || {});
     headers.set('Content-Type', 'application/json');
 
+    console.log('[api/gas] Reenviando a GAS', { method, target: target.toString() });
+
     const gasRes = await fetch(target.toString(), {
       method,
       headers,
@@ -61,11 +64,14 @@ export default async function handler(req, res) {
     });
 
     const text = await gasRes.text();
+    console.log('[api/gas] Respuesta GAS', { status: gasRes.status, contentType: gasRes.headers.get('content-type'), bodyLength: text.length });
+
     res.status(gasRes.status);
     res.setHeader('Content-Type', gasRes.headers.get('content-type') || 'application/json');
     res.setHeader('Access-Control-Allow-Origin', '*');
     res.send(text);
   } catch (err) {
+    console.error('[api/gas] Proxy error', err);
     res.status(502).json({ success: false, error: 'Proxy error: ' + err.message });
   }
 }
