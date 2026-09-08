@@ -87,8 +87,8 @@
   height: 12px;
 }
 
-/* Responsive adjustments for location display */
-@media (max-width: 768px) {
+/* Responsive adjustments for location display (Standardized Breakpoints) */
+@media (max-width: 767px) {
   .location-badge {
     font-size: 10px;
     padding: var(--space-1) var(--space-2);
@@ -151,8 +151,8 @@
   background: #007EA7;
 }
 
-/* Responsive map adjustments */
-@media (max-width: 768px) {
+/* Responsive map adjustments (Standardized Breakpoints) */
+@media (max-width: 767px) {
   .map-container {
     height: 300px;
   }
@@ -319,8 +319,8 @@
 
 /* Icono en topbar */
 .topbar-btn {
-  width: 40px;
-  height: 40px;
+  width: 44px;
+  height: 44px;
   border-radius: var(--radius-md);
   display: flex;
   align-items: center;
@@ -341,8 +341,8 @@
 }
 
 .menu-toggle {
-  width: 40px;
-  height: 40px;
+  width: 44px;
+  height: 44px;
   border-radius: var(--radius-md);
   display: flex;
   align-items: center;
@@ -571,9 +571,9 @@ input[type="month"].input-glass {
 }
 
 /* ─────────────────────────────────────────────────────────────────────────────
-   VISTA DE CARDS PARA TABLAS EN MÓVIL (< 640px)
+   VISTA DE CARDS PARA TABLAS EN MÓVIL (< 767px)
    ───────────────────────────────────────────────────────────────────────────── */
-@media (max-width: 640px) {
+@media (max-width: 767px) {
   .table-responsive {
     overflow-x: visible;
   }
@@ -720,8 +720,8 @@ input[type="month"].input-glass {
 }
 
 .table-action-btn {
-  width: 32px;
-  height: 32px;
+  width: 40px;
+  height: 40px;
   border-radius: var(--radius-sm);
   display: flex;
   align-items: center;
@@ -731,8 +731,8 @@ input[type="month"].input-glass {
 }
 
 .table-action-btn svg {
-  width: 16px;
-  height: 16px;
+  width: 18px;
+  height: 18px;
 }
 
 .table-action-btn:hover { background: var(--glass-bg-hover); color: #fff; }
@@ -1160,8 +1160,8 @@ input[type="month"].input-glass {
   pointer-events: none;
 }
 
-/* Optimización del calendario para móviles pequeños */
-@media (max-width: 360px) {
+/* Optimización del calendario para móviles pequeños (Standardized Breakpoints) */
+@media (max-width: 479px) {
   .calendar-card {
     min-height: 320px;
   }
@@ -1286,6 +1286,36 @@ input[type="month"].input-glass {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  max-width: 200px;
+  position: relative;
+}
+
+/* Tooltip for truncated text */
+.text-truncate {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  position: relative;
+  cursor: help;
+}
+
+.text-truncate:hover::after {
+  content: attr(data-full-text);
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(0, 40, 70, 0.95);
+  color: #fff;
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-sm);
+  font-size: var(--text-xs);
+  white-space: nowrap;
+  z-index: 1000;
+  pointer-events: none;
+  margin-bottom: var(--space-2);
+  border: 1px solid var(--glass-border);
+  box-shadow: var(--glass-shadow);
 }
 
 .attendance-item .item-detail {
@@ -1635,22 +1665,41 @@ input[type="month"].input-glass {
 }
 
 /* ─────────────────────────────────────────────────────────────────────────────
-   RESPONSIVE COMPONENTS
+   RESPONSIVE COMPONENTS (Standardized Breakpoints)
    ───────────────────────────────────────────────────────────────────────────── */
-@media (max-width: 1100px) {
+@media (max-width: 1199px) {
   .reportes-grid {
     grid-template-columns: repeat(2, 1fr);
   }
 }
 
-@media (max-width: 900px) {
+/* Tablet-specific optimizations */
+@media (min-width: 768px) and (max-width: 1023px) {
+  .kpi-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  
+  .dashboard-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .section-header {
+    flex-wrap: wrap;
+  }
+  
+  .search-box .input-glass {
+    min-width: 200px;
+  }
+}
+
+@media (max-width: 1023px) {
   .ajustes-grid,
   .reportes-grid {
     grid-template-columns: 1fr;
   }
 }
 
-@media (max-width: 640px) {
+@media (max-width: 767px) {
   .form-row {
     grid-template-columns: 1fr;
     gap: var(--space-3);
@@ -1693,9 +1742,9 @@ input[type="month"].input-glass {
 }
 
 /* ─────────────────────────────────────────────────────────────────────────────
-   OPTIMIZACIÓN PARA MÓVILES MUY PEQUEÑOS (< 360px)
+   OPTIMIZACIÓN PARA MÓVILES MUY PEQUEÑOS (< 479px)
    ───────────────────────────────────────────────────────────────────────────── */
-@media (max-width: 360px) {
+@media (max-width: 479px) {
   .btn-marcacion {
     min-width: auto;
     padding: var(--space-2) var(--space-3);
@@ -1795,7 +1844,7 @@ input[type="month"].input-glass {
   margin-bottom: var(--space-6);
 }
 
-@media (max-width: 900px) {
+@media (max-width: 1023px) {
   .dashboard-charts-grid {
     grid-template-columns: 1fr;
   }
@@ -1833,8 +1882,8 @@ input[type="month"].input-glass {
   padding-bottom: 0;
 }
 
-/* Scroll horizontal para tabs de turno en móvil */
-@media (max-width: 768px) {
+/* Scroll horizontal para tabs de turno en móvil (Standardized Breakpoints) */
+@media (max-width: 767px) {
   .turno-tabs {
     flex-wrap: nowrap;
     overflow-x: auto;
@@ -1842,6 +1891,19 @@ input[type="month"].input-glass {
     -webkit-overflow-scrolling: touch;
     scrollbar-width: thin;
     padding-right: var(--space-3);
+    position: relative;
+  }
+
+  /* Visual indicator for scrollable content */
+  .turno-tabs::after {
+    content: '';
+    position: absolute;
+    right: 0;
+    top: 0;
+    bottom: 0;
+    width: 40px;
+    background: linear-gradient(to right, transparent, rgba(0, 52, 89, 0.3));
+    pointer-events: none;
   }
 
   .turno-tabs::-webkit-scrollbar {
@@ -1988,7 +2050,7 @@ input[type="month"].input-glass {
   margin-bottom: var(--space-5);
 }
 
-@media (max-width: 600px) {
+@media (max-width: 767px) {
   .historial-resumen {
     grid-template-columns: repeat(2, 1fr);
   }

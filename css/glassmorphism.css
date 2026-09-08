@@ -377,8 +377,8 @@
 }
 
 .modal-close {
-  width: 36px;
-  height: 36px;
+  width: 44px;
+  height: 44px;
   border-radius: var(--radius-md);
   display: flex;
   align-items: center;
@@ -553,21 +553,21 @@
 }
 
 /* ─────────────────────────────────────────────────────────────────────────────
-   RESPONSIVE KPI Y DASHBOARD
+   RESPONSIVE KPI Y DASHBOARD (Standardized Breakpoints)
    ───────────────────────────────────────────────────────────────────────────── */
-@media (max-width: 1200px) {
+@media (max-width: 1199px) {
   .kpi-grid {
     grid-template-columns: repeat(2, 1fr);
   }
 }
 
-@media (max-width: 900px) {
+@media (max-width: 1023px) {
   .dashboard-grid {
     grid-template-columns: 1fr;
   }
 }
 
-@media (max-width: 600px) {
+@media (max-width: 767px) {
   .kpi-grid {
     grid-template-columns: 1fr;
   }
@@ -591,9 +591,9 @@
 }
 
 /* ─────────────────────────────────────────────────────────────────────────────
-   SIDEBAR EN MÓVIL
+   SIDEBAR EN MÓVIL (Standardized Breakpoints)
    ───────────────────────────────────────────────────────────────────────────── */
-@media (max-width: 768px) {
+@media (max-width: 767px) {
   .glass-sidebar {
     transform: translateX(-100%);
     z-index: var(--z-modal);

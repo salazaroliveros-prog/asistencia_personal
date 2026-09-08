@@ -209,10 +209,22 @@ const API = (() => {
 
     // ═══════════════════ PERSONAL ═══════════════════
     async obtenerPersonal() {
+      // Check cache first
+      const cached = CacheManager ? CacheManager.get('personal_list') : null;
+      if (cached && Array.isArray(cached)) {
+        AppState.set('personal', cached);
+        return { success: true, data: cached, cached: true };
+      }
+
       const result = await _post({ action: 'obtenerPersonal' });
       if (result.success && Array.isArray(result.data)) {
         AppState.set('personal', result.data);
-        // Cachear en localStorage
+        // Cache with 10 minute TTL if CacheManager is available
+        if (CacheManager) {
+          CacheManager.set('personal_list', result.data, 10 * 60 * 1000);
+        }
+        
+        // Fallback localStorage cache for persistence
         try {
           localStorage.setItem(LS_KEYS.PERSONAL_CACHE, JSON.stringify(result.data));
           localStorage.setItem(LS_KEYS.LAST_SYNC, new Date().toISOString());

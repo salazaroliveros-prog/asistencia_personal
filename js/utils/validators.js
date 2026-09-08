@@ -127,14 +127,20 @@ const Validators = (() => {
 
     const clean = telefono.replace(/\D/g, '');
 
-    if (clean.length !== VALIDATION_RULES.TELEFONO_LENGTH) {
-      return { valid: false, error: `El teléfono debe tener ${VALIDATION_RULES.TELEFONO_LENGTH} dígitos` };
+    // Aceptar 8 dígitos (local) o 11 dígitos (con código de país 502)
+    if (clean.length !== 8 && clean.length !== 11) {
+      return { valid: false, error: 'El teléfono debe tener 8 dígitos (sin país) o 11 dígitos (con +502)' };
     }
 
-    // Verificar que comience con código de Guatemala (2 para Guatemala fijo, 3-7 para móviles)
-    const firstDigit = parseInt(clean[0]);
-    if (firstDigit < 2 || firstDigit > 7) {
-      return { valid: false, error: 'El teléfono debe comenzar con 2-7 (código Guatemala)' };
+    if (clean.length === 11) {
+      if (!clean.startsWith('502')) {
+        return { valid: false, error: 'El teléfono con código de país debe comenzar con 502' };
+      }
+    } else {
+      const firstDigit = parseInt(clean[0]);
+      if (firstDigit < 2 || firstDigit > 7) {
+        return { valid: false, error: 'El teléfono debe comenzar con 2-7 (código Guatemala)' };
+      }
     }
 
     return { valid: true, error: null };

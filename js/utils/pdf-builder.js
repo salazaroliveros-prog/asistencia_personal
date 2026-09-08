@@ -232,6 +232,7 @@ const PDFBuilder = (() => {
   function reporteDiario(fecha, asistencias, orientation = 'portrait') {
     const doc      = _newDoc(orientation);
     const personal = AppState.get('personal') || [];
+    const personalMap = new Map(personal.map(p => [p.ID_Trabajador, p]));
 
     // Resumen
     const presentes = new Set(asistencias.map(a => a.ID_Trabajador)).size;
@@ -268,17 +269,20 @@ const PDFBuilder = (() => {
         startY: y,
         margin: { left: 15, right: 15, top: 10, bottom: 22 },
         head: [['Trabajador', 'DPI', 'Puesto', 'Tipo', 'H. Prog.', 'H. Real', 'Estado', 'Método', 'H. Extra']],
-        body: asistencias.map(a => [
-          a.Nombre_Trabajador || '--',
-          a.DPI_CUI || (personal.find(p => p.ID_Trabajador === a.ID_Trabajador) || {}).DPI_CUI || '--',
-          (personal.find(p => p.ID_Trabajador === a.ID_Trabajador) || {}).Puesto || '--',
-          _labelTipoMarcacion(a.Tipo_Marcacion),
-          a.Hora_Programada || '--',
-          a.Hora_Real ? a.Hora_Real.substring(0, 5) : '--',
-          a.Estado_Marcacion || '--',
-          a.Metodo === 'Escaneo_QR' ? 'QR' : 'Manual',
-          a.Horas_Extra > 0 ? a.Horas_Extra + 'h' : '-',
-        ]),
+        body: asistencias.map(a => {
+          const worker = personalMap.get(a.ID_Trabajador) || {};
+          return [
+            a.Nombre_Trabajador || '--',
+            a.DPI_CUI || worker.DPI_CUI || '--',
+            worker.Puesto || '--',
+            _labelTipoMarcacion(a.Tipo_Marcacion),
+            a.Hora_Programada || '--',
+            a.Hora_Real ? a.Hora_Real.substring(0, 5) : '--',
+            a.Estado_Marcacion || '--',
+            a.Metodo_Registro === 'Escaneo_QR' ? 'QR' : 'Manual',
+            a.Horas_Extra > 0 ? a.Horas_Extra + 'h' : '-',
+          ];
+        }),
         headStyles: {
           fillColor: COLORS.primary,
           textColor: COLORS.white,
@@ -517,7 +521,7 @@ const PDFBuilder = (() => {
       a.Hora_Programada  || '',
       a.Hora_Real        ? a.Hora_Real.substring(0, 5) : '',
       a.Estado_Marcacion || '',
-      a.Metodo           || '',
+       a.Metodo_Registro  || '',
       a.Horas_Extra      || '0',
       a.Ubicacion_Obra   || '',
     ].map(v => `"${String(v).replace(/"/g, '""')}"`));
@@ -558,7 +562,7 @@ const PDFBuilder = (() => {
         <td>${a.Hora_Programada || '--'}</td>
         <td>${a.Hora_Real ? a.Hora_Real.substring(0, 5) : '--'}</td>
         <td class="print-estado-${(a.Estado_Marcacion || 'tiempo').toLowerCase().replace(' ', '-')}">${a.Estado_Marcacion || '--'}</td>
-        <td>${a.Metodo === 'Escaneo_QR' ? 'QR' : 'Manual'}</td>
+        <td>${a.Metodo_Registro === 'Escaneo_QR' ? 'QR' : 'Manual'}</td>
         <td>${a.Horas_Extra > 0 ? a.Horas_Extra + 'h' : '-'}</td>
       </tr>
     `).join('');

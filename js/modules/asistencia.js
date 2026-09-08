@@ -14,6 +14,7 @@ const ModuloAsistencia = (() => {
   let _pendingMarcacion  = null;  // Para el flujo de horas extra
   let _audio             = null;
   const DEFAULT_GEOFENCE_RADIUS = 200; // meters
+  let _optimisticUpdates = new Map(); // Track optimistic updates
 
   // ─── Inicialización ───────────────────────────────────────────────────────
   function init() {
@@ -38,10 +39,11 @@ const ModuloAsistencia = (() => {
     if (btnStart) btnStart.addEventListener('click', _iniciarScanner);
     if (btnStop)  btnStop.addEventListener('click',  _detenerScanner);
 
-    // Búsqueda manual con autocomplete
+    // Búsqueda manual con autocomplete (optimized with RequestOptimizer)
     const searchInput = document.getElementById('manual-worker-search');
     if (searchInput) {
-      searchInput.addEventListener('input', _debounce(_buscarTrabajadorManual, 250));
+      const debouncedSearch = RequestOptimizer.debounce('manual-search', _buscarTrabajadorManual, 250);
+      searchInput.addEventListener('input', debouncedSearch);
       searchInput.addEventListener('keydown', (e) => {
         if (e.key === 'Escape') _limpiarAutocomplete();
       });
@@ -535,9 +537,9 @@ const ModuloAsistencia = (() => {
             Hora_Programada:   horaOficial,
             Hora_Real:         horaReal,
             Estado_Marcacion:  estadoMarcacion,
-            Metodo:            payload.metodo,
+            Metodo_Registro:  payload.metodo,
             Horas_Extra:       horasExtra || 0,
-            obra:              payload.obra,
+            Ubicacion_Obra:    payload.obra,
             GPS_Latitud:       payload.gpsData?.latitude || null,
             GPS_Longitud:      payload.gpsData?.longitude || null,
             GPS_Accuracy:      payload.gpsData?.accuracy || null,
@@ -666,7 +668,7 @@ const ModuloAsistencia = (() => {
           <td data-label="Real" style="font-family:var(--font-mono)">${_escHtml(m.Hora_Real ? m.Hora_Real.substring(0, 5) : '--')}</td>
           <td data-label="Estado"><span class="${estadoClase}">${_escHtml(m.Estado_Marcacion || '--')}</span></td>
           <td data-label="Método">
-            ${m.Metodo === 'Escaneo_QR'
+            ${m.Metodo_Registro === 'Escaneo_QR'
               ? '<span class="badge badge-green"><i data-lucide="qr-code" style="width:10px;height:10px"></i> QR</span>'
               : '<span class="badge badge-gray">Manual</span>'
             }

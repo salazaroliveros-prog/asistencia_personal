@@ -137,8 +137,8 @@ function calcularEstadoMarcacion(horaProgramadaStr, horaRealStr, toleranciaMinut
 }
 
 function calcularHorasExtra(horaRealStr, horaSalidaStr) {
-  // Salida oficial: 17:00, alerta después de 17:15
-  var HORA_SALIDA_MIN = 17 * 60 + 15;
+  var partesSalida = horaSalidaStr.split(':');
+  var HORA_SALIDA_MIN = parseInt(partesSalida[0]) * 60 + parseInt(partesSalida[1]) + 15;
   var partes = horaRealStr.split(':');
   var minutosReal = parseInt(partes[0]) * 60 + parseInt(partes[1]);
   if (minutosReal > HORA_SALIDA_MIN) {
@@ -262,7 +262,8 @@ function registrarMarcacion(ss, payload) {
   // Calcular horas extra si es salida de obra
   var horasExtra = payload.horasExtra || 0;
   if (payload.tipoMarcacion === 'Salida_Obra') {
-    horasExtra = calcularHorasExtra(horaActualCorta, "17:00");
+    var horaSalidaObra = config.data ? (config.data['Hora_Salida_Obra'] || '17:00') : '17:00';
+    horasExtra = calcularHorasExtra(horaActualCorta, horaSalidaObra);
   }
 
   sheet.appendRow([

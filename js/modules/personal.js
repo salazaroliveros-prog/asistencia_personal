@@ -29,10 +29,11 @@ const ModuloPersonal = (() => {
     const btnGuardar = document.getElementById('btn-guardar-personal');
     if (btnGuardar) btnGuardar.addEventListener('click', _guardarPersonal);
 
-    // Búsqueda en tiempo real
+    // Búsqueda en tiempo real (optimized with RequestOptimizer)
     const searchInput = document.getElementById('personal-search');
     if (searchInput) {
-      searchInput.addEventListener('input', _debounce(_filtrarTabla, 300));
+      const debouncedFilter = RequestOptimizer.debounce('personal-search', _filtrarTabla, 300);
+      searchInput.addEventListener('input', debouncedFilter);
     }
 
     // Filtros de tabla
@@ -1259,7 +1260,7 @@ const ModuloPersonal = (() => {
     const cur = new Date(ini);
     while (cur <= fin) {
       const dow = cur.getDay();
-      if (dow !== 0 && dow !== 6) count++; // Solo días hábiles
+      if (dow !== 0) count++; // En construcción el sábado es laborable
       cur.setDate(cur.getDate() + 1);
     }
     return count;
