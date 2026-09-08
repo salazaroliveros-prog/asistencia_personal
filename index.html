@@ -1244,8 +1244,8 @@
             </div>
 
             <div class="gas-info-box">
-              <p><strong>🔒 Seguridad:</strong> Solo necesitas tu correo y contraseña de Google. No guardamos tus credenciales.</p>
-              <p><strong>⏱️ Tiempo estimado:</strong> 5-10 minutos</p>
+              <p><strong>🔒 Seguridad:</strong> Nunca escribas tu contraseña aquí. Google se encarga de la autorización en su propia pantalla.</p>
+              <p><strong>⚡ Configuración automática:</strong> después de publicar Apps Script una vez, la aplicación creará y preparará Google Sheets por ti.</p>
             </div>
 
             <button id="gas-start-step-2" class="btn btn-primary btn-block">
@@ -1262,15 +1262,15 @@
               <span class="gas-step-label">Iniciar Sesión en Google</span>
             </div>
             
-            <p class="text-muted">Ingresa tu correo de Google para crear el proyecto de Apps Script.</p>
+            <p class="text-muted">La autorización ocurre directamente en Google. No guardamos contraseñas ni solicitamos acceso a tu correo.</p>
             
             <div class="form-group">
-              <label for="gas-email" class="form-label">Correo de Google</label>
+              <label for="gas-email" class="form-label">Correo de referencia (opcional)</label>
               <input type="email" id="gas-email" class="input-glass" placeholder="tu.correo@gmail.com" aria-label="Correo de Google" />
             </div>
 
             <div class="gas-info-box info-box-amber">
-              <p><strong>ℹ️ Nota:</strong> Solo necesitamos tu correo para generar el enlace de configuración. La autenticación se hace directamente en Google.</p>
+              <p><strong>ℹ️ Nota:</strong> Este campo ya no es necesario para conectar. La autorización siempre se realiza directamente en Google.</p>
             </div>
 
             <div class="gas-buttons">
@@ -1400,7 +1400,7 @@
               <span class="gas-step-label">Conectar con tu Aplicación</span>
             </div>
             
-            <p class="text-muted">Conecta la Web App con tu aplicación de control de asistencia:</p>
+            <p class="text-muted">Pega la URL publicada. La aplicación probará el endpoint, creará la hoja si hace falta y verificará todas las pestañas.</p>
             
             <div class="gas-instructions">
               <div class="gas-instruction-step">
@@ -1417,7 +1417,12 @@
               <div class="gas-instruction-step">
                 <span class="gas-instruction-number">2</span>
                 <div class="gas-instruction-content">
-                  <p><strong>Prueba la conexión:</strong></p>
+                  <p><strong>Configuración automática:</strong></p>
+                  <button id="gas-auto-setup" class="btn btn-primary">
+                    <i data-lucide="wand-sparkles" aria-hidden="true"></i> Preparar Google Sheets automáticamente
+                  </button>
+                  <p class="text-muted">Si es la primera vez, Google puede mostrar una pantalla de autorización.</p>
+                  <p><strong>Prueba manual:</strong></p>
                   <button id="gas-test-connection" class="btn btn-secondary">
                     <i data-lucide="refresh-cw" aria-hidden="true"></i> Probar Conexión
                   </button>

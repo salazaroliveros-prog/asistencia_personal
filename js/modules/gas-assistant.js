@@ -38,6 +38,7 @@ const GASAssistant = (() => {
     document.getElementById('gas-step-4-confirm')?.addEventListener('click', () => _goToStep(5));
     document.getElementById('gas-back-step-4')?.addEventListener('click', () => _goToStep(4));
     document.getElementById('gas-test-connection')?.addEventListener('click', _testConnection);
+    document.getElementById('gas-auto-setup')?.addEventListener('click', _autoSetup);
     document.getElementById('gas-finalize-setup')?.addEventListener('click', _finalizeSetup);
     document.getElementById('gas-close-assistant')?.addEventListener('click', _closeAssistant);
 
@@ -494,18 +495,23 @@ function guardarConfiguracion(ss, payload) {
 }`;
 
     codeContent.textContent = gasCode;
+
+    // Mantener el código mostrado sincronizado con los archivos reales.
+    Promise.all([
+      fetch('gas/Code.gs').then(response => response.ok ? response.text() : Promise.reject(new Error('Code.gs no disponible'))),
+      fetch('gas/SetupSheets.gs').then(response => response.ok ? response.text() : Promise.reject(new Error('SetupSheets.gs no disponible')))
+    ]).then(([code, setup]) => {
+      codeContent.textContent = code + '\n\n' + setup;
+    }).catch(() => {
+      // El código embebido anterior permite continuar sin red.
+    });
   }
 
   function _generateCreateLink() {
     const emailInput = document.getElementById('gas-email');
     const email = emailInput?.value.trim();
     
-    if (!email || !email.includes('@')) {
-      Alerts.error('Por favor ingresa un correo válido');
-      return;
-    }
-
-    _userEmail = email;
+    _userEmail = email && email.includes('@') ? email : '';
 
     // Generar enlace para crear proyecto Apps Script
     const createLink = `https://script.google.com/macros/create?fromDrive=true&fromDriveUpload=true&u=${encodeURIComponent(email)}`;
@@ -551,8 +557,11 @@ function guardarConfiguracion(ss, payload) {
       const result = await API.ping();
       
       if (result.success) {
+        statusEl.textContent = '⏳ Conexión válida. Preparando Google Sheets...';
+        const provision = await API.initializeConnection();
+        await API.diagnoseConnection();
         statusEl.className = 'gas-connection-status success';
-        statusEl.textContent = '✅ Conexión exitosa';
+        statusEl.textContent = `✅ Google Sheets listo${provision.spreadsheetUrl ? ' y conectado' : ''}`;
         _webAppUrl = webAppUrl;
         
         const previewEl = document.getElementById('gas-url-preview');
@@ -560,7 +569,7 @@ function guardarConfiguracion(ss, payload) {
           previewEl.textContent = webAppUrl;
         }
         
-        Alerts.success('Conexión con Google Sheets establecida correctamente');
+        Alerts.success('Google Sheets se preparó y conectó automáticamente');
       } else {
         statusEl.className = 'gas-connection-status error';
         statusEl.textContent = '❌ Error de conexión';
@@ -571,6 +580,60 @@ function guardarConfiguracion(ss, payload) {
       statusEl.textContent = '❌ Error de conexión';
       Alerts.error('Error de conexión: ' + err.message);
     }
+  }
+
+  async function _autoSetup() {
+    const input = document.getElementById('gas-webapp-url');
+    const url = input?.value.trim();
+    const statusEl = document.getElementById('gas-connection-status');
+    const button = document.getElementById('gas-auto-setup');
+
+    if (!url || !url.includes('/exec')) {
+      Alerts.warning('Primero pega la URL /exec de tu Web App de Apps Script.');
+      input?.focus();
+      return;
+    }
+
+    if (button) { button.disabled = true; button.setAttribute('aria-busy', 'true'); }
+    if (statusEl) {
+      statusEl.className = 'gas-connection-status loading';
+      statusEl.style.display = 'block';
+      statusEl.textContent = '⏳ Conectando, creando la hoja y verificando pestañas...';
+    }
+
+    try {
+      AppState.set('gasUrl', url);
+      const ping = await API.ping();
+      if (!ping.success) throw new Error(ping.error || 'Apps Script no respondió correctamente.');
+      const provision = await API.initializeConnection();
+      await API.diagnoseConnection();
+      _webAppUrl = url;
+      document.getElementById('gas-url-preview')?.replaceChildren(document.createTextNode(url));
+      if (statusEl) {
+        statusEl.className = 'gas-connection-status success';
+        statusEl.textContent = '✅ Todo listo: hoja, pestañas y conexión verificadas.';
+      }
+      Alerts.success(provision.spreadsheetUrl ? 'Cuenta conectada y Google Sheets creado automáticamente.' : 'Conexión verificada correctamente.');
+    } catch (error) {
+      if (statusEl) {
+        statusEl.className = 'gas-connection-status error';
+        statusEl.textContent = `❌ ${_friendlySetupError(error)}`;
+      }
+      Alerts.error(_friendlySetupError(error), 'No se pudo completar la conexión');
+    } finally {
+      if (button) { button.disabled = false; button.removeAttribute('aria-busy'); }
+    }
+  }
+
+  function _friendlySetupError(error) {
+    const message = String(error?.message || error || 'Error desconocido');
+    if (/Acción no válida|initialize/i.test(message)) {
+      return 'Tu Apps Script necesita actualizarse con la versión de configuración automática y volver a desplegarse.';
+    }
+    if (/getActiveSpreadsheet|null|Spreadsheet/i.test(message)) {
+      return 'Google autorizó la conexión, pero el Apps Script aún no tiene una hoja vinculada. Pulsa “Actualizar instrucciones” y vuelve a desplegarlo.';
+    }
+    return message;
   }
 
   async function _finalizeSetup() {

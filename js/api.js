@@ -237,6 +237,29 @@ const API = (() => {
       }
     },
 
+    // Aprovisiona la hoja y sus pestañas en la primera conexión. La operación
+    // es idempotente: si ya existe una base válida, solo la verifica.
+    async initializeConnection() {
+      const result = await _post({ action: 'initialize' });
+      if (!result || result.success !== true) {
+        throw new Error(result?.error || 'Google Sheets no pudo prepararse automáticamente.');
+      }
+      return result;
+    },
+
+    // Comprueba que el endpoint no solo responda al ping, sino que pueda leer
+    // la estructura de datos necesaria para operar la aplicación.
+    async diagnoseConnection() {
+      const [config, personal, asistencias] = await Promise.all([
+        _post({ action: 'obtenerConfiguracion' }),
+        _post({ action: 'obtenerPersonal', limit: 1, offset: 0 }),
+        _post({ action: 'obtenerAsistencias', fecha: AppState.today(), limit: 1, offset: 0 })
+      ]);
+      const failed = [config, personal, asistencias].find(result => !result?.success);
+      if (failed) throw new Error(failed.error || 'Google Sheets no devolvió una respuesta válida.');
+      return { success: true, config, personal, asistencias };
+    },
+
     // ═══════════════════ PERSONAL ═══════════════════
     async obtenerPersonal(limit, offset) {
       const cacheKey = 'personal_list' + (limit ? '_p' + limit : '') + (offset ? '_o' + offset : '');

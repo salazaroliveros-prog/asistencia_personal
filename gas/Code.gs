@@ -9,6 +9,7 @@
 // CONFIGURACIÓN GLOBAL
 // ─────────────────────────────────────────────────────────────────────────────
 var TIMEZONE = "GMT-6";
+var DATABASE_PROPERTY = "CONTROL_PERSONAL_SPREADSHEET_ID";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // CORS / PREFLIGHT
@@ -33,7 +34,15 @@ function doPost(e) {
   try {
     var data = JSON.parse(e.postData.contents);
     var action = data.action;
-    var ss = SpreadsheetApp.getActiveSpreadsheet();
+
+    // El ping no requiere acceso a Sheets. El resto de acciones obtiene o
+    // crea automáticamente la base de datos para evitar el error
+    // getActiveSpreadsheet() === null en proyectos independientes.
+    if (action === 'ping') {
+      return responseJSON({ success: true, message: 'Conexión exitosa', timestamp: new Date().toString() });
+    }
+
+    var ss = obtenerBaseDatos();
 
     switch (action) {
       case 'registrarPersonal':
@@ -60,8 +69,8 @@ function doPost(e) {
         return responseJSON(obtenerConfiguracion(ss));
       case 'guardarConfiguracion':
         return responseJSON(guardarConfiguracion(ss, data.payload));
-      case 'ping':
-        return responseJSON({ success: true, message: 'Conexión exitosa', timestamp: new Date().toString() });
+      case 'initialize':
+        return responseJSON(inicializarBaseDatos(ss));
       default:
         return responseJSON({ success: false, error: 'Acción no válida: ' + action });
     }
@@ -77,22 +86,88 @@ function doPost(e) {
 // ─────────────────────────────────────────────────────────────────────────────
 function doGet(e) {
   var action = e.parameter.action || 'ping';
-  var ss = SpreadsheetApp.getActiveSpreadsheet();
 
   try {
+    if (action === 'ping') {
+      return responseJSON({ success: true, message: 'API CONTROL PERSONAL CAMPO activa', timestamp: new Date().toString() });
+    }
+
+    var ss = obtenerBaseDatos();
     switch (action) {
+      case 'initialize':
+        return responseJSON(inicializarBaseDatos(ss));
       case 'obtenerPersonal':
         return responseJSON(obtenerPersonal(ss));
       case 'obtenerAsistencias':
         return responseJSON(obtenerAsistencias(ss, e.parameter.fecha));
-      case 'ping':
-        return responseJSON({ success: true, message: 'API CONTROL PERSONAL CAMPO activa', timestamp: new Date().toString() });
       default:
         return responseJSON({ success: false, error: 'Acción GET no válida' });
     }
   } catch (err) {
     return responseJSON({ success: false, error: err.toString() });
   }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// PROVISIONAMIENTO AUTOMÁTICO DE LA BASE DE DATOS
+// ─────────────────────────────────────────────────────────────────────────────
+function obtenerBaseDatos() {
+  var propiedades = PropertiesService.getScriptProperties();
+  var activa = SpreadsheetApp.getActiveSpreadsheet();
+
+  if (activa) {
+    propiedades.setProperty(DATABASE_PROPERTY, activa.getId());
+    return _asegurarEstructuraBaseDatos(activa);
+  }
+
+  var idGuardado = propiedades.getProperty(DATABASE_PROPERTY);
+  if (idGuardado) {
+    try {
+      return _asegurarEstructuraBaseDatos(SpreadsheetApp.openById(idGuardado));
+    } catch (error) {
+      propiedades.deleteProperty(DATABASE_PROPERTY);
+    }
+  }
+
+  var nueva = SpreadsheetApp.create('Control de Asistencia - Personal');
+  propiedades.setProperty(DATABASE_PROPERTY, nueva.getId());
+  return _asegurarEstructuraBaseDatos(nueva);
+}
+
+function _asegurarEstructuraBaseDatos(ss) {
+  var hojas = {
+    Personal: ['ID_Trabajador','Nombre_Completo','DPI_CUI','Puesto','Jefe_Inmediato','Telefono','WhatsApp','Direccion','Fotografia_URL','Codigo_QR_Data','Fecha_Registro','Estado'],
+    Asistencias: ['ID_Asistencia','ID_Trabajador','Nombre_Trabajador','Fecha','Tipo_Marcacion','Hora_Programada','Hora_Real','Minutos_Tolerancia','Estado_Marcacion','Horas_Extra','Metodo_Registro','Ubicacion_Obra','GPS_Latitud','GPS_Longitud','GPS_Accuracy','Geofence_Inside','Geofence_Distance'],
+    Alertas: ['ID_Alerta','Fecha_Hora','ID_Trabajador','Tipo_Incidencia','Estatus'],
+    Configuracion: ['Clave','Valor']
+  };
+
+  Object.keys(hojas).forEach(function(nombre) {
+    var hoja = ss.getSheetByName(nombre) || ss.insertSheet(nombre);
+    if (hoja.getLastRow() === 0) hoja.getRange(1, 1, 1, hojas[nombre].length).setValues([hojas[nombre]]);
+  });
+
+  var configuracion = ss.getSheetByName('Configuracion');
+  if (configuracion.getLastRow() <= 1) {
+    configuracion.getRange(2, 1, 6, 2).setValues([
+      ['Nombre_Obra', 'Obra Principal'],
+      ['Tolerancia_Minutos', 15],
+      ['Hora_Entrada_Obra', '07:00'],
+      ['Hora_Salida_Obra', '17:00'],
+      ['GPS_Habilitado', true],
+      ['GPS_Requerir_Ubicacion', false]
+    ]);
+  }
+  return ss;
+}
+
+function inicializarBaseDatos(ss) {
+  return {
+    success: true,
+    message: 'Google Sheets preparado automáticamente',
+    spreadsheetId: ss.getId(),
+    spreadsheetUrl: ss.getUrl()
+  };
 }
 
 // ─────────────────────────────────────────────────────────────────────────────

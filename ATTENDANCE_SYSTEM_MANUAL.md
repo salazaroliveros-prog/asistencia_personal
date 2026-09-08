@@ -66,11 +66,15 @@ The Control Personal Campo system is a comprehensive worker attendance managemen
 ### 3.1 System Configuration
 
 #### Step 1: Configure Google Apps Script Connection
-1. Navigate to **Ajustes** (Settings) in the main menu
-2. Locate the **Conexión con Google Sheets** section
-3. Enter your Google Apps Script Web App URL in the provided field
-4. Click **Probar** (Test) to verify the connection
-5. If successful, click **Guardar URL** (Save URL)
+1. Navigate to **Ajustes** (Settings) and open the Google Sheets connection assistant.
+2. Create/deploy the Apps Script Web App once using the code shown by the assistant.
+3. Set the Web App to execute as the owner and allow access to anyone who has the link.
+4. Paste the URL ending in `/exec`.
+5. Click **Preparar Google Sheets automáticamente**.
+6. The application will create or recover the spreadsheet, create the `Personal`, `Asistencias`, `Alertas` and `Configuracion` sheets, and verify read access.
+7. If successful, click **Finalizar Configuración**. The URL is stored locally in the browser.
+
+The application never asks for or stores a Google password. Google handles authorization in its own interface. After the first deployment, no manual spreadsheet creation or sheet naming is required.
 
 #### Step 2: Configure Work Schedule
 1. In **Ajustes**, locate the **Horarios de Obra** section
@@ -409,6 +413,13 @@ The Control Personal Campo system is a comprehensive worker attendance managemen
 - Test connection in Settings
 - Check Google Sheets quota limits
 - Manually trigger sync when connection is stable
+
+**Problem**: Connection ping succeeds but data reads fail with `getActiveSpreadsheet()` or `Cannot read properties of null`
+**Cause**: The Apps Script deployment is using an older backend or is not linked to a spreadsheet.
+**Solutions**:
+- Update/redeploy the current `gas/Code.gs` version.
+- Click **Preparar Google Sheets automáticamente** in the assistant.
+- Confirm that the Web App executes as the owner and is accessible to anyone with the link.
 
 #### QR Code Not Recognized
 **Problem**: System cannot read worker QR code  

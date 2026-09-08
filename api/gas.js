@@ -28,7 +28,7 @@ function _isGoogleAppsScriptUrl(url) {
   }
 }
 
-export default async function handler(req, res) {
+async function handler(req, res) {
   try {
     const method = (req.method || 'GET').toUpperCase();
 
@@ -75,3 +75,5 @@ export default async function handler(req, res) {
     res.status(502).json({ success: false, error: 'Proxy error: ' + err.message });
   }
 }
+
+module.exports = handler;
