@@ -11,6 +11,19 @@
 var TIMEZONE = "GMT-6";
 
 // ─────────────────────────────────────────────────────────────────────────────
+// CORS / PREFLIGHT
+// ─────────────────────────────────────────────────────────────────────────────
+function doOptions(e) {
+  var output = ContentService.createTextOutput('');
+  output.setMimeType(ContentService.MimeType.TEXT);
+  output.setHeader('Access-Control-Allow-Origin', '*');
+  output.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+  output.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+  output.setHeader('Access-Control-Max-Age', '3600');
+  return output;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 // PUNTO DE ENTRADA HTTP POST
 // ─────────────────────────────────────────────────────────────────────────────
 function doPost(e) {
@@ -88,6 +101,9 @@ function doGet(e) {
 function responseJSON(data) {
   var output = ContentService.createTextOutput(JSON.stringify(data));
   output.setMimeType(ContentService.MimeType.JSON);
+  output.setHeader('Access-Control-Allow-Origin', '*');
+  output.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+  output.setHeader('Access-Control-Allow-Headers', 'Content-Type');
   return output;
 }
 

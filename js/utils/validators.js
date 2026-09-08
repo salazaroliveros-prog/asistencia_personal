@@ -391,3 +391,7 @@ const Validators = (() => {
     }
   };
 })();
+
+if (typeof module !== 'undefined' && module.exports) {
+  module.exports = Validators;
+}

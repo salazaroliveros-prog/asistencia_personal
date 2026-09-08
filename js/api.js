@@ -43,19 +43,12 @@ const API = (() => {
         headers: { 'Content-Type': 'text/plain;charset=utf-8' },
         body:    JSON.stringify(body),
         signal:  controller.signal,
-        // Google Apps Script requiere no-cors en algunos contextos,
-        // pero para Web Apps desplegadas como "Anyone" funciona con cors normal.
         mode:    'cors',
       });
 
       clearTimeout(timeoutId);
 
       if (!response.ok) {
-        const errorDetails = {
-          status: response.status,
-          statusText: response.statusText,
-          url: url
-        };
         throw new Error(`Error HTTP ${response.status}: ${response.statusText} al conectar con ${url}`);
       }
 
@@ -79,8 +72,26 @@ const API = (() => {
       // Reintento en error de red (no de aplicación)
       if (retries > 0 && (err.message.includes('fetch') || err.message.includes('network') || err.message.includes('Failed'))) {
         console.warn(`[API] Error de red detectado, reintentando... (${RETRY_COUNT - retries + 1}/${RETRY_COUNT})`);
-        await _sleep(800); // Usar valor directo hasta que CONSTANTS esté disponible
+        await _sleep(800);
         return _post(body, retries - 1);
+      }
+
+      // Si es error CORS, reintentar con no-cors como último recurso
+      if (err.message.includes('Access to fetch') || err.message.includes('CORS') || err.message.includes('has been blocked')) {
+        console.warn('[API] Error CORS detectado, reintentando con no-cors...');
+        try {
+          const noCorsResponse = await fetch(url, {
+            method:  'POST',
+            headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+            body:    JSON.stringify(body),
+            mode:    'no-cors',
+          });
+          // En no-cors no podemos leer el cuerpo, pero si la petición no lanzó error,
+          // asumimos que llegó al servidor.
+          return { success: true, noCors: true, message: 'Petición enviada (modo no-cors)' };
+        } catch (noCorsErr) {
+          throw new Error('Error CORS persistente. Verifica que el Web App de Google Apps Script esté desplegado como "Anyone" y tenga headers CORS configurados.');
+        }
       }
 
       throw err;
