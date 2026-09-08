@@ -126,7 +126,7 @@ const ModuloPersonal = (() => {
     }
 
     // Intentar actualizar desde API
-    if (AppState.get('gasUrl')) {
+    if (AppState.get('backendMode') === 'firestore') {
       _setLoadingState(true);
       try {
         const result = await API.obtenerPersonal();
@@ -370,7 +370,7 @@ const ModuloPersonal = (() => {
 
   /**
    * Guarda un trabajador directamente en AppState cuando no hay
-   * Google Apps Script configurado (modo offline / sin conexión).
+   * Firestore no configurado (modo local / sin conexión).
    * Replica la estructura de campos que usa el GAS backend.
    * @param {object} payload
    * @param {boolean} isEdit
@@ -429,8 +429,8 @@ const ModuloPersonal = (() => {
       success: true,
       offline: true,
       message: isEdit
-        ? 'Trabajador actualizado localmente (sin conexión con Google Sheets)'
-        : 'Trabajador registrado localmente (sin conexión con Google Sheets)',
+        ? 'Trabajador actualizado en modo local.'
+        : 'Trabajador registrado en modo local.',
     };
   }
 
@@ -464,7 +464,7 @@ const ModuloPersonal = (() => {
     }
 
     // ── Modo offline: sin URL configurada, guardar localmente ──────────────
-    if (!AppState.get('gasUrl')) {
+    if (AppState.get('backendMode') !== 'firestore') {
       const result = _guardarPersonalLocal(payload, !!_editingId);
       if (result.success) {
         Alerts.success(result.message);
@@ -515,14 +515,14 @@ const ModuloPersonal = (() => {
     if (!t) return;
 
     const confirmed = await Alerts.confirm(
-      `¿Dar de baja a "${t.Nombre_Completo}"?\n\nEsto cambiará su estado a Inactivo${AppState.get('gasUrl') ? ' en Google Sheets' : ' localmente'}.`,
+      `¿Dar de baja a "${t.Nombre_Completo}"?\n\nEsto cambiará su estado a Inactivo${AppState.get('backendMode') === 'firestore' ? ' en Firestore' : ' localmente'}.`,
       'Confirmar baja de trabajador'
     );
 
     if (!confirmed) return;
 
     // ── Modo offline ────────────────────────────────────────────────────────
-    if (!AppState.get('gasUrl')) {
+    if (AppState.get('backendMode') !== 'firestore') {
       const lista = personal.map(p =>
         p.ID_Trabajador === id ? { ...p, Estado: 'Inactivo' } : p
       );
@@ -1120,7 +1120,7 @@ const ModuloPersonal = (() => {
     try {
       let asistencias = [];
 
-      if (AppState.get('gasUrl')) {
+      if (AppState.get('backendMode') === 'firestore') {
         if (fechaIni === fechaFin) {
           const r = await API.obtenerAsistencias(fechaIni);
           if (r.success) asistencias = r.data;

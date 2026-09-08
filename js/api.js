@@ -1,451 +1,62 @@
-/**
- * CONTROL PERSONAL CAMPO — api.js
- * Conector de comunicación asíncrona con Google Apps Script.
- * Todas las llamadas son via fetch() con manejo robusto de errores.
- * @version 1.0.0
- */
-
+/** API de datos: Firestore en línea con respaldo local y cola offline. */
 const API = (() => {
-  // ─── Constantes ──────────────────────────────────────────────────────────
-  const TIMEOUT_MS   = 30000;  // 30 segundos máximo por request
-  const RETRY_COUNT  = 2;      // Reintentos en caso de error de red
-
-  // ─── Helpers privados ────────────────────────────────────────────────────
-
-  function _isVercel() {
-    try {
-      return typeof window !== 'undefined' && /vercel\.app$/.test(window.location.hostname);
-    } catch {
-      return false;
-    }
-  }
-
-  function _useProxy() {
-    try {
-      return typeof window !== 'undefined' && /vercel\.app$/.test(window.location.hostname);
-    } catch {
-      return false;
-    }
-  }
-
-  /**
-   * Obtiene la URL actual del Web App de Google Apps Script.
-   * En Vercel devuelve el proxy local del mismo origen para evitar CORS y CSP.
-   * @returns {string} URL del endpoint
-   * @throws {Error} Si no hay URL configurada
-   */
-  function _getUrl() {
-    const url = AppState.get('gasUrl');
-    if (!url) {
-      throw new Error('URL de Google Apps Script no configurada. Ve a Ajustes para configurarla.');
-    }
-    if (_useProxy()) {
-      return '/api/gas';
-    }
-    return url;
-  }
-
-  function _gasUrlHeader() {
-    const url = AppState.get('gasUrl');
-    if (!url) return {};
-    return _useProxy() ? { 'X-GAS-URL': url } : {};
-  }
-
-  /**
-   * Realiza un POST con JSON al endpoint de GAS.
-   * @param {object} body - Cuerpo del request
-   * @param {number} retries - Reintentos restantes
-   * @returns {Promise<object>} Respuesta parseada
-   */
-  async function _post(body, retries = RETRY_COUNT) {
-    const url = _getUrl();
-
-    const controller = new AbortController();
-    const timeoutId  = setTimeout(() => controller.abort(), TIMEOUT_MS);
-
-    try {
-      const headers = { 'Content-Type': 'text/plain;charset=utf-8', ..._gasUrlHeader() };
-      console.log('[API] POST destino', url, { action: body && body.action, headers });
-
-      const response = await fetch(url, {
-        method:  'POST',
-        headers,
-        body:    JSON.stringify(body),
-        signal:  controller.signal,
-        mode:    'cors',
-      });
-
-      clearTimeout(timeoutId);
-
-      if (!response.ok) {
-        const httpError = new Error(`Error HTTP ${response.status}: ${response.statusText} al conectar con ${url}`);
-        httpError.status = response.status;
-        throw httpError;
-      }
-
-      const text = await response.text();
-      let data;
-      try {
-        data = JSON.parse(text);
-      } catch {
-        throw new Error(`Respuesta inválida del servidor. Se esperaba JSON pero se recibió: ${text.substring(0, 100)}`);
-      }
-
-      return data;
-
-    } catch (err) {
-      clearTimeout(timeoutId);
-
-      if (err.name === 'AbortError') {
-        throw new Error(`Tiempo de espera agotado (${TIMEOUT_MS}ms). Verifica tu conexión a internet o la URL del servidor.`);
-      }
-
-      if (retries > 0 && (err.message.includes('fetch') || err.message.includes('network') || err.message.includes('Failed'))) {
-        console.warn(`[API] Error de red detectado, reintentando... (${RETRY_COUNT - retries + 1}/${RETRY_COUNT})`);
-        await _sleep(800);
-        return _post(body, retries - 1);
-      }
-
-      if (retries > 0 && err.status && err.status >= 500) {
-        console.warn(`[API] Error servidor GAS ${err.status}, reintentando... (${RETRY_COUNT - retries + 1}/${RETRY_COUNT})`);
-        await _sleep(1200);
-        return _post(body, retries - 1);
-      }
-
-      throw err;
-    }
-  }
-
-  /**
-   * Wrapper para solicitudes GET (usando postData con action en URL param).
-   * GAS doGet acepta parámetros de URL.
-   */
-  async function _get(action, params = {}) {
-    const url = _getUrl();
-    const queryParams = new URLSearchParams({ action, ...params });
-    const fullUrl = `${url}${url.includes('?') ? '&' : '?'}${queryParams.toString()}`;
-
-    const controller = new AbortController();
-    const timeoutId  = setTimeout(() => controller.abort(), TIMEOUT_MS);
-
-    try {
-      const response = await fetch(fullUrl, {
-        method: 'GET',
-        signal: controller.signal,
-        headers: _gasUrlHeader(),
-      });
-
-      clearTimeout(timeoutId);
-
-      if (!response.ok) {
-        throw new Error(`Error HTTP ${response.status}: ${response.statusText}`);
-      }
-
-      return await response.json();
-    } catch (err) {
-      clearTimeout(timeoutId);
-      if (err.name === 'AbortError') {
-        throw new Error('Tiempo de espera agotado.');
-      }
-      throw err;
-    }
-  }
-
-  function _sleep(ms) {
-    return new Promise(resolve => setTimeout(resolve, ms));
-  }
-
-  // ─── Actualizar estado de conexión ───────────────────────────────────────
-  function _setConnectionStatus(connected) {
-    AppState.set('connected',  connected);
-    AppState.set('connecting', false);
-
-    const dot  = document.querySelector('.connection-dot');
+  const now = () => new Date().toISOString();
+  const local = key => { try { return JSON.parse(localStorage.getItem(key) || '[]'); } catch (_) { return []; } };
+  const saveLocal = (key, value) => { try { localStorage.setItem(key, JSON.stringify(value)); } catch (_) {} };
+  const queue = () => local(LS_KEYS.OFFLINE_QUEUE);
+  const setQueue = value => { saveLocal(LS_KEYS.OFFLINE_QUEUE, value); AppState.set('offlineQueue', value.length); };
+  const isOnline = () => FirebaseClient.isReady() && AppState.get('connected');
+  const result = (data = [], extra = {}) => ({ success: true, data, ...extra });
+  const makeId = prefix => `${prefix}-${Date.now()}-${Math.random().toString(36).slice(2, 7).toUpperCase()}`;
+  function status(connected) {
+    AppState.set('connected', Boolean(connected));
+    const dot = document.querySelector('.connection-dot');
     const text = document.getElementById('connection-text');
-
-    if (dot) {
-      dot.className = 'connection-dot ' + (connected ? 'connected' : 'disconnected');
-    }
-    if (text) {
-      text.textContent = connected ? 'Conectado a Sheets' : 'Sin conexión';
-    }
+    if (dot) dot.className = `connection-dot ${connected ? 'connected' : 'disconnected'}`;
+    if (text) text.textContent = connected ? 'Firestore en línea' : 'Modo local';
   }
-
-  // ─── Offline Queue ────────────────────────────────────────────────────────
-
-  function _getQueue() {
-    try {
-      return JSON.parse(localStorage.getItem(LS_KEYS.OFFLINE_QUEUE) || '[]');
-    } catch { return []; }
+  function cachePersonal(data) { AppState.set('personal', data); saveLocal(LS_KEYS.PERSONAL_CACHE, data); saveLocal(LS_KEYS.LAST_SYNC, now()); AppState.set('lastSync', now()); }
+  function localPersonal() { return AppState.get('personal') || local(LS_KEYS.PERSONAL_CACHE); }
+  function localAssistances() { return AppState.get('asistencias') || []; }
+  function addOffline(type, payload) { const items = queue(); items.push({ id: makeId('Q'), type, payload, timestamp: now() }); setQueue(items); }
+  function personalFromPayload(payload, old = {}) {
+    const id = payload.id || old.ID_Trabajador || makeId('TRAB');
+    return { ...old, ID_Trabajador: id, Nombre_Completo: payload.nombre, DPI_CUI: payload.dpi, Puesto: payload.puesto, Jefe_Inmediato: payload.jefe || '', Telefono: payload.telefono || '', WhatsApp: payload.whatsapp || '', Direccion: payload.direccion || '', Fotografia_URL: payload.fotografia || old.Fotografia_URL || '', Codigo_QR_Data: old.Codigo_QR_Data || JSON.stringify({ id, dpi: payload.dpi, nombre: payload.nombre }), Fecha_Registro: old.Fecha_Registro || now().replace('T', ' ').substring(0, 19), Estado: old.Estado || 'Activo' };
   }
-
-  function _saveQueue(queue) {
-    try {
-      localStorage.setItem(LS_KEYS.OFFLINE_QUEUE, JSON.stringify(queue));
-    } catch (e) { console.warn('[API] No se pudo guardar la queue offline:', e.message); }
+  function localSavePersonal(payload, edit) {
+    const list = [...localPersonal()]; const index = list.findIndex(item => item.ID_Trabajador === payload.id);
+    if (edit && index < 0) return { success: false, error: 'Trabajador no encontrado.' };
+    const item = personalFromPayload(payload, index >= 0 ? list[index] : {}); if (index >= 0) list[index] = item; else list.push(item); cachePersonal(list);
+    return result([item], { offline: true, message: edit ? 'Trabajador actualizado en modo local.' : 'Trabajador registrado en modo local.' });
   }
-
-  function _encolarMarcacion(payload) {
-    const queue = _getQueue();
-    const item  = {
-      id:        'Q-' + Date.now(),
-      payload,
-      timestamp: new Date().toISOString(),
-    };
-    queue.push(item);
-    _saveQueue(queue);
-    _notifyQueueChange();
-
-    return {
-      success:          true,
-      offline:          true,
-      estadoMarcacion:  'Pendiente',
-      horaReal:         `${new Date().getHours().toString().padStart(2,'0')}:${new Date().getMinutes().toString().padStart(2,'0')}:00`,
-      message:          'Marcación guardada localmente. Se enviará al reconectar.',
-    };
+  function localAttendance(payload) {
+    const item = { ...payload, ID_Marcacion: payload.id || makeId('MARC'), ID_Registro: payload.id || makeId('MARC'), Fecha: payload.fecha || AppState.today(), Hora_Real: payload.horaReal || new Date().toLocaleTimeString('es-GT', { hour12: false }), Estado_Marcacion: payload.estado || 'A tiempo', Fecha_Registro: now() };
+    AppState.set('asistencias', [...localAssistances(), item]); addOffline('attendance', payload);
+    return result([item], { offline: true, estadoMarcacion: item.Estado_Marcacion, horaReal: item.Hora_Real, message: 'Marcación guardada localmente; se sincronizará al conectar.' });
   }
-
-  function _notifyQueueChange() {
-    const count = _getQueue().length;
-    AppState.set('offlineQueue', count);
+  function setupRealtime() {
+    if (!isOnline() || API._realtimeReady) return; API._realtimeReady = true;
+    FirebaseClient.subscribe('personal', data => cachePersonal(data.filter(item => item.Estado !== 'Eliminado')));
+    FirebaseClient.subscribe('alertas', data => AppState.set('alertas', data));
+    FirebaseClient.subscribe('asistencias', data => AppState.set('asistencias', data.filter(item => item.Fecha === AppState.today())));
+    FirebaseClient.subscribe('configuracion', data => { if (data[0]) { const c = { ...DEFAULT_CONFIG, ...data[0] }; AppState.set('config', c); saveLocal(LS_KEYS.CONFIG, c); } });
   }
-
-  function _actualizarLastSync() {
-    const now = new Date().toISOString();
-    try {
-      localStorage.setItem(LS_KEYS.LAST_SYNC, now);
-    } catch (e) { /* ignorar */ }
-    AppState.set('lastSync', now);
-  }
-
-  // ─── API PÚBLICA ─────────────────────────────────────────────────────────
   return {
-
-    // ═══════════════════ PING / CONEXIÓN ═══════════════════
-    async ping() {
-      AppState.set('connecting', true);
-      const dot = document.querySelector('.connection-dot');
-      if (dot) dot.className = 'connection-dot connecting';
-
-      try {
-        const result = await _post({ action: 'ping' });
-        _setConnectionStatus(result.success === true);
-        return result;
-      } catch (err) {
-        _setConnectionStatus(false);
-        throw err;
-      }
-    },
-
-    // Aprovisiona la hoja y sus pestañas en la primera conexión. La operación
-    // es idempotente: si ya existe una base válida, solo la verifica.
-    async initializeConnection() {
-      const result = await _post({ action: 'initialize' });
-      if (!result || result.success !== true) {
-        throw new Error(result?.error || 'Google Sheets no pudo prepararse automáticamente.');
-      }
-      return result;
-    },
-
-    // Comprueba que el endpoint no solo responda al ping, sino que pueda leer
-    // la estructura de datos necesaria para operar la aplicación.
-    async diagnoseConnection() {
-      const [config, personal, asistencias] = await Promise.all([
-        _post({ action: 'obtenerConfiguracion' }),
-        _post({ action: 'obtenerPersonal', limit: 1, offset: 0 }),
-        _post({ action: 'obtenerAsistencias', fecha: AppState.today(), limit: 1, offset: 0 })
-      ]);
-      const failed = [config, personal, asistencias].find(result => !result?.success);
-      if (failed) throw new Error(failed.error || 'Google Sheets no devolvió una respuesta válida.');
-      return { success: true, config, personal, asistencias };
-    },
-
-    // ═══════════════════ PERSONAL ═══════════════════
-    async obtenerPersonal(limit, offset) {
-      const cacheKey = 'personal_list' + (limit ? '_p' + limit : '') + (offset ? '_o' + offset : '');
-      const cached = CacheManager ? CacheManager.get(cacheKey) : null;
-      if (cached && Array.isArray(cached)) {
-        AppState.set('personal', cached);
-        return { success: true, data: cached, cached: true };
-      }
-
-      const body = { action: 'obtenerPersonal' };
-      if (limit) body.limit = limit;
-      if (offset) body.offset = offset;
-
-      const result = await _post(body);
-      if (result.success && Array.isArray(result.data)) {
-        AppState.set('personal', result.data);
-        if (CacheManager) {
-          CacheManager.set(cacheKey, result.data, 10 * 60 * 1000);
-        }
-        try {
-          localStorage.setItem(LS_KEYS.PERSONAL_CACHE, JSON.stringify(result.data));
-          localStorage.setItem(LS_KEYS.LAST_SYNC, new Date().toISOString());
-        } catch (e) { /* Ignorar errores de quota */ }
-      }
-      return result;
-    },
-
-    async registrarPersonal(payload) {
-      const result = await _post({ action: 'registrarPersonal', payload });
-      if (result.success) {
-        // Refrescar cache
-        await this.obtenerPersonal().catch(() => {});
-      }
-      return result;
-    },
-
-    async actualizarPersonal(payload) {
-      const result = await _post({ action: 'actualizarPersonal', payload });
-      if (result.success) {
-        await this.obtenerPersonal().catch(() => {});
-      }
-      return result;
-    },
-
-    async eliminarPersonal(id) {
-      const result = await _post({ action: 'eliminarPersonal', id });
-      if (result.success) {
-        // Actualizar cache local inmediatamente
-        const personal = AppState.get('personal').filter(p => p.ID_Trabajador !== id);
-        AppState.set('personal', personal);
-      }
-      return result;
-    },
-
-    // ═══════════════════ ASISTENCIAS ═══════════════════
-    async registrarMarcacion(payload) {
-      // Si no hay URL configurada o no hay conexión → encolar localmente
-      if (!AppState.get('gasUrl') || !AppState.get('connected')) {
-        return _encolarMarcacion(payload);
-      }
-      try {
-        const result = await _post({ action: 'registrarMarcacion', payload });
-        if (result.success) {
-          _actualizarLastSync();
-        }
-        return result;
-      } catch (err) {
-        // Si el request falla (red caída), encolar
-        console.warn('[API] Marcación no enviada, encolando offline:', err.message);
-        return _encolarMarcacion(payload);
-      }
-    },
-
-    async obtenerAsistencias(fecha, limit, offset) {
-      const body = { action: 'obtenerAsistencias', fecha: fecha || AppState.today() };
-      if (limit) body.limit = limit;
-      if (offset) body.offset = offset;
-      const result = await _post(body);
-      if (result.success && Array.isArray(result.data)) {
-        AppState.set('asistencias', result.data);
-      }
-      return result;
-    },
-
-    async obtenerAsistenciaRango(fechaInicio, fechaFin, limit, offset) {
-      const body = { action: 'obtenerAsistenciaRango', fechaInicio, fechaFin };
-      if (limit) body.limit = limit;
-      if (offset) body.offset = offset;
-      return await _post(body);
-    },
-
-    // ═══════════════════ ALERTAS ═══════════════════
-    async obtenerAlertas(limit, offset) {
-      const body = { action: 'obtenerAlertas' };
-      if (limit) body.limit = limit;
-      if (offset) body.offset = offset;
-      const result = await _post(body);
-      if (result.success && Array.isArray(result.data)) {
-        AppState.set('alertas', result.data);
-      }
-      return result;
-    },
-
-    async marcarAlertaRevisada(id) {
-      return await _post({ action: 'marcarAlertaRevisada', id });
-    },
-
-    // ═══════════════════ CONFIGURACIÓN ═══════════════════
-    async obtenerConfiguracion() {
-      const result = await _post({ action: 'obtenerConfiguracion' });
-      if (result.success && result.data) {
-        const newConfig = { ...DEFAULT_CONFIG, ...result.data };
-        AppState.set('config', newConfig);
-        localStorage.setItem(LS_KEYS.CONFIG, JSON.stringify(newConfig));
-      }
-      return result;
-    },
-
-    async guardarConfiguracion(payload) {
-      const result = await _post({ action: 'guardarConfiguracion', payload });
-      if (result.success) {
-        // Actualizar estado local
-        const currentConfig = AppState.get('config');
-        const newConfig = { ...currentConfig, ...payload };
-        AppState.set('config', newConfig);
-        localStorage.setItem(LS_KEYS.CONFIG, JSON.stringify(newConfig));
-      }
-      return result;
-    },
-
-    // ═══════════════════ MODO OFFLINE ═══════════════════
-    /**
-     * Retorna true si hay URL configurada pero sin conexión activa.
-     */
-    isOffline() {
-      return AppState.get('gasUrl') !== '' && !AppState.get('connected');
-    },
-
-    /**
-     * Obtener personal del cache local (sin llamada API).
-     */
-    getPersonalFromCache() {
-      return AppState.get('personal') || [];
-    },
-
-    // ═══════════════════ OFFLINE QUEUE ═══════════════════
-    /**
-     * Obtener marcaciones pendientes de la queue.
-     */
-    getOfflineQueue() {
-      return _getQueue();
-    },
-
-    /**
-     * Intentar sincronizar todas las marcaciones en la queue.
-     * @returns {Promise<{enviadas: number, errores: number}>}
-     */
-    async syncOfflineQueue() {
-      const queue = _getQueue();
-      if (queue.length === 0) return { enviadas: 0, errores: 0 };
-      if (!AppState.get('gasUrl')) return { enviadas: 0, errores: queue.length };
-
-      let enviadas = 0;
-      let errores  = 0;
-      const pendientes = [...queue];
-      const nuevaQueue = [];
-
-      for (const item of pendientes) {
-        try {
-          const result = await _post({ action: 'registrarMarcacion', payload: item.payload });
-          if (result.success) {
-            enviadas++;
-          } else {
-            nuevaQueue.push(item);
-            errores++;
-          }
-        } catch (err) {
-          nuevaQueue.push(item);
-          errores++;
-        }
-      }
-
-      _saveQueue(nuevaQueue);
-      _notifyQueueChange();
-      if (enviadas > 0) _actualizarLastSync();
-      return { enviadas, errores };
-    },
+    _realtimeReady: false,
+    async initialize() { const connection = await FirebaseClient.initialize(); status(connection.success); if (connection.success) setupRealtime(); return connection; },
+    async ping() { const connection = await this.initialize(); return { ...connection, message: connection.success ? 'Firestore listo y sincronizando en tiempo real.' : 'Modo local activo.' }; },
+    async obtenerPersonal(limit, offset) { if (!isOnline()) return result(localPersonal(), { offline: true }); const data = (await FirebaseClient.list('personal')).filter(item => item.Estado !== 'Eliminado'); cachePersonal(data); return result(data.slice(offset || 0, limit ? (offset || 0) + limit : undefined)); },
+    async registrarPersonal(payload) { if (!isOnline()) return localSavePersonal(payload, false); const item = personalFromPayload(payload); await FirebaseClient.save('personal', item.ID_Trabajador, item); await this.obtenerPersonal(); return result([item]); },
+    async actualizarPersonal(payload) { const old = localPersonal().find(item => item.ID_Trabajador === payload.id); if (!isOnline()) return localSavePersonal(payload, true); const item = personalFromPayload(payload, old); await FirebaseClient.save('personal', item.ID_Trabajador, item); await this.obtenerPersonal(); return result([item]); },
+    async eliminarPersonal(id) { if (!isOnline()) { cachePersonal(localPersonal().filter(item => item.ID_Trabajador !== id)); return result([], { offline: true }); } await FirebaseClient.remove('personal', id); await this.obtenerPersonal(); return result([]); },
+    async registrarMarcacion(payload) { if (!isOnline()) return localAttendance(payload); const item = { ...payload, ID_Marcacion: payload.id || makeId('MARC'), Fecha: payload.fecha || AppState.today(), Hora_Real: payload.horaReal || new Date().toLocaleTimeString('es-GT', { hour12: false }), Estado_Marcacion: payload.estado || 'A tiempo', Fecha_Registro: now() }; await FirebaseClient.save('asistencias', item.ID_Marcacion, item); return result([item], { estadoMarcacion: item.Estado_Marcacion, horaReal: item.Hora_Real }); },
+    async obtenerAsistencias(fecha = AppState.today(), limit, offset) { let data = isOnline() ? await FirebaseClient.list('asistencias') : localAssistances(); data = data.filter(item => item.Fecha === fecha); AppState.set('asistencias', data); return result(data.slice(offset || 0, limit ? (offset || 0) + limit : undefined), { offline: !isOnline() }); },
+    async obtenerAsistenciaRango(fechaInicio, fechaFin, limit, offset) { let data = isOnline() ? await FirebaseClient.list('asistencias') : localAssistances(); data = data.filter(item => item.Fecha >= fechaInicio && item.Fecha <= fechaFin); return result(data.slice(offset || 0, limit ? (offset || 0) + limit : undefined), { offline: !isOnline() }); },
+    async obtenerAlertas(limit, offset) { const data = isOnline() ? await FirebaseClient.list('alertas') : (AppState.get('alertas') || []); AppState.set('alertas', data); return result(data.slice(offset || 0, limit ? (offset || 0) + limit : undefined)); },
+    async marcarAlertaRevisada(id) { if (isOnline()) await FirebaseClient.save('alertas', id, { Revisada: true }); AppState.set('alertas', (AppState.get('alertas') || []).map(item => item.ID_Alerta === id || item._docId === id ? { ...item, Revisada: true } : item)); return result([]); },
+    async obtenerConfiguracion() { const data = isOnline() ? await FirebaseClient.list('configuracion') : []; if (data[0]) { const c = { ...DEFAULT_CONFIG, ...data[0] }; AppState.set('config', c); saveLocal(LS_KEYS.CONFIG, c); } return result(AppState.get('config')); },
+    async guardarConfiguracion(payload) { const c = { ...AppState.get('config'), ...payload }; AppState.set('config', c); saveLocal(LS_KEYS.CONFIG, c); if (isOnline()) await FirebaseClient.save('configuracion', 'general', c); return result(c); },
+    isOffline() { return !isOnline(); }, getPersonalFromCache() { return localPersonal(); }, getOfflineQueue() { return queue(); }, hasPendingSync() { return queue().length > 0; },
+    async syncOfflineQueue() { if (!isOnline()) return { enviadas: 0, errores: queue().length }; const pending = queue(); let enviadas = 0; const failed = []; for (const item of pending) { try { const p = item.payload || item; const record = { ...p, ID_Marcacion: p.id || makeId('MARC'), Fecha: p.fecha || AppState.today(), Hora_Real: p.horaReal || new Date().toLocaleTimeString('es-GT', { hour12: false }), Estado_Marcacion: p.estado || 'A tiempo', Fecha_Registro: now() }; await FirebaseClient.save('asistencias', record.ID_Marcacion, record); enviadas++; } catch (_) { failed.push(item); } } setQueue(failed); if (enviadas) saveLocal(LS_KEYS.LAST_SYNC, now()); return { enviadas, errores: failed.length }; },
   };
 })();

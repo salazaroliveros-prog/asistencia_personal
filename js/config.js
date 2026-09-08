@@ -1,6 +1,6 @@
 /**
  * CONTROL PERSONAL CAMPO — config.js
- * Constantes globales, URLs de Apps Script y estado de la aplicación.
+ * Constantes globales y estado de la aplicación.
  * @version 1.0.0
  */
 
@@ -15,7 +15,7 @@ const TIMEZONE     = 'America/Guatemala'; // GMT-6
 // CLAVES localStorage
 // ─────────────────────────────────────────────────────────────────────────────
 const LS_KEYS = {
-  GAS_URL:         'cpc_gas_url',
+  FIREBASE_CONFIG: 'cpc_firebase_config',
   CONFIG:          'cpc_config',
   PERSONAL_CACHE:  'cpc_personal_cache',
   LAST_SYNC:       'cpc_last_sync',
@@ -152,8 +152,8 @@ const AppState = (() => {
     // Página activa del router
     currentPage: 'dashboard',
 
-    // URL de Google Apps Script
-    gasUrl: '',
+    // Backend activo: local siempre disponible; Firestore cuando está configurado
+    backendMode: 'local',
 
     // Estado de conexión
     connected: false,
@@ -211,8 +211,8 @@ const AppState = (() => {
       const prev = _state[key];
       
       // Validación básica de tipos para propiedades críticas
-      if (key === 'gasUrl' && value !== null && typeof value !== 'string') {
-        console.warn('[AppState] gasUrl debe ser string, recibido:', typeof value);
+      if (key === 'backendMode' && !['local', 'firestore'].includes(value)) {
+        console.warn('[AppState] backendMode inválido:', value);
         return;
       }
       
@@ -269,22 +269,19 @@ const AppState = (() => {
     // localStorage, las eliminamos antes de restaurar el estado para que
     // la app arranque completamente vacía.
     const URL_DEMO = 'demo.control-personal-campo.local';
-    const gasUrlGuardada = localStorage.getItem(LS_KEYS.GAS_URL) || '';
     const tieneDatosDemo = localStorage.getItem('cpc_demo_loaded') === '1';
-    const tieneUrlDemo   = gasUrlGuardada.includes(URL_DEMO);
+    const configFirebase = localStorage.getItem(LS_KEYS.FIREBASE_CONFIG) || '';
+    const tieneUrlDemo   = false;
 
     if (tieneDatosDemo || tieneUrlDemo) {
       ['cpc_demo_loaded', 'cpc_personal_cache', 'cpc_last_sync', 'cpc_config'].forEach(k => {
         localStorage.removeItem(k);
       });
-      if (tieneUrlDemo) localStorage.removeItem(LS_KEYS.GAS_URL);
+      localStorage.removeItem(LS_KEYS.FIREBASE_CONFIG);
       console.info('[Config] Datos demo eliminados del localStorage — continuando con estado normal.');
     }
 
     // ── Restaurar estado normal ────────────────────────────────────────────
-    const gasUrl = localStorage.getItem(LS_KEYS.GAS_URL) || '';
-    AppState.set('gasUrl', gasUrl);
-
     const savedConfig = localStorage.getItem(LS_KEYS.CONFIG);
     if (savedConfig) {
       const parsed = JSON.parse(savedConfig);

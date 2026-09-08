@@ -21,7 +21,7 @@ function htmlChecks() {
   check(`IDs únicos sin duplicados (${new Set(ids).size} IDs)`, new Set(ids).size === ids.length);
   for (const [, file] of html.matchAll(/src="(js\/[^\"]+)"/g)) check(`Script existe: ${file}`, fs.existsSync(path.join(ROOT, file)));
   for (const [, file] of html.matchAll(/href="(css\/[^\"]+)"/g)) check(`CSS existe: ${file}`, fs.existsSync(path.join(ROOT, file)));
-  for (const id of ['app','splash-screen','sidebar','toast-container','kpi-total','kpi-asistencia','kpi-tardanzas','kpi-ausencias','calendar-grid','qr-reader','modal-personal','modal-carne','asistencia-tbody','modal-horas-extra','gas-url','btn-test-connection','modal-dia-calendario','modal-dia-content']) check(`ID crítico #${id}`, html.includes(`id="${id}"`));
+  for (const id of ['app','splash-screen','sidebar','toast-container','kpi-total','kpi-asistencia','kpi-tardanzas','kpi-ausencias','calendar-grid','qr-reader','modal-personal','modal-carne','asistencia-tbody','modal-horas-extra','firebase-project-id','btn-connect-firebase','modal-dia-calendario','modal-dia-content']) check(`ID crítico #${id}`, html.includes(`id="${id}"`));
   check('5 páginas SPA declaradas', ['dashboard','personal','asistencia','reportes','ajustes'].every(p => html.includes(`id="page-${p}"`)));
 }
 
@@ -36,13 +36,13 @@ function validatorChecks() {
 
 function businessChecks() {
   console.log('\n── Lógica de negocio');
-  const pdf = read('js/utils/pdf-builder.js'); const asistencia = read('js/modules/asistencia.js'); const personal = read('js/modules/personal.js'); const gas = read('gas/Code.gs');
+  const pdf = read('js/utils/pdf-builder.js'); const asistencia = read('js/modules/asistencia.js'); const personal = read('js/modules/personal.js'); const api = read('js/api.js');
   check('PDF usa Metodo_Registro', pdf.includes('Metodo_Registro') && !pdf.includes('a.Metodo ==='));
   check('PDF usa lookup eficiente de personal', pdf.includes('personalMap') || pdf.includes('new Map'));
   check('Asistencia conserva Metodo_Registro', asistencia.includes('Metodo_Registro'));
   check('Asistencia offline conserva Ubicacion_Obra', asistencia.includes('Ubicacion_Obra:'));
   check('Sábado contado como día hábil', personal.includes('dow !== 0'));
-  check('Horas extra usan configuración', gas.includes('Hora_Salida_Obra') && !gas.includes('17 * 60 + 15'));
+  check('API usa Firestore con respaldo local', api.includes('FirebaseClient') && api.includes('modo local'));
 }
 
 async function main() {

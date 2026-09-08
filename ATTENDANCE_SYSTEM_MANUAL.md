@@ -42,8 +42,8 @@ The Control Personal Campo system is a comprehensive worker attendance managemen
 ## 2. Prerequisites
 
 ### For Administrators
-- Google Account with Google Sheets access
-- configured Google Apps Script Web App URL
+- Firebase project with a Web application registered
+- Firestore Database and Anonymous Authentication enabled
 - Mobile device or tablet with camera (recommended)
 - Internet connection for initial setup and data sync
 
@@ -65,16 +65,14 @@ The Control Personal Campo system is a comprehensive worker attendance managemen
 
 ### 3.1 System Configuration
 
-#### Step 1: Configure Google Apps Script Connection
-1. Navigate to **Ajustes** (Settings) and open the Google Sheets connection assistant.
-2. Create/deploy the Apps Script Web App once using the code shown by the assistant.
-3. Set the Web App to execute as the owner and allow access to anyone who has the link.
-4. Paste the URL ending in `/exec`.
-5. Click **Preparar Google Sheets automáticamente**.
-6. The application will create or recover the spreadsheet, create the `Personal`, `Asistencias`, `Alertas` and `Configuracion` sheets, and verify read access.
-7. If successful, click **Finalizar Configuración**. The URL is stored locally in the browser.
+#### Step 1: Configure Firestore Connection
+1. In Firebase Console create a project and register a Web application.
+2. Enable **Firestore Database** and **Authentication → Sign-in method → Anonymous**.
+3. Publish this repository's `firestore.rules` to the project.
+4. In **Ajustes**, paste the Web App values: Project ID, API Key, Auth Domain and App ID.
+5. Click **Conectar Firestore**. The application authenticates anonymously and subscribes to realtime changes.
 
-The application never asks for or stores a Google password. Google handles authorization in its own interface. After the first deployment, no manual spreadsheet creation or sheet naming is required.
+If Firebase is not configured, the application remains fully usable in **Modo local**. Data is stored in that browser/device and pending attendance records are synchronized when Firestore is connected. No Google password or Apps Script URL is requested.
 
 #### Step 2: Configure Work Schedule
 1. In **Ajustes**, locate the **Horarios de Obra** section
@@ -129,7 +127,7 @@ The application never asks for or stores a Google password. Google handles autho
 #### Before Workers Arrive
 1. **System Check**: Ensure the device is charged and connected to internet
 2. **Connection Verification**: Check the connection status in the sidebar
-   - Green dot: Connected to Google Sheets
+   - Green dot: Connected to Firestore
    - Red dot: No connection (offline mode active)
    - Yellow dot: Attempting to connect
 3. **GPS Verification**: If using GPS, ensure location services are enabled
@@ -355,7 +353,7 @@ The application never asks for or stores a Google password. Google handles autho
 #### Device Failure
 1. **Backup Device**: Have secondary device available with system access
 2. **Cloud Access**: System can be accessed from any device with browser
-3. **Data Recovery**: All data is stored in Google Sheets, not on device
+3. **Data Recovery**: Online data is stored in Firestore; local data remains on the device until synchronization.
 4. **Quick Setup**: New device can be configured in minutes
 
 ### 7.2 Worker Emergency Procedures
@@ -405,21 +403,21 @@ The application never asks for or stores a Google password. Google handles autho
 - Check if GPS works in other applications
 
 #### Sync Failures
-**Problem**: Attendance markings not syncing to Google Sheets  
-**Causes**: Internet connection, Google Apps Script URL incorrect, API quota exceeded  
+**Problem**: Attendance markings not syncing to Firestore
+**Causes**: Internet connection, Firebase configuration, Authentication or Firestore rules
 **Solutions**:
 - Check internet connection
-- Verify Google Apps Script URL is correct
-- Test connection in Settings
-- Check Google Sheets quota limits
+- Verify Firebase values in Settings
+- Confirm Anonymous Authentication is enabled
+- Publish `firestore.rules`
 - Manually trigger sync when connection is stable
 
 **Problem**: Connection ping succeeds but data reads fail with `getActiveSpreadsheet()` or `Cannot read properties of null`
-**Cause**: The Apps Script deployment is using an older backend or is not linked to a spreadsheet.
+**Cause**: Firebase is not configured, anonymous authentication is disabled, or Firestore rules reject the user.
 **Solutions**:
-- Update/redeploy the current `gas/Code.gs` version.
-- Click **Preparar Google Sheets automáticamente** in the assistant.
-- Confirm that the Web App executes as the owner and is accessible to anyone with the link.
+- Confirm the Web App Firebase configuration values.
+- Enable Anonymous Authentication.
+- Publish the repository's `firestore.rules` file.
 
 #### QR Code Not Recognized
 **Problem**: System cannot read worker QR code  
@@ -445,7 +443,7 @@ The application never asks for or stores a Google password. Google handles autho
 ### 8.2 Error Messages Explained
 
 #### Connection Errors
-- **"URL de Google Apps Script no configurada"**: Setup required in Settings
+- **"Modo local activo"**: Firebase is not configured or temporarily unavailable; the application still works locally.
 - **"Error de conexión"**: Internet or server issue
 - **"Tiempo de espera agotado"**: Request timeout, try again
 
@@ -489,15 +487,14 @@ The application never asks for or stores a Google password. Google handles autho
 ### 9.2 Data Management
 
 #### Regular Maintenance
-- ✅ Regularly backup Google Sheets data
+- ✅ Regularly export an application backup and verify Firestore rules
 - ✅ Review and clean up old attendance records
 - ✅ Update worker information as needed
 - ✅ Monitor system performance and storage
 - ✅ Keep system software and dependencies updated
 
 #### Security Practices
-- ✅ Protect Google Apps Script URL
-- ✅ Use strong passwords for Google accounts
+- ✅ Keep Firebase project configuration and Firestore rules under review
 - ✅ Regularly review access permissions
 - ✅ Monitor for unauthorized access attempts
 - ✅ Keep worker information confidential
@@ -562,7 +559,7 @@ The application never asks for or stores a Google password. Google handles autho
 - 🔴 **Red**: Salida Obra (Site Exit) - End of work day
 
 ### Connection Status Indicators
-- 🟢 **Green Dot**: Connected to Google Sheets
+- 🟢 **Green Dot**: Connected to Firestore
 - 🔴 **Red Dot**: No connection (offline mode)
 - 🟡 **Yellow Dot**: Attempting to connect
 - ⚪ **White Dot**: Not configured

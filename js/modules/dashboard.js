@@ -610,7 +610,7 @@ const ModuloDashboard = (() => {
     const ultimoDia   = new Date(anio, mes + 1, 0);
     const ultimoDiaStr = `${anio}-${String(mes + 1).padStart(2, '0')}-${String(ultimoDia.getDate()).padStart(2, '0')}`;
 
-    if (AppState.get('gasUrl') || true) { // siempre intentar (API mockeada en demo)
+    if (AppState.get('backendMode') === 'firestore' || true) { // API resuelve Firestore o cache local
       try {
         const result = await API.obtenerAsistenciaRango(primerDia, ultimoDiaStr);
         if (result.success && Array.isArray(result.data)) {

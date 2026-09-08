@@ -205,7 +205,7 @@ async function registrarTrabajador(page, datos) {
     const connText = await page.evaluate(() =>
       document.getElementById('connection-text')?.textContent?.trim()
     );
-    check(connText === 'Sin configurar', `Indicador de conexión correcto: "${connText}"`);
+    check(connText === 'Modo local', `Indicador de conexión correcto: "${connText}"`);
 
     const currentPage = await page.evaluate(() => AppState.get('currentPage'));
     check(currentPage === 'dashboard', `Página inicial correcta: "${currentPage}"`);

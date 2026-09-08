@@ -50,7 +50,7 @@ const criticalIds = [
   'kpi-total', 'kpi-asistencia', 'kpi-tardanzas', 'kpi-ausencias',
   'calendar-grid', 'qr-reader', 'modal-personal', 'modal-carne',
   'asistencia-tbody', 'modal-horas-extra',
-  'gas-url', 'btn-test-connection',
+  'firebase-project-id', 'btn-connect-firebase',
   'modal-dia-calendario', 'modal-dia-content'
 ];
 criticalIds.forEach(function(id) {

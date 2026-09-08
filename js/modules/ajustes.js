@@ -1,6 +1,6 @@
 /**
  * CONTROL PERSONAL CAMPO — modules/ajustes.js
- * Módulo de configuración: URL GAS, general, horarios, logo y backup.
+ * Módulo de configuración: Firestore, general, horarios, logo y backup.
  * @version 1.0.0
  */
 
@@ -13,12 +13,10 @@ const ModuloAjustes = (() => {
   }
 
   function _bindEvents() {
-    // ─── Conexión GAS ──────────────────────────────────────────────────
-    const btnTestConn = document.getElementById('btn-test-connection');
-    const btnSaveUrl  = document.getElementById('btn-save-url');
-
-    if (btnTestConn) btnTestConn.addEventListener('click', _testConexion);
-    if (btnSaveUrl)  btnSaveUrl.addEventListener('click', _guardarURL);
+    const btnFirebase = document.getElementById('btn-connect-firebase');
+    const btnLocal = document.getElementById('btn-use-local');
+    if (btnFirebase) btnFirebase.addEventListener('click', _conectarFirebase);
+    if (btnLocal) btnLocal.addEventListener('click', _usarModoLocal);
 
     // ─── Configuración General ─────────────────────────────────────────
     const btnSaveGeneral = document.getElementById('btn-save-general');
@@ -79,12 +77,12 @@ const ModuloAjustes = (() => {
   // CARGAR CONFIGURACIÓN LOCAL
   // ─────────────────────────────────────────────────────────────────────────
   function _cargarConfigLocal() {
-    const gasUrl = AppState.get('gasUrl');
     const config = AppState.get('config') || DEFAULT_CONFIG;
-
-    // URL de GAS
-    const urlInput = document.getElementById('gas-url');
-    if (urlInput) urlInput.value = gasUrl || '';
+    const firebase = FirebaseClient.getConfig();
+    _setInput('firebase-project-id', firebase.projectId);
+    _setInput('firebase-api-key', firebase.apiKey);
+    _setInput('firebase-auth-domain', firebase.authDomain);
+    _setInput('firebase-app-id', firebase.appId);
 
     // General
     _setInput('cfg-nombre-obra', config.Nombre_Obra);
@@ -119,81 +117,28 @@ const ModuloAjustes = (() => {
     if (el && value !== undefined && value !== null) el.value = value;
   }
 
-  // ─────────────────────────────────────────────────────────────────────────
-  // CONEXIÓN GOOGLE APPS SCRIPT
-  // ─────────────────────────────────────────────────────────────────────────
-  async function _testConexion() {
-    const urlInput = document.getElementById('gas-url');
-    const url      = urlInput?.value.trim();
-
-    console.log('[Ajustes] _testConexion inicio', { url, stored: AppState.get('gasUrl') });
-
-    if (!url) {
-      Alerts.error('Ingresa la URL de tu Web App de Google Apps Script.');
-      return;
-    }
-
-    if (!url.startsWith('https://script.google.com/macros/s/')) {
-      Alerts.warning('La URL no parece ser válida. Debe comenzar con:\nhttps://script.google.com/macros/s/');
-    }
-
-    AppState.set('gasUrl', url);
-
+  async function _conectarFirebase() {
+    const config = { ...FirebaseClient.getConfig(),
+      projectId: document.getElementById('firebase-project-id')?.value.trim(),
+      apiKey: document.getElementById('firebase-api-key')?.value.trim(),
+      authDomain: document.getElementById('firebase-auth-domain')?.value.trim(),
+      appId: document.getElementById('firebase-app-id')?.value.trim(),
+    };
+    if (!FirebaseClient.isConfigured(config)) { Alerts.error('Completa ID del proyecto, API Key, dominio de autenticación y App ID.'); return; }
+    localStorage.setItem(LS_KEYS.FIREBASE_CONFIG, JSON.stringify(config));
     const statusEl = document.getElementById('connection-status-detail');
-    const btnTest  = document.getElementById('btn-test-connection');
-    if (btnTest) btnTest.disabled = true;
-
-    if (statusEl) {
-      statusEl.className = 'connection-status-detail';
-      statusEl.textContent = '⏳ Probando conexión...';
-      statusEl.style.display = 'block';
-      statusEl.style.background = 'rgba(0,168,232,0.1)';
-      statusEl.style.border = '1px solid rgba(0,168,232,0.3)';
-      statusEl.style.color = 'var(--color-secondary)';
-    }
-
-    try {
-      console.log('[Ajustes] Llamando API.ping desde', typeof window !== 'undefined' ? window.location.hostname : 'server');
-      const result = await API.ping();
-      console.log('[Ajustes] API.ping resultado', result);
-
-      if (result.success) {
-        if (statusEl) {
-          statusEl.className = 'connection-status-detail success';
-          statusEl.textContent = `✅ Conexión exitosa — ${result.message || 'API activa'} (${new Date().toLocaleTimeString('es-GT')})`;
-        }
-        Alerts.success('Conexión con Google Sheets establecida correctamente', 'Conexión exitosa');
-      } else {
-        if (statusEl) {
-          statusEl.className = 'connection-status-detail error';
-          statusEl.textContent = `❌ Error: ${result.error || 'Respuesta inesperada del servidor'}`;
-        }
-        console.warn('[Ajustes] Ping fallido', result);
-      }
-    } catch (err) {
-      console.warn('[Ajustes] Error en prueba de conexión', err);
-      if (statusEl) {
-        statusEl.className = 'connection-status-detail error';
-        statusEl.textContent = `❌ Error de conexión: ${err.message}`;
-      }
-      Alerts.error(err.message, 'Sin conexión');
-    } finally {
-      if (btnTest) btnTest.disabled = false;
-    }
+    if (statusEl) statusEl.textContent = '⏳ Conectando con Firestore…';
+    const result = await API.initialize();
+    if (result.success) { if (statusEl) { statusEl.className = 'connection-status-detail success'; statusEl.textContent = `✅ Firestore conectado: ${config.projectId}`; } Alerts.success('Firestore conectado y sincronización en tiempo real activa.'); }
+    else { if (statusEl) { statusEl.className = 'connection-status-detail error'; statusEl.textContent = `❌ ${result.error || 'No se pudo conectar.'}`; } Alerts.error(result.error || 'No se pudo conectar con Firestore.'); }
   }
 
-  async function _guardarURL() {
-    const url = document.getElementById('gas-url')?.value.trim();
-
-    if (!url) {
-      Alerts.error('Ingresa una URL válida.');
-      return;
-    }
-
-    localStorage.setItem(LS_KEYS.GAS_URL, url);
-    AppState.set('gasUrl', url);
-
-    Alerts.success('URL guardada correctamente. Ahora prueba la conexión.');
+  function _usarModoLocal() {
+    FirebaseClient.stop();
+    AppState.set('backendMode', 'local'); AppState.set('connected', false);
+    const statusEl = document.getElementById('connection-status-detail');
+    if (statusEl) { statusEl.className = 'connection-status-detail'; statusEl.textContent = '💾 Modo local activo en este dispositivo.'; }
+    Alerts.success('Modo local activado. Tus datos se conservarán en este dispositivo.');
   }
 
   // ─────────────────────────────────────────────────────────────────────────
@@ -220,15 +165,15 @@ const ModuloAjustes = (() => {
     localStorage.setItem(LS_KEYS.CONFIG, JSON.stringify(newConfig));
 
     // Sincronizar con GAS si hay conexión
-    if (AppState.get('gasUrl') && AppState.get('connected')) {
-      const loader = Alerts.loading('Guardando en Google Sheets...');
+    if (AppState.get('backendMode') === 'firestore' && AppState.get('connected')) {
+      const loader = Alerts.loading('Guardando en Firestore...');
       try {
         await API.guardarConfiguracion(payload);
         loader.close();
-        Alerts.success('Configuración general guardada y sincronizada con Google Sheets');
+        Alerts.success('Configuración general guardada y sincronizada con Firestore');
       } catch (err) {
         loader.close();
-        Alerts.warning('Guardado localmente. No se pudo sincronizar con Google Sheets: ' + err.message);
+        Alerts.warning('Guardado localmente. No se pudo sincronizar con Firestore: ' + err.message);
       }
     } else {
       Alerts.success('Configuración guardada localmente');
@@ -263,7 +208,7 @@ const ModuloAjustes = (() => {
     AppState.set('config', newConfig);
     localStorage.setItem(LS_KEYS.CONFIG, JSON.stringify(newConfig));
 
-    if (AppState.get('gasUrl') && AppState.get('connected')) {
+    if (AppState.get('backendMode') === 'firestore' && AppState.get('connected')) {
       const loader = Alerts.loading('Guardando horarios...');
       try {
         await API.guardarConfiguracion(payload);
@@ -347,7 +292,7 @@ const ModuloAjustes = (() => {
     AppState.set('config', newConfig);
     localStorage.setItem(LS_KEYS.CONFIG, JSON.stringify(newConfig));
 
-    if (AppState.get('gasUrl') && AppState.get('connected')) {
+    if (AppState.get('backendMode') === 'firestore' && AppState.get('connected')) {
       const loader = Alerts.loading('Guardando logo...');
       try {
         await API.guardarConfiguracion({ Logo_Base64: logoSrc });
@@ -371,7 +316,6 @@ const ModuloAjustes = (() => {
     const backup = {
       version:   APP_VERSION,
       fecha:     new Date().toISOString(),
-      gasUrl:    AppState.get('gasUrl') || '',
       config:    AppState.get('config') || DEFAULT_CONFIG,
       personal:  AppState.get('personal') || [],
     };
@@ -419,11 +363,6 @@ const ModuloAjustes = (() => {
         if (!confirmed) return;
 
         // Restaurar
-        if (backup.gasUrl) {
-          localStorage.setItem(LS_KEYS.GAS_URL, backup.gasUrl);
-          AppState.set('gasUrl', backup.gasUrl);
-        }
-
         if (backup.config) {
           const newConfig = { ...DEFAULT_CONFIG, ...backup.config };
           localStorage.setItem(LS_KEYS.CONFIG, JSON.stringify(newConfig));
@@ -512,7 +451,7 @@ const ModuloAjustes = (() => {
     localStorage.setItem(LS_KEYS.CONFIG, JSON.stringify(newConfig));
 
     // Sincronizar con GAS si hay conexión
-    if (AppState.get('gasUrl') && AppState.get('connected')) {
+    if (AppState.get('backendMode') === 'firestore' && AppState.get('connected')) {
       const loader = Alerts.loading('Guardando configuración GPS...');
       try {
         await API.guardarConfiguracion(payload);
@@ -532,7 +471,7 @@ const ModuloAjustes = (() => {
     _cargarConfigLocal();
 
     // Si hay conexión, sincronizar config desde GAS
-    if (AppState.get('gasUrl') && AppState.get('connected')) {
+    if (AppState.get('backendMode') === 'firestore' && AppState.get('connected')) {
       try {
         await API.obtenerConfiguracion();
         _cargarConfigLocal(); // Re-llenar con datos actualizados

@@ -242,8 +242,8 @@
   AppState.set('alertas',     ALERTAS.filter(a => a.Estatus === 'Pendiente'));
   AppState.set('config',      CONFIG);
   AppState.set('connected',   true);   // Simular conexión activa (API parcheada)
-  // URL ficticia para que los if(gasUrl) en los módulos no bloqueen las llamadas
-  AppState.set('gasUrl',      'https://demo.control-personal-campo.local/exec');
+  // El demo usa la misma API local sin requerir un backend externo.
+  AppState.set('backendMode', 'local');
   try { localStorage.setItem('cpc_gas_url', 'https://demo.control-personal-campo.local/exec'); } catch(e) {}
 
   // Exponer para que el parche de API los use

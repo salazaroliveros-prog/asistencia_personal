@@ -75,7 +75,6 @@ function _initModules() {
   ModuloDashboard.init();
   ModuloReportes.init();
   ModuloAjustes.init();
-  GASAssistant.init();
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -385,43 +384,14 @@ function _getFormattedDate(date) {
 // CONEXIÓN INICIAL
 // ─────────────────────────────────────────────────────────────────────────────
 async function _initialConnection() {
-  const gasUrl = AppState.get('gasUrl');
-
-  // Actualizar el indicador de conexión en sidebar según estado real
-  const dot  = document.querySelector('.connection-dot');
-  const text = document.getElementById('connection-text');
-
-  if (!gasUrl) {
-    // Sin URL: mostrar "Sin configurar" en gris neutral
-    if (dot)  dot.className  = 'connection-dot';
-    if (text) text.textContent = 'Sin configurar';
-
-    // Mostrar aviso si no hay URL configurada (solo primera vez)
-    const alreadyNotified = sessionStorage.getItem('cpc_setup_notified');
-    if (!alreadyNotified) {
-      setTimeout(() => {
-        Alerts.info(
-          'Configura la URL de Google Apps Script en <b>Ajustes</b> para conectar tu base de datos.',
-          'Sin conexión configurada'
-        );
-      }, 2000);
-      sessionStorage.setItem('cpc_setup_notified', '1');
-    }
-    return;
-  }
-
-  // Hay URL configurada: intentar ping silencioso
-  if (dot)  dot.className  = 'connection-dot connecting';
-  if (text) text.textContent = 'Conectando…';
-
   try {
-    await API.ping();
-    // Si hay conexión, cargar personal y config en segundo plano
-    API.obtenerPersonal().catch(() => {});
-    API.obtenerConfiguracion().catch(() => {});
+    const connection = await API.ping();
+    if (connection.success) {
+      API.obtenerPersonal().catch(() => {});
+      API.obtenerConfiguracion().catch(() => {});
+    }
   } catch (err) {
-    console.warn('[App] Conexión inicial fallida:', err.message);
-    // API.ping ya llama _setConnectionStatus(false) internamente
+    console.warn('[App] Firestore no disponible; se mantiene el modo local:', err.message);
   }
 }
 
@@ -475,18 +445,6 @@ function _limpiarDatosDemo() {
     console.info('[App] Limpiando datos demo del localStorage…');
     CLAVES_DEMO.forEach(k => localStorage.removeItem(k));
 
-    // Limpiar la URL ficticia de demo (pero preservar una URL real si el usuario
-    // ya había configurado una propia)
-    const gasUrl = localStorage.getItem('cpc_gas_url') || '';
-    if (gasUrl.includes('demo.control-personal-campo.local')) {
-      localStorage.removeItem('cpc_gas_url');
-    }
-  }
-
-  // Siempre asegurar que AppState arranque sin la URL demo
-  const gasUrl = localStorage.getItem('cpc_gas_url') || '';
-  if (gasUrl.includes('demo.control-personal-campo.local')) {
-    localStorage.removeItem('cpc_gas_url');
   }
 }
 
@@ -528,15 +486,12 @@ function _initSyncIndicator() {
   const syncLastEl   = document.getElementById('sync-last-time');
   const btnSyncNow   = document.getElementById('btn-sync-now');
 
-  // Mostrar indicador si hay URL configurada
-  if (AppState.get('gasUrl') && indicator) {
-    indicator.hidden = false;
-  }
+  if (indicator) indicator.hidden = false;
 
   // Actualizar UI cuando cambia el estado de conexión
   AppState.on('connected', (connected) => {
     if (!indicator) return;
-    indicator.hidden = !AppState.get('gasUrl');
+    indicator.hidden = false;
 
     if (connected) {
       // Reconexión — sincronizar automáticamente si hay pendientes
@@ -550,12 +505,6 @@ function _initSyncIndicator() {
 
   // Actualizar UI cuando cambia la queue
   AppState.on('offlineQueue', () => _updateSyncUI());
-
-  // Actualizar cuando se guarda la URL de GAS
-  AppState.on('gasUrl', (url) => {
-    if (indicator) indicator.hidden = !url;
-    _updateSyncUI();
-  });
 
   // Actualizar cuando hay nueva sync
   AppState.on('lastSync', () => _updateSyncUI());
