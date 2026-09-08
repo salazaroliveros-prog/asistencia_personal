@@ -5,10 +5,11 @@
  */
 
 const CacheManager = (() => {
-  
+   
   const memoryCache = new Map();
   const CACHE_TTL = 5 * 60 * 1000; // 5 minutes default TTL
   const CACHE_PREFIX = 'cpc_cache_';
+  const LS_QUOTA_WARN_BYTES = 4 * 1024 * 1024; // warn at ~4MB of cpc_ keys
 
   /**
    * Set item in cache with optional TTL
@@ -176,6 +177,24 @@ const CacheManager = (() => {
     return value;
   }
 
+  function checkQuota() {
+    try {
+      let totalBytes = 0;
+      for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        if (!key || !key.startsWith('cpc_')) continue;
+        const val = localStorage.getItem(key);
+        totalBytes += (key.length + (val ? val.length : 0)) * 2; // UTF-16
+      }
+      if (totalBytes > LS_QUOTA_WARN_BYTES) {
+        console.warn(`[CacheManager] localStorage uso estimado: ${(totalBytes / 1024).toFixed(1)} KB. Supera ${(LS_QUOTA_WARN_BYTES / 1024).toFixed(0)} KB.`);
+      }
+      return totalBytes;
+    } catch (e) {
+      return -1;
+    }
+  }
+
   return { 
     set, 
     get, 
@@ -184,6 +203,7 @@ const CacheManager = (() => {
     clear, 
     getStats, 
     cleanExpired,
-    getOrSet
+    getOrSet,
+    checkQuota
   };
 })();

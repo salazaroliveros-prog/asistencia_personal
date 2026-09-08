@@ -278,8 +278,7 @@ const AppState = (() => {
         localStorage.removeItem(k);
       });
       if (tieneUrlDemo) localStorage.removeItem(LS_KEYS.GAS_URL);
-      console.info('[Config] Datos demo eliminados del localStorage — arrancando en estado vacío.');
-      return; // Salir sin cargar nada al AppState
+      console.info('[Config] Datos demo eliminados del localStorage — continuando con estado normal.');
     }
 
     // ── Restaurar estado normal ────────────────────────────────────────────

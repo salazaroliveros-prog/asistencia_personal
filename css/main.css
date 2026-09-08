@@ -169,6 +169,24 @@ table {
 }
 
 /* ─────────────────────────────────────────────────────────────────────────────
+   ACCESIBILIDAD
+   ───────────────────────────────────────────────────────────────────────────── */
+.skip-link {
+  position: absolute;
+  left: -999px;
+  top: 8px;
+  background: var(--color-primary);
+  color: #fff;
+  padding: var(--space-2) var(--space-4);
+  border-radius: var(--radius-sm);
+  z-index: 9999;
+  font-weight: 600;
+}
+.skip-link:focus {
+  left: 8px;
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
    FONDO GLOBAL — Glassmorphism optimizado
    ───────────────────────────────────────────────────────────────────────────── */
 body {

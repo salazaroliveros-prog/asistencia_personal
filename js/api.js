@@ -78,7 +78,9 @@ const API = (() => {
       clearTimeout(timeoutId);
 
       if (!response.ok) {
-        throw new Error(`Error HTTP ${response.status}: ${response.statusText} al conectar con ${url}`);
+        const httpError = new Error(`Error HTTP ${response.status}: ${response.statusText} al conectar con ${url}`);
+        httpError.status = response.status;
+        throw httpError;
       }
 
       const text = await response.text();
@@ -101,6 +103,12 @@ const API = (() => {
       if (retries > 0 && (err.message.includes('fetch') || err.message.includes('network') || err.message.includes('Failed'))) {
         console.warn(`[API] Error de red detectado, reintentando... (${RETRY_COUNT - retries + 1}/${RETRY_COUNT})`);
         await _sleep(800);
+        return _post(body, retries - 1);
+      }
+
+      if (retries > 0 && err.status && err.status >= 500) {
+        console.warn(`[API] Error servidor GAS ${err.status}, reintentando... (${RETRY_COUNT - retries + 1}/${RETRY_COUNT})`);
+        await _sleep(1200);
         return _post(body, retries - 1);
       }
 
@@ -230,23 +238,24 @@ const API = (() => {
     },
 
     // ═══════════════════ PERSONAL ═══════════════════
-    async obtenerPersonal() {
-      // Check cache first
-      const cached = CacheManager ? CacheManager.get('personal_list') : null;
+    async obtenerPersonal(limit, offset) {
+      const cacheKey = 'personal_list' + (limit ? '_p' + limit : '') + (offset ? '_o' + offset : '');
+      const cached = CacheManager ? CacheManager.get(cacheKey) : null;
       if (cached && Array.isArray(cached)) {
         AppState.set('personal', cached);
         return { success: true, data: cached, cached: true };
       }
 
-      const result = await _post({ action: 'obtenerPersonal' });
+      const body = { action: 'obtenerPersonal' };
+      if (limit) body.limit = limit;
+      if (offset) body.offset = offset;
+
+      const result = await _post(body);
       if (result.success && Array.isArray(result.data)) {
         AppState.set('personal', result.data);
-        // Cache with 10 minute TTL if CacheManager is available
         if (CacheManager) {
-          CacheManager.set('personal_list', result.data, 10 * 60 * 1000);
+          CacheManager.set(cacheKey, result.data, 10 * 60 * 1000);
         }
-        
-        // Fallback localStorage cache for persistence
         try {
           localStorage.setItem(LS_KEYS.PERSONAL_CACHE, JSON.stringify(result.data));
           localStorage.setItem(LS_KEYS.LAST_SYNC, new Date().toISOString());
@@ -301,21 +310,30 @@ const API = (() => {
       }
     },
 
-    async obtenerAsistencias(fecha) {
-      const result = await _post({ action: 'obtenerAsistencias', fecha: fecha || AppState.today() });
+    async obtenerAsistencias(fecha, limit, offset) {
+      const body = { action: 'obtenerAsistencias', fecha: fecha || AppState.today() };
+      if (limit) body.limit = limit;
+      if (offset) body.offset = offset;
+      const result = await _post(body);
       if (result.success && Array.isArray(result.data)) {
         AppState.set('asistencias', result.data);
       }
       return result;
     },
 
-    async obtenerAsistenciaRango(fechaInicio, fechaFin) {
-      return await _post({ action: 'obtenerAsistenciaRango', fechaInicio, fechaFin });
+    async obtenerAsistenciaRango(fechaInicio, fechaFin, limit, offset) {
+      const body = { action: 'obtenerAsistenciaRango', fechaInicio, fechaFin };
+      if (limit) body.limit = limit;
+      if (offset) body.offset = offset;
+      return await _post(body);
     },
 
     // ═══════════════════ ALERTAS ═══════════════════
-    async obtenerAlertas() {
-      const result = await _post({ action: 'obtenerAlertas' });
+    async obtenerAlertas(limit, offset) {
+      const body = { action: 'obtenerAlertas' };
+      if (limit) body.limit = limit;
+      if (offset) body.offset = offset;
+      const result = await _post(body);
       if (result.success && Array.isArray(result.data)) {
         AppState.set('alertas', result.data);
       }

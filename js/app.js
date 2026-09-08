@@ -21,6 +21,11 @@ document.addEventListener('DOMContentLoaded', async () => {
     // 2. Inicializar todos los módulos
     _initModules();
 
+    // 2.1 Verificar cuota de localStorage
+    if (typeof CacheManager !== 'undefined' && CacheManager.checkQuota) {
+      CacheManager.checkQuota();
+    }
+
     // 3. Iniciar reloj en tiempo real
     _startClock();
 

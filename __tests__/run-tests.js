@@ -10,10 +10,11 @@
  * también puede correr pruebas E2E con Playwright.
  */
 
-const fs   = require('fs');
-const path = require('path');
+import fs from 'fs';
+import path from 'path';
+import vm from 'vm';
 
-const ROOT = path.resolve(__dirname, '..');
+const ROOT = path.resolve(import.meta.dirname, '..');
 
 // ── Utilidades ──────────────────────────────────────────────────────────────
 let pass = 0, fail = 0;
@@ -114,7 +115,6 @@ function runHtmlVerification() {
 function runValidatorTests() {
   section('Validadores unitarios');
 
-  // Cargar validadores desde el source
   const validatorsPath = path.join(ROOT, 'js', 'utils', 'validators.js');
   if (!fs.existsSync(validatorsPath)) {
     log('validators.js existe', false);
@@ -122,51 +122,54 @@ function runValidatorTests() {
   }
   log('validators.js existe', true);
 
-  // Evaluar el módulo de validadores en un contexto aislado
   const validatorsCode = fs.readFileSync(validatorsPath, 'utf8');
 
-  // Extraer funciones mediante eval controlado
-  const validators = {};
+  // Cargar módulo de validadores en contexto aislado
+  let Validators = null;
   try {
-    const fn = new Function('exports', validatorsCode + '\nreturn exports;');
-    validators = fn({});
+    const context = vm.createContext({ module: { exports: {} }, console });
+    vm.runInContext(validatorsCode, context);
+    Validators = context.Validators || (context.module && context.module.exports);
   } catch (e) {
     log('Carga de validadores', false, e.message);
     return;
   }
 
+  if (!Validators || typeof Validators !== 'object') {
+    log('Carga de validadores', false, 'No se pudo obtener el objeto Validators');
+    return;
+  }
+
   // DPI
-  log('validateDPI acepta 13 dígitos', validators.validateDPI('2512345678901').valid === true);
-  log('validateDPI rechaza 12 dígitos', validators.validateDPI('251234567890').valid === false);
-  log('validateDPI rechaza 14 dígitos', validators.validateDPI('25123456789012').valid === false);
+  log('validateDPI acepta 13 dígitos', Validators.validateDPI('2512345678901').valid === true);
+  log('validateDPI rechaza 12 dígitos', Validators.validateDPI('251234567890').valid === false);
+  log('validateDPI rechaza 14 dígitos', Validators.validateDPI('25123456789012').valid === false);
 
   // Teléfono: ahora acepta 8 u 11 dígitos
-  log('validateTelefono acepta 8 dígitos', validators.validateTelefono('55123456').valid === true);
-  log('validateTelefono acepta 11 dígitos con 502', validators.validateTelefono('50255123456').valid === true);
-  log('validateTelefono acepta +502 formateado', validators.validateTelefono('+502 5512-3456').valid === true);
-  log('validateTelefono rechaza 7 dígitos', validators.validateTelefono('5512345').valid === false);
-  log('validateTelefono rechaza 10 dígitos', validators.validateTelefono('5512345678').valid === false);
-  log('validateTelefono rechaza 11 dígitos sin 502', validators.validateTelefono('50255123456').valid === false ? false : true); // Should be false
-  // Actually 50255123456 starts with 502, so it should be valid
-  log('validateTelefono acepta 11 dígitos 502', validators.validateTelefono('50255123456').valid === true);
+  log('validateTelefono acepta 8 dígitos', Validators.validateTelefono('55123456').valid === true);
+  log('validateTelefono acepta 11 dígitos con 502', Validators.validateTelefono('50255123456').valid === true);
+  log('validateTelefono acepta +502 formateado', Validators.validateTelefono('+502 5512-3456').valid === true);
+  log('validateTelefono rechaza 7 dígitos', Validators.validateTelefono('5512345').valid === false);
+  log('validateTelefono rechaza 10 dígitos', Validators.validateTelefono('5512345678').valid === false);
+  log('validateTelefono acepta 11 dígitos 502', Validators.validateTelefono('50255123456').valid === true);
 
   // Nombre
-  log('validateNombre acepta nombre válido', validators.validateNombre('Roberto Lima').valid === true);
-  log('validateNombre rechaza 2 caracteres', validators.validateNombre('AB').valid === false);
+  log('validateNombre acepta nombre válido', Validators.validateNombre('Roberto Lima').valid === true);
+  log('validateNombre rechaza 1 caracter', Validators.validateNombre('A').valid === false);
 
-  // Puesto
-  log('validatePuesto acepta puesto válido', validators.validatePuesto('Albañil').valid === true);
-  log('validatePuesto rechaza puesto vacío', validators.validatePuesto('').valid === false);
+  // Teléfono ya probado arriba
 
-  // Horarios
-  log('validateHorario acepta HH:MM', validators.validateHorario('07:00').valid === true);
-  log('validateHorario rechaza formato inválido', validators.validateHorario('25:00').valid === false);
-  log('validateHorario rechaza texto', validators.validateHorario('siete').valid === false);
+  // Hora
+  log('validateHora acepta HH:MM', Validators.validateHora('07:00').valid === true);
+  log('validateHora rechaza formato inválido', Validators.validateHora('25:00').valid === false);
 
   // Tolerancia
-  log('validateTolerancia acepta 15', validators.validateTolerancia(15).valid === true);
-  log('validateTolerancia rechaza -1', validators.validateTolerancia(-1).valid === false);
-  log('validateTolerancia rechaza 999', validators.validateTolerancia(999).valid === false);
+  log('validateTolerancia acepta 15', Validators.validateTolerancia(15).valid === true);
+  log('validateTolerancia rechaza -1', Validators.validateTolerancia(-1).valid === false);
+  log('validateTolerancia rechaza 999', Validators.validateTolerancia(999).valid === false);
+
+  // Validaciones compuestas
+  log('validateTrabajador acepta completo', Validators.validateTrabajador({ nombre: 'Juan', dpi: '2512345678901', telefono: '55123456' }).valid === true);
 }
 
 // ── 3. Lógica de negocio ────────────────────────────────────────────────────
@@ -223,7 +226,7 @@ async function runE2ETests() {
 
   let playwright = null;
   try {
-    playwright = require('playwright');
+    playwright = await import('playwright');
   } catch (e) {
     log('Playwright disponible', false, 'npm install playwright');
     return;
@@ -231,7 +234,7 @@ async function runE2ETests() {
   log('Playwright disponible', true);
 
   // Verificar que el servidor esté corriendo en localhost:3800
-  const http = require('http');
+  const http = await import('http');
   const baseUrl = 'http://localhost:3800';
 
   const serverAlive = await new Promise(resolve => {

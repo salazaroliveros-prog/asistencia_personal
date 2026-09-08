@@ -43,17 +43,17 @@ function doPost(e) {
       case 'eliminarPersonal':
         return responseJSON(eliminarPersonal(ss, data.id));
       case 'obtenerPersonal':
-        return responseJSON(obtenerPersonal(ss));
+        return responseJSON(obtenerPersonal(ss, data.limit, data.offset));
       case 'obtenerTodosPersonal':
-        return responseJSON(obtenerTodosPersonal(ss));
+        return responseJSON(obtenerTodosPersonal(ss, data.limit, data.offset));
       case 'registrarMarcacion':
         return responseJSON(registrarMarcacion(ss, data.payload));
       case 'obtenerAsistencias':
-        return responseJSON(obtenerAsistencias(ss, data.fecha));
+        return responseJSON(obtenerAsistencias(ss, data.fecha, data.limit, data.offset));
       case 'obtenerAsistenciaRango':
-        return responseJSON(obtenerAsistenciaRango(ss, data.fechaInicio, data.fechaFin));
+        return responseJSON(obtenerAsistenciaRango(ss, data.fechaInicio, data.fechaFin, data.limit, data.offset));
       case 'obtenerAlertas':
-        return responseJSON(obtenerAlertas(ss));
+        return responseJSON(obtenerAlertas(ss, data.limit, data.offset));
       case 'marcarAlertaRevisada':
         return responseJSON(marcarAlertaRevisada(ss, data.id));
       case 'obtenerConfiguracion':
@@ -133,10 +133,28 @@ function sheetToObjects(sheet) {
 }
 
 function encontrarFilaPorID(sheet, idColumna, idValor) {
-  var data = sheet.getDataRange().getValues();
-  for (var i = 1; i < data.length; i++) {
-    if (data[i][idColumna] == idValor) return i + 1; // 1-indexed row
+  var cacheKey = 'row_cache_' + sheet.getName() + '_' + idColumna;
+  var cache = CacheService.getScriptCache();
+  var cached = cache.get(cacheKey);
+  
+  if (cached) {
+    try {
+      var map = JSON.parse(cached);
+      if (map[idValor]) return map[idValor];
+    } catch (e) {}
   }
+  
+  var data = sheet.getDataRange().getValues();
+  var map = {};
+  for (var i = 1; i < data.length; i++) {
+    map[data[i][idColumna]] = i + 1;
+    if (data[i][idColumna] == idValor) {
+      try { cache.put(cacheKey, JSON.stringify(map), 600); } catch (e) {}
+      return i + 1;
+    }
+  }
+  
+  try { cache.put(cacheKey, JSON.stringify(map), 600); } catch (e) {}
   return -1;
 }
 
@@ -236,22 +254,38 @@ function eliminarPersonal(ss, id) {
   return { success: true, message: "Trabajador dado de baja correctamente" };
 }
 
-function obtenerPersonal(ss) {
+function obtenerPersonal(ss, limit, offset) {
   var sheet = ss.getSheetByName("Personal");
   if (!sheet) return { success: false, error: "Hoja 'Personal' no encontrada" };
 
   var todos = sheetToObjects(sheet);
   var activos = todos.filter(function(t) { return t.Estado === "Activo"; });
-
-  return { success: true, data: activos, total: activos.length };
+  
+  var total = activos.length;
+  var start = offset ? parseInt(offset) : 0;
+  var length = limit ? parseInt(limit) : activos.length;
+  var end = Math.min(start + length, total);
+  
+  return { 
+    success: true, 
+    data: activos.slice(start, end), 
+    total: total,
+    limit: length,
+    offset: start
+  };
 }
 
-function obtenerTodosPersonal(ss) {
+function obtenerTodosPersonal(ss, limit, offset) {
   var sheet = ss.getSheetByName("Personal");
   if (!sheet) return { success: false, error: "Hoja 'Personal' no encontrada" };
 
   var todos = sheetToObjects(sheet);
-  return { success: true, data: todos, total: todos.length };
+  var total = todos.length;
+  var start = offset ? parseInt(offset) : 0;
+  var length = limit ? parseInt(limit) : total;
+  var end = Math.min(start + length, total);
+  
+  return { success: true, data: todos.slice(start, end), total: total, limit: length, offset: start };
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -317,7 +351,7 @@ function registrarMarcacion(ss, payload) {
   };
 }
 
-function obtenerAsistencias(ss, fecha) {
+function obtenerAsistencias(ss, fecha, limit, offset) {
   var sheet = ss.getSheetByName("Asistencias");
   if (!sheet) return { success: false, error: "Hoja 'Asistencias' no encontrada" };
 
@@ -325,11 +359,16 @@ function obtenerAsistencias(ss, fecha) {
   if (fecha) {
     todos = todos.filter(function(a) { return a.Fecha === fecha; });
   }
-
-  return { success: true, data: todos, total: todos.length };
+  
+  var total = todos.length;
+  var start = offset ? parseInt(offset) : 0;
+  var length = limit ? parseInt(limit) : total;
+  var end = Math.min(start + length, total);
+  
+  return { success: true, data: todos.slice(start, end), total: total, limit: length, offset: start };
 }
 
-function obtenerAsistenciaRango(ss, fechaInicio, fechaFin) {
+function obtenerAsistenciaRango(ss, fechaInicio, fechaFin, limit, offset) {
   var sheet = ss.getSheetByName("Asistencias");
   if (!sheet) return { success: false, error: "Hoja 'Asistencias' no encontrada" };
 
@@ -339,8 +378,13 @@ function obtenerAsistenciaRango(ss, fechaInicio, fechaFin) {
       return a.Fecha >= fechaInicio && a.Fecha <= fechaFin;
     });
   }
-
-  return { success: true, data: todos, total: todos.length };
+  
+  var total = todos.length;
+  var start = offset ? parseInt(offset) : 0;
+  var length = limit ? parseInt(limit) : total;
+  var end = Math.min(start + length, total);
+  
+  return { success: true, data: todos.slice(start, end), total: total, limit: length, offset: start };
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
