@@ -14,12 +14,10 @@
  *     body: JSON.stringify({action:'ping'})
  *   })
  *
- * Configuración en Vercel:
- *   vercel env add GAS_URL production
- *   Valor: https://script.google.com/macros/s/.../exec
+ * Importante:
+ *   Este proxy NO incluye una URL fija. Cada request debe enviar
+ *   'X-GAS-URL' con la URL del Web App del usuario.
  */
-
-const GAS_URL = (process.env.GAS_URL || '').trim();
 
 function _isGoogleAppsScriptUrl(url) {
   try {
@@ -42,18 +40,16 @@ export default async function handler(req, res) {
       return;
     }
 
-    let targetUrl = GAS_URL ? GAS_URL : null;
-
     const headerGasUrl = (req.headers['x-gas-url'] || req.headers['X-GAS-URL'] || '').trim();
-    if (headerGasUrl && _isGoogleAppsScriptUrl(headerGasUrl)) {
-      targetUrl = headerGasUrl;
+
+    if (!headerGasUrl || !_isGoogleAppsScriptUrl(headerGasUrl)) {
+      return res.status(400).json({
+        success: false,
+        error: 'Falta el header X-GAS-URL con la URL del Web App de Google Apps Script.'
+      });
     }
 
-    if (!targetUrl) {
-      return res.status(500).json({ success: false, error: 'Falta configurar la URL del backend de Google Apps Script.' });
-    }
-
-    const target = new URL(targetUrl);
+    const target = new URL(headerGasUrl);
     const headers = new Headers(req.headers || {});
     headers.set('Content-Type', 'application/json');
 

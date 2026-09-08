@@ -127,7 +127,7 @@ const ModuloAjustes = (() => {
     const url      = urlInput?.value.trim();
 
     if (!url) {
-      Alerts.error('Ingresa la URL del Web App primero.');
+      Alerts.error('Ingresa la URL de tu Web App de Google Apps Script.');
       return;
     }
 
@@ -135,7 +135,6 @@ const ModuloAjustes = (() => {
       Alerts.warning('La URL no parece ser válida. Debe comenzar con:\nhttps://script.google.com/macros/s/');
     }
 
-    // Guardar temporalmente para usar en API
     AppState.set('gasUrl', url);
 
     const statusEl = document.getElementById('connection-status-detail');
@@ -185,7 +184,6 @@ const ModuloAjustes = (() => {
       return;
     }
 
-    // Guardar en localStorage
     localStorage.setItem(LS_KEYS.GAS_URL, url);
     AppState.set('gasUrl', url);
 
