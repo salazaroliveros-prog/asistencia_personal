@@ -4,10 +4,5 @@
   "outputDirectory": ".",
   "devCommand": null,
   "installCommand": null,
-  "git": {
-    "deploymentEnabled": {
-      "main": true
-    }
-  },
   "crons": []
 }
