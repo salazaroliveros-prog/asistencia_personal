@@ -250,20 +250,53 @@ async function _navigate(page, updateHash = true) {
 // MODALES GLOBALES
 // ─────────────────────────────────────────────────────────────────────────────
 function _initModals() {
+  let lastFocusedElement = null;
+  const focusableSelector = 'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
+
+  const focusModal = (modal) => {
+    lastFocusedElement = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+    const firstFocusable = modal.querySelector(focusableSelector);
+    (firstFocusable || modal).focus?.();
+  };
+
+  const closeModal = (modal) => {
+    if (!modal || modal.hidden) return;
+    modal.hidden = true;
+    if (lastFocusedElement?.isConnected) lastFocusedElement.focus();
+    lastFocusedElement = null;
+  };
+
+  // Los módulos abren modales directamente cambiando [hidden]. Centralizamos
+  // foco inicial y retorno para que todos respeten teclado y lectores de pantalla.
+  const modalObserver = new MutationObserver((mutations) => {
+    mutations.forEach((mutation) => {
+      if (mutation.type !== 'attributes' || mutation.attributeName !== 'hidden') return;
+      const modal = mutation.target;
+      if (!(modal instanceof HTMLElement) || !modal.classList.contains('modal-overlay')) return;
+      if (!modal.hidden) {
+        modal.setAttribute('aria-hidden', 'false');
+        focusModal(modal);
+      } else {
+        modal.setAttribute('aria-hidden', 'true');
+      }
+    });
+  });
+  document.querySelectorAll('.modal-overlay').forEach((modal) => modalObserver.observe(modal, { attributes: true }));
+
   // Cerrar modales al hacer click en botones con data-modal="id"
   document.addEventListener('click', (e) => {
     const closeBtn = e.target.closest('[data-modal]');
     if (closeBtn) {
       const modalId = closeBtn.dataset.modal;
       const modal   = document.getElementById(modalId);
-      if (modal) modal.hidden = true;
+      closeModal(modal);
     }
   });
 
   // Cerrar modales al hacer click en el overlay
   document.addEventListener('click', (e) => {
     if (e.target.classList.contains('modal-overlay')) {
-      e.target.hidden = true;
+      closeModal(e.target);
     }
   });
 
@@ -272,8 +305,18 @@ function _initModals() {
     if (e.key === 'Escape') {
       const openModal = document.querySelector('.modal-overlay:not([hidden])');
       if (openModal) {
-        openModal.hidden = true;
+        closeModal(openModal);
       }
+      return;
+    }
+    const openModal = document.querySelector('.modal-overlay:not([hidden])');
+    if (openModal && e.key === 'Tab') {
+      const focusable = [...openModal.querySelectorAll(focusableSelector)].filter((element) => element instanceof HTMLElement);
+      if (!focusable.length) { e.preventDefault(); openModal.focus(); return; }
+      const first = focusable[0];
+      const last = focusable[focusable.length - 1];
+      if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
+      else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
     }
   });
 
@@ -306,6 +349,8 @@ function _initSidebar() {
   if (sidebarToggle) sidebarToggle.addEventListener('click', toggleSidebar);
   if (overlay)       overlay.addEventListener('click', () => {
     document.body.classList.remove('sidebar-open');
+    if (menuToggle) menuToggle.setAttribute('aria-expanded', 'false');
+    if (sidebarToggle) sidebarToggle.setAttribute('aria-expanded', 'false');
   });
 }
 
@@ -574,7 +619,7 @@ async function _autoSync() {
   try {
     const { enviadas } = await API.syncOfflineQueue();
     if (enviadas > 0) {
-      Alerts.success(`${enviadas} marcación(es) offline sincronizada(s) automáticamente`, 'Sync completada');
+      Alerts.success(`${enviadas} operación(es) offline sincronizada(s) automáticamente`, 'Sync completada');
     }
   } catch (err) {
     console.warn('[Sync] Error en autosync:', err.message);

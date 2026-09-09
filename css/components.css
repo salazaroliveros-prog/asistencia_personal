@@ -684,6 +684,55 @@ input[type="month"].input-glass {
   vertical-align: middle;
 }
 
+/* Densidad y accesibilidad de la vista de personal. La tabla conserva su
+   semántica en móvil; las filas son seleccionables y el detalle vive en el
+   drawer/modal, evitando convertir cada registro en una tarjeta alta. */
+.table-card { min-width: 0; }
+.table-responsive { max-width: 100%; overflow-x: auto; overscroll-behavior-x: contain; }
+.data-table { table-layout: fixed; }
+.data-table tbody tr { cursor: pointer; transition: background-color var(--transition-fast), box-shadow var(--transition-fast); }
+.data-table tbody tr:focus-visible { outline: 3px solid var(--color-secondary); outline-offset: -3px; }
+.data-table tbody td, .data-table thead th { overflow: hidden; text-overflow: ellipsis; }
+.data-table thead th:nth-child(1) { width: 58px; }
+.data-table thead th:nth-child(2) { width: 105px; }
+.data-table thead th:nth-child(3) { width: 24%; }
+.data-table thead th:nth-child(4) { width: 125px; }
+.data-table thead th:nth-child(5) { width: 140px; }
+.data-table thead th:nth-child(6) { width: 110px; }
+.data-table thead th:nth-child(7) { width: 90px; }
+.data-table thead th:nth-child(8) { width: 170px; }
+
+#modal-historial .modal { width: min(920px, calc(100vw - 32px)); max-height: min(860px, calc(100dvh - 32px)); }
+#modal-historial .modal-body { overflow-y: auto; min-height: 0; }
+
+@media (max-width: 767px) {
+  .table-responsive { overflow-x: hidden; }
+  .data-table { display: table; width: 100%; table-layout: fixed; }
+  .data-table thead { display: table-header-group; }
+  .data-table tbody, .data-table tbody tr { display: table-row-group; }
+  .data-table tbody tr { display: table-row; border: 0; padding: 0; }
+  .data-table tbody td { display: table-cell; padding: 10px 6px; font-size: 0.8125rem; vertical-align: middle; }
+  .data-table tbody td::before { display: none; }
+  .data-table thead th { padding: 10px 6px; font-size: 0.6875rem; }
+  .data-table thead th:nth-child(2), .data-table tbody td:nth-child(2),
+  .data-table thead th:nth-child(4), .data-table tbody td:nth-child(4),
+  .data-table thead th:nth-child(6), .data-table tbody td:nth-child(6) { display: none; }
+  .data-table thead th:nth-child(1) { width: 44px; }
+  .data-table thead th:nth-child(3) { width: 42%; }
+  .data-table thead th:nth-child(5) { width: 25%; }
+  .data-table thead th:nth-child(7) { width: 20%; }
+  .data-table thead th:nth-child(8) { width: 52px; }
+  .data-table tbody td.actions-col { display: table-cell; padding: 4px 2px; }
+  .data-table .table-actions { gap: 0; flex-wrap: nowrap; }
+  .data-table .table-action-btn:not(.historial) { display: none; }
+  .data-table .table-action-btn.historial { width: 44px; height: 44px; }
+  #modal-historial .modal { width: 100%; max-width: none; max-height: 100dvh; border-radius: 16px 16px 0 0; align-self: end; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .data-table tbody tr { transition: none; }
+}
+
 /* Foto en tabla */
 .worker-photo-small {
   width: 40px;
@@ -2838,8 +2887,4 @@ input[type="month"].input-glass {
 .gas-success-item svg {
   width: 20px;
   height: 20px;
-}
-  font-size: var(--text-sm);
-  line-height: 1.6;
-  white-space: pre-line;
 }

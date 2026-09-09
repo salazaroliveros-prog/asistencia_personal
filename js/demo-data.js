@@ -230,6 +230,7 @@
   // ── GUARDAR EN localStorage ───────────────────────────────────────────────
   try {
     localStorage.setItem('cpc_personal_cache', JSON.stringify(PERSONAL));
+    localStorage.setItem('cpc_attendance_cache', JSON.stringify(TODAS));
     localStorage.setItem('cpc_config',         JSON.stringify(CONFIG));
     localStorage.setItem('cpc_last_sync',      new Date().toISOString());
     localStorage.setItem('cpc_demo_loaded',    '1');
@@ -320,6 +321,7 @@
       Ubicacion_Obra:    payload.obra||window.__DEMO.CONFIG.Nombre_Obra,
     };
     window.__DEMO.TODAS.push(nueva);
+    AppState.set('asistencias', window.__DEMO.TODAS.filter(a => a.Fecha === AppState.today()));
     return { success:true, id, horaReal:hr, estadoMarcacion:nueva.Estado_Marcacion, horasExtra:nueva.Horas_Extra, message:'Marcación registrada (demo)' };
   };
 

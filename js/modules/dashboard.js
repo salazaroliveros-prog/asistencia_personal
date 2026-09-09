@@ -17,6 +17,20 @@ const ModuloDashboard = (() => {
   function init() {
     _bindEvents();
     _setFechaInput();
+    // Mantener las listas derivadas sincronizadas con marcaciones hechas desde
+    // Asistencia (incluido el adapter local/demo), sin depender de un refresh
+    // manual del Dashboard.
+    AppState.on('asistencias', _onAttendanceStateChanged);
+    AppState.on('personal', _onAttendanceStateChanged);
+  }
+
+  function _onAttendanceStateChanged() {
+    const fecha = AppState.get('dashboardDate') || AppState.today();
+    const personal = AppState.get('personal') || [];
+    const asistencias = (AppState.get('asistencias') || []).filter(a => a.Fecha === fecha);
+    _actualizarKPIs(personal, asistencias, fecha);
+    _renderListaAsistenciaHoy(personal, asistencias);
+    _renderPanelTurno(personal, asistencias);
   }
 
   function _bindEvents() {

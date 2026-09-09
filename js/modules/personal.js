@@ -225,7 +225,7 @@ const ModuloPersonal = (() => {
       const ini = inicialesDeNombre(p.Nombre_Completo);
       const col = colorPorPuesto(p.Puesto);
       return `
-      <tr data-id="${_escHtml(p.ID_Trabajador)}">
+      <tr data-id="${_escHtml(p.ID_Trabajador)}" tabindex="0" aria-label="Abrir detalle de ${_escHtml(p.Nombre_Completo)}">
         <td data-label="Foto">
           ${p.Fotografia_URL
             ? `<img src="${_escHtml(p.Fotografia_URL)}"
@@ -283,7 +283,7 @@ const ModuloPersonal = (() => {
     // Delegación de eventos en tabla
     tbody.onclick = (e) => {
       const btn = e.target.closest('[data-action]');
-      if (!btn) return;
+      if (!btn) { const row = e.target.closest('tr[data-id]'); if (row) _abrirModalHistorial(row.dataset.id); return; }
       const id     = btn.dataset.id;
       const action = btn.dataset.action;
       if (action === 'edit')      _abrirModalEditar(id);
@@ -291,6 +291,7 @@ const ModuloPersonal = (() => {
       if (action === 'qr')        _abrirModalCarne(id);
       if (action === 'historial') _abrirModalHistorial(id);
     };
+    tbody.onkeydown = (e) => { const row = e.target.closest('tr[data-id]'); if (row && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); _abrirModalHistorial(row.dataset.id); } };
   }
 
   // ─────────────────────────────────────────────────────────────────────────

@@ -18,6 +18,7 @@ const LS_KEYS = {
   FIREBASE_CONFIG: 'cpc_firebase_config',
   CONFIG:          'cpc_config',
   PERSONAL_CACHE:  'cpc_personal_cache',
+  ATTENDANCE_CACHE: 'cpc_attendance_cache',
   LAST_SYNC:       'cpc_last_sync',
   OFFLINE_QUEUE:   'cpc_offline_queue',
 };
@@ -259,6 +260,12 @@ const AppState = (() => {
   };
 })();
 
+// Puente explícito para los módulos ES/TypeScript. Las declaraciones `const`
+// de scripts clásicos no forman propiedades de window en todos los runtimes.
+window.LS_KEYS = LS_KEYS;
+window.DEFAULT_CONFIG = DEFAULT_CONFIG;
+window.AppState = AppState;
+
 // ─────────────────────────────────────────────────────────────────────────────
 // INICIALIZAR ESTADO DESDE localStorage
 // ─────────────────────────────────────────────────────────────────────────────
@@ -274,7 +281,7 @@ const AppState = (() => {
     const tieneUrlDemo   = false;
 
     if (tieneDatosDemo || tieneUrlDemo) {
-      ['cpc_demo_loaded', 'cpc_personal_cache', 'cpc_last_sync', 'cpc_config'].forEach(k => {
+      ['cpc_demo_loaded', 'cpc_personal_cache', 'cpc_attendance_cache', 'cpc_last_sync', 'cpc_config'].forEach(k => {
         localStorage.removeItem(k);
       });
       localStorage.removeItem(LS_KEYS.FIREBASE_CONFIG);
@@ -294,6 +301,12 @@ const AppState = (() => {
       if (Array.isArray(parsed)) {
         AppState.set('personal', parsed);
       }
+    }
+
+    const cachedAttendance = localStorage.getItem(LS_KEYS.ATTENDANCE_CACHE);
+    if (cachedAttendance) {
+      const parsed = JSON.parse(cachedAttendance);
+      if (Array.isArray(parsed)) AppState.set('asistencias', parsed);
     }
   } catch (e) {
     console.warn('[Config] Error al restaurar estado desde localStorage:', e.message);

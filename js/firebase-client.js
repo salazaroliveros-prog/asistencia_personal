@@ -22,6 +22,12 @@ const FirebaseClient = (() => {
       if (!firebase.apps.length) firebase.initializeApp(config);
       auth = firebase.auth();
       db = firebase.firestore();
+      // Firestore mantiene una caché propia; si no está disponible (por
+      // ejemplo, múltiples pestañas antiguas), la caché de API sigue siendo
+      // el respaldo determinista.
+      try { await db.enablePersistence({ synchronizeTabs: true }); } catch (persistenceError) {
+        console.info('[Firestore] Persistencia local no habilitada:', persistenceError.code || persistenceError.message);
+      }
       if (!auth.currentUser) await auth.signInAnonymously();
       initialized = true;
       AppState.set('backendMode', 'firestore');
@@ -77,3 +83,5 @@ const FirebaseClient = (() => {
 
   return { getConfig, isConfigured, initialize, isReady, list, save, remove, subscribe, stop };
 })();
+
+window.FirebaseClient = FirebaseClient;

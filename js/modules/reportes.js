@@ -243,7 +243,7 @@ const ModuloReportes = (() => {
       const asistencias = await _obtenerDatos(params.fechaInicio, params.fechaFin);
       const filename    = `control-campo-${params.tipo}-${params.fechaInicio}.csv`;
 
-      PDFBuilder.exportarCSV(asistencias, filename);
+      PDFBuilder.exportarCSV(asistencias, filename, params.fechaInicio, params.fechaFin);
 
       loader.close();
       Alerts.success(`CSV "${filename}" descargado. Ábrelo con Excel o Google Sheets.`);

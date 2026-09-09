@@ -1,5 +1,7 @@
 .env*
+credencialesgoogle.txt
 node_modules/
+dist/
 .vercel
 
 # ── Artefactos y temporales de QA (no son código) ──

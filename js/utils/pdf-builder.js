@@ -239,6 +239,11 @@ const PDFBuilder = (() => {
     const total     = personal.length;
     const porcentaje = total > 0 ? Math.round((presentes / total) * 100) : 0;
     const tardanzas = asistencias.filter(a => a.Estado_Marcacion === 'Atraso').length;
+    const presentesIds = new Set(asistencias.map(a => a.ID_Trabajador));
+    const ausentes = personal
+      .filter(p => p.Estado === 'Activo' && !presentesIds.has(p.ID_Trabajador))
+      .map(worker => ({ __absence: true, worker }));
+    const reporteRows = [...asistencias, ...ausentes];
 
     const fechaFormateada = fecha
       ? new Date(fecha + 'T12:00:00').toLocaleDateString('es-GT', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })
@@ -259,7 +264,7 @@ const PDFBuilder = (() => {
     y += 22;
 
     // ─── Tabla de marcaciones ─────────────────────────────────────────────
-    if (asistencias.length === 0) {
+    if (reporteRows.length === 0) {
       doc.setFont('helvetica', 'italic');
       doc.setFontSize(FONTS.base);
       doc.setTextColor(...COLORS.textMuted);
@@ -269,7 +274,13 @@ const PDFBuilder = (() => {
         startY: y,
         margin: { left: 15, right: 15, top: 10, bottom: 22 },
         head: [['Trabajador', 'DPI', 'Puesto', 'Tipo', 'H. Prog.', 'H. Real', 'Estado', 'Método', 'H. Extra']],
-        body: asistencias.map(a => {
+        body: reporteRows.map(a => {
+          if (a.__absence) {
+            return [
+              a.worker.Nombre_Completo || '--', a.worker.DPI_CUI || '--', a.worker.Puesto || '--',
+              '—', '--', '--', 'Ausencia', '—', '-',
+            ];
+          }
           const worker = personalMap.get(a.ID_Trabajador) || {};
           return [
             a.Nombre_Trabajador || '--',
@@ -506,16 +517,26 @@ const PDFBuilder = (() => {
    * @param {Array} asistencias
    * @param {string} filename
    */
-  function exportarCSV(asistencias, filename = 'asistencias.csv') {
+  function exportarCSV(asistencias, filename = 'asistencias.csv', fechaInicio = '', fechaFin = fechaInicio) {
+    const personalMap = new Map((AppState.get('personal') || []).map(p => [p.ID_Trabajador, p]));
     const headers = [
-      'ID', 'ID_Trabajador', 'Nombre', 'Fecha', 'Tipo', 'H_Programada',
+      'ID_Marcacion', 'ID_Trabajador', 'Nombre', 'DPI_CUI', 'Puesto', 'Fecha', 'Tipo', 'H_Programada',
       'H_Real', 'Estado', 'Metodo', 'H_Extra', 'Obra'
     ];
 
-    const rows = asistencias.map(a => [
-      a.ID_Asistencia    || '',
+    const presentesIds = new Set(asistencias.filter(a => a.Tipo_Marcacion === 'Entrada').map(a => a.ID_Trabajador));
+    const absentRows = fechaInicio === fechaFin
+      ? [...personalMap.values()].filter(p => p.Estado === 'Activo' && !presentesIds.has(p.ID_Trabajador)).map(worker => ({ __absence: true, worker }))
+      : [];
+    const rawRows = [...asistencias, ...absentRows].map(a => a.__absence ? [
+      '', a.worker.ID_Trabajador || '', a.worker.Nombre_Completo || '', a.worker.DPI_CUI || '',
+      a.worker.Puesto || '', fechaInicio, '', '', '', 'Ausencia', '', '0', '',
+    ] : [
+      a.ID_Marcacion || a.ID_Asistencia || a.ID_Registro || '',
       a.ID_Trabajador    || '',
-      a.Nombre_Trabajador || '',
+      a.Nombre_Trabajador || personalMap.get(a.ID_Trabajador)?.Nombre_Completo || '',
+      a.DPI_CUI || personalMap.get(a.ID_Trabajador)?.DPI_CUI || '',
+      personalMap.get(a.ID_Trabajador)?.Puesto || '',
       a.Fecha            || '',
       a.Tipo_Marcacion   || '',
       a.Hora_Programada  || '',
@@ -524,7 +545,8 @@ const PDFBuilder = (() => {
        a.Metodo_Registro  || '',
       a.Horas_Extra      || '0',
       a.Ubicacion_Obra   || '',
-    ].map(v => `"${String(v).replace(/"/g, '""')}"`));
+    ]);
+    const rows = rawRows.map(row => row.map(v => `"${String(v).replace(/"/g, '""')}"`));
 
     const csvContent = [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
     const BOM        = '\uFEFF'; // UTF-8 BOM para Excel español
