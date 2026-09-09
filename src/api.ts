@@ -99,6 +99,11 @@ function updateConnection(value: boolean): void {
   if (label) label.textContent = value ? 'Firestore en línea' : 'Modo local';
 }
 
+function markRemoteFailure(error: unknown): void {
+  console.warn('[API] Firestore no disponible; se activa el modo local:', error);
+  updateConnection(false);
+}
+
 let connectivityBound = false;
 let realtimeSubscriptionsBound = false;
 function bindConnectivity(): void {
@@ -154,47 +159,94 @@ const API: Api = {
   async ping() { const connection = await this.initialize(); return { ...connection, message: connection.success ? 'Firestore listo y sincronizando en tiempo real.' : 'Modo local activo.' }; },
   async obtenerPersonal(limit, offset = 0) {
     if (!connected()) return result(personalCache(), { offline: true });
-    const data = (await firebase().list('personal')).filter(item => item.Estado !== 'Eliminado') as unknown as Worker[];
-    savePersonalCache(data);
-    return result(data.slice(offset, limit ? offset + limit : undefined));
+    try {
+      const data = (await firebase().list('personal')).filter(item => item.Estado !== 'Eliminado') as unknown as Worker[];
+      savePersonalCache(data);
+      return result(data.slice(offset, limit ? offset + limit : undefined));
+    } catch (error) {
+      markRemoteFailure(error);
+      return result(personalCache().slice(offset, limit ? offset + limit : undefined), { offline: true });
+    }
   },
   async registrarPersonal(payload) {
     if (!connected()) { const local = localSaveWorker(payload, false); if (local.data[0]) enqueue('personal', { ...payload, id: local.data[0].ID_Trabajador }); return local; }
     const worker = normalizeWorker(payload);
-    await firebase().save('personal', worker.ID_Trabajador, worker as unknown as Record<string, unknown>);
-    await this.obtenerPersonal();
-    return result([worker]);
+    try {
+      await firebase().save('personal', worker.ID_Trabajador, worker as unknown as Record<string, unknown>);
+      await this.obtenerPersonal();
+      return result([worker]);
+    } catch (error) {
+      markRemoteFailure(error);
+      const local = localSaveWorker(payload, false);
+      if (local.data[0]) enqueue('personal', { ...payload, id: local.data[0].ID_Trabajador });
+      return local;
+    }
   },
   async actualizarPersonal(payload) {
     const previous = personalCache().find(worker => worker.ID_Trabajador === payload.id);
     if (!connected()) { const local = localSaveWorker(payload, true); enqueue('personal', payload); return local; }
     const worker = normalizeWorker(payload, previous);
-    await firebase().save('personal', worker.ID_Trabajador, worker as unknown as Record<string, unknown>);
-    await this.obtenerPersonal();
-    return result([worker]);
+    try {
+      await firebase().save('personal', worker.ID_Trabajador, worker as unknown as Record<string, unknown>);
+      await this.obtenerPersonal();
+      return result([worker]);
+    } catch (error) {
+      markRemoteFailure(error);
+      const local = localSaveWorker(payload, true);
+      if (local.success) enqueue('personal', payload);
+      return local;
+    }
   },
   async eliminarPersonal(workerId) {
     if (!connected()) { savePersonalCache(personalCache().map(worker => worker.ID_Trabajador === workerId ? { ...worker, Estado: 'Inactivo' } : worker)); enqueue('personal-delete', { id: workerId }); return result([] as never[], { offline: true }); }
-    await firebase().save('personal', workerId, { Estado: 'Inactivo' });
-    await this.obtenerPersonal();
-    return result([] as never[]);
+    try {
+      await firebase().save('personal', workerId, { Estado: 'Inactivo' });
+      await this.obtenerPersonal();
+      return result([] as never[]);
+    } catch (error) {
+      markRemoteFailure(error);
+      savePersonalCache(personalCache().map(worker => worker.ID_Trabajador === workerId ? { ...worker, Estado: 'Inactivo' } : worker));
+      enqueue('personal-delete', { id: workerId });
+      return result([] as never[], { offline: true });
+    }
   },
   async registrarMarcacion(payload) {
     if (!connected()) return localSaveAttendance(payload);
     const record = normalizeAttendance(payload);
-    await firebase().save('asistencias', record.ID_Marcacion, record as unknown as Record<string, unknown>);
-    saveAttendanceCache([...attendanceCache(), record]);
-    return result([record], { estadoMarcacion: record.Estado_Marcacion, horaReal: record.Hora_Real });
+    try {
+      await firebase().save('asistencias', record.ID_Marcacion, record as unknown as Record<string, unknown>);
+      saveAttendanceCache([...attendanceCache(), record]);
+      return result([record], { estadoMarcacion: record.Estado_Marcacion, horaReal: record.Hora_Real });
+    } catch (error) {
+      markRemoteFailure(error);
+      return localSaveAttendance(payload);
+    }
   },
   async obtenerAsistencias(fecha = state().get<string>('dashboardDate') || new Date().toISOString().slice(0, 10), limit, offset = 0) {
-    let data = connected() ? await firebase().list('asistencias') as unknown as AttendanceRecord[] : attendanceCache();
-    if (connected()) saveAttendanceCache(data);
+    let data: AttendanceRecord[];
+    if (connected()) {
+      try {
+        data = await firebase().list('asistencias') as unknown as AttendanceRecord[];
+        saveAttendanceCache(data);
+      } catch (error) {
+        markRemoteFailure(error);
+        data = attendanceCache();
+      }
+    } else data = attendanceCache();
     data = data.filter(record => record.Fecha === fecha);
     return result(data.slice(offset, limit ? offset + limit : undefined), { offline: !connected() });
   },
   async obtenerAsistenciaRango(inicio, fin, limit, offset = 0) {
-    let data = connected() ? await firebase().list('asistencias') as unknown as AttendanceRecord[] : attendanceCache();
-    if (connected()) saveAttendanceCache(data);
+    let data: AttendanceRecord[];
+    if (connected()) {
+      try {
+        data = await firebase().list('asistencias') as unknown as AttendanceRecord[];
+        saveAttendanceCache(data);
+      } catch (error) {
+        markRemoteFailure(error);
+        data = attendanceCache();
+      }
+    } else data = attendanceCache();
     data = data.filter(record => record.Fecha >= inicio && record.Fecha <= fin);
     return result(data.slice(offset, limit ? offset + limit : undefined), { offline: !connected() });
   },
@@ -212,8 +264,11 @@ const API: Api = {
   async guardarConfiguracion(payload) {
     const config = { ...(state().get<Record<string, unknown>>('config') || {}), ...payload };
     state().set('config', config); write(keys().CONFIG, config);
-    if (connected()) await firebase().save('configuracion', 'general', config);
-    return result(config);
+    if (connected()) {
+      try { await firebase().save('configuracion', 'general', config); }
+      catch (error) { markRemoteFailure(error); return result(config, { offline: true }); }
+    }
+    return result(config, { offline: !connected() });
   },
   isOffline: () => !connected(),
   getPersonalFromCache: personalCache,
