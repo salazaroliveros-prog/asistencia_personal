@@ -301,7 +301,7 @@
 
 .sidebar-open .sidebar-overlay {
   display: block;
-  z-index: calc(var(--z-modal) - 1);
+  z-index: calc(var(--z-modal) + 1);
 }
 
 /* ─────────────────────────────────────────────────────────────────────────────
@@ -612,11 +612,13 @@
   .glass-sidebar {
     transform: translateX(-100%);
     z-index: var(--z-modal);
+    pointer-events: none;
   }
 
-   .sidebar-open .glass-sidebar {
-     transform: translateX(0);
-   }
+  .sidebar-open .glass-sidebar {
+    transform: translateX(0);
+    pointer-events: auto;
+  }
 }
 
 /* ─────────────────────────────────────────────────────────────────────────────

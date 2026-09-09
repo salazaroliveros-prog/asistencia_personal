@@ -154,7 +154,7 @@ fs.readdirSync(DIR).filter(f => f.endsWith('.png')).forEach(f => fs.unlinkSync(D
   await page.click('#menu-toggle');
   await page.waitForTimeout(400);
   await shot('15-mobile-sidebar.png');
-  await page.click('#menu-toggle');
+  await page.click('#sidebar-overlay');
   await page.waitForTimeout(200);
 
   // ─── 16. MOBILE — Personal ───────────────────────────────────────────
