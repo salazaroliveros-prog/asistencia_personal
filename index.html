@@ -152,6 +152,25 @@
   <a class="skip-link" href="#app">Saltar al contenido</a>
 
   <!-- ═══════════════════════════════════════════════════════════════
+       PWA INSTALL BANNER
+  ═══════════════════════════════════════════════════════════════ -->
+  <div id="pwa-install-banner" class="pwa-install-banner" hidden role="alert" aria-live="polite">
+    <div class="pwa-install-icon" aria-hidden="true">
+      <i data-lucide="download-cloud"></i>
+    </div>
+    <div class="pwa-install-text">
+      <strong>Instalar aplicación</strong>
+      <span>Agregar Control Personal Campo a tu pantalla de inicio</span>
+    </div>
+    <button type="button" id="pwa-install-btn" class="btn btn-primary btn-sm pwa-install-cta">
+      <i data-lucide="download" aria-hidden="true"></i> Instalar
+    </button>
+    <button type="button" id="pwa-install-dismiss" class="btn btn-ghost btn-sm pwa-install-close" aria-label="Cerrar">
+      <i data-lucide="x" aria-hidden="true"></i>
+    </button>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════════════════
        TOAST NOTIFICATIONS CONTAINER
   ═══════════════════════════════════════════════════════════════ -->
   <div id="toast-container" role="alert" aria-live="polite" aria-atomic="true"></div>

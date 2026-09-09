@@ -84,30 +84,69 @@ function _initModules() {
 // INSTALACIÓN PWA
 // ─────────────────────────────────────────────────────────────────────────────
 let _deferredInstallPrompt = null;
+const PWA_DISMISS_KEY = 'cpc_pwa_install_dismissed';
 
 function _initPwaInstall() {
   const installButton = document.getElementById('btn-install-app');
-  if (!installButton) return;
+  const banner = document.getElementById('pwa-install-banner');
+  const bannerInstallBtn = document.getElementById('pwa-install-btn');
+  const bannerDismissBtn = document.getElementById('pwa-install-dismiss');
+
+  // Si el usuario ya descartó el banner, no mostrarlo
+  const dismissed = localStorage.getItem(PWA_DISMISS_KEY);
 
   window.addEventListener('beforeinstallprompt', (event) => {
     event.preventDefault();
     _deferredInstallPrompt = event;
-    installButton.hidden = false;
+
+    // Mostrar botón en topbar
+    if (installButton) installButton.hidden = false;
+
+    // Mostrar banner a menos que lo haya descartado
+    if (banner && !dismissed) {
+      banner.hidden = false;
+      if (window.lucide) lucide.createIcons({ nodes: [banner] });
+    }
   });
 
   window.addEventListener('appinstalled', () => {
     _deferredInstallPrompt = null;
-    installButton.hidden = true;
+    if (installButton) installButton.hidden = true;
+    if (banner) banner.hidden = true;
+    localStorage.removeItem(PWA_DISMISS_KEY);
     Alerts.success('La aplicación quedó instalada en este dispositivo.', 'Instalación completada');
   });
 
-  installButton.addEventListener('click', async () => {
-    if (!_deferredInstallPrompt) return;
-    _deferredInstallPrompt.prompt();
-    const choice = await _deferredInstallPrompt.userChoice;
-    if (choice.outcome === 'accepted') installButton.hidden = true;
-    _deferredInstallPrompt = null;
-  });
+  // Click en botón topbar
+  if (installButton) {
+    installButton.addEventListener('click', _triggerInstall);
+  }
+
+  // Click en botón del banner
+  if (bannerInstallBtn) {
+    bannerInstallBtn.addEventListener('click', _triggerInstall);
+  }
+
+  // Cerrar banner (descartar)
+  if (bannerDismissBtn) {
+    bannerDismissBtn.addEventListener('click', () => {
+      if (banner) banner.hidden = true;
+      localStorage.setItem(PWA_DISMISS_KEY, '1');
+    });
+  }
+}
+
+async function _triggerInstall() {
+  if (!_deferredInstallPrompt) return;
+  _deferredInstallPrompt.prompt();
+  const choice = await _deferredInstallPrompt.userChoice;
+  if (choice.outcome === 'accepted') {
+    const installButton = document.getElementById('btn-install-app');
+    const banner = document.getElementById('pwa-install-banner');
+    if (installButton) installButton.hidden = true;
+    if (banner) banner.hidden = true;
+  }
+  _deferredInstallPrompt = null;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────

@@ -2156,9 +2156,56 @@ input[type="month"].input-glass {
   gap: var(--space-3);
   box-shadow: var(--shadow-lg);
   z-index: 9000;
-  max-width: 400px;
+  max-width: 420px;
   width: 90vw;
   animation: slideUpFade 0.3s ease;
+}
+
+.pwa-install-icon {
+  flex-shrink: 0;
+  width: 40px;
+  height: 40px;
+  border-radius: var(--radius-md);
+  background: linear-gradient(135deg, var(--color-primary), var(--color-secondary));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+}
+
+.pwa-install-icon svg {
+  width: 22px;
+  height: 22px;
+}
+
+.pwa-install-text {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.pwa-install-text strong {
+  font-size: var(--text-sm);
+  font-weight: 600;
+  color: var(--color-text);
+}
+
+.pwa-install-text span {
+  font-size: var(--text-xs);
+  color: var(--color-text-muted);
+}
+
+.pwa-install-cta {
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+
+.pwa-install-close {
+  flex-shrink: 0;
+  padding: var(--space-1);
+  color: var(--color-text-muted);
 }
 
 @keyframes slideUpFade {
