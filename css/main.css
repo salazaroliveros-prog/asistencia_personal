@@ -322,6 +322,21 @@ p {
   flex-shrink: 0;
 }
 
+@media (max-width: 479px) {
+  .topbar-right {
+    flex-shrink: 1;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    min-width: 0;
+    row-gap: var(--space-1);
+  }
+
+  .topbar-right > * {
+    flex-shrink: 1;
+    min-width: 0;
+  }
+}
+
 .page-title {
   font-size: var(--text-xl);
   font-weight: 700;
@@ -334,6 +349,9 @@ p {
   font-size: var(--text-xs);
   color: var(--color-text-muted);
   white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
 }
 
 .topbar-clock {

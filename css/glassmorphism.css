@@ -73,6 +73,7 @@
    ───────────────────────────────────────────────────────────────────────────── */
 .glass-sidebar {
   width: var(--sidebar-width);
+  min-height: 100dvh;
   min-height: 100vh;
   position: fixed;
   top: 0;
@@ -139,6 +140,8 @@
   letter-spacing: 0.1em;
   color: #fff;
   white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .brand-sub {
@@ -148,6 +151,8 @@
   color: var(--color-secondary);
   white-space: nowrap;
   text-transform: uppercase;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .sidebar-toggle {
@@ -191,6 +196,7 @@
   transition: color var(--transition-fast), background-color var(--transition-fast), border-color var(--transition-fast);
   white-space: nowrap;
   overflow: hidden;
+  text-overflow: ellipsis;
   position: relative;
 }
 
@@ -294,6 +300,7 @@
 
 .sidebar-open .sidebar-overlay {
   display: block;
+  z-index: calc(var(--z-modal) - 1);
 }
 
 /* ─────────────────────────────────────────────────────────────────────────────
@@ -343,7 +350,7 @@
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
   width: 100%;
   max-width: 680px;
-  max-height: 90vh;
+  max-height: min(90vh, 90dvh);
   display: flex;
   flex-direction: column;
   animation: slideInModal 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
@@ -397,6 +404,7 @@
   padding: var(--space-6);
   overflow-y: auto;
   flex: 1;
+  min-height: 0;
 }
 
 .modal-footer {
@@ -484,6 +492,8 @@
   text-transform: uppercase;
   letter-spacing: 0.06em;
   white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .kpi-value {
@@ -491,6 +501,9 @@
   font-weight: 800;
   color: #fff;
   line-height: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 /* ─────────────────────────────────────────────────────────────────────────────
@@ -507,7 +520,7 @@
    ───────────────────────────────────────────────────────────────────────────── */
 .tabs-container {
   padding: 0;
-  overflow: hidden;
+  overflow: visible;
 }
 
 .tabs {
@@ -575,7 +588,7 @@
 
   .glass-modal {
     border-radius: var(--radius-lg);
-    max-height: 95vh;
+    max-height: min(95vh, 95dvh);
   }
 
   .modal-body {
