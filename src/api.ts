@@ -100,6 +100,7 @@ function updateConnection(value: boolean): void {
 }
 
 let connectivityBound = false;
+let realtimeSubscriptionsBound = false;
 function bindConnectivity(): void {
   if (connectivityBound) return;
   connectivityBound = true;
@@ -139,12 +140,14 @@ export interface Api {
 const API: Api = {
   async initialize() {
     bindConnectivity();
+    if (state().get('backendMode') !== 'firestore') realtimeSubscriptionsBound = false;
     const connection = await firebase().initialize();
     updateConnection(connection.success);
-    if (connection.success) {
+    if (connection.success && !realtimeSubscriptionsBound) {
       firebase().subscribe('personal', records => savePersonalCache(records.filter(record => record.Estado !== 'Eliminado') as unknown as Worker[]));
       firebase().subscribe('asistencias', records => saveAttendanceCache(records as unknown as AttendanceRecord[]));
       firebase().subscribe('alertas', records => state().set('alertas', records));
+      realtimeSubscriptionsBound = true;
     }
     return connection;
   },

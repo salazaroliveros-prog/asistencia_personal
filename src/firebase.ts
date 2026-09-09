@@ -117,7 +117,13 @@ const FirebaseClient: FirebaseAdapter = {
     listeners.push(unsubscribe);
     return unsubscribe;
   },
-  stop() { listeners.splice(0).forEach(unsubscribe => unsubscribe()); },
+  stop() {
+    listeners.splice(0).forEach(unsubscribe => unsubscribe());
+    initialized = false;
+    database = null;
+    window.AppState.set('backendMode', 'local');
+    window.AppState.set('connected', false);
+  },
 };
 
 window.FirebaseClient = FirebaseClient;
