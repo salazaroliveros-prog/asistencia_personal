@@ -98,9 +98,9 @@ function runHtmlVerification() {
     'kpi-total', 'kpi-asistencia', 'kpi-tardanzas', 'kpi-ausencias',
     'calendar-grid', 'qr-reader', 'modal-personal', 'modal-carne',
     'asistencia-tbody', 'modal-horas-extra',
-    'gas-url', 'btn-test-connection',
     'modal-dia-calendario', 'modal-dia-content',
-    'pwa-install-banner', 'btn-install-app', 'pwa-install-btn', 'pwa-install-dismiss'
+    'pwa-install-banner', 'btn-install-app', 'pwa-install-btn', 'pwa-install-dismiss',
+    'gas-webapp-url', 'gas-test-connection', 'gas-connection-status'
   ];
   criticalIds.forEach(id => {
     log('ID crítico #' + id, html.indexOf('id="' + id + '"') !== -1);
@@ -108,8 +108,8 @@ function runHtmlVerification() {
 
   // Campos corregidos presentes en HTML
   log('Input #p-telefono existe', html.indexOf('id="p-telefono"') !== -1);
-  log('Input #gas-url existe', html.indexOf('id="gas-url"') !== -1);
-  log('Botón #btn-test-connection existe', html.indexOf('id="btn-test-connection"') !== -1);
+  log('Input #gas-webapp-url existe', html.indexOf('id="gas-webapp-url"') !== -1);
+  log('Botón #gas-test-connection existe', html.indexOf('id="gas-test-connection"') !== -1);
 }
 
 // ── 2. Validadores unitarios ────────────────────────────────────────────────
