@@ -92,17 +92,14 @@ function _initPwaInstall() {
   const bannerInstallBtn = document.getElementById('pwa-install-btn');
   const bannerDismissBtn = document.getElementById('pwa-install-dismiss');
 
-  // Si el usuario ya descartó el banner, no mostrarlo
   const dismissed = localStorage.getItem(PWA_DISMISS_KEY);
 
   window.addEventListener('beforeinstallprompt', (event) => {
     event.preventDefault();
     _deferredInstallPrompt = event;
 
-    // Mostrar botón en topbar
     if (installButton) installButton.hidden = false;
 
-    // Mostrar banner a menos que lo haya descartado
     if (banner && !dismissed) {
       banner.hidden = false;
       if (window.lucide) lucide.createIcons({ nodes: [banner] });
@@ -111,29 +108,30 @@ function _initPwaInstall() {
 
   window.addEventListener('appinstalled', () => {
     _deferredInstallPrompt = null;
-    if (installButton) installButton.hidden = true;
-    if (banner) banner.hidden = true;
+    _hidePwaUi(installButton, banner);
     localStorage.removeItem(PWA_DISMISS_KEY);
     Alerts.success('La aplicación quedó instalada en este dispositivo.', 'Instalación completada');
   });
 
-  // Click en botón topbar
   if (installButton) {
     installButton.addEventListener('click', _triggerInstall);
   }
 
-  // Click en botón del banner
   if (bannerInstallBtn) {
     bannerInstallBtn.addEventListener('click', _triggerInstall);
   }
 
-  // Cerrar banner (descartar)
   if (bannerDismissBtn) {
     bannerDismissBtn.addEventListener('click', () => {
-      if (banner) banner.hidden = true;
+      _hidePwaUi(installButton, banner);
       localStorage.setItem(PWA_DISMISS_KEY, '1');
     });
   }
+}
+
+function _hidePwaUi(installButton, banner) {
+  if (installButton) installButton.hidden = true;
+  if (banner) banner.hidden = true;
 }
 
 async function _triggerInstall() {
@@ -143,8 +141,7 @@ async function _triggerInstall() {
   if (choice.outcome === 'accepted') {
     const installButton = document.getElementById('btn-install-app');
     const banner = document.getElementById('pwa-install-banner');
-    if (installButton) installButton.hidden = true;
-    if (banner) banner.hidden = true;
+    _hidePwaUi(installButton, banner);
   }
   _deferredInstallPrompt = null;
 }
