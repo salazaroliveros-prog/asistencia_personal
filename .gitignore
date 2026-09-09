@@ -3,6 +3,8 @@ credencialesgoogle.txt
 node_modules/
 dist/
 .vercel
+.firebase/
+.vscode/
 
 # ── Artefactos y temporales de QA (no son código) ──
 __tests__/*.log

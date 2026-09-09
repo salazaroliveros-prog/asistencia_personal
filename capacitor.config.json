@@ -1,0 +1,16 @@
+{
+  "appId": "com.controlpersonalcampo.app",
+  "appName": "Control Personal Campo",
+  "webDir": "dist",
+  "bundledWebRuntime": false,
+  "loggingBehavior": "none",
+  "android": {
+    "allowMixedContent": false
+  },
+  "ios": {
+    "contentInset": "automatic"
+  },
+  "server": {
+    "androidScheme": "https"
+  }
+}

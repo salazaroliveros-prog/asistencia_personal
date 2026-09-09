@@ -2,11 +2,14 @@
   "name": "Control Personal Campo",
   "short_name": "CtrlCampo",
   "description": "Sistema de gestión y asistencia de personal en obra",
+  "id": "/",
+  "scope": "/",
   "start_url": "/",
   "display": "standalone",
+  "display_override": ["window-controls-overlay", "standalone", "minimal-ui"],
   "background_color": "#003459",
   "theme_color": "#003459",
-  "orientation": "portrait-primary",
+  "orientation": "any",
   "lang": "es",
   "icons": [
     {
@@ -22,6 +25,7 @@
       "purpose": "any maskable"
     }
   ],
+  "prefer_related_applications": false,
   "screenshots": [],
   "categories": ["productivity", "business"],
   "shortcuts": [

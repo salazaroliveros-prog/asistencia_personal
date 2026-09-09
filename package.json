@@ -14,6 +14,13 @@
     "lint": "echo \"Linting no configurado - instalar ESLint para verificación de código\"",
     "format": "echo \"Formateo no configurado - instalar Prettier para formateo de código\"",
     "build": "vite build",
+    "cap:sync": "npm run build && npx cap sync",
+    "cap:android": "npm run build && npx cap sync android",
+    "cap:ios": "npm run build && npx cap sync ios",
+    "cap:build:android": "npm run cap:android && cd android && gradlew.bat :app:assembleDebug",
+    "cap:build:release": "npm run cap:android && cd android && gradlew.bat :app:assembleRelease",
+    "cap:open:android": "npx cap open android",
+    "cap:open:ios": "npx cap open ios",
     "typecheck": "tsc --noEmit -p tsconfig.json",
     "verify": "npm run typecheck && npm test && npm run build"
   },
@@ -29,8 +36,15 @@
   "author": "",
   "license": "ISC",
   "devDependencies": {
+    "@capacitor/assets": "^3.0.5",
+    "@capacitor/cli": "^8.5.1",
     "playwright": "^1.63.0",
     "typescript": "^7.0.2",
     "vite": "^8.2.2"
+  },
+  "dependencies": {
+    "@capacitor/android": "^8.5.1",
+    "@capacitor/core": "^8.5.1",
+    "@capacitor/ios": "^8.5.1"
   }
 }

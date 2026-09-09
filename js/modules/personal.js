@@ -458,6 +458,16 @@ const ModuloPersonal = (() => {
       return;
     }
 
+    // Verificar que el DPI no esté registrado en otro trabajador
+    const dpiCheck = _checkDPIDuplicate(payload.dpi, _editingId);
+    if (dpiCheck.duplicated) {
+      Alerts.error(
+        `El DPI ${payload.dpi} ya está registrado a nombre de "${dpiCheck.existingWorker.Nombre_Completo}" (${dpiCheck.existingWorker.ID_Trabajador}). No se permiten DPI duplicados.`,
+        'DPI duplicado'
+      );
+      return;
+    }
+
     // Construir link de WhatsApp si se proporcionó número
     if (payload.whatsapp) {
       const numWA = payload.whatsapp.replace(/\D/g, '');
@@ -941,6 +951,24 @@ const ModuloPersonal = (() => {
   // ─────────────────────────────────────────────────────────────────────────
   // VALIDACIONES
   // ─────────────────────────────────────────────────────────────────────────
+
+  /**
+   * Verifica si un DPI ya está registrado en otro trabajador.
+   * @param {string} dpi - DPI a buscar (solo dígitos)
+   * @param {string} [excludeId] - ID del trabajador a excluir (modo edición)
+   * @returns {{ duplicated: boolean, existingWorker: object|null }}
+   */
+  function _checkDPIDuplicate(dpi, excludeId) {
+    const clean = (dpi || '').replace(/\D/g, '');
+    if (clean.length !== 13) return { duplicated: false, existingWorker: null };
+
+    const personal = AppState.get('personal') || [];
+    const existing = personal.find(p =>
+      p.DPI_CUI === clean && p.ID_Trabajador !== excludeId
+    );
+    return { duplicated: !!existing, existingWorker: existing };
+  }
+
   function _validateForm() {
     let valid = true;
 

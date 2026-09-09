@@ -50,6 +50,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     // 10. Banner de modo demo
     _initDemoBanner();
 
+    // 10.1 Instalación PWA cuando el navegador la ofrece
+    _initPwaInstall();
+
     // 9. Navegar a la página según el hash actual o dashboard
     _navigateToHash();
 
@@ -75,6 +78,36 @@ function _initModules() {
   ModuloDashboard.init();
   ModuloReportes.init();
   ModuloAjustes.init();
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// INSTALACIÓN PWA
+// ─────────────────────────────────────────────────────────────────────────────
+let _deferredInstallPrompt = null;
+
+function _initPwaInstall() {
+  const installButton = document.getElementById('btn-install-app');
+  if (!installButton) return;
+
+  window.addEventListener('beforeinstallprompt', (event) => {
+    event.preventDefault();
+    _deferredInstallPrompt = event;
+    installButton.hidden = false;
+  });
+
+  window.addEventListener('appinstalled', () => {
+    _deferredInstallPrompt = null;
+    installButton.hidden = true;
+    Alerts.success('La aplicación quedó instalada en este dispositivo.', 'Instalación completada');
+  });
+
+  installButton.addEventListener('click', async () => {
+    if (!_deferredInstallPrompt) return;
+    _deferredInstallPrompt.prompt();
+    const choice = await _deferredInstallPrompt.userChoice;
+    if (choice.outcome === 'accepted') installButton.hidden = true;
+    _deferredInstallPrompt = null;
+  });
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -231,6 +264,8 @@ async function _navigate(page, updateHash = true) {
   }
 
   document.body.classList.remove('sidebar-open');
+  document.getElementById('menu-toggle')?.setAttribute('aria-expanded', 'false');
+  document.getElementById('sidebar-toggle')?.setAttribute('aria-expanded', 'false');
 
   // Cargar datos del módulo activo
   const pageConfig = PAGES[page];

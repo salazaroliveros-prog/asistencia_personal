@@ -19,27 +19,52 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
 
   <!-- ═══════════════════ ICONOS ═══════════════════ -->
-  <!-- Lucide Icons (via unpkg) -->
-  <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+  <!-- Lucide Icons (local vendor + CDN fallback) -->
+  <script src="assets/vendor/lucide.min.js"></script>
+  <script>
+    if (typeof window.lucide === 'undefined') {
+      document.write('<script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"><\/script>');
+    }
+  </script>
 
   <!-- ═══════════════════ QR CODE - Generación ═══════════════════ -->
-  <!-- qrcode.js para generar QR -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"
-    integrity="sha512-CNgIRecGo7nphbeZ04Sc13ka07paqdeTu0WR1IM4kNcpmBAUSHSQX0FslNhTDadL4O5SAGapGt4FodqL8My0mA=="
-    crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+  <!-- qrcode.js para generar QR (local + CDN fallback) -->
+  <script src="assets/vendor/qrcode.min.js"></script>
+  <script>
+    if (typeof window.QRCode === 'undefined') {
+      document.write('<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"><\/script>');
+    }
+  </script>
 
   <!-- ═══════════════════ QR CODE - Lectura/Escáner ═══════════════════ -->
-  <!-- html5-qrcode para escanear con cámara -->
-  <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+  <!-- html5-qrcode para escanear con cámara (local + CDN fallback) -->
+  <script src="assets/vendor/html5-qrcode.min.js"></script>
+  <script>
+    if (typeof window.Html5Qrcode === 'undefined') {
+      document.write('<script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"><\/script>');
+    }
+  </script>
 
   <!-- ═══════════════════ MAPA (Leaflet.js) ═══════════════════ -->
-  <!-- Leaflet CSS y JS para visualización de mapas -->
-  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" 
-        integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" 
-        crossorigin=""/>
-  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" 
-          integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" 
-          crossorigin=""></script>
+  <!-- Leaflet CSS y JS para visualización de mapas (local + CDN fallback) -->
+  <link rel="stylesheet" href="assets/vendor/leaflet/leaflet.css" />
+  <script>
+    (function () {
+      var cssOk = !!document.querySelector('link[href*="leaflet.css"]');
+      if (!cssOk || !document.styleSheets.length) {
+        var l = document.createElement('link');
+        l.rel = 'stylesheet';
+        l.href = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css';
+        document.head.appendChild(l);
+      }
+    })();
+  </script>
+  <script src="assets/vendor/leaflet/leaflet.js"></script>
+  <script>
+    if (typeof window.L === 'undefined') {
+      document.write('<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"><\/script>');
+    }
+  </script>
 
   <!-- ═══════════════════ CHART.JS - Gráficas ═══════════════════ -->
   <!-- Chart.js local (vendor) con fallback CDN -->
@@ -250,6 +275,9 @@
           <!-- Actualizar datos -->
           <button type="button" id="refresh-btn" class="topbar-btn" aria-label="Actualizar datos">
             <i data-lucide="refresh-cw" aria-hidden="true"></i>
+          </button>
+          <button type="button" id="btn-install-app" class="topbar-btn install-app-btn" aria-label="Instalar aplicación" hidden>
+            <i data-lucide="download" aria-hidden="true"></i>
           </button>
           <!-- Fecha/Hora actual -->
           <div class="topbar-clock" aria-live="off">
