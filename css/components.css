@@ -181,6 +181,7 @@
   font-weight: 600;
   line-height: 1;
   transition: color var(--transition-fast), background-color var(--transition-fast), border-color var(--transition-fast), box-shadow var(--transition-fast);
+  will-change: transform, box-shadow;
   white-space: nowrap;
   position: relative;
   overflow: hidden;
@@ -202,6 +203,12 @@
   opacity: 0.45;
   cursor: not-allowed;
   pointer-events: none;
+}
+
+.btn:focus-visible {
+  outline: 3px solid var(--color-secondary);
+  outline-offset: 3px;
+  box-shadow: 0 0 0 6px rgba(0, 168, 232, 0.25);
 }
 
 /* Primario */
@@ -327,6 +334,7 @@
   justify-content: center;
   color: var(--color-text-muted);
   transition: color var(--transition-fast), background-color var(--transition-fast), border-color var(--transition-fast), box-shadow var(--transition-fast);
+  will-change: transform, box-shadow;
   position: relative;
 }
 
@@ -349,6 +357,7 @@
   justify-content: center;
   color: var(--color-text-secondary);
   transition: color var(--transition-fast), background-color var(--transition-fast), border-color var(--transition-fast), box-shadow var(--transition-fast);
+  will-change: transform, box-shadow;
 }
 
 .menu-toggle:hover {
@@ -657,7 +666,14 @@ input[type="month"].input-glass {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .data-table tbody tr { transition: none; }
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }
 
 /* Foto en tabla */
@@ -704,6 +720,7 @@ input[type="month"].input-glass {
   justify-content: center;
   color: var(--color-text-muted);
   transition: color var(--transition-fast), background-color var(--transition-fast), border-color var(--transition-fast), box-shadow var(--transition-fast);
+  will-change: transform, box-shadow;
 }
 
 .table-action-btn svg {
@@ -1354,6 +1371,7 @@ input[type="month"].input-glass {
   justify-content: center;
   color: var(--color-text-muted);
   transition: color var(--transition-fast), background-color var(--transition-fast), border-color var(--transition-fast), box-shadow var(--transition-fast);
+  will-change: transform, box-shadow;
   flex-shrink: 0;
 }
 
@@ -1465,7 +1483,8 @@ input[type="month"].input-glass {
   padding: var(--space-8);
   text-align: center;
   cursor: pointer;
-  transition: opacity var(--transition-base), transform var(--transition-base), box-shadow var(--transition-base);
+  transition: opacity var(--transition-fast), transform var(--transition-base), box-shadow var(--transition-base);
+  will-change: transform, opacity;
   position: relative;
 }
 
@@ -1923,7 +1942,7 @@ input[type="month"].input-glass {
   font-size: var(--text-sm);
   font-weight: 500;
   cursor: pointer;
-  transition: color 0.2s, border-color 0.2s;
+  transition: color var(--transition-fast), border-color var(--transition-fast);
   margin-bottom: -1px;
 }
 
@@ -1960,7 +1979,7 @@ input[type="month"].input-glass {
   gap: var(--space-3);
   padding: var(--space-3) var(--space-5);
   border-bottom: 1px solid rgba(255, 255, 255, 0.04);
-  transition: background 0.15s;
+  transition: background var(--transition-fast);
   position: relative;
 }
 
@@ -1993,7 +2012,7 @@ input[type="month"].input-glass {
   box-shadow: 0 2px 8px rgba(0,0,0,0.3);
   /* El borde de color se aplica inline desde JS según el estado del turno */
   border: 2px solid rgba(255,255,255,0.25);
-  transition: border-color 0.2s;
+  transition: border-color var(--transition-fast);
 }
 
 .turno-photo-placeholder {
@@ -2325,7 +2344,7 @@ input[type="month"].input-glass {
   border-radius: var(--radius-sm);
   display: flex;
   align-items: center;
-  transition: color 0.2s;
+  transition: color var(--transition-fast);
 }
 
 .demo-banner-close:hover {
@@ -2363,7 +2382,7 @@ input[type="month"].input-glass {
   justify-content: center;
   cursor: pointer;
   z-index: 2;
-  transition: background 0.15s, transform 0.15s;
+  transition: background var(--transition-fast), transform var(--transition-fast);
   padding: 0;
 }
 

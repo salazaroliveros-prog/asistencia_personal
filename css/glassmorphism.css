@@ -17,6 +17,7 @@
   position: relative;
   overflow: hidden;
   transition: box-shadow var(--transition-base), transform var(--transition-base);
+  will-change: transform, box-shadow;
 }
 
 /* Highlight superior: simula el reflejo de luz en el borde superior del cristal.
@@ -613,7 +614,26 @@
     z-index: var(--z-modal);
   }
 
-  .sidebar-open .glass-sidebar {
-    transform: translateX(0);
+   .sidebar-open .glass-sidebar {
+     transform: translateX(0);
+   }
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   REDUCED MOTION
+   ───────────────────────────────────────────────────────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  .glass-card,
+  .glass-card:hover,
+  .glass-sidebar,
+  .modal-overlay,
+  .glass-modal,
+  .connection-dot.connected,
+  .connection-dot.connecting,
+  .pwa-install-banner,
+  .toast {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
   }
 }

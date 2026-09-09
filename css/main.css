@@ -82,9 +82,9 @@ table {
 
   /* Texto */
   --color-text-primary:   #FFFFFF;
-  --color-text-secondary: rgba(255, 255, 255, 0.75);
-  --color-text-muted:     rgba(255, 255, 255, 0.50);
-  --color-text-disabled:  rgba(255, 255, 255, 0.30);
+  --color-text-secondary: rgba(255, 255, 255, 0.82);
+  --color-text-muted:     rgba(255, 255, 255, 0.68);
+  --color-text-disabled:  rgba(255, 255, 255, 0.45);
 
   /* Glassmorphism — ajustado para el nuevo fondo más oscuro */
   --glass-bg:             rgba(255, 255, 255, 0.08);
@@ -151,9 +151,10 @@ table {
   --text-3xl:   2.25rem;    /* 36px */
 
   /* Transiciones */
-  --transition-fast:   0.15s ease;
-  --transition-base:   0.25s ease;
-  --transition-slow:   0.4s ease;
+  --transition-fast:   0.18s cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-base:   0.28s cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-slow:   0.45s cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-spring: 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
 
   /* Z-index */
   --z-base:      1;
@@ -183,9 +184,31 @@ table {
   border-radius: var(--radius-sm);
   z-index: 9999;
   font-weight: 600;
+  text-decoration: none;
 }
 .skip-link:focus {
   left: 8px;
+  outline: 3px solid var(--color-secondary);
+  outline-offset: 2px;
+}
+
+/* Focus global */
+:focus-visible {
+  outline: 2.5px solid var(--color-secondary);
+  outline-offset: 3px;
+  border-radius: var(--radius-sm);
+}
+
+/* Respetar preferencia de movimiento reducido */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }
 
 /* ─────────────────────────────────────────────────────────────────────────────
