@@ -1,0 +1,30 @@
+# ── Ficheros y credenciales sensibles / locales (NUNCA se despliegan) ──
+.env*
+!/.env.example
+credencialesgoogle.txt
+*.log
+firebase-debug.log
+.firebaserc
+.firebase/
+
+# ── Tooling de agentes / habilidades (no es código del producto) ──
+.agents/
+.claude/
+skills-lock.json
+
+# ── Firebase Data Connect (backend local/generado; no se sirve estáticamente) ──
+dataconnect/
+src/dataconnect-generated/
+
+# ── Plataformas nativas (Capacitor Android/iOS no se despliegan en Vercel) ──
+android/
+ios/
+
+# ── Documentación, informes y QA ──
+docs/
+*.md
+__tests__/
+
+# ── Dependencias y build (Vercel los gestiona) ──
+node_modules/
+dist/

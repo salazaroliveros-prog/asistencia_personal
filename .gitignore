@@ -13,6 +13,17 @@ __tests__/results/
 __tests__/screenshots/
 __tests__/_qa_state.json
 
+# ── Firebase local / Data Connect (credenciales locales y código generado) ──
+.firebaserc
+firebase-debug.log
+dataconnect/
+src/dataconnect-generated/
+
+# ── Tooling de agentes (local) ──
+.agents/
+.claude/
+skills-lock.json
+
 # ── Scripts auxiliares desechables del harness QA ──
 __tests__/_apply_fix.mjs
 __tests__/_marker.cmd

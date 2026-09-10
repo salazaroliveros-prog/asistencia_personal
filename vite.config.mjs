@@ -20,7 +20,7 @@ function copyLegacyRuntime() {
   };
 }
 
-export default defineConfig({
+export default defineConfig(({ mode }) => ({
   appType: 'spa',
   plugins: [copyLegacyRuntime()],
   server: { host: '127.0.0.1', port: 3800 },
@@ -28,6 +28,8 @@ export default defineConfig({
   build: {
     outDir: 'dist',
     emptyOutDir: true,
-    sourcemap: true,
+    // Generar sourcemaps solo en desarrollo; en producción evitar exponer
+    // los mapas del bundle (u or 'hidden' si se necesita trazabilidad interna).
+    sourcemap: mode === 'development',
   },
-});
+}));
