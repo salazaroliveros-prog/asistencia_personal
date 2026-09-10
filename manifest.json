@@ -37,6 +37,13 @@
       "icons": [{ "src": "assets/icons/icon-192.png", "sizes": "192x192" }]
     },
     {
+      "name": "Marcar en Campo",
+      "short_name": "Campo",
+      "description": "Escáner de campo: registrar asistencia en tiempo real",
+      "url": "/#campo",
+      "icons": [{ "src": "assets/icons/icon-192.png", "sizes": "192x192" }]
+    },
+    {
       "name": "Dashboard",
       "short_name": "Dashboard",
       "description": "Ver panel de control",

@@ -37,11 +37,11 @@ while ((m = cssRegex.exec(html)) !== null) {
 }
 
 // 4. Páginas declaradas (data-page en elementos section/div)
-const spaPages = ['dashboard', 'personal', 'asistencia', 'reportes', 'ajustes'];
+const spaPages = ['dashboard', 'personal', 'asistencia', 'campo', 'reportes', 'ajustes'];
 const pageIds = spaPages.filter(function(p) {
   return html.indexOf('id="page-' + p + '"') !== -1;
 });
-check('5 páginas SPA declaradas (dashboard/personal/asistencia/reportes/ajustes)', pageIds.length === 5);
+check('6 páginas SPA declaradas (dashboard/personal/asistencia/campo/reportes/ajustes)', pageIds.length === 6);
 console.log('    Páginas encontradas: ' + pageIds.join(', '));
 
 // 5. IDs críticos presentes

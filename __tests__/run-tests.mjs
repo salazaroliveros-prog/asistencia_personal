@@ -22,7 +22,7 @@ function htmlChecks() {
   for (const [, file] of html.matchAll(/src="(js\/[^\"]+)"/g)) check(`Script existe: ${file}`, fs.existsSync(path.join(ROOT, file)));
   for (const [, file] of html.matchAll(/href="(css\/[^\"]+)"/g)) check(`CSS existe: ${file}`, fs.existsSync(path.join(ROOT, file)));
   for (const id of ['app','splash-screen','sidebar','toast-container','kpi-total','kpi-asistencia','kpi-tardanzas','kpi-ausencias','calendar-grid','qr-reader','modal-personal','modal-carne','asistencia-tbody','modal-horas-extra','firebase-project-id','btn-connect-firebase','modal-dia-calendario','modal-dia-content']) check(`ID crítico #${id}`, html.includes(`id="${id}"`));
-  check('5 páginas SPA declaradas', ['dashboard','personal','asistencia','reportes','ajustes'].every(p => html.includes(`id="page-${p}"`)));
+  check('6 páginas SPA declaradas', ['dashboard','personal','asistencia','campo','reportes','ajustes'].every(p => html.includes(`id="page-${p}"`)));
 }
 
 function validatorChecks() {

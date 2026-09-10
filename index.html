@@ -103,6 +103,7 @@
   <link rel="icon" href="favicon.svg" type="image/svg+xml" />
   <link rel="stylesheet" href="css/glassmorphism.css" />
   <link rel="stylesheet" href="css/components.css" />
+  <link rel="stylesheet" href="css/campo.css" />
   <link rel="stylesheet" media="print" href="css/print.css" />
 
   <!-- ═══════════════════ CSP PARA SEGURIDAD ═══════════════════ -->
@@ -144,6 +145,7 @@
   <script src="js/modules/dashboard.js"></script>
   <script src="js/modules/personal.js"></script>
   <script src="js/modules/asistencia.js"></script>
+  <script src="js/modules/campo.js"></script>
   <script src="js/modules/reportes.js"></script>
   <script src="js/modules/ajustes.js"></script>
   <script src="js/app.js"></script>
@@ -229,6 +231,12 @@
           <a href="#asistencia" class="nav-link" data-page="asistencia" role="button">
             <i data-lucide="scan-line" aria-hidden="true"></i>
             <span>Asistencia</span>
+          </a>
+        </li>
+        <li class="nav-item">
+          <a href="#campo" class="nav-link" data-page="campo" role="button">
+            <i data-lucide="smartphone" aria-hidden="true"></i>
+            <span>Marcar en Campo</span>
           </a>
         </li>
         <li class="nav-item">
@@ -701,6 +709,60 @@
                   </tr>
                 </tbody>
               </table>
+            </div>
+          </div>
+        </section>
+
+        <!-- ══════════════════════════════════════════
+             PÁGINA: CAMPO (sub-app móvil de escaneo)
+        ══════════════════════════════════════════ -->
+        <section id="page-campo" class="page" data-page="campo" aria-label="Marcador de campo" hidden>
+          <div class="page-inner">
+            <div class="campo-topbar">
+              <h2 class="campo-title">Marcar en Campo</h2>
+              <span id="campo-status" class="campo-status-pill" role="status"><span class="dot" aria-hidden="true"></span>Offline</span>
+            </div>
+
+            <!-- Escáner -->
+            <div class="campo-scanner-card">
+              <div class="campo-scanner-wrap">
+                <div id="campo-qr-reader" aria-label="Visor de cámara para escaneo QR"></div>
+                <p class="campo-scan-hint">Apunta la cámara al QR del carné del trabajador</p>
+              </div>
+              <div class="campo-scan-btns">
+                <button type="button" id="campo-btn-scan" class="btn btn-primary">
+                  <i data-lucide="camera" aria-hidden="true"></i> Iniciar Cámara
+                </button>
+                <button type="button" id="campo-btn-stop" class="btn btn-danger" hidden>
+                  <i data-lucide="camera-off" aria-hidden="true"></i> Detener
+                </button>
+              </div>
+            </div>
+
+            <!-- Tarjeta del trabajador escaneado -->
+            <div id="campo-worker" class="campo-worker-card" hidden aria-live="polite">
+              <img id="campo-worker-photo" class="campo-worker-photo" src="" alt="Foto del trabajador" />
+              <span id="campo-worker-avatar" class="campo-worker-avatar" aria-hidden="true">?</span>
+              <div class="campo-worker-info">
+                <h3 id="campo-worker-name">--</h3>
+                <p id="campo-worker-puesto">--</p>
+                <p class="campo-worker-id" id="campo-worker-id">--</p>
+              </div>
+            </div>
+
+            <!-- GPS / geocerca -->
+            <div id="campo-gps" class="campo-gps" hidden>
+              <i data-lucide="map-pin" class="ico" aria-hidden="true"></i>
+              <span id="campo-gps-label">Obteniendo ubicación…</span>
+            </div>
+
+            <!-- Botones de marcación -->
+            <div id="campo-mark-grid" class="campo-mark-grid" aria-label="Tipos de marcación"></div>
+
+            <!-- Feed en vivo de marcas de hoy -->
+            <div class="campo-feed">
+              <p class="campo-feed-title">Marcaciones de hoy — en vivo</p>
+              <ul id="campo-feed-list" class="campo-feed-list"></ul>
             </div>
           </div>
         </section>

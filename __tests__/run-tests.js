@@ -88,9 +88,9 @@ function runHtmlVerification() {
   }
 
   // Páginas SPA declaradas
-  const spaPages = ['dashboard', 'personal', 'asistencia', 'reportes', 'ajustes'];
+  const spaPages = ['dashboard', 'personal', 'asistencia', 'campo', 'reportes', 'ajustes'];
   const pageIds = spaPages.filter(p => html.indexOf('id="page-' + p + '"') !== -1);
-  log('5 páginas SPA declaradas', pageIds.length === 5, 'Encontradas: ' + pageIds.join(', '));
+  log('6 páginas SPA declaradas', pageIds.length === 6, 'Encontradas: ' + pageIds.join(', '));
 
   // IDs críticos
   const criticalIds = [

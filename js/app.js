@@ -21,6 +21,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     // 2. Inicializar todos los módulos
     _initModules();
 
+    // 2.0 Refresco automático de la vista activa cuando Firestore recibe datos
+    _initRealtimeRefresh();
+
     // 2.1 Verificar cuota de localStorage
     if (typeof CacheManager !== 'undefined' && CacheManager.checkQuota) {
       CacheManager.checkQuota();
@@ -75,6 +78,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 function _initModules() {
   ModuloPersonal.init();
   ModuloAsistencia.init();
+  ModuloCampo.init();
   ModuloDashboard.init();
   ModuloReportes.init();
   ModuloAjustes.init();
@@ -154,6 +158,7 @@ const PAGES = {
   dashboard:  { title: 'Dashboard',           module: ModuloDashboard  },
   personal:   { title: 'Gestión de Personal', module: ModuloPersonal   },
   asistencia: { title: 'Control Asistencia',  module: ModuloAsistencia },
+  campo:      { title: 'Marcar en Campo',     module: ModuloCampo      },
   reportes:   { title: 'Reportes',            module: ModuloReportes   },
   ajustes:    { title: 'Ajustes',             module: ModuloAjustes    },
 };
@@ -189,6 +194,9 @@ async function _navigate(page, updateHash = true) {
   // Cleanup de la página anterior si aplica
   if (_currentPage === 'asistencia' && page !== 'asistencia') {
     ModuloAsistencia.cleanup?.();
+  }
+  if (_currentPage === 'campo' && page !== 'campo') {
+    ModuloCampo.cleanup?.();
   }
 
   // Determinar dirección de la animación
@@ -695,6 +703,36 @@ async function _autoSync() {
   } catch (err) {
     console.warn('[Sync] Error en autosync:', err.message);
   }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// REFRESCO EN TIEMPO REAL
+// Cuando Firestore actualiza datos (p.ej. otra sub-app de "Campo" marcó a un
+// trabajador), se refresca la vista actual para que los KPIs, tablas y reportes
+// se activen sin recargar la página.
+// ─────────────────────────────────────────────────────────────────────────────
+function _initRealtimeRefresh() {
+  // Datos aplicados (JSON) para evitar bucles de re-render al re-guardar lo mismo.
+  const lastApplied = { asistencias: '', personal: '', alertas: '', config: '' };
+  // Páginas que se refrescan solas cuando cambian datos (evita modales etc.)
+  const REFRESHABLE = ['dashboard', 'asistencia', 'campo', 'reportes'];
+
+  function refreshIfActive() {
+    if (!REFRESHABLE.includes(_currentPage)) return;
+    const mod = PAGES[_currentPage]?.module;
+    if (mod && typeof mod.cargar === 'function') {
+      mod.cargar().catch(err => console.warn('[Realtime] Error refrescando', _currentPage, err.message));
+    }
+  }
+
+  ['personal', 'asistencias', 'alertas', 'config'].forEach(key => {
+    AppState.on(key, (value) => {
+      const snapshot = JSON.stringify(value ?? []);
+      if (snapshot === lastApplied[key]) return;
+      lastApplied[key] = snapshot;
+      refreshIfActive();
+    });
+  });
 }
 
 // ─────────────────────────────────────────────────────────────────────────────

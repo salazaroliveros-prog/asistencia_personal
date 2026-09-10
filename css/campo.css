@@ -1,0 +1,203 @@
+/* ═══════════════════════════════════════════════════════════════════
+   CONTROL PERSONAL CAMPO — css/campo.css
+   Vista "Marcador de Campo": sub-app instalable móvil para escaneo QR
+   y registro de asistencia en tiempo real (Firestore) con cola offline.
+   Mobile-first; pensada para operarse con una mano en obra.
+   ═══════════════════════════════════════════════════════════════════ */
+
+#page-campo .page-inner {
+  max-width: 480px;
+  margin: 0 auto;
+  padding: var(--space-4) var(--space-4);
+}
+
+.campo-topbar {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  margin-bottom: var(--space-4);
+}
+.campo-topbar .campo-title {
+  margin: 0;
+  font-size: 1.15rem;
+  color: var(--color-text);
+}
+.campo-status-pill {
+  margin-left: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: rgba(230, 57, 70, 0.12);
+  color: var(--color-accent-red);
+}
+.campo-status-pill.connected {
+  background: rgba(42, 157, 143, 0.14);
+  color: var(--color-accent-green);
+}
+.campo-status-pill .dot {
+  width: 8px; height: 8px; border-radius: 50%;
+  background: currentColor;
+}
+
+/* ── Escáner ─────────────────────────────────────────────────────── */
+.campo-scanner-card {
+  background: var(--color-dark, #001c33);
+  border-radius: 18px;
+  overflow: hidden;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.18);
+  margin-bottom: var(--space-4);
+}
+.campo-scanner-wrap {
+  position: relative;
+  padding: var(--space-2);
+}
+#campo-qr-reader {
+  width: 100%;
+  min-height: 200px;
+  border-radius: 12px;
+  overflow: hidden;
+}
+.campo-scan-hint {
+  text-align: center;
+  color: #cfe0ee;
+  font-size: 0.8rem;
+  padding: 8px var(--space-2) 6px;
+  letter-spacing: 0.3px;
+}
+.campo-scan-btns {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-2);
+  padding: 0 var(--space-3) var(--space-3);
+}
+.campo-scan-btns .btn { min-height: 44px; }
+
+/* ── Tarjeta del trabajador ──────────────────────────────────────── */
+.campo-worker-card {
+  background: var(--surface, #fff);
+  border: 1px solid var(--border-color, #e2e8f0);
+  border-radius: 16px;
+  padding: var(--space-4);
+  display: flex;
+  gap: var(--space-3);
+  align-items: center;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
+  margin-bottom: var(--space-4);
+}
+.campo-worker-photo {
+  width: 64px; height: 64px;
+  border-radius: 50%;
+  object-fit: cover;
+  background: #eef2f6;
+  flex-shrink: 0;
+  display: none;
+}
+.campo-worker-photo[src] { display: block; }
+.campo-worker-avatar {
+  width: 64px; height: 64px;
+  border-radius: 50%;
+  background: var(--color-primary, #003459);
+  color: #fff;
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.4rem;
+  flex-shrink: 0;
+}
+.campo-worker-info h3 { margin: 0 0 4px; font-size: 1.05rem; }
+.campo-worker-info p { margin: 0; color: var(--color-text-muted); font-size: 0.82rem; }
+.campo-worker-id {
+  font-family: monospace;
+  font-size: 0.72rem;
+  color: var(--color-text-muted);
+  margin-top: 2px;
+}
+
+/* ── Botones de marcación ────────────────────────────────────────── */
+.campo-mark-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 10px;
+  margin-bottom: var(--space-4);
+}
+.campo-mark-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 14px 4px;
+  border: none;
+  border-radius: 14px;
+  font-weight: 700;
+  font-size: 0.74rem;
+  color: #fff;
+  cursor: pointer;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.14);
+  transition: transform 0.08s ease, opacity 0.15s ease;
+  min-height: 72px;
+}
+.campo-mark-btn:active { transform: scale(0.96); }
+.campo-mark-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+.campo-mark-btn svg { width: 22px; height: 22px; }
+.campo-mark-entry     { background: #2a9d8f; }
+.campo-mark-break     { background: #f4a261; }
+.campo-mark-resume    { background: #00a8e8; }
+.campo-mark-exit      { background: #e63946; }
+.campo-mark-time { font-size: 0.62rem; opacity: 0.9; font-weight: 500; }
+
+/* ── GPS / geocerca ──────────────────────────────────────────────── */
+.campo-gps {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: 0.78rem;
+  color: var(--color-text-muted);
+  margin-bottom: var(--space-4);
+}
+.campo-gps .ico { color: var(--color-accent-green); }
+.campo-gps.out-of-fence .ico { color: var(--color-accent-red); }
+
+/* ── Marca registrada (feed en vivo) ─────────────────────────────── */
+.campo-feed { margin-top: var(--space-2); }
+.campo-feed-title {
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: var(--color-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  margin-bottom: var(--space-2);
+}
+.campo-feed-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+.campo-feed-item {
+  background: var(--surface, #fff);
+  border: 1px solid var(--border-color, #e2e8f0);
+  border-radius: 12px;
+  padding: 10px 12px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 0.82rem;
+}
+.campo-feed-item .feed-dot {
+  width: 10px; height: 10px; border-radius: 50%;
+  background: var(--color-accent-green);
+  flex-shrink: 0;
+}
+.campo-feed-item.pending .feed-dot { background: var(--color-accent-amber); }
+.campo-feed-item b { color: var(--color-text); }
+.campo-feed-item .feed-meta { margin-left: auto; text-align: right; color: var(--color-text-muted); }
+.campo-feed-empty {
+  color: var(--color-text-muted);
+  font-size: 0.8rem;
+  text-align: center;
+  padding: 12px;
+}
+
+@media (max-width: 400px) {
+  .campo-mark-grid { grid-template-columns: repeat(2, 1fr); }
+}

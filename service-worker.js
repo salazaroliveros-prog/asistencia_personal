@@ -28,9 +28,11 @@ const PRECACHE_ASSETS = [
   '/js/utils/pdf-builder.js',
   '/js/modules/personal.js',
   '/js/modules/asistencia.js',
+  '/js/modules/campo.js',
   '/js/modules/dashboard.js',
   '/js/modules/reportes.js',
   '/js/modules/ajustes.js',
+  '/css/campo.css',
   '/assets/vendor/jspdf.umd.min.js',
   '/assets/vendor/jspdf.plugin.autotable.min.js',
 ];

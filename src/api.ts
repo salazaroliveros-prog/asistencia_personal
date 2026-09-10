@@ -76,6 +76,18 @@ function normalizeWorker(payload: Record<string, unknown>, previous: Partial<Wor
     Estado: (previous.Estado as Worker['Estado']) || 'Activo',
   };
 }
+/** Detecta una marcación duplicada reciente (mismo trabajador+tipo+fecha en ≤2 min). */
+function findRecentDuplicate(record: AttendanceRecord): boolean {
+  const same = attendanceCache().find(c =>
+    c.ID_Trabajador === record.ID_Trabajador &&
+    c.Tipo_Marcacion === record.Tipo_Marcacion &&
+    c.Fecha === record.Fecha
+  );
+  if (!same || !same.Hora_Real || !record.Hora_Real) return false;
+  const toMin = (h: string): number => { const p = h.split(':').map(Number); return (p[0] || 0) * 60 + (p[1] || 0); };
+  return Math.abs(toMin(record.Hora_Real) - toMin(same.Hora_Real)) <= 2;
+}
+
 function localSaveWorker(payload: Record<string, unknown>, edit: boolean): Result<Worker[]> {
   const items = [...personalCache()];
   const index = items.findIndex(worker => worker.ID_Trabajador === payload.id);
@@ -211,12 +223,22 @@ const API: Api = {
     }
   },
   async registrarMarcacion(payload) {
-    if (!connected()) return localSaveAttendance(payload);
     const record = normalizeAttendance(payload);
+    // Guard anti duplicados: ignorar dobles toques del mismo trabajador+tipo.
+    if (findRecentDuplicate(record)) {
+      return result([] as AttendanceRecord[], {
+        estadoMarcacion: record.Estado_Marcacion,
+        horaReal: record.Hora_Real,
+        duplicate: true,
+        offline: !connected(),
+        message: 'Marcación duplicada ignorada.',
+      });
+    }
+    if (!connected()) return localSaveAttendance(payload);
     try {
       await firebase().save('asistencias', record.ID_Marcacion, record as unknown as Record<string, unknown>);
       saveAttendanceCache([...attendanceCache(), record]);
-      return result([record], { estadoMarcacion: record.Estado_Marcacion, horaReal: record.Hora_Real });
+      return result([record], { estadoMarcacion: record.Estado_Marcacion, horaReal: record.Hora_Real, offline: false });
     } catch (error) {
       markRemoteFailure(error);
       return localSaveAttendance(payload);
