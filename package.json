@@ -2,7 +2,7 @@
   "name": "control_asistencia_app",
   "version": "1.0.0",
   "description": "Sistema de Control de Asistencia Personal con GPS y QR",
-  "main": "index.js",
+  "main": "index.html",
   "scripts": {
     "test": "node __tests__/run-tests.mjs",
     "test:unit": "node __tests__/run-tests.mjs",
@@ -36,7 +36,6 @@
   "author": "",
   "license": "ISC",
   "devDependencies": {
-    "@capacitor/assets": "^3.0.5",
     "@capacitor/cli": "^8.5.1",
     "playwright": "^1.63.0",
     "typescript": "^7.0.2",
@@ -46,5 +45,8 @@
     "@capacitor/android": "^8.5.1",
     "@capacitor/core": "^8.5.1",
     "@capacitor/ios": "^8.5.1"
+  },
+  "overrides": {
+    "uuid": "^11.1.1"
   }
 }
