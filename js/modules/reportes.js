@@ -6,6 +6,9 @@
 
 const ModuloReportes = (() => {
 
+  // ─── Helpers globales ─────────────────────────────────────────────────────
+  const isoDate = (date) => (window.CPC?.DateHelpers?.toISODate?.(date) ?? _dateToStr(date));
+
   // ─── Inicialización ───────────────────────────────────────────────────────
   function init() {
     _bindEvents();
@@ -19,7 +22,7 @@ const ModuloReportes = (() => {
 
     // Semana actual (lunes a hoy)
     const lunes = _getLunesDeSemana(new Date());
-    const lunesStr = _dateToStr(lunes);
+    const lunesStr = isoDate(lunes);
     const semanainicio = document.getElementById('reporte-semana-inicio');
     const semanafin    = document.getElementById('reporte-semana-fin');
     if (semanainicio) semanainicio.value = lunesStr;

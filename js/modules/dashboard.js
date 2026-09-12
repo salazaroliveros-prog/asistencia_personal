@@ -7,6 +7,9 @@
 
 const ModuloDashboard = (() => {
 
+  // ─── Helpers globales ─────────────────────────────────────────────────────
+  const isoDate = (date) => (window.CPC?.DateHelpers?.toISODate?.(date) ?? _dateToStr(date));
+
   // ─── Estado del módulo ────────────────────────────────────────────────────
   let _asistenciaDelMes = {};  // { 'YYYY-MM-DD': { presentes, total } }
   let _chartSemana      = null; // Instancia Chart.js semanal
@@ -409,7 +412,7 @@ const ModuloDashboard = (() => {
     for (let i = 6; i >= 0; i--) {
       const d = new Date(hoy);
       d.setDate(d.getDate() - i);
-      dias.push(_dateToStr(d));
+      dias.push(isoDate(d));
     }
 
     // Cargar asistencias del rango (funciona tanto en modo real como en modo demo)

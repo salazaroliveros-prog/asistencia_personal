@@ -23,11 +23,39 @@ function htmlChecks() {
   for (const [, file] of html.matchAll(/href="(css\/[^\"]+)"/g)) check(`CSS existe: ${file}`, fs.existsSync(path.join(ROOT, file)));
   for (const id of ['app','splash-screen','sidebar','toast-container','kpi-total','kpi-asistencia','kpi-tardanzas','kpi-ausencias','calendar-grid','qr-reader','modal-personal','modal-carne','asistencia-tbody','modal-horas-extra','firebase-project-id','btn-connect-firebase','modal-dia-calendario','modal-dia-content']) check(`ID crítico #${id}`, html.includes(`id="${id}"`));
   check('6 páginas SPA declaradas', ['dashboard','personal','asistencia','campo','reportes','ajustes'].every(p => html.includes(`id="page-${p}"`)));
+  check('field-scanner standalone existe', fs.existsSync(path.join(ROOT, 'field-scanner.html')));
+  check('field-scanner.js existe', fs.existsSync(path.join(ROOT, 'field-scanner.js')));
+  check('index.html enlaza a field-scanner standalone', html.includes('href="/field-scanner.html"') || html.includes('href="./field-scanner.html"'));
 }
 
 function validatorChecks() {
   console.log('\n── Validadores unitarios');
-  const context = vm.createContext({ module: { exports: {} }, console });
+  const context = vm.createContext({
+    module: { exports: {} },
+    console,
+    window: {
+      CPC: {
+        ValidationRules: {
+          DPI_LENGTH: 13,
+          DPI_MIN_LENGTH: 13,
+          DPI_MAX_LENGTH: 13,
+          TOLERANCIA_MIN: 0,
+          TOLERANCIA_MAX: 60,
+          LATITUDE_MIN: -90,
+          LATITUDE_MAX: 90,
+          LONGITUDE_MIN: -180,
+          LONGITUDE_MAX: 180,
+          GPS_RADIUS_MIN: 10,
+          GPS_RADIUS_MAX: 10000,
+          NOMBRE_MIN_LENGTH: 3,
+          NOMBRE_MAX_LENGTH: 100,
+          TELEFONO_LENGTH: 8,
+          IMAGEN_MAX_SIZE: 600 * 1024,
+          IMAGEN_MAX_DIMENSION: 300,
+        },
+      },
+    },
+  });
   vm.runInContext(read('js/utils/validators.js'), context);
   const V = context.Validators || context.module.exports;
   const cases = [
@@ -122,9 +150,92 @@ function businessChecks() {
   check('API usa Firestore con respaldo local', api.includes('FirebaseClient') && api.includes('attendanceCache'));
 }
 
+function helpersChecks() {
+  console.log('\n── Helpers compartidos');
+  const stringHelpers = read('js/utils/string-helpers.js');
+  const photoHelpers = read('js/utils/photo-helpers.js');
+  const validationRules = read('js/utils/validation-rules.js');
+  const dateHelpers = read('js/utils/date-helpers.js');
+  check('string-helpers.js creado', fs.existsSync(path.join(ROOT, 'js/utils/string-helpers.js')));
+  check('photo-helpers.js creado', fs.existsSync(path.join(ROOT, 'js/utils/photo-helpers.js')));
+  check('validation-rules.js creado', fs.existsSync(path.join(ROOT, 'js/utils/validation-rules.js')));
+  check('date-helpers.js creado', fs.existsSync(path.join(ROOT, 'js/utils/date-helpers.js')));
+  check('string-helpers expone escHtml', stringHelpers.includes('escHtml'));
+  check('string-helpers expone formatTelefono', stringHelpers.includes('formatTelefono'));
+  check('string-helpers expose debounce', stringHelpers.includes('debounce'));
+  check('string-helpers expone generateLocalId', stringHelpers.includes('generateLocalId'));
+  check('photo-helpers expone compressImage', photoHelpers.includes('compressImage'));
+  check('photo-helpers expone updatePhotoPreview', photoHelpers.includes('updatePhotoPreview'));
+  check('validation-rules expone DPI_LENGTH', validationRules.includes('DPI_LENGTH'));
+  check('validation-rules expone TOLERANCIA_MAX', validationRules.includes('TOLERANCIA_MAX'));
+  check('validation-rules expone GPS_RADIUS_MAX', validationRules.includes('GPS_RADIUS_MAX'));
+  check('date-helpers expone toISODate', dateHelpers.includes('toISODate'));
+  check('date-helpers expose addDays', dateHelpers.includes('addDays'));
+  check('date-helpers expose startOfWeek', dateHelpers.includes('startOfWeek'));
+  check('personal.js usa CPC.StringHelpers', read('js/modules/personal.js').includes('CPC.StringHelpers'));
+  check('personal.js usa CPC.PhotoHelpers', read('js/modules/personal.js').includes('CPC.PhotoHelpers'));
+  check('validators.js usa CPC.ValidationRules', read('js/utils/validators.js').includes('window.CPC?.ValidationRules'));
+  check('dashboard.js usa CPC.DateHelpers', read('js/modules/dashboard.js').includes('window.CPC?.DateHelpers') || read('js/modules/dashboard.js').includes('CPC.DateHelpers'));
+  check('reportes.js usa CPC.DateHelpers', read('js/modules/reportes.js').includes('window.CPC?.DateHelpers') || read('js/modules/reportes.js').includes('CPC.DateHelpers'));
+}
+
+function fieldScannerChecks() {
+  console.log('\n── Field Scanner standalone');
+  const scannerHtml = read('field-scanner.html');
+  const scannerJs = read('field-scanner.js');
+  check('field-scanner.html existe', fs.existsSync(path.join(ROOT, 'field-scanner.html')));
+  check('field-scanner.js existe', fs.existsSync(path.join(ROOT, 'field-scanner.js')));
+  check('field-scanner incluye Firebase CDN', scannerHtml.includes('firebase-app-compat.js') && scannerHtml.includes('firebase-firestore-compat.js'));
+  check('field-scanner incluye html5-qrcode', scannerHtml.includes('html5-qrcode'));
+  check('field-scanner incluye lucide icons', scannerHtml.includes('lucide'));
+  check('field-scanner enlaza a field-scanner.js', scannerHtml.includes('field-scanner.js'));
+  check('field-scanner expone FieldScanner global', scannerJs.includes('window.FieldScanner'));
+  check('field-scanner inicializa Firestore', scannerJs.includes('firebase.firestore()'));
+  check('field-scanner suscribe a asistencias', scannerJs.includes("db.collection('asistencias')"));
+  check('field-scanner guarda en Firestore', scannerJs.includes("collection('asistencias').add"));
+  check('field-scanner parsea QR', scannerJs.includes('parseQRData'));
+  check('field-scanner busca trabajador local', scannerJs.includes('cpc_personal_cache'));
+  check('field-scanner captura GPS', scannerJs.includes('navigator.geolocation'));
+  check('field-scanner soporta offline queue', scannerJs.includes('localStorage'));
+  check('field-scanner tiene login section', scannerHtml.includes('id="login-section"'));
+  check('field-scanner tiene input PIN', scannerHtml.includes('id="login-pin"'));
+  check('field-scanner tiene formulario login', scannerHtml.includes('id="login-form"'));
+  check('field-scanner valida PIN', scannerJs.includes('requirePin'));
+  check('field-scanner guarda sesión', scannerJs.includes('field_scanner_session'));
+  check('field-scanner cierra sesión', scannerJs.includes('removeItem(SESSION_KEY)') || scannerJs.includes('field_scanner_session'));
+  check('field-scanner oculta scanner sin login', scannerJs.includes('scannerSection.hidden = true'));
+  check('field-scanner muestra scanner con login', scannerJs.includes('scannerSection.hidden = false'));
+  check('Ajustes incluye campo PIN scanner', read('index.html').includes('id="cfg-scanner-pin"'));
+  check('Ajustes guarda PIN en localStorage', read('js/modules/ajustes.js').includes('cpc_field_scanner_pin'));
+  check('field-scanner incluye auditoría', scannerJs.includes('saveAuditLog'));
+  check('field-scanner registra operador', scannerJs.includes('getOperatorInfo'));
+  check('field-scanner registra dispositivo', scannerJs.includes('getDeviceInfo'));
+  check('field-scanner guarda log en localStorage', scannerJs.includes('field_scanner_audit_log'));
+  check('field-scanner registra errores', scannerJs.includes('saveErrorLog'));
+  check('field-scanner es PWA instalable', scannerHtml.includes('field-scanner-manifest.json'));
+  check('field-scanner tiene service worker', scannerHtml.includes('field-scanner-sw.js'));
+  check('field-scanner manifest es standalone', read('field-scanner-manifest.json').includes('"display": "standalone"'));
+  check('Ajustes muestra auditoría scanner', read('index.html').includes('id="btn-load-scanner-audit"'));
+  check('Ajustes limpia auditoría scanner', read('index.html').includes('id="btn-clear-scanner-audit"'));
+  check('Ajustes renderiza log scanner', read('js/modules/ajustes.js').includes('_mostrarAuditoriaScanner'));
+  check('Ajustes elimina log scanner', read('js/modules/ajustes.js').includes('_limpiarAuditoriaScanner'));
+  check('Ajustes exporta auditoría scanner CSV', read('js/modules/ajustes.js').includes('_exportarAuditoriaScannerCSV'));
+  check('Ajustes incluye botón exportar CSV', read('index.html').includes('id="btn-export-scanner-audit"'));
+  check('Ajustes incluye botón WhatsApp', read('index.html').includes('id="btn-share-scanner-whatsapp"'));
+  check('Ajustes comparte por WhatsApp', read('js/modules/ajustes.js').includes('_compartirScannerWhatsApp'));
+  check('Ajustes usa wa.me para compartir', read('js/modules/ajustes.js').includes('wa.me'));
+}
+
 async function main() {
   console.log('\n╔══════════════════════════════════════════════════════════════════╗\n║          CONTROL PERSONAL CAMPO — TEST SUITE                    ║\n╚══════════════════════════════════════════════════════════════════╝');
-  htmlChecks(); validatorChecks(); dpiDuplicateChecks(); formInputChecks(); businessChecks();
+  htmlChecks(); validatorChecks(); dpiDuplicateChecks(); formInputChecks(); businessChecks(); helpersChecks(); fieldScannerChecks();
+
+  // Unit test files
+  console.log('\n── Tests unitarios');
+  check('string-helpers.test.js creado', fs.existsSync(path.join(ROOT, '__tests__/unit/string-helpers.test.js')));
+  check('photo-helpers.test.js creado', fs.existsSync(path.join(ROOT, '__tests__/unit/photo-helpers.test.js')));
+  check('personal.test.js creado', fs.existsSync(path.join(ROOT, '__tests__/unit/personal.test.js')));
+
   console.log(`\n════════════════════════════════════════════════════════════\n  Total: ${pass + fail}  |  PASS: ${pass}  |  FAIL: ${fail}`);
   if (fail) { console.log('  Fallos:'); failures.forEach(item => console.log(`    - ${item}`)); }
   process.exitCode = fail ? 1 : 0;

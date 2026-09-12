@@ -11,6 +11,16 @@ const ModuloPersonal = (() => {
   let _editingId        = null;
   let _fotoBase64       = '';
 
+  // ─── Helpers globales ─────────────────────────────────────────────────────
+  const $ = (id) => document.getElementById(id);
+  const CPC = window.CPC || {};
+  const esc = (str) => CPC.StringHelpers?.escHtml?.(str) ?? _escHtml(str);
+  const fmtTel = (tel) => CPC.StringHelpers?.formatTelefono?.(tel) ?? _formatTelefono(tel);
+  const compress = (img, maxW = 600, maxH = 600, quality = 0.75) =>
+    CPC.PhotoHelpers?.compressImage?.(img, maxW, maxH, quality) ?? _comprimirFoto(img, maxW, maxH, quality);
+  const updatePreview = (src) => CPC.PhotoHelpers?.updatePhotoPreview?.(src) ?? _actualizarFotoPreview(src);
+  const genId = () => CPC.StringHelpers?.generateLocalId?.() ?? _generarIdLocal();
+
   // ─── Inicialización ───────────────────────────────────────────────────────
   function init() {
     _bindEvents();
@@ -361,12 +371,7 @@ const ModuloPersonal = (() => {
    * @returns {string}
    */
   function _generarIdLocal() {
-    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
-    let id = 'TRAB-';
-    for (let i = 0; i < 8; i++) {
-      id += chars.charAt(Math.floor(Math.random() * chars.length));
-    }
-    return id;
+    return genId();
   }
 
   /**
@@ -913,39 +918,11 @@ const ModuloPersonal = (() => {
   }
 
   function _comprimirFoto(img, maxW = 600, maxH = 600, quality = 0.75) {
-    const canvas = document.createElement('canvas');
-    let { width, height } = img;
-
-    if (width > maxW || height > maxH) {
-      const ratio = Math.min(maxW / width, maxH / height);
-      width  = Math.round(width  * ratio);
-      height = Math.round(height * ratio);
-    }
-
-    canvas.width  = width;
-    canvas.height = height;
-    const ctx = canvas.getContext('2d');
-    ctx.drawImage(img, 0, 0, width, height);
-    return canvas.toDataURL('image/jpeg', quality);
+    return compress(img, maxW, maxH, quality);
   }
 
   function _actualizarFotoPreview(src) {
-    const preview     = document.getElementById('foto-preview');
-    const placeholder = document.getElementById('foto-placeholder');
-
-    if (src) {
-      if (preview) {
-        preview.src = src;
-        preview.style.display = 'block';
-      }
-      if (placeholder) placeholder.style.display = 'none';
-    } else {
-      if (preview) {
-        preview.src = '';
-        preview.style.display = 'none';
-      }
-      if (placeholder) placeholder.style.display = 'flex';
-    }
+    updatePreview(src);
   }
 
   // ─────────────────────────────────────────────────────────────────────────
@@ -1038,19 +1015,11 @@ const ModuloPersonal = (() => {
   // UTILIDADES
   // ─────────────────────────────────────────────────────────────────────────
   function _formatTelefono(tel) {
-    if (!tel) return '';
-    const num = tel.replace(/\D/g, '');
-    if (num.length === 8) return `+502 ${num.substring(0, 4)}-${num.substring(4)}`;
-    return tel;
+    return fmtTel(tel);
   }
 
   function _escHtml(str) {
-    if (str == null) return '';
-    return String(str)
-      .replace(/&/g, '&amp;')
-      .replace(/</g, '&lt;')
-      .replace(/>/g, '&gt;')
-      .replace(/"/g, '&quot;');
+    return esc(str);
   }
 
   function _debounce(fn, wait) {

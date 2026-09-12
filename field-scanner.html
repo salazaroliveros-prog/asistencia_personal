@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Escáner de Campo — Control Personal</title>
+  <meta name="theme-color" content="#2563eb">
+  <link rel="manifest" href="/field-scanner-manifest.json">
+  <link rel="icon" type="image/svg+xml" href="/field-scanner-favicon.svg">
+  <link rel="stylesheet" href="/css/main.css">
+  <link rel="stylesheet" href="/css/campo.css">
+  <style>
+    :root { --safe-bottom: env(safe-area-inset-bottom, 0px); }
+    html, body { overscroll-behavior: none; }
+    body { padding-bottom: calc(16px + var(--safe-bottom)); }
+  </style>
+</head>
+<body>
+  <div id="app" class="campo-app">
+    <header class="campo-header">
+      <h1>Escáner de Campo</h1>
+      <span id="campo-status" class="campo-status" role="status" aria-label="Estado de conexión">
+        <span class="dot disconnected" aria-hidden="true"></span>Offline
+      </span>
+      <button type="button" id="logout-btn" class="campo-btn ghost" hidden>Cerrar sesión</button>
+    </header>
+
+    <main class="campo-main">
+      <section id="login-section" class="campo-login">
+        <div class="login-card">
+          <h2>Acceso restringido</h2>
+          <p class="campo-hint">Ingresá el PIN del operador para habilitar el escáner.</p>
+          <form id="login-form" autocomplete="off">
+            <label for="login-pin">PIN</label>
+            <input id="login-pin" type="password" inputmode="numeric" pattern="[0-9]*" maxlength="10" placeholder="Ej: 1234" required>
+            <button type="submit" class="campo-btn primary">Ingresar</button>
+            <p id="login-error" class="login-error" hidden>PIN incorrecto</p>
+          </form>
+        </div>
+      </section>
+
+      <section class="campo-scanner" id="campo-scanner" hidden>
+        <div id="campo-qr-reader" class="qr-reader"></div>
+        <div class="campo-scanner-actions">
+          <button type="button" id="campo-btn-scan" class="campo-btn primary">Iniciar escáner</button>
+          <button type="button" id="campo-btn-stop" class="campo-btn danger" hidden>Detener</button>
+        </div>
+        <p class="campo-hint">Escanea el código QR del trabajador para registrar su marcación.</p>
+      </section>
+
+      <section class="campo-worker" id="campo-worker" hidden>
+        <div class="campo-worker-header">
+          <img id="campo-worker-photo" class="campo-worker-photo" alt="" hidden>
+          <div id="campo-worker-avatar" class="campo-worker-avatar" aria-hidden="true"></div>
+          <div class="campo-worker-info">
+            <h2 id="campo-worker-name"></h2>
+            <p id="campo-worker-puesto"></p>
+            <p id="campo-worker-id" class="mono"></p>
+          </div>
+        </div>
+
+        <div id="campo-mark-grid" class="campo-mark-grid"></div>
+
+        <div id="campo-gps" class="campo-gps" hidden>
+          <span id="campo-gps-label">GPS activo</span>
+        </div>
+      </section>
+
+      <section class="campo-feed" id="campo-feed">
+        <h3>Marcaciones recientes</h3>
+        <ul id="campo-feed-list" class="campo-feed-list">
+          <li class="campo-feed-empty">Aún no hay marcaciones hoy.</li>
+        </ul>
+      </section>
+    </main>
+
+    <footer class="campo-footer">
+      <p>Control Personal Campo · Escáner</p>
+    </footer>
+  </div>
+
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+  <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <script src="/field-scanner.js"></script>
+  <script>
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('/field-scanner-sw.js').catch(() => {});
+    }
+  </script>
+</body>
+</html>

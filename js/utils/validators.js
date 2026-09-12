@@ -7,9 +7,9 @@
 const Validators = (() => {
 
   // ─── Constantes de Validación ───────────────────────────────────────────────
-  const VALIDATION_RULES = {
+  const VALIDATION_RULES = window.CPC?.ValidationRules || {
     DPI_LENGTH: 13,
-    DPI_MIN_LENGTH: 13, // Cambiado a 13 para requerir exactamente 13 dígitos
+    DPI_MIN_LENGTH: 13,
     DPI_MAX_LENGTH: 13,
     TOLERANCIA_MIN: 0,
     TOLERANCIA_MAX: 60,
@@ -22,7 +22,7 @@ const Validators = (() => {
     NOMBRE_MIN_LENGTH: 3,
     NOMBRE_MAX_LENGTH: 100,
     TELEFONO_LENGTH: 8,
-    IMAGEN_MAX_SIZE: 600 * 1024, // 600KB
+    IMAGEN_MAX_SIZE: 600 * 1024,
     IMAGEN_MAX_DIMENSION: 300,
   };
 

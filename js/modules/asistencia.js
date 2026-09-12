@@ -744,16 +744,14 @@ const ModuloAsistencia = (() => {
     await _cargarMarcaciones(AppState.today());
   }
 
+  // ─── Helpers globales ─────────────────────────────────────────────────────
+  const esc = (str) => (window.CPC?.StringHelpers?.escHtml?.(str) ?? _escHtml(str));
+
   // ─────────────────────────────────────────────────────────────────────────
   // UTILIDADES
   // ─────────────────────────────────────────────────────────────────────────
   function _escHtml(str) {
-    if (str == null) return '';
-    return String(str)
-      .replace(/&/g, '&amp;')
-      .replace(/</g, '&lt;')
-      .replace(/>/g, '&gt;')
-      .replace(/"/g, '&quot;');
+    return esc(str);
   }
 
   function _debounce(fn, wait) {

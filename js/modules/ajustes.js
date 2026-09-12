@@ -32,6 +32,16 @@ const ModuloAjustes = (() => {
     if (btnCapturarUbicacion) btnCapturarUbicacion.addEventListener('click', _capturarUbicacionActual);
     if (btnSaveGPS) btnSaveGPS.addEventListener('click', _guardarConfigGPS);
 
+    // ─── Auditoría Escáner de Campo ──────────────────────────────────────
+    const btnLoadAudit = document.getElementById('btn-load-scanner-audit');
+    const btnClearAudit = document.getElementById('btn-clear-scanner-audit');
+    const btnExportAudit = document.getElementById('btn-export-scanner-audit');
+    const btnShareWhatsApp = document.getElementById('btn-share-scanner-whatsapp');
+    if (btnLoadAudit) btnLoadAudit.addEventListener('click', _mostrarAuditoriaScanner);
+    if (btnClearAudit) btnClearAudit.addEventListener('click', _limpiarAuditoriaScanner);
+    if (btnExportAudit) btnExportAudit.addEventListener('click', _exportarAuditoriaScannerCSV);
+    if (btnShareWhatsApp) btnShareWhatsApp.addEventListener('click', _compartirScannerWhatsApp);
+
     // ─── Logo ──────────────────────────────────────────────────────────
     const logoInput   = document.getElementById('logo-input');
     const logoDropArea = document.getElementById('logo-drop-area');
@@ -88,6 +98,10 @@ const ModuloAjustes = (() => {
     _setInput('cfg-nombre-obra', config.Nombre_Obra);
     _setInput('cfg-encargado',   config.Encargado);
     _setInput('cfg-tolerancia',  config.Tolerancia_Minutos);
+
+    // Field scanner PIN
+    const scannerPin = localStorage.getItem('cpc_field_scanner_pin');
+    _setInput('cfg-scanner-pin', scannerPin || '');
 
     // Horarios
     _setInput('cfg-hora-entrada',       config.Hora_Entrada       || '07:00');
@@ -216,6 +230,15 @@ const ModuloAjustes = (() => {
     const newConfig = { ...config, ...payload };
     AppState.set('config', newConfig);
     localStorage.setItem(LS_KEYS.CONFIG, JSON.stringify(newConfig));
+
+    // Guardar PIN del escáner de campo
+    const scannerPinInput = document.getElementById('cfg-scanner-pin');
+    const scannerPin = (scannerPinInput?.value || '').trim();
+    if (scannerPin) {
+      localStorage.setItem('cpc_field_scanner_pin', scannerPin);
+    } else {
+      localStorage.removeItem('cpc_field_scanner_pin');
+    }
 
     // Sincronizar con GAS si hay conexión
     if (AppState.get('backendMode') === 'firestore' && AppState.get('connected')) {
@@ -531,6 +554,96 @@ const ModuloAjustes = (() => {
       } catch (err) {
         console.warn('[Ajustes] No se pudo sincronizar configuración:', err.message);
       }
+    }
+  }
+
+  // ─── Auditoría Escáner de Campo ──────────────────────────────────────
+  function _mostrarAuditoriaScanner() {
+    const output = document.getElementById('scanner-audit-output');
+    const logEl = document.getElementById('scanner-audit-log');
+    if (!output || !logEl) return;
+
+    try {
+      const raw = localStorage.getItem('field_scanner_audit_log');
+      const log = raw ? JSON.parse(raw) : [];
+      if (!log.length) {
+        logEl.textContent = 'Sin registros de auditoría.';
+        output.hidden = false;
+        return;
+      }
+      const lines = log.slice().reverse().slice(0, 50).map((entry) => {
+        const when = new Date(entry.timestamp).toLocaleString('es-GT');
+        return `[${when}] ${entry.operator} · ${entry.device}\n  ${entry.workerName} · ${entry.tipo} · ${entry.status}`;
+      });
+      logEl.textContent = lines.join('\n\n');
+      output.hidden = false;
+    } catch {
+      logEl.textContent = 'No se pudo leer el log de auditoría.';
+      output.hidden = false;
+    }
+  }
+
+  function _limpiarAuditoriaScanner() {
+    localStorage.removeItem('field_scanner_audit_log');
+    const output = document.getElementById('scanner-audit-output');
+    const logEl = document.getElementById('scanner-audit-log');
+    if (logEl) logEl.textContent = '';
+    if (output) output.hidden = true;
+  }
+
+  function _exportarAuditoriaScannerCSV() {
+    try {
+      const raw = localStorage.getItem('field_scanner_audit_log');
+      const log = raw ? JSON.parse(raw) : [];
+      if (!log.length) {
+        Alerts.warning('No hay registros para exportar.');
+        return;
+      }
+
+      const headers = ['Fecha', 'Operador', 'Dispositivo', 'Acción', 'Trabajador', 'Tipo', 'Estado', 'Contexto', 'Error'];
+      const rows = log.map((entry) => {
+        const when = new Date(entry.timestamp).toISOString();
+        return [
+          when,
+          entry.operator || '',
+          entry.device || '',
+          entry.action || '',
+          entry.workerName || entry.workerId || '',
+          entry.tipo || '',
+          entry.status || '',
+          entry.context || '',
+          entry.error || '',
+        ].map((v) => `"${String(v).replace(/"/g, '""')}"`).join(',');
+      });
+
+      const csv = [headers.join(','), ...rows].join('\n');
+      const blob = new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `auditoria_scanner_${new Date().toISOString().slice(0, 10)}.csv`;
+      link.click();
+      URL.revokeObjectURL(url);
+      Alerts.success('CSV exportado correctamente');
+    } catch {
+      Alerts.error('No se pudo exportar la auditoría.');
+    }
+  }
+
+  function _compartirScannerWhatsApp() {
+    try {
+      const url = window.location.origin + '/field-scanner.html';
+      const mensaje = encodeURIComponent(
+        'Escáner de Campo — Control Personal\n\n' +
+        'Instalá la subaplicación de escaneo QR desde el siguiente link:\n' +
+        url + '\n\n' +
+        'PIN de acceso: consultá al administrador.'
+      );
+      const waUrl = `https://wa.me/?text=${mensaje}`;
+      window.open(waUrl, '_blank', 'noopener,noreferrer');
+      Alerts.success('Se abrió WhatsApp para compartir el link.');
+    } catch {
+      Alerts.error('No se pudo abrir WhatsApp.');
     }
   }
 

@@ -142,6 +142,10 @@
   <script src="js/utils/request-optimizer.js"></script>
   <script src="js/utils/data-validator.js"></script>
   <script src="js/utils/cache-manager.js"></script>
+  <script src="js/utils/validation-rules.js"></script>
+  <script src="js/utils/string-helpers.js"></script>
+  <script src="js/utils/photo-helpers.js"></script>
+  <script src="js/utils/date-helpers.js"></script>
   <script src="js/modules/dashboard.js"></script>
   <script src="js/modules/personal.js"></script>
   <script src="js/modules/asistencia.js"></script>
@@ -241,7 +245,7 @@
           </a>
         </li>
         <li class="nav-item">
-          <a href="/pwa/scanner.html" class="nav-link" target="_blank" rel="noopener noreferrer">
+          <a href="/field-scanner.html" class="nav-link" target="_blank" rel="noopener noreferrer">
             <i data-lucide="scan-line" aria-hidden="true"></i>
             <span>Escáner QR Móvil</span>
           </a>
@@ -939,6 +943,11 @@
                 <label for="cfg-tolerancia" class="form-label">Tolerancia de Marcación (minutos)</label>
                 <input type="number" id="cfg-tolerancia" class="input-glass" min="0" max="60" value="15" aria-label="Minutos de tolerancia" />
               </div>
+              <div class="form-group">
+                <label for="cfg-scanner-pin" class="form-label">PIN Escáner de Campo</label>
+                <input type="password" id="cfg-scanner-pin" class="input-glass" inputmode="numeric" pattern="[0-9]*" maxlength="10" placeholder="PIN para operadores de campo" aria-label="PIN del escáner de campo" />
+                <p class="form-hint">Este PIN se usará en la subaplicación de escaneo. Si se deja vacío, se usará el valor por defecto.</p>
+              </div>
               <button type="button" id="btn-save-general" class="btn btn-primary btn-block">
                 <i data-lucide="save" aria-hidden="true"></i> Guardar Configuración General
               </button>
@@ -1013,6 +1022,37 @@
               <button type="button" id="btn-save-gps" class="btn btn-primary btn-block">
                 <i data-lucide="save" aria-hidden="true"></i> Guardar Configuración GPS
               </button>
+            </div>
+
+            <!-- Auditoría Escáner de Campo -->
+            <div class="glass-card ajuste-card">
+              <div class="card-header">
+                <h3><i data-lucide="scan-line" aria-hidden="true"></i> Auditoría Escáner de Campo</h3>
+              </div>
+              <p class="text-muted text-sm">Registro local de marcaciones realizadas desde la subaplicación de escaneo.</p>
+              <div class="form-group">
+                <button type="button" id="btn-load-scanner-audit" class="btn btn-secondary btn-block">
+                  <i data-lucide="list" aria-hidden="true"></i> Ver últimas marcaciones del escáner
+                </button>
+              </div>
+              <div id="scanner-audit-output" class="audit-output" hidden>
+                <pre id="scanner-audit-log" class="audit-log"></pre>
+                <div class="audit-actions">
+                  <button type="button" id="btn-export-scanner-audit" class="btn btn-secondary btn-sm">
+                    <i data-lucide="download" aria-hidden="true"></i> Exportar CSV
+                  </button>
+                  <button type="button" id="btn-clear-scanner-audit" class="btn btn-danger btn-sm">
+                    Limpiar log local
+                  </button>
+                </div>
+              </div>
+
+              <div class="form-group" style="margin-top: 12px;">
+                <button type="button" id="btn-share-scanner-whatsapp" class="btn btn-primary btn-block">
+                  <i data-lucide="message-circle" aria-hidden="true"></i> Enviar link de descarga por WhatsApp
+                </button>
+                <p class="text-muted text-sm">Se abrirá WhatsApp con el link de instalación del escáner.</p>
+              </div>
             </div>
 
             <!-- Logo personalizado -->
