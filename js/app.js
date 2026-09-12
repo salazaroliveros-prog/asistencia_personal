@@ -89,6 +89,7 @@ function _initModules() {
 // ─────────────────────────────────────────────────────────────────────────────
 let _deferredInstallPrompt = null;
 const PWA_DISMISS_KEY = 'cpc_pwa_install_dismissed';
+let _pwaDismissed = false;
 
 /**
  * Detecta si la aplicación ya está instalada como PWA en el dispositivo.
@@ -137,23 +138,35 @@ function _triggerUninstall() {
   );
 }
 
+function _pwaIsDismissed() {
+  // Se consulta el estado en vivo (memoria de sesión + persistencia) para que,
+  // si el navegador vuelve a emitir "beforeinstallprompt", el banner no
+  // reaparezca después de que el usuario lo cerró con la "X".
+  return _pwaDismissed || localStorage.getItem(PWA_DISMISS_KEY) === '1';
+}
+
 function _initPwaInstall() {
   const installButton = document.getElementById('btn-install-app');
   const banner = document.getElementById('pwa-install-banner');
   const bannerInstallBtn = document.getElementById('pwa-install-btn');
   const bannerDismissBtn = document.getElementById('pwa-install-dismiss');
 
-  const dismissed = localStorage.getItem(PWA_DISMISS_KEY);
-
-  // Si la app ya está instalada, el banner (en modo "Quitar") se muestra al
-  // cargar, salvo que el usuario lo haya descartado en esta sesión.
-  const installed = _isPwaInstalled();
-  if (installed) {
-    _setInstallCtaMode(banner, 'remove');
-    if (banner && !dismissed) {
+  const showBanner = (mode) => {
+    if (_pwaIsDismissed()) return;
+    _setInstallCtaMode(banner, mode);
+    if (banner) {
       banner.hidden = false;
       if (window.lucide) lucide.createIcons({ nodes: [banner] });
     }
+  };
+
+  // Si la app ya está instalada, el banner (en modo "Quitar") se muestra al
+  // cargar, salvo que el usuario lo haya descartado.
+  if (_isPwaInstalled()) {
+    showBanner('remove');
+  } else if (installButton) {
+    // Enmascarado hasta que el navegador ofrezca instalar la PWA.
+    installButton.hidden = true;
   }
 
   window.addEventListener('beforeinstallprompt', (event) => {
@@ -166,19 +179,15 @@ function _initPwaInstall() {
       return;
     }
 
-    _setInstallCtaMode(banner, 'install');
-    if (installButton) installButton.hidden = false;
-
-    if (banner && !dismissed) {
-      banner.hidden = false;
-      if (window.lucide) lucide.createIcons({ nodes: [banner] });
-    }
+    if (installButton && !_pwaIsDismissed()) installButton.hidden = false;
+    showBanner('install');
   });
 
   window.addEventListener('appinstalled', () => {
     _deferredInstallPrompt = null;
     _hidePwaUi(installButton, banner);
     localStorage.removeItem(PWA_DISMISS_KEY);
+    _pwaDismissed = false;
     Alerts.success('La aplicación quedó instalada en este dispositivo.', 'Instalación completada');
   });
 
@@ -194,9 +203,14 @@ function _initPwaInstall() {
   }
 
   if (bannerDismissBtn) {
-    bannerDismissBtn.addEventListener('click', () => {
+    bannerDismissBtn.addEventListener('click', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      if (!_pwaDismissed) {
+        _pwaDismissed = true;
+        try { localStorage.setItem(PWA_DISMISS_KEY, '1'); } catch (err) { /* noop */ }
+      }
       _hidePwaUi(installButton, banner);
-      localStorage.setItem(PWA_DISMISS_KEY, '1');
     });
   }
 }

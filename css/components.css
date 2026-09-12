@@ -1525,7 +1525,8 @@ input[type="month"].input-glass {
    ───────────────────────────────────────────────────────────────────────────── */
 #toast-container {
   position: fixed;
-  bottom: max(var(--space-6), env(safe-area-inset-bottom));
+  /* env() no está soportado por los navegadores: se usa el espacio fijo. */
+  bottom: var(--space-6);
   right: var(--space-6);
   z-index: var(--z-toast);
   display: flex;
@@ -2169,7 +2170,7 @@ input[type="month"].input-glass {
 /* Banner de instalación PWA (opcional, se puede activar desde JS) */
 .pwa-install-banner {
   position: fixed;
-  bottom: max(var(--space-4), env(safe-area-inset-bottom));
+  bottom: var(--space-4);
   left: 50%;
   transform: translateX(-50%);
   background: var(--glass-bg);
@@ -2185,6 +2186,12 @@ input[type="month"].input-glass {
   max-width: 420px;
   width: 90vw;
   animation: slideUpFade 0.3s ease;
+}
+
+/* El display:flex anterior anula el atributo [hidden]; sin esta regla la "X"
+   no oculta el banner (regresión QA E2E test 02). */
+.pwa-install-banner[hidden] {
+  display: none !important;
 }
 
 .pwa-install-icon {
@@ -2230,8 +2237,17 @@ input[type="month"].input-glass {
 
 .pwa-install-close {
   flex-shrink: 0;
-  padding: var(--space-1);
+  min-width: 44px;
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   color: var(--color-text-muted);
+}
+
+.pwa-install-close svg {
+  width: 18px;
+  height: 18px;
 }
 
 @keyframes slideUpFade {

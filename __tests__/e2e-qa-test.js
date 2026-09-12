@@ -625,22 +625,28 @@ async function registrarTrabajador(page, datos) {
       await botonesDelete[botonesDelete.length - 1].click();
       await page.waitForTimeout(400);
 
-      // Confirmar el diálogo de confirmación
-      page.on('dialog', async dialog => {
-        await dialog.accept();
-      });
+      // Confirmar usando el modal custom si está presente; si no, aceptar dialog nativo
+      const modalConfirm = await page.$('#modal-confirm');
+      if (modalConfirm) {
+        const titleBefore = await page.textContent('#modal-confirm-title');
+        check(!!titleBefore && titleBefore.trim().length > 0, 'Modal de confirmación mostrado para baja');
+        await page.click('#btn-confirm-ok');
+      } else {
+        page.once('dialog', async dialog => {
+          await dialog.accept();
+        });
+      }
       await page.waitForTimeout(800);
 
-      // Verificar que se redujo (o mostrar advertencia si el confirm es un modal custom)
       const countDespues = await page.evaluate(() =>
         (AppState.get('personal') || []).length
       );
-      if (countDespues < countAntes) {
-        check(true, `Baja lógica exitosa: personal pasó de ${countAntes} a ${countDespues}`);
-      } else {
-        warn('La baja puede usar un modal custom (confirm nativo interceptado) — verificar manualmente');
-        check(true, 'Botón de baja responde sin errores JS');
-      }
+      const estadoMartín = await page.evaluate(() => {
+        const lista = AppState.get('personal') || [];
+        const m = lista.find(p => p.Nombre_Completo.includes('Martín'));
+        return m ? m.Estado : null;
+      });
+      check(countDespues === countAntes && estadoMartín === 'Inactivo', 'Baja lógica aplicada como cambio de estado a Inactivo');
       await shot(page, 'baja-trabajador');
     }
 
