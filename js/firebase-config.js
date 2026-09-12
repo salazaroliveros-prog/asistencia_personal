@@ -8,12 +8,12 @@
  * Ajustes antes de la primera carga. La app intentará conectar automáticamente.
  */
 window.FIREBASE_CONFIG = window.FIREBASE_CONFIG || {
-  apiKey: '',
-  authDomain: '',
-  projectId: '',
-  storageBucket: '',
-  messagingSenderId: '',
-  appId: '',
+  apiKey: import.meta.env && import.meta.env.VITE_FIREBASE_API_KEY ? import.meta.env.VITE_FIREBASE_API_KEY : "AIzaSyDriDh1SC5_8T1rx5EmgFi0pUEKUGQU5xg",
+  authDomain: import.meta.env && import.meta.env.VITE_FIREBASE_AUTH_DOMAIN ? import.meta.env.VITE_FIREBASE_AUTH_DOMAIN : "sistema-de-control-aee89.firebaseapp.com",
+  projectId: import.meta.env && import.meta.env.VITE_FIREBASE_PROJECT_ID ? import.meta.env.VITE_FIREBASE_PROJECT_ID : "sistema-de-control-aee89",
+  storageBucket: import.meta.env && import.meta.env.VITE_FIREBASE_STORAGE_BUCKET ? import.meta.env.VITE_FIREBASE_STORAGE_BUCKET : "sistema-de-control-aee89.firebasestorage.app",
+  messagingSenderId: import.meta.env && import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID ? import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID : "265655332442",
+  appId: import.meta.env && import.meta.env.VITE_FIREBASE_APP_ID ? import.meta.env.VITE_FIREBASE_APP_ID : "1:265655332442:web:c4e8617741e3b916987263",
 };
 
 /**
@@ -44,4 +44,3 @@ window.validateFirebaseConfig = function(config) {
   
   return { valid: true };
 };
-

@@ -4,7 +4,7 @@ import { resolve } from 'node:path';
 
 function copyLegacyRuntime() {
   const directories = ['js', 'assets', 'css'];
-  const files = ['service-worker.js', 'manifest.json'];
+  const files = ['service-worker.js', 'manifest.json', 'field-scanner.html', 'field-scanner.js', 'campo.css'];
   return {
     name: 'copy-legacy-runtime',
     closeBundle() {
@@ -23,8 +23,8 @@ function copyLegacyRuntime() {
 export default defineConfig(({ mode }) => ({
   appType: 'spa',
   plugins: [copyLegacyRuntime()],
-  server: { host: '127.0.0.1', port: 3800 },
-  preview: { host: '127.0.0.1', port: 3800 },
+  server: { host: '127.0.0.1', port: 3801 },
+  preview: { host: '127.0.0.1', port: 3801 },
   build: {
     outDir: 'dist',
     emptyOutDir: true,
