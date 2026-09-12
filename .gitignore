@@ -48,3 +48,9 @@ __tests__/e2e-qa-test.js.orig
 .firebase/logs/  
 .firebase/logs/ 
 \".firebase/logs/\"  
+
+
+# Playwright browsers locales + logs temporales
+.playwright-browsers/
+preview.log
+_browsers_install.log
