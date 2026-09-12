@@ -53,27 +53,23 @@ declare global {
       };
       firestore(): {
         enablePersistence(options: { synchronizeTabs: boolean }): Promise<void>;
-        collection(name: string): {
-          orderBy(field: string, direction: string): { 
-            get(): Promise<{ docs: Array<{ id: string; data(): FirestoreRecord }> }>; 
-            limit(count: number): { get(): Promise<{ docs: Array<{ id: string; data(): FirestoreRecord }> }> };
-          };
-          get(): Promise<{ docs: Array<{ id: string; data(): FirestoreRecord }> }> };
-          doc(id?: string): {
-            set(data: FirestoreRecord, options: { merge: boolean }): Promise<void>;
-            delete(): Promise<void>;
-            get(): Promise<{ exists: boolean; data(): FirestoreRecord }>;
-          };
-          onSnapshot(onNext: (snapshot: { docs: Array<{ id: string; data(): FirestoreRecord }> }) => void, onError: (error: Error) => void): () => void;
+      collection(name: string): {
+        orderBy(field: string, direction: string): { 
+          get(): Promise<{ docs: Array<{ id: string; data(): FirestoreRecord }> }>; 
+          limit(count: number): { get(): Promise<{ docs: Array<{ id: string; data(): FirestoreRecord }> }> };
         };
+        get(): Promise<{ docs: Array<{ id: string; data(): FirestoreRecord }> }>;
+        doc(id?: string): {
+          set(data: FirestoreRecord, options: { merge: boolean }): Promise<void>;
+          delete(): Promise<void>;
+          get(): Promise<{ exists: boolean; data(): FirestoreRecord }>;
+        };
+        onSnapshot(onNext: (snapshot: { docs: Array<{ id: string; data(): FirestoreRecord }> }) => void, onError: (error: Error) => void): () => void;
+      };
         FieldValue: { serverTimestamp(): unknown };
       };
     };
     FirebaseClient: FirebaseAdapter;
-    AppState: {
-      get<T>(key: string): T;
-      set(key: string, value: unknown): void;
-    };
   }
 }
 
@@ -373,15 +369,14 @@ function isReady(): boolean {
 async function list(name: string, orderField: string | null = null, limitCount: number = 500): Promise<FirestoreRecord[]> {
   if (!database) throw new Error('Firestore no está conectado.');
   
-  let query = database.collection(name);
+  let query: any = database.collection(name);
   
   if (orderField) {
-    query = query.orderBy(orderField, 'desc') as any;
+    query = query.orderBy(orderField, 'desc');
   }
   
-  // Apply limit to prevent excessive data transfer
   if (limitCount > 0) {
-    query = query.limit(limitCount) as any;
+    query = query.limit(limitCount);
   }
   
   const snapshot = await query.get();

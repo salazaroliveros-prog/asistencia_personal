@@ -5,11 +5,14 @@ type Result<T> = { success: boolean; data: T; offline?: boolean; error?: string;
 type AppStateLike = { get<T = unknown>(key: string): T; set(key: string, value: unknown): void };
 type FirebaseLike = {
   isReady(): boolean;
+  getConnectionState(): string;
   initialize(): Promise<{ success: boolean; [key: string]: unknown }>;
-  list(collection: string): Promise<Record<string, unknown>[]>;
+  list(collection: string, orderField?: string | null, limit?: number): Promise<Record<string, unknown>[]>;
   save(collection: string, id: string, data: Record<string, unknown>): Promise<unknown>;
   remove(collection: string, id: string): Promise<void>;
   subscribe(collection: string, callback: (records: Record<string, unknown>[]) => void): () => void;
+  onConnectionChange(callback: (state: string) => void): () => void;
+  getHealth(): { healthy: boolean; lastCheck: number; consecutiveFailures: number; latencyMs: number };
 };
 
 declare global {
@@ -145,33 +148,30 @@ function bindConnectivity(): void {
   window.addEventListener('online', async () => {
     console.log('[API] Network online, checking Firebase connection...');
     
-    // If Firebase is ready but not connected, try to reconnect
     if (firebase().isReady() && firebase().getConnectionState() === 'failed') {
       console.log('[API] Attempting to reconnect to Firebase...');
       const connection = await firebase().initialize();
       if (connection.success) {
         console.log('[API] Reconnected to Firebase');
-        await this.syncOfflineQueue();
-        await this.obtenerPersonal();
-        await this.obtenerAsistencias();
+        await API.syncOfflineQueue();
+        await API.obtenerPersonal();
+        await API.obtenerAsistencias();
       }
     } else if (firebase().isReady() && firebase().getConnectionState() === 'degraded') {
-      // If degraded, trigger health check
       console.log('[API] Connection degraded, triggering health check...');
       const healthy = await (firebase() as any).checkHealth?.();
       if (healthy) {
         updateConnection(true);
-        await this.syncOfflineQueue();
+        await API.syncOfflineQueue();
       }
     } else if (!firebase().isReady() && isConfigured()) {
-      // If not ready but config exists, try to initialize
       console.log('[API] Firebase not initialized but config exists, initializing...');
       const connection = await firebase().initialize();
       if (connection.success) {
         updateConnection(true);
-        await this.syncOfflineQueue();
-        await this.obtenerPersonal();
-        await this.obtenerAsistencias();
+        await API.syncOfflineQueue();
+        await API.obtenerPersonal();
+        await API.obtenerAsistencias();
       }
     }
   });
@@ -233,7 +233,10 @@ const API: Api = {
     
     return connection;
   },
-  async ping() { const connection = await this.initialize(); return { ...connection, message: connection.success ? 'Firestore listo y sincronizando en tiempo real.' : 'Modo local activo.' }; },
+  async ping(this: Api) { 
+    const connection = await API.initialize(); 
+    return { ...connection, message: connection.success ? 'Firestore listo y sincronizando en tiempo real.' : 'Modo local activo.' }; 
+  },
   async obtenerPersonal(limit, offset = 0) {
     if (!connected()) return result(personalCache(), { offline: true });
     try {
