@@ -4,9 +4,9 @@
  * @version 1.0.0
  */
 
-const CACHE_NAME    = 'cpc-v1.1.0';
-const CACHE_STATIC  = 'cpc-static-v1.1.0';
-const CACHE_DYNAMIC = 'cpc-dynamic-v1.1.0';
+const CACHE_NAME    = 'cpc-v1.2.0';
+const CACHE_STATIC  = 'cpc-static-v1.2.0';
+const CACHE_DYNAMIC = 'cpc-dynamic-v1.2.0';
 
 // Assets críticos que se precargan en el install
 const PRECACHE_ASSETS = [
@@ -38,7 +38,7 @@ const PRECACHE_ASSETS = [
 
 // ─── INSTALL ─────────────────────────────────────────────────────────────────
 self.addEventListener('install', (event) => {
-  console.log('[SW] Instalando v1.1.0...');
+  console.log('[SW] Instalando v1.2.0...');
   event.waitUntil(
     caches.open(CACHE_STATIC).then((cache) => {
       console.log('[SW] Pre-cacheando assets estáticos...');
@@ -95,6 +95,23 @@ self.addEventListener('fetch', (event) => {
  * Cache-First: sirve desde cache; si no hay, fetch y guarda.
  */
 async function _cacheFirst(request) {
+  // Navegaciones (páginas): Network-First para que las actualizaciones
+  // (CSP, bundles) se apliquen de inmediato; caché solo como fallback offline.
+  if (request.mode === 'navigate') {
+    try {
+      const fresh = await fetch(request);
+      if (fresh && fresh.status === 200) {
+        const cache = await caches.open(CACHE_STATIC);
+        cache.put(request, fresh.clone());
+      }
+      return fresh;
+    } catch (err) {
+      const fallback = await caches.match('/index.html');
+      if (fallback) return fallback;
+      throw err;
+    }
+  }
+
   const cached = await caches.match(request);
   if (cached) return cached;
 
