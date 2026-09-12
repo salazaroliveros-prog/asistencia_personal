@@ -113,13 +113,13 @@ function formInputChecks() {
 
 function businessChecks() {
   console.log('\n── Lógica de negocio');
-  const pdf = read('js/utils/pdf-builder.js'); const asistencia = read('js/modules/asistencia.js'); const personal = read('js/modules/personal.js'); const api = read('js/api.js');
+  const pdf = read('js/utils/pdf-builder.js'); const asistencia = read('js/modules/asistencia.js'); const personal = read('js/modules/personal.js'); const api = read('src/api.ts');
   check('PDF usa Metodo_Registro', pdf.includes('Metodo_Registro') && !pdf.includes('a.Metodo ==='));
   check('PDF usa lookup eficiente de personal', pdf.includes('personalMap') || pdf.includes('new Map'));
   check('Asistencia conserva Metodo_Registro', asistencia.includes('Metodo_Registro'));
   check('Asistencia offline conserva Ubicacion_Obra', asistencia.includes('Ubicacion_Obra:'));
   check('Sábado contado como día hábil', personal.includes('dow !== 0'));
-  check('API usa Firestore con respaldo local', api.includes('FirebaseClient') && api.includes('modo local'));
+  check('API usa Firestore con respaldo local', api.includes('FirebaseClient') && api.includes('attendanceCache'));
 }
 
 async function main() {

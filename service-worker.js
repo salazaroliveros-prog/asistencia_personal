@@ -21,7 +21,6 @@ const PRECACHE_ASSETS = [
   '/css/components.css',
   '/css/print.css',
   '/js/config.js',
-  '/js/api.js',
   '/js/app.js',
   '/js/utils/alerts.js',
   '/js/utils/qr-generator.js',

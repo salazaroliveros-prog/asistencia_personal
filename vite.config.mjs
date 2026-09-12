@@ -4,7 +4,7 @@ import { resolve } from 'node:path';
 
 function copyLegacyRuntime() {
   const directories = ['js', 'assets', 'css'];
-  const files = ['service-worker.js', 'manifest.json', 'firestore.rules', 'vercel.json'];
+  const files = ['service-worker.js', 'manifest.json'];
   return {
     name: 'copy-legacy-runtime',
     closeBundle() {

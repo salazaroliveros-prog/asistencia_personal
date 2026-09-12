@@ -44,3 +44,7 @@ __tests__/_timing.log
 __tests__/p*.log
 __tests__/e2e-qa-test.js.orig
 
+.firebase/logs/  
+.firebase/logs/  
+.firebase/logs/ 
+\".firebase/logs/\"  
