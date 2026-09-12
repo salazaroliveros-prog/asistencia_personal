@@ -18,10 +18,12 @@ __tests__/_qa_state.json
 firebase-debug.log
 dataconnect/
 src/dataconnect-generated/
+ios/FirebaseDataConnectGenerated/
 
 # ── Tooling de agentes (local) ──
 .agents/
 .claude/
+.kilo/
 skills-lock.json
 
 # ── Scripts auxiliares desechables del harness QA ──
