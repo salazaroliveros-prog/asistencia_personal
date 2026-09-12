@@ -591,14 +591,30 @@ function _getFormattedDate(date) {
 // ─────────────────────────────────────────────────────────────────────────────
 async function _initialConnection() {
   try {
+    // FirebaseClient.initialize() is already called automatically in firebase.ts
+    // if config exists. Here we just check the state and load initial data.
+    
+    // Give auto-initialization a moment to complete
+    await delay(500);
+    
     const connection = await API.ping();
     if (connection.success) {
+      // Connection already established by auto-initialization
       API.obtenerPersonal().catch(() => {});
       API.obtenerConfiguracion().catch(() => {});
+    } else if (!connection.success && connection.mode === 'local') {
+      // No Firebase config or auto-connection failed
+      // App will work in local mode - user can configure in Settings if needed
+      console.log('[App] Running in local mode. Configure Firebase in Settings for cloud sync.');
     }
   } catch (err) {
     console.warn('[App] Firestore no disponible; se mantiene el modo local:', err.message);
   }
+}
+
+// Helper delay function
+function delay(ms: number): Promise<void> {
+  return new Promise(resolve => setTimeout(resolve, ms));
 }
 
 // ─────────────────────────────────────────────────────────────────────────────

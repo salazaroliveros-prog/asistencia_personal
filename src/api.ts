@@ -25,6 +25,16 @@ const state = (): AppStateLike => window.AppState;
 const firebase = (): FirebaseLike => window.FirebaseClient;
 const keys = (): Record<string, string> => window.LS_KEYS;
 const now = (): string => new Date().toISOString();
+
+function isConfigured(): boolean {
+  try {
+    const saved = JSON.parse(localStorage.getItem(window.LS_KEYS.FIREBASE_CONFIG) || '{}');
+    return Boolean(saved.apiKey && saved.authDomain && saved.projectId && saved.appId);
+  } catch {
+    return false;
+  }
+}
+
 const read = <T>(key: string, fallback: T): T => {
   try { return JSON.parse(localStorage.getItem(key) || JSON.stringify(fallback)) as T; } catch { return fallback; }
 };
@@ -39,7 +49,11 @@ function setQueue(items: Record<string, unknown>[]): void {
   write(keys().OFFLINE_QUEUE, items);
   state().set('offlineQueue', items.length);
 }
-function connected(): boolean { return firebase().isReady() && Boolean(state().get('connected')); }
+function connected(): boolean { 
+  return firebase().isReady() && 
+         (firebase().getConnectionState() === 'connected' || firebase().getConnectionState() === 'degraded') &&
+         Boolean(state().get('connected')); 
+}
 function personalCache(): Worker[] { return (state().get<Worker[]>('personal') || read(keys().PERSONAL_CACHE, [])) as Worker[]; }
 function attendanceCache(): AttendanceRecord[] {
   const cached = read<AttendanceRecord[]>(keys().ATTENDANCE_CACHE, []);
@@ -114,6 +128,7 @@ function updateConnection(value: boolean): void {
 function markRemoteFailure(error: unknown): void {
   console.warn('[API] Firestore no disponible; se activa el modo local:', error);
   updateConnection(false);
+  // Don't reset backend mode - let Firebase health monitor handle reconnection
 }
 
 let connectivityBound = false;
@@ -121,14 +136,43 @@ let realtimeSubscriptionsBound = false;
 function bindConnectivity(): void {
   if (connectivityBound) return;
   connectivityBound = true;
-  window.addEventListener('offline', () => updateConnection(false));
+  
+  window.addEventListener('offline', () => {
+    updateConnection(false);
+    console.log('[API] Network offline');
+  });
+  
   window.addEventListener('online', async () => {
-    if (!firebase().isReady()) return;
-    updateConnection(true);
-    const sync = await API.syncOfflineQueue();
-    if (sync.enviadas > 0) {
-      await API.obtenerPersonal();
-      await API.obtenerAsistencias();
+    console.log('[API] Network online, checking Firebase connection...');
+    
+    // If Firebase is ready but not connected, try to reconnect
+    if (firebase().isReady() && firebase().getConnectionState() === 'failed') {
+      console.log('[API] Attempting to reconnect to Firebase...');
+      const connection = await firebase().initialize();
+      if (connection.success) {
+        console.log('[API] Reconnected to Firebase');
+        await this.syncOfflineQueue();
+        await this.obtenerPersonal();
+        await this.obtenerAsistencias();
+      }
+    } else if (firebase().isReady() && firebase().getConnectionState() === 'degraded') {
+      // If degraded, trigger health check
+      console.log('[API] Connection degraded, triggering health check...');
+      const healthy = await (firebase() as any).checkHealth?.();
+      if (healthy) {
+        updateConnection(true);
+        await this.syncOfflineQueue();
+      }
+    } else if (!firebase().isReady() && isConfigured()) {
+      // If not ready but config exists, try to initialize
+      console.log('[API] Firebase not initialized but config exists, initializing...');
+      const connection = await firebase().initialize();
+      if (connection.success) {
+        updateConnection(true);
+        await this.syncOfflineQueue();
+        await this.obtenerPersonal();
+        await this.obtenerAsistencias();
+      }
     }
   });
 }
@@ -158,14 +202,35 @@ const API: Api = {
   async initialize() {
     bindConnectivity();
     if (state().get('backendMode') !== 'firestore') realtimeSubscriptionsBound = false;
+    
     const connection = await firebase().initialize();
     updateConnection(connection.success);
+    
+    // Bind to connection state changes for automatic reconnection
     if (connection.success && !realtimeSubscriptionsBound) {
       firebase().subscribe('personal', records => savePersonalCache(records.filter(record => record.Estado !== 'Eliminado') as unknown as Worker[]));
       firebase().subscribe('asistencias', records => saveAttendanceCache(records as unknown as AttendanceRecord[]));
       firebase().subscribe('alertas', records => state().set('alertas', records));
       realtimeSubscriptionsBound = true;
     }
+    
+    // Listen for connection state changes
+    const unsubscribe = firebase().onConnectionChange((newState) => {
+      console.log(`[API] Connection state changed: ${newState}`);
+      updateConnection(newState === 'connected' || newState === 'degraded');
+      
+      // Auto-sync when reconnecting
+      if ((newState === 'connected' || newState === 'degraded') && realtimeSubscriptionsBound) {
+        this.syncOfflineQueue().catch(() => {});
+        this.obtenerPersonal().catch(() => {});
+      }
+    });
+    
+    // Store unsubscribe for cleanup if needed
+    if (typeof window !== 'undefined') {
+      (window as any)._firebaseConnectionUnsubscribe = unsubscribe;
+    }
+    
     return connection;
   },
   async ping() { const connection = await this.initialize(); return { ...connection, message: connection.success ? 'Firestore listo y sincronizando en tiempo real.' : 'Modo local activo.' }; },

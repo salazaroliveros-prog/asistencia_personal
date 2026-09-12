@@ -124,13 +124,44 @@ const ModuloAjustes = (() => {
       authDomain: document.getElementById('firebase-auth-domain')?.value.trim(),
       appId: document.getElementById('firebase-app-id')?.value.trim(),
     };
-    if (!FirebaseClient.isConfigured(config)) { Alerts.error('Completa ID del proyecto, API Key, dominio de autenticación y App ID.'); return; }
-    localStorage.setItem(LS_KEYS.FIREBASE_CONFIG, JSON.stringify(config));
+    
+    // Validate config before attempting connection
+    const validation = window.validateFirebaseConfig ? window.validateFirebaseConfig(config) : { valid: true };
+    if (!validation.valid) { 
+      Alerts.error(validation.error || 'Completa ID del proyecto, API Key, dominio de autenticación y App ID.'); 
+      return; 
+    }
+    
+    if (!FirebaseClient.isConfigured(config)) { 
+      Alerts.error('Completa ID del proyecto, API Key, dominio de autenticación y App ID.'); 
+      return; 
+    }
+    
     const statusEl = document.getElementById('connection-status-detail');
     if (statusEl) statusEl.textContent = '⏳ Conectando con Firestore…';
-    const result = await API.initialize();
-    if (result.success) { if (statusEl) { statusEl.className = 'connection-status-detail success'; statusEl.textContent = `✅ Firestore conectado: ${config.projectId}`; } Alerts.success('Firestore conectado y sincronización en tiempo real activa.'); }
-    else { if (statusEl) { statusEl.className = 'connection-status-detail error'; statusEl.textContent = `❌ ${result.error || 'No se pudo conectar.'}`; } Alerts.error(result.error || 'No se pudo conectar con Firestore.'); }
+    
+    try {
+      const result = await API.initialize();
+      if (result.success) { 
+        if (statusEl) { 
+          statusEl.className = 'connection-status-detail success'; 
+          statusEl.textContent = `✅ Firestore conectado: ${config.projectId}`; 
+        } 
+        Alerts.success('Firestore conectado y sincronización en tiempo real activa.'); 
+      } else { 
+        if (statusEl) { 
+          statusEl.className = 'connection-status-detail error'; 
+          statusEl.textContent = `❌ ${result.error || 'No se pudo conectar.'}`; 
+        } 
+        Alerts.error(result.error || 'No se pudo conectar con Firestore.'); 
+      }
+    } catch (error) {
+      if (statusEl) { 
+        statusEl.className = 'connection-status-detail error'; 
+        statusEl.textContent = `❌ Error: ${error.message}`; 
+      } 
+      Alerts.error('Error al conectar con Firestore: ' + error.message);
+    }
   }
 
   function _usarModoLocal() {
@@ -139,6 +170,28 @@ const ModuloAjustes = (() => {
     const statusEl = document.getElementById('connection-status-detail');
     if (statusEl) { statusEl.className = 'connection-status-detail'; statusEl.textContent = '💾 Modo local activo en este dispositivo.'; }
     Alerts.success('Modo local activado. Tus datos se conservarán en este dispositivo.');
+  }
+
+  async function _guardarConfigFirebase() {
+    const config = {
+      projectId: document.getElementById('firebase-project-id')?.value.trim(),
+      apiKey: document.getElementById('firebase-api-key')?.value.trim(),
+      authDomain: document.getElementById('firebase-auth-domain')?.value.trim(),
+      appId: document.getElementById('firebase-app-id')?.value.trim(),
+    };
+    
+    // Validate before saving
+    const validation = window.validateFirebaseConfig ? window.validateFirebaseConfig(config) : { valid: true };
+    if (!validation.valid) {
+      Alerts.error(validation.error || 'Configuración inválida.');
+      return;
+    }
+    
+    localStorage.setItem(LS_KEYS.FIREBASE_CONFIG, JSON.stringify(config));
+    Alerts.success('Configuración de Firebase guardada. La app intentará conectar automáticamente.');
+    
+    // Try to connect automatically
+    setTimeout(() => _conectarFirebase(), 500);
   }
 
   // ─────────────────────────────────────────────────────────────────────────
