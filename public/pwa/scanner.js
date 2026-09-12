@@ -140,11 +140,19 @@ function handleQRScan(data) {
   if (now - lastScanTime < 2000) return;
   lastScanTime = now;
 
+  // Parsear el contenido del QR robustamente:
+  //  - Si es JSON válido con workerId/id/dpi, usar esos campos
+  //  - Si es un número (DPI a secas) o texto plano, tratar como workerId raw
   let qrData;
   try {
-    qrData = JSON.parse(data);
+    const parsed = JSON.parse(data);
+    if (typeof parsed === 'object' && parsed !== null) {
+      qrData = parsed;
+    } else {
+      qrData = { raw: String(parsed).trim() };
+    }
   } catch {
-    qrData = { raw: data };
+    qrData = { raw: String(data).trim() };
   }
 
   processAttendance(qrData);
