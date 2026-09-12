@@ -42,7 +42,14 @@ self.addEventListener('install', (event) => {
   event.waitUntil(
     caches.open(CACHE_STATIC).then((cache) => {
       console.log('[SW] Pre-cacheando assets estáticos...');
-      return cache.addAll(PRECACHE_ASSETS);
+      return Promise.all(
+        PRECACHE_ASSETS.map((url) =>
+          cache.add(url).catch((err) => {
+            console.warn('[SW] No se pudo precachear:', url, err.message);
+            return null;
+          })
+        )
+      );
     }).then(() => self.skipWaiting())
   );
 });

@@ -613,7 +613,7 @@ async function _initialConnection() {
 }
 
 // Helper delay function
-function delay(ms: number): Promise<void> {
+function delay(ms) {
   return new Promise(resolve => setTimeout(resolve, ms));
 }
 
