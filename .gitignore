@@ -53,3 +53,4 @@ __tests__/e2e-qa-test.js.orig
 .playwright-browsers/
 preview.log
 _browsers_install.log
+.playwright-mcp/
