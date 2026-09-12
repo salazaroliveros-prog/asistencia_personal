@@ -90,6 +90,53 @@ function _initModules() {
 let _deferredInstallPrompt = null;
 const PWA_DISMISS_KEY = 'cpc_pwa_install_dismissed';
 
+/**
+ * Detecta si la aplicación ya está instalada como PWA en el dispositivo.
+ * En modo standalone (ventana dedicada) Chrome expone el ambiente de
+ * pantalla "standalone". Es la forma más fiable y sin dependencias de
+ * saber que la app ya fue instalada.
+ * @returns {boolean}
+ */
+function _isPwaInstalled() {
+  try {
+    if (typeof navigator !== 'undefined' && navigator.standalone) return true;
+    if (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches) return true;
+  } catch (e) { /* noop */ }
+  return false;
+}
+
+/**
+ * Ajusta el contenido del banner según el modo actual.
+ * @param {HTMLElement|null} banner
+ * @param {'install'|'remove'} mode - 'install' para sugerir instalar, 'remove' para sugerir quitar.
+ */
+function _setInstallCtaMode(banner, mode) {
+  if (!banner) return;
+  const installed = mode === 'remove';
+  const title    = document.getElementById('pwa-install-title');
+  const subtitle = document.getElementById('pwa-install-subtitle');
+  const iconEl   = document.getElementById('pwa-install-cta-icon');
+  const labelEl  = document.getElementById('pwa-install-cta-label');
+
+  if (title)    title.textContent    = installed ? 'Quitar aplicación' : 'Instalar aplicación';
+  if (subtitle) subtitle.textContent = installed
+    ? 'Control Personal Campo ya está en este dispositivo'
+    : 'Agregar Control Personal Campo a tu pantalla de inicio';
+  if (labelEl)  labelEl.textContent  = installed ? 'Quitar' : 'Instalar';
+  if (iconEl)   iconEl.setAttribute('data-lucide', installed ? 'trash-2' : 'download');
+}
+
+/**
+ * Muestra un instructivo de cómo desinstalar la PWA (no existe API
+ * estándar para forzar la desinstalación desde el navegador).
+ */
+function _triggerUninstall() {
+  Alerts.info(
+    'Para quitar la aplicación ve a chrome://apps (o a tu gestor de aplicaciones) y desinstala "Control Personal Campo".',
+    'Quitar aplicación'
+  );
+}
+
 function _initPwaInstall() {
   const installButton = document.getElementById('btn-install-app');
   const banner = document.getElementById('pwa-install-banner');
@@ -98,10 +145,28 @@ function _initPwaInstall() {
 
   const dismissed = localStorage.getItem(PWA_DISMISS_KEY);
 
+  // Si la app ya está instalada, el banner (en modo "Quitar") se muestra al
+  // cargar, salvo que el usuario lo haya descartado en esta sesión.
+  const installed = _isPwaInstalled();
+  if (installed) {
+    _setInstallCtaMode(banner, 'remove');
+    if (banner && !dismissed) {
+      banner.hidden = false;
+      if (window.lucide) lucide.createIcons({ nodes: [banner] });
+    }
+  }
+
   window.addEventListener('beforeinstallprompt', (event) => {
     event.preventDefault();
     _deferredInstallPrompt = event;
 
+    // Nunca sobrescribir el estado "Quitar" cuando ya está instalada.
+    if (_isPwaInstalled()) {
+      _setInstallCtaMode(banner, 'remove');
+      return;
+    }
+
+    _setInstallCtaMode(banner, 'install');
     if (installButton) installButton.hidden = false;
 
     if (banner && !dismissed) {
@@ -122,7 +187,10 @@ function _initPwaInstall() {
   }
 
   if (bannerInstallBtn) {
-    bannerInstallBtn.addEventListener('click', _triggerInstall);
+    bannerInstallBtn.addEventListener('click', () => {
+      if (_isPwaInstalled()) _triggerUninstall();
+      else _triggerInstall();
+    });
   }
 
   if (bannerDismissBtn) {

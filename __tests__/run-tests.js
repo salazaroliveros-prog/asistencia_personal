@@ -228,6 +228,10 @@ function runPwaInstallTests() {
   log('app.js maneja appinstalled', appJs.includes('appinstalled'));
   log('app.js oculta UI post-instalación', appJs.includes('_hidePwaUi'));
   log('app.js elimina dismiss state post-instalación', appJs.includes("localStorage.removeItem(PWA_DISMISS_KEY)"));
+  log('app.js detecta si está instalada (_isPwaInstalled)', appJs.includes('_isPwaInstalled'));
+  log('app.js detecta modo standalone', appJs.includes("'(display-mode: standalone)'"));
+  log('app.js cambia CTA a Quitar (_setInstallCtaMode)', appJs.includes('_setInstallCtaMode'));
+  log('app.js maneja Quitar/desinstalar (_triggerUninstall)', appJs.includes('_triggerUninstall'));
 
   const manifestPath = path.join(ROOT, 'manifest.json');
   if (!fs.existsSync(manifestPath)) {
