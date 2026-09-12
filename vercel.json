@@ -5,7 +5,12 @@
   "devCommand": "npm run dev",
   "installCommand": "npm ci",
   "cleanUrls": true,
-  "rewrites": [{ "source": "/(.*)", "destination": "/index.html" }],
+  "rewrites": [
+    { "source": "/pwa/(.*)", "destination": "/pwa/$1" },
+    { "source": "/pwa/index.html", "destination": "/pwa/scanner.html" },
+    { "source": "/pwa", "destination": "/pwa/scanner.html" },
+    { "source": "/(.*)", "destination": "/index.html" }
+  ],
   "headers": [
     {
       "source": "/assets/(.*)",
@@ -23,6 +28,13 @@
       "source": "/js/(.*)",
       "headers": [
         { "key": "Cache-Control", "value": "public, max-age=3600, must-revalidate" }
+      ]
+    },
+    {
+      "source": "/pwa/(.*)",
+      "headers": [
+        { "key": "Cache-Control", "value": "public, max-age=0, must-revalidate" },
+        { "key": "X-Content-Type-Options", "value": "nosniff" }
       ]
     },
     {
