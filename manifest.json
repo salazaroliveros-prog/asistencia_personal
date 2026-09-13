@@ -5,76 +5,109 @@
   "version": "1.5.0",
   "id": "/",
   "scope": "/",
-  "start_url": "/",
+  "start_url": "/?utm_source=pwa",
   "display": "standalone",
   "display_override": ["window-controls-overlay", "standalone", "minimal-ui"],
   "background_color": "#003459",
   "theme_color": "#003459",
   "orientation": "any",
   "lang": "es",
+  "dir": "ltr",
+  "prefer_related_applications": false,
+  "categories": ["productivity", "business"],
   "icons": [
     {
       "src": "/pwa/icons/icon-72.png",
       "sizes": "72x72",
-      "type": "image/png"
+      "type": "image/png",
+      "purpose": "any"
     },
     {
       "src": "/pwa/icons/icon-96.png",
       "sizes": "96x96",
-      "type": "image/png"
+      "type": "image/png",
+      "purpose": "any"
     },
     {
       "src": "/pwa/icons/icon-128.png",
       "sizes": "128x128",
-      "type": "image/png"
+      "type": "image/png",
+      "purpose": "any"
     },
     {
       "src": "/pwa/icons/icon-144.png",
       "sizes": "144x144",
-      "type": "image/png"
+      "type": "image/png",
+      "purpose": "any"
     },
     {
       "src": "/pwa/icons/icon-192.png",
       "sizes": "192x192",
       "type": "image/png",
-      "purpose": "any maskable"
+      "purpose": "any"
+    },
+    {
+      "src": "/pwa/icons/icon-192-maskable.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable"
     },
     {
       "src": "/pwa/icons/icon-384.png",
       "sizes": "384x384",
-      "type": "image/png"
+      "type": "image/png",
+      "purpose": "any"
     },
     {
       "src": "/pwa/icons/icon-512.png",
       "sizes": "512x512",
       "type": "image/png",
-      "purpose": "any maskable"
+      "purpose": "any"
+    },
+    {
+      "src": "/pwa/icons/icon-512-maskable.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
     }
   ],
-  "prefer_related_applications": false,
-  "screenshots": [],
-  "categories": ["productivity", "business"],
+  "screenshots": [
+    {
+      "src": "/pwa/icons/screenshot-desktop.png",
+      "sizes": "1280x720",
+      "type": "image/png",
+      "form_factor": "wide",
+      "label": "Panel principal del sistema"
+    },
+    {
+      "src": "/pwa/icons/screenshot-mobile.png",
+      "sizes": "390x844",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "Vista móvil del escáner"
+    }
+  ],
   "shortcuts": [
     {
       "name": "Marcar Asistencia",
       "short_name": "Asistencia",
       "description": "Ir directamente al escáner QR",
-      "url": "/#asistencia",
-      "icons": [{ "src": "/pwa/icons/icon-192.png", "sizes": "192x192" }]
+      "url": "/?utm_source=shortcut#asistencia",
+      "icons": [{ "src": "/pwa/icons/icon-192.png", "sizes": "192x192", "type": "image/png" }]
     },
     {
       "name": "Marcar en Campo",
       "short_name": "Campo",
       "description": "Escáner de campo: registrar asistencia en tiempo real",
-      "url": "/#campo",
-      "icons": [{ "src": "/pwa/icons/icon-192.png", "sizes": "192x192" }]
+      "url": "/?utm_source=shortcut#campo",
+      "icons": [{ "src": "/pwa/icons/icon-192.png", "sizes": "192x192", "type": "image/png" }]
     },
     {
       "name": "Dashboard",
       "short_name": "Dashboard",
       "description": "Ver panel de control",
-      "url": "/#dashboard",
-      "icons": [{ "src": "/pwa/icons/icon-192.png", "sizes": "192x192" }]
+      "url": "/?utm_source=shortcut#dashboard",
+      "icons": [{ "src": "/pwa/icons/icon-192.png", "sizes": "192x192", "type": "image/png" }]
     }
   ]
 }

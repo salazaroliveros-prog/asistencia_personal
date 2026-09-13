@@ -6,10 +6,10 @@
   "installCommand": "npm ci",
   "cleanUrls": true,
   "rewrites": [
-    { "source": "/pwa/(.*)", "destination": "/pwa/$1" },
-    { "source": "/pwa/index.html", "destination": "/pwa/scanner.html" },
-    { "source": "/pwa", "destination": "/pwa/scanner.html" },
-    { "source": "/(.*)", "destination": "/index.html" }
+    { "source": "/pwa/scanner.html", "destination": "/pwa/scanner.html" },
+    { "source": "/pwa/:path*",        "destination": "/pwa/:path*" },
+    { "source": "/field-scanner.html","destination": "/field-scanner.html" },
+    { "source": "/(.*)",              "destination": "/index.html" }
   ],
   "headers": [
     {
@@ -19,57 +19,84 @@
       ]
     },
     {
+      "source": "/vendor/(.*)",
+      "headers": [
+        { "key": "Cache-Control", "value": "public, max-age=31536000, immutable" }
+      ]
+    },
+    {
       "source": "/css/(.*)",
       "headers": [
-        { "key": "Cache-Control", "value": "public, max-age=3600, must-revalidate" }
+        { "key": "Cache-Control", "value": "public, max-age=86400, must-revalidate" }
       ]
     },
     {
       "source": "/js/(.*)",
       "headers": [
-        { "key": "Cache-Control", "value": "public, max-age=3600, must-revalidate" }
+        { "key": "Cache-Control", "value": "public, max-age=86400, must-revalidate" }
       ]
     },
     {
       "source": "/service-worker.js",
       "headers": [
-        { "key": "Cache-Control", "value": "public, max-age=0, must-revalidate" },
-        { "key": "Service-Worker-Allowed", "value": "/" }
+        { "key": "Cache-Control",        "value": "public, max-age=0, must-revalidate" },
+        { "key": "Service-Worker-Allowed","value": "/" }
       ]
     },
     {
       "source": "/field-scanner-sw.js",
       "headers": [
-        { "key": "Cache-Control", "value": "public, max-age=0, must-revalidate" },
-        { "key": "Service-Worker-Allowed", "value": "/" }
+        { "key": "Cache-Control",        "value": "public, max-age=0, must-revalidate" },
+        { "key": "Service-Worker-Allowed","value": "/" }
       ]
     },
     {
       "source": "/manifest.json",
       "headers": [
-        { "key": "Cache-Control", "value": "public, max-age=0, must-revalidate" }
+        { "key": "Cache-Control",  "value": "public, max-age=0, must-revalidate" },
+        { "key": "Content-Type",   "value": "application/manifest+json; charset=utf-8" }
       ]
     },
     {
       "source": "/field-scanner-manifest.json",
       "headers": [
-        { "key": "Cache-Control", "value": "public, max-age=0, must-revalidate" }
+        { "key": "Cache-Control",  "value": "public, max-age=0, must-revalidate" },
+        { "key": "Content-Type",   "value": "application/manifest+json; charset=utf-8" }
+      ]
+    },
+    {
+      "source": "/pwa/manifest.json",
+      "headers": [
+        { "key": "Cache-Control",  "value": "public, max-age=0, must-revalidate" },
+        { "key": "Content-Type",   "value": "application/manifest+json; charset=utf-8" }
       ]
     },
     {
       "source": "/pwa/(.*)",
       "headers": [
-        { "key": "Cache-Control", "value": "public, max-age=0, must-revalidate" },
+        { "key": "Cache-Control",         "value": "public, max-age=0, must-revalidate" },
         { "key": "X-Content-Type-Options", "value": "nosniff" }
       ]
     },
     {
       "source": "/(.*)",
       "headers": [
-        { "key": "X-Content-Type-Options", "value": "nosniff" },
-        { "key": "Referrer-Policy", "value": "strict-origin-when-cross-origin" },
-        { "key": "X-Frame-Options", "value": "SAMEORIGIN" },
-        { "key": "Permissions-Policy", "value": "camera=(self), geolocation=(self), microphone=()" }
+        {
+          "key": "Strict-Transport-Security",
+          "value": "max-age=63072000; includeSubDomains; preload"
+        },
+        {
+          "key": "Content-Security-Policy",
+          "value": "default-src 'self'; script-src 'self' 'unsafe-inline' https://www.gstatic.com https://apis.google.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob: https://*.googleapis.com; connect-src 'self' https://*.googleapis.com https://*.firebaseio.com https://*.google.com https://script.google.com wss://*.firebaseio.com; worker-src 'self'; manifest-src 'self'; frame-ancestors 'none';"
+        },
+        { "key": "X-Content-Type-Options",  "value": "nosniff" },
+        { "key": "X-Frame-Options",          "value": "DENY" },
+        { "key": "X-XSS-Protection",         "value": "1; mode=block" },
+        { "key": "Referrer-Policy",          "value": "strict-origin-when-cross-origin" },
+        {
+          "key": "Permissions-Policy",
+          "value": "camera=(self), geolocation=(self), microphone=(), payment=(), usb=()"
+        }
       ]
     }
   ]

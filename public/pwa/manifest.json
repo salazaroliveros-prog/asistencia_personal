@@ -1,22 +1,83 @@
 {
-  "name": "Control de Asistencia - Escáner",
+  "name": "Control de Asistencia — Escáner",
   "short_name": "Escáner ASIST",
-  "description": "Sub-aplicación para registrar asistencia escaneando códigos QR de trabajadores",
-  "start_url": "/pwa/scanner.html",
+  "description": "Registra asistencia de trabajadores escaneando códigos QR en tiempo real",
+  "version": "1.5.0",
+  "id": "/pwa/scanner.html",
+  "scope": "/pwa/",
+  "start_url": "/pwa/scanner.html?utm_source=pwa",
   "display": "standalone",
+  "display_override": ["standalone", "minimal-ui"],
+  "orientation": "portrait",
   "background_color": "#1e40af",
   "theme_color": "#1e40af",
-  "orientation": "portrait",
+  "lang": "es",
+  "dir": "ltr",
+  "prefer_related_applications": false,
+  "categories": ["business", "productivity"],
   "icons": [
+    {
+      "src": "/pwa/icons/icon-72.png",
+      "sizes": "72x72",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/pwa/icons/icon-96.png",
+      "sizes": "96x96",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/pwa/icons/icon-128.png",
+      "sizes": "128x128",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/pwa/icons/icon-144.png",
+      "sizes": "144x144",
+      "type": "image/png",
+      "purpose": "any"
+    },
     {
       "src": "/pwa/icons/icon-192.png",
       "sizes": "192x192",
-      "type": "image/png"
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/pwa/icons/icon-192-maskable.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "/pwa/icons/icon-384.png",
+      "sizes": "384x384",
+      "type": "image/png",
+      "purpose": "any"
     },
     {
       "src": "/pwa/icons/icon-512.png",
       "sizes": "512x512",
-      "type": "image/png"
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/pwa/icons/icon-512-maskable.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Escanear QR",
+      "short_name": "Escanear",
+      "description": "Iniciar escáner de asistencia",
+      "url": "/pwa/scanner.html?utm_source=shortcut",
+      "icons": [{ "src": "/pwa/icons/icon-192.png", "sizes": "192x192", "type": "image/png" }]
     }
   ]
 }

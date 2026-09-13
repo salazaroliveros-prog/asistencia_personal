@@ -2,16 +2,175 @@ name: CI
 
 on:
   push:
-    branches: [ main ]
+    branches: [main, develop]
   pull_request:
-    branches: [ main ]
+    branches: [main, develop]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
-  verify:
+  # ──────────────────────────────────────────────────────────────
+  # Job 1: TypeScript typecheck
+  # ──────────────────────────────────────────────────────────────
+  typecheck:
+    name: TypeScript Check
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
         with:
           node-version: '20'
-      - run: npm ci
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: TypeScript typecheck
+        run: npm run typecheck
+
+  # ──────────────────────────────────────────────────────────────
+  # Job 2: Lint (placeholder)
+  # ──────────────────────────────────────────────────────────────
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Lint (placeholder)
+        run: npm run lint
+
+  # ──────────────────────────────────────────────────────────────
+  # Job 3: Unit tests (Jest)
+  # ──────────────────────────────────────────────────────────────
+  test:
+    name: Unit Tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run unit tests (Jest)
+        run: npm test
+
+  # ──────────────────────────────────────────────────────────────
+  # Job 4: Build (Vite)
+  # ──────────────────────────────────────────────────────────────
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    needs: [typecheck]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build (Vite)
+        run: npm run build
+
+      - name: Verify dist output
+        run: |
+          echo "── Verificando salida del build ──"
+          test -f dist/index.html          && echo "✓ index.html"          || (echo "✗ Falta index.html"          && exit 1)
+          test -f dist/manifest.json       && echo "✓ manifest.json"       || (echo "✗ Falta manifest.json"       && exit 1)
+          test -f dist/service-worker.js   && echo "✓ service-worker.js"   || (echo "✗ Falta service-worker.js"   && exit 1)
+          test -f dist/field-scanner.html  && echo "✓ field-scanner.html"  || (echo "✗ Falta field-scanner.html"  && exit 1)
+          test -f dist/field-scanner-sw.js && echo "✓ field-scanner-sw.js" || (echo "✗ Falta field-scanner-sw.js" && exit 1)
+          test -d dist/pwa                 && echo "✓ dir pwa/"            || (echo "✗ Falta directorio pwa/"     && exit 1)
+          test -d dist/vendor              && echo "✓ dir vendor/"         || (echo "✗ Falta directorio vendor/"  && exit 1)
+          test -d dist/js                  && echo "✓ dir js/"             || (echo "✗ Falta directorio js/"      && exit 1)
+          test -d dist/css                 && echo "✓ dir css/"            || (echo "✗ Falta directorio css/"     && exit 1)
+          echo "── Build verificado correctamente ──"
+
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: dist-${{ github.sha }}
+          path: dist/
+          retention-days: 7
+
+  # ──────────────────────────────────────────────────────────────
+  # Job 5: Validate PWA manifests & service workers
+  # ──────────────────────────────────────────────────────────────
+  validate-pwa:
+    name: Validate PWA files
+    runs-on: ubuntu-latest
+    needs: [build]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Validate manifest.json
+        run: node -e "JSON.parse(require('fs').readFileSync('manifest.json','utf8')); console.log('✓ manifest.json válido');"
+
+      - name: Validate field-scanner-manifest.json
+        run: node -e "JSON.parse(require('fs').readFileSync('field-scanner-manifest.json','utf8')); console.log('✓ field-scanner-manifest.json válido');"
+
+      - name: Validate public/pwa/manifest.json
+        run: node -e "JSON.parse(require('fs').readFileSync('public/pwa/manifest.json','utf8')); console.log('✓ public/pwa/manifest.json válido');"
+
+      - name: Validate vercel.json
+        run: node -e "JSON.parse(require('fs').readFileSync('vercel.json','utf8')); console.log('✓ vercel.json válido');"
+
+      - name: Check manifest icon purpose fields
+        run: |
+          node -e "
+            const manifests = [
+              'manifest.json',
+              'field-scanner-manifest.json',
+              'public/pwa/manifest.json'
+            ];
+            for (const filePath of manifests) {
+              const m = JSON.parse(require('fs').readFileSync(filePath, 'utf8'));
+              for (const icon of (m.icons || [])) {
+                if (icon.purpose && icon.purpose.trim().includes(' ')) {
+                  console.error('✗ ' + filePath + ': icono con purpose combinado:', JSON.stringify(icon));
+                  process.exit(1);
+                }
+              }
+              console.log('✓ ' + filePath + ': purposes correctos');
+            }
+          "
+
+      - name: Check service-worker.js syntax
+        run: node --check service-worker.js && echo "✓ service-worker.js sintaxis correcta"
+
+      - name: Check field-scanner-sw.js syntax
+        run: node --check field-scanner-sw.js && echo "✓ field-scanner-sw.js sintaxis correcta"

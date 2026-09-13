@@ -1,30 +1,54 @@
-# ── Ficheros y credenciales sensibles / locales (NUNCA se despliegan) ──
-.env*
-!/.env.example
+# ══════════════════════════════════════════════════════════════════
+# .vercelignore — Control Asistencia App
+# Vercel necesita: todo el código fuente, public/, vendor/, manifests,
+# service-workers, CSS, JS, vite.config.mjs, package.json, tsconfig.json
+# ══════════════════════════════════════════════════════════════════
+
+# ── Credenciales y variables de entorno locales ──────────────────
+.env
+.env.local
+.env.*.local
 credencialesgoogle.txt
-*.log
-firebase-debug.log
-.firebaserc
+
+# ── Firebase local (no se despliega en Vercel) ───────────────────
 .firebase/
+firebase-debug.log
+firestore-debug.log
+.firebaserc
+firebase.json
 
-# ── Tooling de agentes / habilidades (no es código del producto) ──
-.agents/
-.claude/
-skills-lock.json
-
-# ── Firebase Data Connect (backend local/generado; no se sirve estáticamente) ──
+# ── Firebase Data Connect (backend local / código generado) ──────
 dataconnect/
 src/dataconnect-generated/
+ios/FirebaseDataConnectGenerated/
 
-# ── Plataformas nativas (Capacitor Android/iOS no se despliegan en Vercel) ──
+# ── Plataformas nativas (no se despliegan en Vercel) ─────────────
 android/
 ios/
+app-movil/
 
-# ── Documentación, informes y QA ──
+# ── Tooling de agentes (solo local) ──────────────────────────────
+.agents/
+.claude/
+.kilo/
+skills-lock.json
+
+# ── IDE ───────────────────────────────────────────────────────────
+.vscode/
+
+# ── Playwright / QA (navegadores locales y reportes) ─────────────
+.playwright-browsers/
+.playwright-mcp/
+playwright-report/
+__tests__/screenshots/
+__tests__/results/
+
+# ── Documentación y markdown (no necesarios para el build) ───────
 docs/
 *.md
-__tests__/
 
-# ── Dependencias y build (Vercel los gestiona) ──
-node_modules/
+# ── Logs ──────────────────────────────────────────────────────────
+*.log
+
+# ── dist (Vercel lo genera, no lo necesita en el repo) ────────────
 dist/

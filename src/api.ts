@@ -1,5 +1,5 @@
 import { normalizeAttendance } from './domain/attendance';
-import type { AttendancePayload, AttendanceRecord, Worker } from './domain/types';
+import type { AttendancePayload, AttendanceRecord, AttendanceStatus, Worker } from './domain/types';
 
 type Result<T> = { success: boolean; data: T; offline?: boolean; error?: string; [key: string]: unknown };
 type AppStateLike = { get<T = unknown>(key: string): T; set(key: string, value: unknown): void };
@@ -19,6 +19,8 @@ type FirebaseLike = {
 declare global {
   interface Window {
     AppState: AppStateLike;
+    FirebaseClient: FirebaseLike;
+    FunctionsClient: { setAdminClaim: (uid: string, makeAdmin: boolean) => Promise<{ success: boolean }>; deleteUser: (uid: string) => Promise<{ success: boolean }> };
     LS_KEYS: Record<string, string>;
     DEFAULT_CONFIG: Record<string, unknown>;
     API: Api;
@@ -186,6 +188,8 @@ export interface Api {
   actualizarPersonal(payload: Record<string, unknown>): Promise<Result<Worker[]>>;
   eliminarPersonal(workerId: string): Promise<Result<never[]>>;
   registrarMarcacion(payload: AttendancePayload): Promise<Result<AttendanceRecord[]>>;
+  actualizarAsistencia(marcacionId: string, payload: { horaReal?: string; estadoMarcacion?: string; horasExtra?: number }): Promise<Result<AttendanceRecord | AttendanceRecord[] | null>>;
+  eliminarAsistencia(marcacionId: string): Promise<Result<null>>;
   obtenerAsistencias(fecha?: string, limit?: number, offset?: number): Promise<Result<AttendanceRecord[]>>;
   obtenerAsistenciaRango(inicio: string, fin: string, limit?: number, offset?: number): Promise<Result<AttendanceRecord[]>>;
   obtenerAlertas(limit?: number, offset?: number): Promise<Result<Record<string, unknown>[]>>;
@@ -347,9 +351,14 @@ const API: Api = {
     }
   },
   async actualizarAsistencia(marcacionId, payload: { horaReal?: string; estadoMarcacion?: string; horasExtra?: number }) {
+    const asStatus = (s: string | undefined, fallback: AttendanceStatus): AttendanceStatus =>
+      (s as AttendanceStatus) || fallback;
+
     if (!connected()) {
       const updated = attendanceCache().map(a =>
-        a.ID_Marcacion === marcacionId ? { ...a, Hora_Real: payload.horaReal || a.Hora_Real, Estado_Marcacion: payload.estadoMarcacion || a.Estado_Marcacion, Horas_Extra: payload.horasExtra || a.Horas_Extra } : a
+        a.ID_Marcacion === marcacionId
+          ? { ...a, Hora_Real: payload.horaReal || a.Hora_Real, Estado_Marcacion: asStatus(payload.estadoMarcacion, a.Estado_Marcacion), Horas_Extra: payload.horasExtra ?? a.Horas_Extra }
+          : a
       );
       saveAttendanceCache(updated);
       enqueue('attendance-update', { id: marcacionId, payload });
@@ -360,10 +369,10 @@ const API: Api = {
       const existing = attendanceCache().find(a => a.ID_Marcacion === marcacionId);
       if (!existing) return result(null, { error: 'Marcación no encontrada' });
 
-      const updated = {
+      const updated: AttendanceRecord = {
         ...existing,
         Hora_Real: payload.horaReal || existing.Hora_Real,
-        Estado_Marcacion: payload.estadoMarcacion || existing.Estado_Marcacion,
+        Estado_Marcacion: asStatus(payload.estadoMarcacion, existing.Estado_Marcacion),
         Horas_Extra: payload.horasExtra !== undefined ? payload.horasExtra : existing.Horas_Extra,
       };
 
@@ -374,7 +383,9 @@ const API: Api = {
     } catch (error) {
       markRemoteFailure(error);
       const updated = attendanceCache().map(a =>
-        a.ID_Marcacion === marcacionId ? { ...a, Hora_Real: payload.horaReal || a.Hora_Real, Estado_Marcacion: payload.estadoMarcacion || a.Estado_Marcacion, Horas_Extra: payload.horasExtra || a.Horas_Extra } : a
+        a.ID_Marcacion === marcacionId
+          ? { ...a, Hora_Real: payload.horaReal || a.Hora_Real, Estado_Marcacion: asStatus(payload.estadoMarcacion, a.Estado_Marcacion), Horas_Extra: payload.horasExtra ?? a.Horas_Extra }
+          : a
       );
       saveAttendanceCache(updated);
       enqueue('attendance-update', { id: marcacionId, payload });

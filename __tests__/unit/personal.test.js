@@ -6,48 +6,59 @@ const fs = require('fs');
 const path = require('path');
 const vm = require('vm');
 
-const personalCode = fs.readFileSync(path.join(__dirname, '../js/modules/personal.js'), 'utf8');
+const personalCode = fs.readFileSync(
+  path.resolve(__dirname, '../../js/modules/personal.js'),
+  'utf8'
+);
 
-const mockCtx = {
-  window: {
-    AppState: {
-      get: (key) => {
-        if (key === 'personal') return [];
-        if (key === 'backendMode') return 'local';
-        return undefined;
-      },
-      set: () => {},
-      today: () => new Date().toISOString().slice(0, 10),
+// `const` declarations in vm.runInContext are NOT exposed on the sandbox.
+// Wrap the code so the result gets assigned to mockCtx.ModuloPersonal via window.
+const wrappedCode = personalCode + '\nwindow.__ModuloPersonal = typeof ModuloPersonal !== "undefined" ? ModuloPersonal : undefined;';
+
+const mockWindow = {
+  AppState: {
+    get: (key) => {
+      if (key === 'personal') return [];
+      if (key === 'backendMode') return 'local';
+      return undefined;
     },
-    LS_KEYS: {
-      PERSONAL_CACHE: 'cpc_personal_cache',
-      FIREBASE_CONFIG: 'cpc_firebase_config',
-    },
-    API: {
-      obtenerPersonal: async () => ({ success: true, data: [] }),
-      registrarPersonal: async () => ({ success: true, message: 'OK' }),
-      actualizarPersonal: async () => ({ success: true, message: 'OK' }),
-      eliminarPersonal: async () => ({ success: true }),
-    },
-    Alerts: {
-      success: () => ({ close: () => {} }),
-      error: () => ({ close: () => {} }),
-      warning: () => ({ close: () => {} }),
-      loading: () => ({ close: () => {} }),
-      confirm: () => Promise.resolve(true),
-    },
-    DEFAULT_CONFIG: {},
-    APP_NAME: 'Control Personal Campo',
-    RequestOptimizer: {
-      debounce: (key, fn, wait) => fn,
-    },
-    lucide: null,
-    html2canvas: null,
-    QRCode: null,
+    set: () => {},
+    today: () => new Date().toISOString().slice(0, 10),
   },
+  LS_KEYS: {
+    PERSONAL_CACHE: 'cpc_personal_cache',
+    FIREBASE_CONFIG: 'cpc_firebase_config',
+  },
+  API: {
+    obtenerPersonal: async () => ({ success: true, data: [] }),
+    registrarPersonal: async () => ({ success: true, message: 'OK' }),
+    actualizarPersonal: async () => ({ success: true, message: 'OK' }),
+    eliminarPersonal: async () => ({ success: true }),
+  },
+  Alerts: {
+    success: () => ({ close: () => {} }),
+    error:   () => ({ close: () => {} }),
+    warning: () => ({ close: () => {} }),
+    loading: () => ({ close: () => {} }),
+    confirm: () => Promise.resolve(true),
+  },
+  DEFAULT_CONFIG: {},
+  APP_NAME: 'Control Personal Campo',
+  RequestOptimizer: {
+    debounce: (_key, fn, _wait) => fn,
+  },
+  lucide: null,
+  html2canvas: null,
+  QRCode: null,
+  CPC: {},
+  Logger: null,
+};
+
+const mockCtx = vm.createContext({
+  window: mockWindow,
   console,
   document: {
-    getElementById: (id) => ({
+    getElementById: () => ({
       value: '',
       checked: false,
       textContent: '',
@@ -68,9 +79,7 @@ const mockCtx = {
     createElement: () => ({
       width: 0,
       height: 0,
-      getContext: () => ({
-        drawImage: () => {},
-      }),
+      getContext: () => ({ drawImage: () => {} }),
       toDataURL: () => 'data:image/jpeg;base64,test',
     }),
     body: {
@@ -85,84 +94,17 @@ const mockCtx = {
     revokeObjectURL: () => {},
   },
   FileReader: class MockFileReader {
-    constructor() {}
     readAsDataURL() {
-      setTimeout(() => this.onload({ target: { result: 'data:image/jpeg;base64,test' } }), 10);
+      setTimeout(() => this.onload && this.onload({ target: { result: 'data:image/jpeg;base64,test' } }), 10);
     }
   },
   Image: class MockImage {
-    constructor() {
-      setTimeout(() => this.onload(), 10);
-    }
+    constructor() { setTimeout(() => this.onload && this.onload(), 10); }
   },
   setTimeout,
   clearTimeout,
   setInterval,
   clearInterval,
-  JSON,
-  Math,
-  Date,
-  String,
-  Array,
-  Object,
-  Promise,
-  Error,
-  TypeError,
-  RangeError,
-  SyntaxError,
-  ReferenceError,
-  URIError,
-  EvalError,
-  AggregationError,
-  FinalizationRegistry,
-  WeakRef,
-  WeakMap,
-  WeakSet,
-  Map,
-  Set,
-  Symbol,
-  Proxy,
-  Reflect,
-  Intl,
-  WebAssembly,
-  SharedArrayBuffer,
-  Atomics,
-  DataView,
-  Float32Array,
-  Float64Array,
-  Int8Array,
-  Int16Array,
-  Int32Array,
-  Uint8Array,
-  Uint16Array,
-  Uint32Array,
-  BigInt64Array,
-  BigUint64Array,
-  RegExp,
-  JSON.stringify,
-  JSON.parse,
-  encodeURI,
-  decodeURI,
-  encodeURIComponent,
-  decodeURIComponent,
-  isFinite,
-  isNaN,
-  parseFloat,
-  parseInt,
-  escape,
-  unescape,
-  gc: () => {},
-  alert: () => {},
-  confirm: () => true,
-  prompt: () => null,
-  fetch: () => Promise.resolve({}),
-  XMLHttpRequest: class MockXHR {},
-  WebSocket: class MockWS {},
-  EventSource: class MockES {},
-  Worker: class MockWorker {},
-  cache: {},
-  caches: { match: () => Promise.resolve(null) },
-  indexedDB: { open: () => ({ result: null, error: null }) },
   localStorage: {
     getItem: () => null,
     setItem: () => {},
@@ -175,139 +117,78 @@ const mockCtx = {
     removeItem: () => {},
     clear: () => {},
   },
-  cookies: {},
-  name: 'node',
-  location: { href: '', origin: '', pathname: '', search: '', hash: '', protocol: 'https:', host: 'localhost', hostname: 'localhost', port: '', assign: () => {}, replace: () => {}, reload: () => {} },
-  history: { back: () => {}, forward: () => {}, go: () => {}, pushState: () => {}, replaceState: () => {}, length: 1 },
-  screen: { width: 1920, height: 1080, availWidth: 1920, availHeight: 1040, colorDepth: 24, pixelDepth: 24 },
-  innerWidth: 1920,
-  innerHeight: 1080,
-  outerWidth: 1920,
-  outerHeight: 1080,
-  devicePixelRatio: 1,
-  screenX: 0,
-  screenY: 0,
-  pageXOffset: 0,
-  pageYOffset: 0,
-  scrollX: 0,
-  scrollY: 0,
-  closed: false,
-  length: 1,
-  frames: [],
-  top: {},
-  parent: {},
-  opener: null,
-  menubar: { visible: false },
-  toolbar: { visible: false },
-  locationbar: { visible: false },
-  statusbar: { visible: false },
-  personalbar: { visible: false },
-  scrollbars: { visible: true },
-  onblur: null,
-  onerror: null,
-  onfocus: null,
-  onload: null,
-  onresize: null,
-  onunload: null,
-  onbeforeunload: null,
-  onhashchange: null,
-  onpopstate: null,
-  ononline: null,
-  onoffline: null,
-  onpagehide: null,
-  onpageshow: null,
-  ondeviceorientation: null,
-  ondevicemotion: null,
-  onorientationchange: null,
-  onmousemove: null,
-  onmousedown: null,
-  onmouseup: null,
-  onclick: null,
-  ondblclick: null,
-  onmouseover: null,
-  onmouseout: null,
-  onkeydown: null,
-  onkeyup: null,
-  onkeypress: null,
-  onsubmit: null,
-  oninput: null,
-  onchange: null,
-  onfocusin: null,
-  onfocusout: null,
-  onselect: null,
-  onreset: null,
-  oninvalid: null,
-  oncontextmenu: null,
-  onwheel: null,
-  ongesturestart: null,
-  ongesturechange: null,
-  ongestureend: null,
-  ontouchstart: null,
-  ontouchend: null,
-  ontouchmove: null,
-  ontouchcancel: null,
-  onpointerdown: null,
-  onpointerup: null,
-  onpointermove: null,
-  onpointercancel: null,
-  onpointerover: null,
-  onpointerout: null,
-  onpointerenter: null,
-  onpointerleave: null,
-  ongotpointercapture: null,
-  onlostpointercapture: null,
-  onselectstart: null,
-  onselectionchange: null,
-  oncopy: null,
-  oncut: null,
-  onpaste: null,
-  onbeforecopy: null,
-  onbeforecut: null,
-  onbeforepaste: null,
-  ondrag: null,
-  ondragend: null,
-  ondragenter: null,
-  ondragleave: null,
-  ondragover: null,
-  ondragstart: null,
-  ondrop: null,
-  onscroll: null,
-  onresize: null,
-  onabort: null,
-  oncanplay: null,
-  oncanplaythrough: null,
-  oncuechange: null,
-  ondurationchange: null,
-  onemptied: null,
-  onended: null,
-  onloadeddata: null,
-  onloadedmetadata: null,
-  onloadstart: null,
-  onpause: null,
-  onplay: null,
-  onplaying: null,
-  onprogress: null,
-  onratechange: null,
-  onseeked: null,
-  onseeking: null,
-  onstalled: null,
-  onsuspend: null,
-  ontimeupdate: null,
-  onvolumechange: null,
-  onwaiting: null,
-  onclose: null,
-  onmessage: null,
-  onmessageerror: null,
-  onopen: null,
-};
+  location: {
+    href: '', origin: '', pathname: '', search: '', hash: '',
+    protocol: 'https:', host: 'localhost', hostname: 'localhost', port: '',
+    assign: () => {}, replace: () => {}, reload: () => {},
+  },
+  fetch: () => Promise.resolve({}),
+  alert: () => {},
+  confirm: () => true,
+  prompt: () => null,
+  JSON,
+  Math,
+  Date,
+  String,
+  Array,
+  Object,
+  Promise,
+  Error,
+  TypeError,
+  RangeError,
+  SyntaxError,
+  ReferenceError,
+  RegExp,
+  Map,
+  Set,
+  Symbol,
+  WeakMap,
+  WeakSet,
+  Proxy,
+  Reflect,
+  Intl,
+  DataView,
+  Float32Array,
+  Float64Array,
+  Int8Array,
+  Int16Array,
+  Int32Array,
+  Uint8Array,
+  Uint16Array,
+  Uint32Array,
+  BigInt64Array,
+  BigUint64Array,
+  encodeURI,
+  decodeURI,
+  encodeURIComponent,
+  decodeURIComponent,
+  isFinite,
+  isNaN,
+  parseFloat,
+  parseInt,
+});
 
-const ctx = vm.createContext(mockCtx);
-vm.runInContext(personalCode, ctx);
+try {
+  vm.runInContext(wrappedCode, mockCtx);
+} catch (e) {
+  // Some DOM-dependent initialization may throw; that's acceptable
+}
 
-const ModuloPersonal = ctx.ModuloPersonal;
+// Access via window.__ModuloPersonal (assigned in wrapper) or via context
+const ModuloPersonal = mockCtx.window.__ModuloPersonal;
 
 describe('ModuloPersonal', () => {
+  it('exports as an object', () => {
+    expect(ModuloPersonal).toBeDefined();
+    expect(typeof ModuloPersonal).toBe('object');
+    expect(ModuloPersonal).not.toBeNull();
+  });
+
   it('exports init function', () => {
     expect(typeof ModuloPersonal.init).toBe('function');
+  });
+
+  it('exports cargar function', () => {
+    expect(typeof ModuloPersonal.cargar).toBe('function');
   });
 });

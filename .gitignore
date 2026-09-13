@@ -1,69 +1,79 @@
-.env*
+# ══════════════════════════════════════════════════════════════════
+# .gitignore — Control Asistencia App
+# ══════════════════════════════════════════════════════════════════
+
+# ── Variables de entorno (NUNCA al repositorio) ──────────────────
+.env
+.env.local
+.env.*.local
 credencialesgoogle.txt
+
+# ── Dependencias ─────────────────────────────────────────────────
 node_modules/
+functions/node_modules/
+
+# ── Build / dist ─────────────────────────────────────────────────
 dist/
-.vercel
+
+# ── Vercel ───────────────────────────────────────────────────────
+.vercel/
+
+# ── Firebase local ───────────────────────────────────────────────
 .firebase/
-.vscode/
-
-# ── Artefactos y temporales de QA (no son código) ──
-__tests__/*.log
-__tests__/pw_install.*
-__tests__/results/
-__tests__/screenshots/
-__tests__/_qa_state.json
-__e2e__/output/
-__e2e__/*.log
-__e2e__/*.err
-
-# ── Firebase local / Data Connect (credenciales locales y código generado) ──
-.firebaserc
 firebase-debug.log
+firestore-debug.log
+.firebaserc
+
+# ── Firebase Data Connect (generado localmente) ──────────────────
 dataconnect/
 src/dataconnect-generated/
 ios/FirebaseDataConnectGenerated/
 
-# ── Tooling de agentes (local) ──
+# ── Tooling de agentes (solo local, no es código del producto) ───
 .agents/
 .claude/
 .kilo/
 skills-lock.json
 
-# ── Scripts auxiliares desechables del harness QA ──
+# ── IDE / Editor ─────────────────────────────────────────────────
+.vscode/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# ── Capacitor / Plataformas nativas ──────────────────────────────
+android/
+ios/
+app-movil/
+
+# ── Playwright (navegadores y reportes locales) ──────────────────
+.playwright-browsers/
+.playwright-mcp/
+playwright-report/
+
+# ── Logs ─────────────────────────────────────────────────────────
+*.log
+preview.log
+_browsers_install.log
+
+# ── QA / Tests temporales ─────────────────────────────────────────
+__tests__/screenshots/
+__tests__/results/
+__tests__/_qa_state.json
 __tests__/_apply_fix.mjs
 __tests__/_marker.cmd
 __tests__/_netcheck.mjs
 __tests__/_pw_install.cmd
 __tests__/_pwcheck.mjs
 __tests__/_trylaunch.mjs
-__tests__/_qa_smoke.mjs
-__tests__/_qa_compile.mjs
-__tests__/_qa_timing.mjs
-__tests__/_qa_probe.mjs
-__tests__/_qa_mkpng.mjs
-__tests__/_qa_overflow320.mjs
-__tests__/_qa_deploy_check.mjs
+__tests__/_qa_*.mjs
+__tests__/_qa_*.cmd
 __tests__/_commitmsg.txt
-__tests__/_qa_batch.cmd
 __tests__/_timing.log
 __tests__/p*.log
 __tests__/e2e-qa-test.js.orig
-
-# Firebase local logs
-.firebase/logs/
-
-# Playwright browsers locales + logs temporales
-.playwright-browsers/
-preview.log
-_browsers_install.log
-.playwright-mcp/
-
-# Playwright test reports
-playwright-report/
-
-# ── Scripts QA temporales adicionales ──
-__tests__/_qa_*.mjs
-__tests__/_qa_*.cmd
 __tests__/console-tests.js
 __tests__/diag-*.js
 __tests__/diagnose-*.js
@@ -72,29 +82,18 @@ __tests__/e2e-*.mjs
 __tests__/firebase-diagnostic.mjs
 __tests__/headless-test.js
 __tests__/run-tests.js
-__tests__/run-tests.mjs
 __tests__/server.js
 __tests__/take-screenshots.js
 __tests__/verify-*.js
 __tests__/check-*.js
 __tests__/pwa-scanner-integration.test.cjs
-
-# ── Directorio e2e completo (scripts temporales) ──
 __e2e__/
 
-# ── Capacitor y móvil (si no se usa actualmente) ──
-android/
-ios/
-app-movil/
-
-# ── Archivos de configuración local ──
-.env
-.env.local
-skills-lock.json
-
-# ── Documentación obsoleta ──
+# ── Documentación obsoleta ────────────────────────────────────────
 ATTENDANCE_SYSTEM_MANUAL.md
 control_personal_campo_instructivo.md
 FIELD-SCANNER-SETUP.md
-
 app-movil/tsconfig.tsbuildinfo
+
+# ── TypeScript build info ─────────────────────────────────────────
+*.tsbuildinfo

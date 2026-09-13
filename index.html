@@ -11,6 +11,20 @@
   <meta name="apple-mobile-web-app-title" content="Control Campo" />
   <link rel="manifest" href="manifest.json?v=1.5.0" />
   <link rel="apple-touch-icon" href="/pwa/icons/icon-192.png" />
+
+  <!-- Open Graph / WhatsApp / redes sociales -->
+  <meta property="og:type" content="website" />
+  <meta property="og:title" content="Control Personal Campo — Gestión de Asistencia" />
+  <meta property="og:description" content="Sistema inteligente de gestión y asistencia de personal en obra. Instala la app para escanear QR y registrar marcaciones en tiempo real." />
+  <meta property="og:image" content="/pwa/icons/icon-512.png" />
+  <meta property="og:image:width" content="512" />
+  <meta property="og:image:height" content="512" />
+  <meta property="og:url" content="https://controlasistencia-evexmkwgu-proyectoswm.vercel.app" />
+  <meta property="og:site_name" content="Control Personal Campo" />
+  <meta name="twitter:card" content="summary" />
+  <meta name="twitter:title" content="Control Personal Campo" />
+  <meta name="twitter:description" content="Gestión y asistencia de personal en obra con QR y GPS." />
+  <meta name="twitter:image" content="/pwa/icons/icon-512.png" />
   <title>CONTROL PERSONAL CAMPO v1.5.0</title>
 
   <!-- ═══════════════════ FUENTES ═══════════════════ -->
@@ -47,7 +61,7 @@
 
   <!-- ═══════════════════ MAPA (Leaflet.js) ═══════════════════ -->
   <!-- Leaflet CSS y JS para visualización de mapas (local + CDN fallback) -->
-  <link rel="stylesheet" href="vendor/leaflet/leaflet.css" />
+  <link rel="stylesheet" href="/vendor/leaflet/leaflet.css" />
   <script>
     (function () {
       var cssOk = !!document.querySelector('link[href*="leaflet.css"]');
@@ -59,7 +73,7 @@
       }
     })();
   </script>
-  <script src="vendor/leaflet/leaflet.js" type="text/javascript"></script>
+  <script src="/vendor/leaflet/leaflet.js" type="text/javascript"></script>
   <script>
     if (typeof window.L === 'undefined') {
       document.write('<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"><\/script>');
@@ -93,7 +107,7 @@
   </script>
   <script src="vendor/jspdf.plugin.autotable.min.js" type="text/javascript"></script>
   <script>
-    if (typeof window.jspdf === 'undefined' || !window.jspdf.jsPDF) {
+    if (typeof window.jspdf === 'undefined' || !window.jspdf?.jsPDF) {
       document.write('<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"><\/script>');
     }
   </script>

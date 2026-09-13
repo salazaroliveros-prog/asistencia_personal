@@ -2,10 +2,30 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
   <title>Escáner de Campo — Control Personal v2.0.0</title>
+  <meta name="description" content="Escanea códigos QR de trabajadores y registra su asistencia en tiempo real." />
   <meta name="theme-color" content="#2563eb" />
-  <link rel="manifest" href="/field-scanner-manifest.json?v=2.0.0" />
+
+  <!-- PWA Manifest -->
+  <link rel="manifest" href="/field-scanner-manifest.json?v=2.1.0" />
+
+  <!-- iOS / Safari PWA -->
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="Escáner Campo" />
+  <link rel="apple-touch-icon" href="/pwa/icons/icon-192.png" />
+  <link rel="apple-touch-icon" sizes="144x144" href="/pwa/icons/icon-144.png" />
+  <link rel="apple-touch-icon" sizes="128x128" href="/pwa/icons/icon-128.png" />
+  <link rel="apple-touch-startup-image" href="/pwa/icons/icon-512.png" />
+
+  <!-- Open Graph / WhatsApp preview -->
+  <meta property="og:type" content="website" />
+  <meta property="og:title" content="Escáner de Campo — Control Personal" />
+  <meta property="og:description" content="Instala esta app para escanear QR de trabajadores y registrar asistencia en tiempo real." />
+  <meta property="og:image" content="/pwa/icons/icon-512.png" />
+  <meta property="og:url" content="https://controlasistencia-evexmkwgu-proyectoswm.vercel.app/field-scanner.html" />
   <link rel="icon" type="image/svg+xml" href="/field-scanner-favicon.svg" />
   <link rel="stylesheet" href="/css/main.css" />
   <link rel="stylesheet" href="/css/campo.css" />
@@ -91,7 +111,16 @@
   <script src="/field-scanner.js"></script>
   <script>
     if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('/field-scanner-sw.js').catch(() => {});
+      // Usar el service worker principal que ya cubre /field-scanner.html
+      // field-scanner-sw.js es el SW dedicado cuando existe; si falla,
+      // el principal (/service-worker.js) sirve como respaldo.
+      navigator.serviceWorker.register('/field-scanner-sw.js')
+        .then(() => console.log('[FieldScanner] SW registrado'))
+        .catch(() => {
+          // Respaldo: usar el SW principal de la app
+          navigator.serviceWorker.register('/service-worker.js')
+            .catch(() => {});
+        });
     }
   </script>
 </body>

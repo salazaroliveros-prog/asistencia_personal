@@ -206,6 +206,12 @@ const UserManagement = (() => {
       
       Alerts.info('Cambiando rol de usuario...');
       
+      // Guardia: FunctionsClient solo está disponible en plan Blaze con Cloud Functions
+      if (!window.FunctionsClient || typeof window.FunctionsClient.setAdminClaim !== 'function') {
+        Alerts.warning('Gestión de roles requiere Cloud Functions (plan Blaze de Firebase). En plan gratuito todos los usuarios autenticados tienen acceso completo.');
+        return;
+      }
+
       const result = await window.FunctionsClient.setAdminClaim(uid, makeAdmin);
       
       if (result.success) {
@@ -257,6 +263,12 @@ const UserManagement = (() => {
       
       Alerts.info('Eliminando usuario...');
       
+      // Guardia: FunctionsClient solo está disponible en plan Blaze con Cloud Functions
+      if (!window.FunctionsClient || typeof window.FunctionsClient.deleteUser !== 'function') {
+        Alerts.warning('Eliminar usuarios requiere Cloud Functions (plan Blaze de Firebase). Usa la consola de Firebase para esta operación.');
+        return;
+      }
+
       const result = await window.FunctionsClient.deleteUser(uid);
       
       if (result.success) {
