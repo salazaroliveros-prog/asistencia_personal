@@ -6,14 +6,19 @@
  * 
  * IMPORTANTE: Para conexión automática, configura estos valores aquí o en
  * Ajustes antes de la primera carga. La app intentará conectar automáticamente.
+ *
+ * NOTA: Este archivo se carga como SCRIPT CLÁSICO (no type="module"), por lo que
+ * NO se puede usar `import.meta.env` (ni siquiera `typeof import`): el navegador
+ * lanza "Cannot use import/import.meta outside a module". Por eso estos valores
+ * se definen literalmente aquí (equivalentes a los de .env / VITE_*).
  */
 window.FIREBASE_CONFIG = window.FIREBASE_CONFIG || {
-  apiKey: import.meta.env && import.meta.env.VITE_FIREBASE_API_KEY ? import.meta.env.VITE_FIREBASE_API_KEY : "AIzaSyDriDh1SC5_8T1rx5EmgFi0pUEKUGQU5xg",
-  authDomain: import.meta.env && import.meta.env.VITE_FIREBASE_AUTH_DOMAIN ? import.meta.env.VITE_FIREBASE_AUTH_DOMAIN : "sistema-de-control-aee89.firebaseapp.com",
-  projectId: import.meta.env && import.meta.env.VITE_FIREBASE_PROJECT_ID ? import.meta.env.VITE_FIREBASE_PROJECT_ID : "sistema-de-control-aee89",
-  storageBucket: import.meta.env && import.meta.env.VITE_FIREBASE_STORAGE_BUCKET ? import.meta.env.VITE_FIREBASE_STORAGE_BUCKET : "sistema-de-control-aee89.firebasestorage.app",
-  messagingSenderId: import.meta.env && import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID ? import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID : "265655332442",
-  appId: import.meta.env && import.meta.env.VITE_FIREBASE_APP_ID ? import.meta.env.VITE_FIREBASE_APP_ID : "1:265655332442:web:c4e8617741e3b916987263",
+  apiKey: "AIzaSyDriDh1SC5_8T1rx5EmgFi0pUEKUGQU5xg",
+  authDomain: "sistema-de-control-aee89.firebaseapp.com",
+  projectId: "sistema-de-control-aee89",
+  storageBucket: "sistema-de-control-aee89.firebasestorage.app",
+  messagingSenderId: "265655332442",
+  appId: "1:265655332442:web:c4e8617741e3b916987263",
 };
 
 /**

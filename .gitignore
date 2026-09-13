@@ -12,6 +12,9 @@ __tests__/pw_install.*
 __tests__/results/
 __tests__/screenshots/
 __tests__/_qa_state.json
+__e2e__/output/
+__e2e__/*.log
+__e2e__/*.err
 
 # ── Firebase local / Data Connect (credenciales locales y código generado) ──
 .firebaserc
