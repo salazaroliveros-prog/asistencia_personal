@@ -217,15 +217,17 @@ function getReconnectDelay(): number {
 
 async function checkHealth(): Promise<boolean> {
   if (!database || !initialized) return false;
-  
+
   const start = performance.now();
   try {
-    await database.collection('health').doc('ping').get();
+    const doc = await database.collection('health').doc('ping').get();
+    if (!doc.exists) return true;
+
     health.latencyMs = Math.round(performance.now() - start);
     health.lastCheck = Date.now();
     health.consecutiveFailures = 0;
     health.healthy = true;
-    
+
     if (connectionState === 'degraded' || connectionState === 'failed') {
       setConnectionState('connected');
     }
@@ -235,7 +237,7 @@ async function checkHealth(): Promise<boolean> {
     health.lastCheck = Date.now();
     health.consecutiveFailures++;
     health.healthy = health.consecutiveFailures < HEALTH_FAILURE_THRESHOLD;
-    
+
     if (health.consecutiveFailures >= HEALTH_FAILURE_THRESHOLD && connectionState === 'connected') {
       console.warn('[Firebase] Health check failed, transitioning to degraded');
       setConnectionState('degraded');

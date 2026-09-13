@@ -232,10 +232,15 @@ async function _initServiceWorkerUpdates() {
     return;
   }
 
+  let registration: ServiceWorkerRegistration | null = null;
   try {
-    const registration = await navigator.serviceWorker.ready;
+    registration = await navigator.serviceWorker.ready;
   } catch (err) {
     console.warn('[App] No se pudo obtener la registration del Service Worker:', err);
+    return;
+  }
+
+  if (!registration) {
     return;
   }
 
@@ -246,7 +251,6 @@ async function _initServiceWorkerUpdates() {
 
     newWorker.addEventListener('statechange', () => {
       if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-        // Hay una nueva versión lista para activarse.
         _showUpdateNotification(registration, newWorker);
       }
     });

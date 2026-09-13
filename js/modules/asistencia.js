@@ -14,7 +14,6 @@ const ModuloAsistencia = (() => {
   let _pendingMarcacion  = null;  // Para el flujo de horas extra
   let _audio             = null;
   const DEFAULT_GEOFENCE_RADIUS = 200; // meters
-  let _optimisticUpdates = new Map(); // Track optimistic updates
 
   // ─── Inicialización ───────────────────────────────────────────────────────
   function init() {
@@ -744,14 +743,13 @@ const ModuloAsistencia = (() => {
     await _cargarMarcaciones(AppState.today());
   }
 
-  // ─── Helpers globales ─────────────────────────────────────────────────────
-  const esc = (str) => (window.CPC?.StringHelpers?.escHtml?.(str) ?? _escHtml(str));
-
-  // ─────────────────────────────────────────────────────────────────────────
-  // UTILIDADES
-  // ─────────────────────────────────────────────────────────────────────────
   function _escHtml(str) {
-    return esc(str);
+    if (window.CPC?.StringHelpers?.escHtml) {
+      return window.CPC.StringHelpers.escHtml(str);
+    }
+    const div = document.createElement('div');
+    div.textContent = str;
+    return div.innerHTML;
   }
 
   function _debounce(fn, wait) {

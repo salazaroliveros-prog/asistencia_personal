@@ -186,28 +186,6 @@ const ModuloAjustes = (() => {
     Alerts.success('Modo local activado. Tus datos se conservarán en este dispositivo.');
   }
 
-  async function _guardarConfigFirebase() {
-    const config = {
-      projectId: document.getElementById('firebase-project-id')?.value.trim(),
-      apiKey: document.getElementById('firebase-api-key')?.value.trim(),
-      authDomain: document.getElementById('firebase-auth-domain')?.value.trim(),
-      appId: document.getElementById('firebase-app-id')?.value.trim(),
-    };
-    
-    // Validate before saving
-    const validation = window.validateFirebaseConfig ? window.validateFirebaseConfig(config) : { valid: true };
-    if (!validation.valid) {
-      Alerts.error(validation.error || 'Configuración inválida.');
-      return;
-    }
-    
-    localStorage.setItem(LS_KEYS.FIREBASE_CONFIG, JSON.stringify(config));
-    Alerts.success('Configuración de Firebase guardada. La app intentará conectar automáticamente.');
-    
-    // Try to connect automatically
-    setTimeout(() => _conectarFirebase(), 500);
-  }
-
   // ─────────────────────────────────────────────────────────────────────────
   // CONFIGURACIÓN GENERAL
   // ─────────────────────────────────────────────────────────────────────────

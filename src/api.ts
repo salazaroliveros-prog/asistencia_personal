@@ -13,6 +13,7 @@ type FirebaseLike = {
   subscribe(collection: string, callback: (records: Record<string, unknown>[]) => void): () => void;
   onConnectionChange(callback: (state: string) => void): () => void;
   getHealth(): { healthy: boolean; lastCheck: number; consecutiveFailures: number; latencyMs: number };
+  checkHealth?(): Promise<boolean>;
 };
 
 declare global {
@@ -159,7 +160,7 @@ function bindConnectivity(): void {
       }
     } else if (firebase().isReady() && firebase().getConnectionState() === 'degraded') {
       console.log('[API] Connection degraded, triggering health check...');
-      const healthy = await (firebase() as any).checkHealth?.();
+      const healthy = await firebase().checkHealth?.();
       if (healthy) {
         updateConnection(true);
         await API.syncOfflineQueue();
@@ -201,36 +202,40 @@ export interface Api {
 const API: Api = {
   async initialize() {
     bindConnectivity();
-    if (state().get('backendMode') !== 'firestore') realtimeSubscriptionsBound = false;
-    
+    if (state().get('backendMode') !== 'firestore') {
+      realtimeSubscriptionsBound = false;
+    }
+
     const connection = await firebase().initialize();
     updateConnection(connection.success);
-    
-    // Bind to connection state changes for automatic reconnection
+
     if (connection.success && !realtimeSubscriptionsBound) {
-      firebase().subscribe('personal', records => savePersonalCache(records.filter(record => record.Estado !== 'Eliminado') as unknown as Worker[]));
-      firebase().subscribe('asistencias', records => saveAttendanceCache(records as unknown as AttendanceRecord[]));
+      firebase().subscribe('personal', records =>
+        savePersonalCache(
+          records.filter(record => record.Estado !== 'Eliminado') as unknown as Worker[]
+        )
+      );
+      firebase().subscribe('asistencias', records =>
+        saveAttendanceCache(records as unknown as AttendanceRecord[])
+      );
       firebase().subscribe('alertas', records => state().set('alertas', records));
       realtimeSubscriptionsBound = true;
     }
-    
-    // Listen for connection state changes
+
     const unsubscribe = firebase().onConnectionChange((newState) => {
       console.log(`[API] Connection state changed: ${newState}`);
       updateConnection(newState === 'connected' || newState === 'degraded');
-      
-      // Auto-sync when reconnecting
+
       if ((newState === 'connected' || newState === 'degraded') && realtimeSubscriptionsBound) {
-        this.syncOfflineQueue().catch(() => {});
-        this.obtenerPersonal().catch(() => {});
+        API.syncOfflineQueue().catch(() => {});
+        API.obtenerPersonal().catch(() => {});
       }
     });
-    
-    // Store unsubscribe for cleanup if needed
+
     if (typeof window !== 'undefined') {
       (window as any)._firebaseConnectionUnsubscribe = unsubscribe;
     }
-    
+
     return connection;
   },
   async ping(this: Api) { 
@@ -249,7 +254,14 @@ const API: Api = {
     }
   },
   async registrarPersonal(payload) {
-    if (!connected()) { const local = localSaveWorker(payload, false); if (local.data[0]) enqueue('personal', { ...payload, id: local.data[0].ID_Trabajador }); return local; }
+    if (!connected()) {
+      const local = localSaveWorker(payload, false);
+      if (local.data[0]) {
+        enqueue('personal', { ...payload, id: local.data[0].ID_Trabajador });
+      }
+      return local;
+    }
+
     const worker = normalizeWorker(payload);
     try {
       await firebase().save('personal', worker.ID_Trabajador, worker as unknown as Record<string, unknown>);
@@ -258,13 +270,20 @@ const API: Api = {
     } catch (error) {
       markRemoteFailure(error);
       const local = localSaveWorker(payload, false);
-      if (local.data[0]) enqueue('personal', { ...payload, id: local.data[0].ID_Trabajador });
+      if (local.data[0]) {
+        enqueue('personal', { ...payload, id: local.data[0].ID_Trabajador });
+      }
       return local;
     }
   },
   async actualizarPersonal(payload) {
     const previous = personalCache().find(worker => worker.ID_Trabajador === payload.id);
-    if (!connected()) { const local = localSaveWorker(payload, true); enqueue('personal', payload); return local; }
+    if (!connected()) {
+      const local = localSaveWorker(payload, true);
+      enqueue('personal', payload);
+      return local;
+    }
+
     const worker = normalizeWorker(payload, previous);
     try {
       await firebase().save('personal', worker.ID_Trabajador, worker as unknown as Record<string, unknown>);
@@ -273,19 +292,34 @@ const API: Api = {
     } catch (error) {
       markRemoteFailure(error);
       const local = localSaveWorker(payload, true);
-      if (local.success) enqueue('personal', payload);
+      if (local.success) {
+        enqueue('personal', payload);
+      }
       return local;
     }
   },
   async eliminarPersonal(workerId) {
-    if (!connected()) { savePersonalCache(personalCache().map(worker => worker.ID_Trabajador === workerId ? { ...worker, Estado: 'Inactivo' } : worker)); enqueue('personal-delete', { id: workerId }); return result([] as never[], { offline: true }); }
+    if (!connected()) {
+      savePersonalCache(
+        personalCache().map(worker =>
+          worker.ID_Trabajador === workerId ? { ...worker, Estado: 'Inactivo' } : worker
+        )
+      );
+      enqueue('personal-delete', { id: workerId });
+      return result([] as never[], { offline: true });
+    }
+
     try {
       await firebase().save('personal', workerId, { Estado: 'Inactivo' });
       await this.obtenerPersonal();
       return result([] as never[]);
     } catch (error) {
       markRemoteFailure(error);
-      savePersonalCache(personalCache().map(worker => worker.ID_Trabajador === workerId ? { ...worker, Estado: 'Inactivo' } : worker));
+      savePersonalCache(
+        personalCache().map(worker =>
+          worker.ID_Trabajador === workerId ? { ...worker, Estado: 'Inactivo' } : worker
+        )
+      );
       enqueue('personal-delete', { id: workerId });
       return result([] as never[], { offline: true });
     }
@@ -346,8 +380,16 @@ const API: Api = {
     return result(data.slice(offset, limit ? offset + limit : undefined));
   },
   async marcarAlertaRevisada(alertId) {
-    if (connected()) await firebase().save('alertas', alertId, { Revisada: true });
-    state().set('alertas', (state().get<Record<string, unknown>[]>('alertas') || []).map(item => item.ID_Alerta === alertId || item._docId === alertId ? { ...item, Revisada: true } : item));
+    if (connected()) {
+      await firebase().save('alertas', alertId, { Revisada: true });
+    }
+
+    state().set(
+      'alertas',
+      (state().get<Record<string, unknown>[]>('alertas') || []).map(item =>
+        item.ID_Alerta === alertId || item._docId === alertId ? { ...item, Revisada: true } : item
+      )
+    );
     return result([] as never[]);
   },
   async obtenerConfiguracion() { return result(state().get<Record<string, unknown>>('config')); },
