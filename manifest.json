@@ -13,13 +13,13 @@
   "lang": "es",
   "icons": [
     {
-      "src": "/assets/icons/icon-192.png",
+      "src": "/public/pwa/icons/icon-192.png",
       "sizes": "192x192",
       "type": "image/png",
       "purpose": "any maskable"
     },
     {
-      "src": "/assets/icons/icon-512.png",
+      "src": "/public/pwa/icons/icon-512.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any maskable"
@@ -34,21 +34,21 @@
       "short_name": "Asistencia",
       "description": "Ir directamente al escáner QR",
       "url": "/#asistencia",
-      "icons": [{ "src": "/assets/icons/icon-192.png", "sizes": "192x192" }]
+      "icons": [{ "src": "/public/pwa/icons/icon-192.png", "sizes": "192x192" }]
     },
     {
       "name": "Marcar en Campo",
       "short_name": "Campo",
       "description": "Escáner de campo: registrar asistencia en tiempo real",
       "url": "/#campo",
-      "icons": [{ "src": "/assets/icons/icon-192.png", "sizes": "192x192" }]
+      "icons": [{ "src": "/public/pwa/icons/icon-192.png", "sizes": "192x192" }]
     },
     {
       "name": "Dashboard",
       "short_name": "Dashboard",
       "description": "Ver panel de control",
       "url": "/#dashboard",
-      "icons": [{ "src": "/assets/icons/icon-192.png", "sizes": "192x192" }]
+      "icons": [{ "src": "/public/pwa/icons/icon-192.png", "sizes": "192x192" }]
     }
   ]
 }

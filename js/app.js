@@ -242,7 +242,7 @@ async function _initServiceWorkerUpdates() {
     return;
   }
 
-  let registration: ServiceWorkerRegistration | null = null;
+  let registration = null;
   try {
     registration = await navigator.serviceWorker.ready;
   } catch (err) {

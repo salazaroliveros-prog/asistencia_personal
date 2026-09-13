@@ -215,7 +215,7 @@ const Logger = (() => {
   }
   
   // ─── Exportar logs ───────────────────────────────────────────────────────
-  function exportLogs(): string {
+  function exportLogs() {
     const logs = getLogs();
     const exportData = {
       exportDate: new Date().toISOString(),
