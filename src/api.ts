@@ -346,6 +346,62 @@ const API: Api = {
       return localSaveAttendance(payload);
     }
   },
+  async actualizarAsistencia(marcacionId, payload: { horaReal?: string; estadoMarcacion?: string; horasExtra?: number }) {
+    if (!connected()) {
+      const updated = attendanceCache().map(a =>
+        a.ID_Marcacion === marcacionId ? { ...a, Hora_Real: payload.horaReal || a.Hora_Real, Estado_Marcacion: payload.estadoMarcacion || a.Estado_Marcacion, Horas_Extra: payload.horasExtra || a.Horas_Extra } : a
+      );
+      saveAttendanceCache(updated);
+      enqueue('attendance-update', { id: marcacionId, payload });
+      return result([] as never[], { offline: true });
+    }
+
+    try {
+      const existing = attendanceCache().find(a => a.ID_Marcacion === marcacionId);
+      if (!existing) return result(null, { error: 'Marcación no encontrada' });
+
+      const updated = {
+        ...existing,
+        Hora_Real: payload.horaReal || existing.Hora_Real,
+        Estado_Marcacion: payload.estadoMarcacion || existing.Estado_Marcacion,
+        Horas_Extra: payload.horasExtra !== undefined ? payload.horasExtra : existing.Horas_Extra,
+      };
+
+      await firebase().save('asistencias', marcacionId, updated as unknown as Record<string, unknown>);
+      const newCache = attendanceCache().map(a => a.ID_Marcacion === marcacionId ? updated : a);
+      saveAttendanceCache(newCache);
+      return result(updated);
+    } catch (error) {
+      markRemoteFailure(error);
+      const updated = attendanceCache().map(a =>
+        a.ID_Marcacion === marcacionId ? { ...a, Hora_Real: payload.horaReal || a.Hora_Real, Estado_Marcacion: payload.estadoMarcacion || a.Estado_Marcacion, Horas_Extra: payload.horasExtra || a.Horas_Extra } : a
+      );
+      saveAttendanceCache(updated);
+      enqueue('attendance-update', { id: marcacionId, payload });
+      return result([] as never[], { offline: true });
+    }
+  },
+  async eliminarAsistencia(marcacionId) {
+    if (!connected()) {
+      const newCache = attendanceCache().filter(a => a.ID_Marcacion !== marcacionId);
+      saveAttendanceCache(newCache);
+      enqueue('attendance-delete', { id: marcacionId });
+      return result(null, { offline: true });
+    }
+
+    try {
+      await firebase().remove('asistencias', marcacionId);
+      const newCache = attendanceCache().filter(a => a.ID_Marcacion !== marcacionId);
+      saveAttendanceCache(newCache);
+      return result(null);
+    } catch (error) {
+      markRemoteFailure(error);
+      const newCache = attendanceCache().filter(a => a.ID_Marcacion !== marcacionId);
+      saveAttendanceCache(newCache);
+      enqueue('attendance-delete', { id: marcacionId });
+      return result(null, { offline: true });
+    }
+  },
   async obtenerAsistencias(fecha = state().get<string>('dashboardDate') || new Date().toISOString().slice(0, 10), limit, offset = 0) {
     let data: AttendanceRecord[];
     if (connected()) {

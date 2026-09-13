@@ -885,28 +885,24 @@ const ModuloAsistencia = (() => {
       return;
     }
 
-    // Actualizar localmente
-    const index = asistencias.findIndex(a => (a.ID_Marcacion === id || a.ID_Asistencia === id));
-    if (index !== -1) {
-      asistencias[index].Hora_Real = nuevaHora + ':00';
-      
-      // Recalcular estado
-      const config = AppState.get('config');
-      const tolerancia = parseInt(config.Tolerancia_Minutos || 15);
-      const estadoNuevo = _calcularEstado(marcacion.Hora_Programada, nuevaHora, tolerancia);
-      asistencias[index].Estado_Marcacion = estadoNuevo;
-      
-      AppState.set('asistencias', asistencias);
-      
-      try {
-        localStorage.setItem(LS_KEYS.ASISTENCIA_CACHE, JSON.stringify(asistencias));
-      } catch (e) {}
-      
+    // Recalcular estado
+    const config = AppState.get('config');
+    const tolerancia = parseInt(config.Tolerancia_Minutos || 15);
+    const estadoNuevo = _calcularEstado(marcacion.Hora_Programada, nuevaHora, tolerancia);
+
+    // Usar API para actualizar
+    const result = await API.actualizarAsistencia(id, {
+      horaReal: nuevaHora + ':00',
+      estadoMarcacion: estadoNuevo
+    });
+
+    if (result.success) {
       // Recargar tabla
       const fecha = document.getElementById('asistencia-filter-date')?.value || AppState.today();
       _cargarMarcaciones(fecha);
-      
       Alerts.success('Marcación actualizada correctamente');
+    } else {
+      Alerts.error('Error al actualizar marcación: ' + (result.error || 'Error desconocido'));
     }
   }
 
@@ -929,19 +925,17 @@ const ModuloAsistencia = (() => {
 
     if (!confirmed) return;
 
-    // Eliminar localmente
-    const nuevasAsistencias = asistencias.filter(a => (a.ID_Marcacion !== id && a.ID_Asistencia !== id));
-    AppState.set('asistencias', nuevasAsistencias);
-    
-    try {
-      localStorage.setItem(LS_KEYS.ASISTENCIA_CACHE, JSON.stringify(nuevasAsistencias));
-    } catch (e) {}
-    
-    // Recargar tabla
-    const fecha = document.getElementById('asistencia-filter-date')?.value || AppState.today();
-    _cargarMarcaciones(fecha);
-    
-    Alerts.success('Marcación eliminada correctamente');
+    // Usar API para eliminar
+    const result = await API.eliminarAsistencia(id);
+
+    if (result.success || result.offline) {
+      // Recargar tabla
+      const fecha = document.getElementById('asistencia-filter-date')?.value || AppState.today();
+      _cargarMarcaciones(fecha);
+      Alerts.success('Marcación eliminada correctamente');
+    } else {
+      Alerts.error('Error al eliminar marcación: ' + (result.error || 'Error desconocido'));
+    }
   }
 
   return { init, cargar, cleanup };

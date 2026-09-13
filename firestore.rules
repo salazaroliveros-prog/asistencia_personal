@@ -76,8 +76,12 @@ service cloud.firestore {
                      isValidAttendanceData(request.resource.data) &&
                      request.resource.data.keys().size() <= 20; // Límite de campos
       
-      // No permitir actualizaciones de asistencias (prevenir manipulación)
-      allow update: if false;
+      // Solo administradores pueden actualizar asistencias (para edición de marcaciones)
+      allow update: if isAdmin() &&
+                    isValidAttendanceData(request.resource.data) &&
+                    request.resource.data.diff(resource.data).affectedKeys()
+                      .hasOnly(['Hora_Real', 'Estado_Marcacion', 'Horas_Extra']) &&
+                    request.resource.data.keys().size() <= 20;
       
       // Solo administradores pueden eliminar asistencias
       allow delete: if isAdmin();
