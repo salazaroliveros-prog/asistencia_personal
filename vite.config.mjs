@@ -30,5 +30,9 @@ export default defineConfig(({ mode }) => ({
     emptyOutDir: true,
     sourcemap: mode === 'development',
     modulePreload: false,
+    rollupOptions: {
+      input: 'index.html',
+      external: [/\.ts$/],
+    },
   },
 }));
