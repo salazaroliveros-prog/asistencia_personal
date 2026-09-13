@@ -58,4 +58,7 @@ preview.log
 _browsers_install.log
 .playwright-mcp/
 
+# Playwright test reports
+playwright-report/
+
 app-movil/tsconfig.tsbuildinfo
