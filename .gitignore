@@ -61,4 +61,40 @@ _browsers_install.log
 # Playwright test reports
 playwright-report/
 
+# ── Scripts QA temporales adicionales ──
+__tests__/_qa_*.mjs
+__tests__/_qa_*.cmd
+__tests__/console-tests.js
+__tests__/diag-*.js
+__tests__/diagnose-*.js
+__tests__/e2e-*.js
+__tests__/e2e-*.mjs
+__tests__/firebase-diagnostic.mjs
+__tests__/headless-test.js
+__tests__/run-tests.js
+__tests__/run-tests.mjs
+__tests__/server.js
+__tests__/take-screenshots.js
+__tests__/verify-*.js
+__tests__/check-*.js
+__tests__/pwa-scanner-integration.test.cjs
+
+# ── Directorio e2e completo (scripts temporales) ──
+__e2e__/
+
+# ── Capacitor y móvil (si no se usa actualmente) ──
+android/
+ios/
+app-movil/
+
+# ── Archivos de configuración local ──
+.env
+.env.local
+skills-lock.json
+
+# ── Documentación obsoleta ──
+ATTENDANCE_SYSTEM_MANUAL.md
+control_personal_campo_instructivo.md
+FIELD-SCANNER-SETUP.md
+
 app-movil/tsconfig.tsbuildinfo
