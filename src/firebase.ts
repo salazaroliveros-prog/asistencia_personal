@@ -45,7 +45,7 @@ declare global {
   interface Window {
     firebase?: {
       apps: unknown[];
-      initializeApp(config: FirebaseConfig): void;
+      initializeApp(config?: FirebaseConfig): void;
       auth(): { 
         currentUser: unknown; 
         signInAnonymously(): Promise<{ user: unknown }>; 
@@ -66,12 +66,12 @@ declare global {
         };
         onSnapshot(onNext: (snapshot: { docs: Array<{ id: string; data(): FirestoreRecord }> }) => void, onError: (error: Error) => void): () => void;
       };
-        FieldValue: { serverTimestamp(): unknown };
-      };
+      FieldValue: { serverTimestamp(): unknown };
       functions(): {
         httpsCallable(name: string): (data: unknown) => Promise<{ data: unknown }>;
       };
     };
+    FIREBASE_CONFIG?: FirebaseConfig;
     FirebaseClient: FirebaseAdapter;
   }
 }

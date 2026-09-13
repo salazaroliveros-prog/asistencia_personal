@@ -38,13 +38,10 @@ type UserListItem = {
   lastSignInTime: string | null;
 };
 
+// No necesitamos redeclarar firebase ya que está en firebase.ts
+// Solo agregamos FunctionsClient a Window
 declare global {
   interface Window {
-    firebase?: {
-      functions(): {
-        httpsCallable(name: string): (data: unknown) => Promise<{ data: unknown }>;
-      };
-    };
     FunctionsClient: FunctionsClientType;
   }
 }
@@ -72,7 +69,7 @@ const FunctionsClient: FunctionsClientType = (() => {
     }
 
     try {
-      const app = window.firebase.apps[0] || window.firebase.initializeApp(window.FIREBASE_CONFIG);
+      const app = window.firebase.apps[0] || window.firebase.initializeApp((window as { FIREBASE_CONFIG?: unknown }).FIREBASE_CONFIG);
       functionsInstance = window.firebase.functions();
       initialized = true;
       console.log('[Functions] Initialized successfully');
