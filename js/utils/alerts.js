@@ -1,7 +1,7 @@
-/**
+﻿/**
  * CONTROL PERSONAL CAMPO — utils/alerts.js
  * Sistema de notificaciones Toast y alertas en tiempo real.
- * @version 1.0.0
+ * @version 1.5.0
  */
 
 const Alerts = (() => {

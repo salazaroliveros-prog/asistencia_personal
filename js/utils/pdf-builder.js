@@ -1,7 +1,7 @@
-/**
+﻿/**
  * CONTROL PERSONAL CAMPO — utils/pdf-builder.js
  * Generador de reportes PDF con membrete institucional usando jsPDF + AutoTable.
- * @version 1.0.0
+ * @version 1.5.0
  */
 
 const PDFBuilder = (() => {

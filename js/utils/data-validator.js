@@ -1,7 +1,7 @@
 /**
  * CONTROL PERSONAL CAMPO — utils/data-validator.js
  * Data validation for attendance and worker records
- * @version 1.0.0
+ * @version 1.5.0
  */
 
 const DataValidator = (() => {

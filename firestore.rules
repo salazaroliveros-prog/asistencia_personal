@@ -6,11 +6,11 @@ service cloud.firestore {
     // FUNCIONES DE AYUDA
     // ─────────────────────────────────────────────────────────────────────────
     
-    // Verifica si el usuario es administrador
-    // Para plan gratuito sin Cloud Functions, cualquier usuario autenticado tiene acceso completo
-    // TODO: Para plan Blaze con Cloud Functions, cambiar a: return request.auth != null && request.auth.token.admin == true;
+    // Verifica si el usuario es administrador mediante custom claims.
+    // Requiere Cloud Functions para establecer claims (setAdminClaim).
+    // Si no hay claim admin, se niega el acceso de escritura/eliminación.
     function isAdmin() {
-      return request.auth != null;
+      return request.auth != null && request.auth.token.admin == true;
     }
     
     // Valida que un string no esté vacío y tenga longitud razonable
@@ -121,7 +121,9 @@ service cloud.firestore {
     // COLECCIÓN: HEALTH (para health checks)
     // ─────────────────────────────────────────────────────────────────────────
     match /health/{healthId} {
-      allow read, write: if request.auth != null;
+      allow read: if request.auth != null;
+      allow write: if isAdmin() &&
+                   request.resource.data.keys().size() <= 10;
     }
   }
 }

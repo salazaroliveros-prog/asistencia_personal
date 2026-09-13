@@ -1,7 +1,7 @@
 /**
  * CONTROL PERSONAL CAMPO — utils/logger.js
  * Sistema de logging mejorado con niveles, timestamps y persistencia
- * @version 1.0.0
+ * @version 1.5.0
  */
 
 const Logger = (() => {

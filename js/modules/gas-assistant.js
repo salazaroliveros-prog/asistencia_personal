@@ -1,7 +1,7 @@
-/**
+﻿/**
  * CONTROL PERSONAL CAMPO — modules/gas-assistant.js
  * Asistente de configuración para Google Apps Script
- * @version 1.0.0
+ * @version 1.5.0
  */
 
 const GasAssistant = (() => {

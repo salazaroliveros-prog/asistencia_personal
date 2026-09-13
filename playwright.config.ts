@@ -10,8 +10,17 @@ export default defineConfig({
   reporter: [['list'], ['html', { open: 'never' }]],
   outputDir: '__e2e__/output',
   snapshotDir: '__e2e__/snapshots',
+
+  // Arrancar el servidor de desarrollo automáticamente antes de los tests
+  webServer: {
+    command: 'npx vite --host 127.0.0.1 --port 3801',
+    url: 'http://127.0.0.1:3801',
+    reuseExistingServer: !process.env.CI,
+    timeout: 30000,
+  },
+
   use: {
-    baseURL: 'http://localhost:3801',
+    baseURL: 'http://127.0.0.1:3801',
     viewport: { width: 390, height: 844 }, // iPhone 12-like
     deviceScaleFactor: 3,
     isMobile: true,
@@ -22,7 +31,7 @@ export default defineConfig({
     video: 'retain-on-failure',
     trace: 'retain-on-failure',
   },
-      projects: [
+  projects: [
     {
       name: 'mobile',
       use: {

@@ -1,8 +1,8 @@
-/**
+﻿/**
  * CONTROL PERSONAL CAMPO — app.js
  * Router SPA, inicialización de módulos, reloj en tiempo real y gestión de modales.
  * Punto de entrada principal de la aplicación.
- * @version 1.0.0
+ * @version 1.5.0
  */
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -792,12 +792,11 @@ async function _initialConnection() {
     const connection = await API.ping();
     if (connection.success) {
       // Connection already established by auto-initialization
-      API.obtenerPersonal().catch(() => {});
-      API.obtenerConfiguracion().catch(() => {});
+      API.obtenerPersonal().catch(err => console.warn('[App] Error obteniendo personal:', err.message));
+      API.obtenerConfiguracion().catch(err => console.warn('[App] Error obteniendo configuración:', err.message));
     } else if (!connection.success && connection.mode === 'local') {
       // No Firebase config or auto-connection failed
       // App will work in local mode - user can configure in Settings if needed
-      console.log('[App] Running in local mode. Configure Firebase in Settings for cloud sync.');
     }
   } catch (err) {
     console.warn('[App] Firestore no disponible; se mantiene el modo local:', err.message);
@@ -856,7 +855,6 @@ function _limpiarDatosDemo() {
 
   // Si había datos demo, limpiar todo
   if (localStorage.getItem('cpc_demo_loaded') === '1') {
-    console.info('[App] Limpiando datos demo del localStorage…');
     CLAVES_DEMO.forEach(k => localStorage.removeItem(k));
 
   }

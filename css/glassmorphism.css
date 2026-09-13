@@ -1,4 +1,4 @@
-/* ═══════════════════════════════════════════════════════════════════════════
+﻿/* ═══════════════════════════════════════════════════════════════════════════
    CONTROL PERSONAL CAMPO — glassmorphism.css
    Efectos Clear Glass, desenfoques, sidebar, topbar y cards de cristal
    ═══════════════════════════════════════════════════════════════════════════ */
@@ -30,8 +30,8 @@
   border-radius: inherit;
   background: linear-gradient(
     160deg,
-    rgba(255, 255, 255, 0.10) 0%,
-    rgba(255, 255, 255, 0.03) 40%,
+    rgba(var(--color-surface-rgb), 0.10) 0%,
+    rgba(var(--color-surface-rgb), 0.03) 40%,
     transparent 70%
   );
   pointer-events: none;
@@ -80,11 +80,11 @@
   top: 0;
   left: 0;
   z-index: var(--z-sticky);
-  background: rgba(8, 20, 40, 0.80);
+  background: rgba(var(--color-navy-dark-rgb), 0.80);
   backdrop-filter: blur(24px);
   -webkit-backdrop-filter: blur(24px);
-  border-right: 1px solid rgba(255, 255, 255, 0.10);
-  box-shadow: 4px 0 32px rgba(0, 10, 30, 0.40);
+  border-right: 1px solid rgba(var(--color-surface-rgb), 0.10);
+  box-shadow: 4px 0 32px rgba(var(--color-navy-dark-rgb), 0.40);
   display: flex;
   flex-direction: column;
   transition: transform var(--transition-base), width var(--transition-base);
@@ -126,7 +126,7 @@
 .brand-icon svg {
   width: 22px;
   height: 22px;
-  color: #fff;
+   color: var(--color-text-primary);
 }
 
 .brand-text {
@@ -139,7 +139,7 @@
   font-size: var(--text-sm);
   font-weight: 800;
   letter-spacing: 0.1em;
-  color: #fff;
+   color: var(--color-text-primary);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -169,7 +169,7 @@
 }
 
 .sidebar-toggle:hover {
-  color: #fff;
+   color: var(--color-text-primary);
   background: var(--glass-bg-hover);
 }
 
@@ -210,7 +210,7 @@
 
 .nav-link:hover {
   background: var(--glass-bg-hover);
-  color: #fff;
+   color: var(--color-text-primary);
 }
 
 .nav-link:hover svg {
@@ -218,9 +218,9 @@
 }
 
 .nav-link.active {
-  background: linear-gradient(135deg, rgba(0, 126, 167, 0.5), rgba(0, 168, 232, 0.3));
-  color: #fff;
-  border: 1px solid rgba(0, 168, 232, 0.4);
+  background: linear-gradient(135deg, rgba(var(--color-primary-rgb), 0.5), rgba(var(--color-secondary-rgb), 0.3));
+   color: var(--color-text-primary);
+  border: 1px solid rgba(var(--color-secondary-rgb), 0.4);
 }
 
 .nav-link.active::before {
@@ -294,7 +294,7 @@
   display: none;
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.5);
+  background: rgba(var(--color-black-rgb), 0.5);
   z-index: calc(var(--z-sticky) - 1);
   backdrop-filter: blur(2px);
 }
@@ -310,11 +310,11 @@
    TOPBAR GLASS
    ───────────────────────────────────────────────────────────────────────────── */
 .glass-topbar {
-  background: rgba(0, 34, 58, 0.60);
+  background: rgba(var(--color-navy-rgb), 0.60);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
   border-bottom: 1px solid var(--glass-border-light);
-  box-shadow: 0 4px 16px rgba(0, 52, 89, 0.15);
+  box-shadow: 0 4px 16px rgba(var(--color-dark-rgb), 0.15);
 }
 
 /* ─────────────────────────────────────────────────────────────────────────────
@@ -324,7 +324,7 @@
   position: fixed;
   inset: 0;
   z-index: var(--z-modal);
-  background: rgba(0, 20, 40, 0.65);
+  background: rgba(var(--color-navy-dark-rgb), 0.65);
   backdrop-filter: blur(4px);
   -webkit-backdrop-filter: blur(4px);
   display: flex;
@@ -345,12 +345,12 @@
 }
 
 .glass-modal {
-  background: rgba(0, 40, 70, 0.85);
+  background: rgba(var(--color-navy-deep-rgb), 0.85);
   backdrop-filter: blur(24px);
   -webkit-backdrop-filter: blur(24px);
   border: 1px solid var(--glass-border);
   border-radius: var(--radius-xl);
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
+  box-shadow: 0 20px 60px rgba(var(--color-black-rgb), 0.4);
   width: 100%;
   max-width: 680px;
   max-height: min(90vh, 90dvh);
@@ -371,7 +371,7 @@
 }
 
 .modal-sm { max-width: 440px; }
-.modal-lg { max-width: 880px; }
+/* .modal-lg defined in components.css with width: 95vw */
 
 .modal-header {
   display: flex;
@@ -399,7 +399,7 @@
 }
 
 .modal-close:hover {
-  background: rgba(230, 57, 70, 0.2);
+  background: rgba(var(--color-accent-red-rgb), 0.2);
   color: var(--color-accent-red);
 }
 
@@ -476,10 +476,10 @@
   height: 26px;
 }
 
-.kpi-blue  { background: rgba(0, 168, 232, 0.20); color: var(--color-secondary); }
-.kpi-green { background: rgba(42, 157, 143, 0.20); color: var(--color-accent-green); }
-.kpi-amber { background: rgba(255, 183, 3, 0.20); color: var(--color-accent-amber); }
-.kpi-red   { background: rgba(230, 57, 70, 0.20); color: var(--color-accent-red); }
+.kpi-blue  { background: rgba(var(--color-secondary-rgb), 0.20); color: var(--color-secondary); }
+.kpi-green { background: rgba(var(--color-accent-green-rgb), 0.20); color: var(--color-accent-green); }
+.kpi-amber { background: rgba(var(--color-accent-amber-rgb), 0.20); color: var(--color-accent-amber); }
+.kpi-red   { background: rgba(var(--color-accent-red-rgb), 0.20); color: var(--color-accent-red); }
 
 .kpi-info {
   display: flex;
@@ -502,7 +502,7 @@
 .kpi-value {
   font-size: var(--text-2xl);
   font-weight: 800;
-  color: #fff;
+   color: var(--color-text-primary);
   line-height: 1;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -530,7 +530,7 @@
   display: flex;
   border-bottom: 1px solid var(--glass-border-light);
   padding: 0 var(--space-4);
-  background: rgba(0, 0, 0, 0.1);
+  background: rgba(var(--color-black-rgb), 0.1);
 }
 
 .tab {

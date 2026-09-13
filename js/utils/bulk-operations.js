@@ -1,7 +1,7 @@
 /**
  * CONTROL PERSONAL CAMPO — utils/bulk-operations.js
  * Sistema de operaciones en lote (bulk operations)
- * @version 1.0.0
+ * @version 1.5.0
  */
 
 const BulkOperations = (() => {

@@ -1,7 +1,7 @@
 /**
  * CONTROL PERSONAL CAMPO — utils/data-export.js
  * Sistema de exportación e importación de datos
- * @version 1.0.0
+ * @version 1.5.0
  */
 
 const DataExport = (() => {

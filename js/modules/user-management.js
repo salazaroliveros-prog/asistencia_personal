@@ -1,7 +1,7 @@
 /**
  * CONTROL PERSONAL CAMPO — modules/user-management.js
  * Módulo de gestión de usuarios y roles mediante Firebase Custom Claims
- * @version 1.0.0
+ * @version 1.5.0
  */
 
 const UserManagement = (() => {

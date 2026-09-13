@@ -2,7 +2,7 @@
  * CONTROL PERSONAL CAMPO — utils/gps.js
  * GPS location utilities for attendance verification.
  * Handles geolocation capture, geofence validation, and distance calculations.
- * @version 1.0.0
+ * @version 1.5.0
  */
 
 const GPS = (() => {

@@ -181,7 +181,8 @@
   function subscribeRealtime() {
     if (!db) return;
     try {
-      unsubscribe = db.collection('asistencia')
+      // COLECCIÓN CORRECTA: 'asistencias' (plural, igual que api.js y firestore.rules)
+      unsubscribe = db.collection('asistencias')
         .orderBy('Fecha', 'desc')
         .limit(50)
         .onSnapshot((snapshot) => {
@@ -630,35 +631,68 @@
 
   async function enviarMarcacionFirestore(payload, worker) {
     if (!db) throw new Error('Firebase no disponible');
-    const docRef = db.collection('asistencia').doc();
-    const doc = {
-      ID_Trabajador: payload.ID_Trabajador,
-      Documento: worker?.DPI || worker?.Documento || payload.ID_Trabajador,
-      Nombre_Completo: payload.Nombre_Trabajador || 'Desconocido',
-      Puesto: currentWorker?.Puesto || 'N/A',
-      Fecha: payload.Fecha,
-      Jefe: currentWorker?.Jefe || '',
-      Telefono: currentWorker?.Telefono || '',
-      Estado_General: 'Presente',
-      Metodo_Registro: payload.Metodo_Registro,
-      Ubicacion_Obra: payload.Ubicacion_Obra || 'GPS: desconocida',
-      Historial_Marcaciones: [
-        {
-          Fecha: payload.Fecha,
-          Hora: new Date().toLocaleTimeString('es-GT', { hour12: false }).substring(0, 5),
-          Timestamp: Date.now(),
-          Metodo_Registro: payload.Metodo_Registro,
-          Origen: 'ESCANER_CAMPO',
-        },
-      ],
-      Metodos_Registro: [payload.Metodo_Registro],
-      Ultima_Actualizacion: Date.now(),
-      updated_at: new Date().toISOString(),
-    };
 
-    await docRef.set(doc);
-    saveAuditLog({ ...doc, ID_Marcacion: docRef.id });
-    return docRef.id;
+    const fechaHoy = payload.Fecha;
+    const dpiLimpio = String(payload.ID_Trabajador).replace(/[^0-9]/g, '');
+    const ahora = new Date();
+    const hora = ahora.toLocaleTimeString('es-GT', { hour12: false }).substring(0, 5);
+    const timestamp = ahora.getTime();
+
+    // COLECCIÓN CORRECTA: 'asistencias' (plural, igual que api.js y firestore.rules)
+    // Usar ID determinístico fecha_dpi para hacer merge y evitar documentos duplicados
+    const asistenciaId = `${fechaHoy}_${dpiLimpio}`;
+    const docRef = db.collection('asistencias').doc(asistenciaId);
+
+    // Hacer merge con la marcación del día para acumular historial
+    await db.runTransaction(async (transaction) => {
+      const snap = await transaction.get(docRef);
+      let historial = [];
+      let metodosRegistro = [];
+      if (snap.exists) {
+        const existing = snap.data();
+        historial = existing.Historial_Marcaciones || [];
+        metodosRegistro = existing.Metodos_Registro || [];
+      }
+
+      historial.push({
+        Fecha: fechaHoy,
+        Hora: hora,
+        Timestamp: timestamp,
+        Metodo_Registro: payload.Metodo_Registro || 'Escaneo_QR',
+        Tipo_Marcacion: payload.Tipo_Marcacion || 'Entrada',
+        Origen: 'ESCANER_CAMPO',
+        GPS_Latitud: payload.GPS_Latitud || null,
+        GPS_Longitud: payload.GPS_Longitud || null,
+      });
+      metodosRegistro.push(payload.Metodo_Registro || 'Escaneo_QR');
+
+      const doc = {
+        ID_Trabajador: payload.ID_Trabajador,
+        Documento: worker?.DPI_CUI || worker?.DPI || worker?.Documento || dpiLimpio,
+        Nombre_Completo: payload.Nombre_Trabajador || worker?.Nombre_Completo || 'Desconocido',
+        Puesto: worker?.Puesto || 'N/A',
+        Fecha: fechaHoy,
+        Jefe: worker?.Jefe_Inmediato || worker?.Jefe || '',
+        Telefono: worker?.Telefono || '',
+        Estado_General: 'Presente',
+        Metodo_Registro: payload.Metodo_Registro || 'Escaneo_QR',
+        Ubicacion_Obra: payload.Ubicacion_Obra || 'GPS: desconocida',
+        Historial_Marcaciones: historial,
+        Metodos_Registro: [...new Set(metodosRegistro)],
+        Ultima_Actualizacion: timestamp,
+        updated_at: new Date().toISOString(),
+      };
+
+      transaction.set(docRef, doc, { merge: true });
+    });
+
+    saveAuditLog({
+      ID_Trabajador: payload.ID_Trabajador,
+      Nombre_Trabajador: payload.Nombre_Trabajador,
+      Tipo_Marcacion: payload.Tipo_Marcacion,
+      ID_Marcacion: asistenciaId,
+    });
+    return asistenciaId;
   }
 
   // ─── Feed ──────────────────────────────────────────────────────────

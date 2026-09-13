@@ -1,7 +1,7 @@
 /**
  * CONTROL PERSONAL CAMPO — utils/request-optimizer.js
  * Request optimization: debouncing, throttling, and deduplication
- * @version 1.0.0
+ * @version 1.5.0
  */
 
 const RequestOptimizer = (() => {

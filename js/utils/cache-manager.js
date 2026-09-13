@@ -1,7 +1,7 @@
 /**
  * CONTROL PERSONAL CAMPO — utils/cache-manager.js
  * Advanced caching strategy with memory and localStorage persistence
- * @version 1.0.0
+ * @version 1.5.0
  */
 
 const CacheManager = (() => {

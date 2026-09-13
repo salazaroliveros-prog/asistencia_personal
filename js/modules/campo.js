@@ -3,7 +3,7 @@
  * "Sub-app" de campo: vista instalable pensada para operarse en un móvil
  * dentro de la obra. Escanea el QR del carné, captura GPS opcional y registra
  * la marcación en Firestore en tiempo real (con cola offline como respaldo).
- * @version 1.1.0
+ * @version 1.5.0
  */
 
 const ModuloCampo = (() => {

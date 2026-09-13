@@ -1,7 +1,7 @@
-/**
+﻿/**
  * CONTROL PERSONAL CAMPO — modules/ajustes.js
  * Módulo de configuración: Firestore, general, horarios, logo y backup.
- * @version 1.0.0
+ * @version 1.5.0
  */
 
 const ModuloAjustes = (() => {

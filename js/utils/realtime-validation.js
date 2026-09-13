@@ -1,7 +1,7 @@
 /**
  * CONTROL PERSONAL CAMPO — utils/realtime-validation.js
  * Sistema de validación en tiempo real para formularios
- * @version 1.0.0
+ * @version 1.5.0
  */
 
 const RealtimeValidation = (() => {

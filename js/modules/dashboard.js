@@ -1,8 +1,8 @@
-/**
+﻿/**
  * CONTROL PERSONAL CAMPO — modules/dashboard.js
  * Panel de control: KPIs, gráficas Chart.js, panel de turno en tiempo real,
  * calendario interactivo y alertas.
- * @version 1.1.0
+ * @version 1.5.0
  */
 
 const ModuloDashboard = (() => {

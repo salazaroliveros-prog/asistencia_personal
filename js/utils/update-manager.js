@@ -2,7 +2,7 @@
  * UPDATE MANAGER - js/utils/update-manager.js
  * Gestiona la detección y notificación de actualizaciones del service worker
  * Notifica al usuario cuando hay una nueva versión disponible y permite actualizar
- * @version 1.0.0
+ * @version 1.5.0
  */
 
 const UpdateManager = (() => {
@@ -16,7 +16,6 @@ const UpdateManager = (() => {
    */
   function init() {
     if (!('serviceWorker' in navigator)) {
-      console.log('[UpdateManager] Service Worker no soportado');
       return;
     }
 
@@ -25,7 +24,6 @@ const UpdateManager = (() => {
     if (dismissedUntil) {
       _dismissedUntil = new Date(dismissedUntil);
       if (new Date() < _dismissedUntil) {
-        console.log('[UpdateManager] Notificación descartada temporalmente');
         return;
       }
     }
@@ -34,7 +32,6 @@ const UpdateManager = (() => {
     navigator.serviceWorker.register('/service-worker.js')
       .then(registration => {
         _registration = registration;
-        console.log('[UpdateManager] Service Worker registrado:', registration.scope);
 
         // Verificar actualizaciones periódicamente
         setInterval(() => {
@@ -59,14 +56,11 @@ const UpdateManager = (() => {
    * Manejar el evento de actualización encontrada
    */
   function handleUpdateFound() {
-    console.log('[UpdateManager] Nueva versión del Service Worker encontrada');
-    
     const newWorker = _registration.installing;
     
     newWorker.addEventListener('statechange', () => {
       if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
         // El nuevo service worker está instalado pero esperando
-        console.log('[UpdateManager] Nueva versión disponible, esperando activación');
         _updateAvailable = true;
         showUpdateBanner();
       }
@@ -78,7 +72,6 @@ const UpdateManager = (() => {
    */
   function handleServiceWorkerMessage(event) {
     if (event.data && event.data.type === 'NEW_VERSION_AVAILABLE') {
-      console.log('[UpdateManager] Service Worker indica nueva versión disponible');
       _updateAvailable = true;
       showUpdateBanner();
     }
@@ -89,11 +82,7 @@ const UpdateManager = (() => {
    */
   function checkForUpdates() {
     if (_registration) {
-      _registration.update()
-        .then(() => {
-          console.log('[UpdateManager] Verificación de actualización completada');
-        })
-        .catch(error => {
+      _registration.update().catch(error => {
           console.error('[UpdateManager] Error verificando actualización:', error);
         });
     }
@@ -138,8 +127,6 @@ const UpdateManager = (() => {
    * Aplicar la actualización (recargar página)
    */
   function applyUpdate() {
-    console.log('[UpdateManager] Aplicando actualización...');
-    
     // Enviar mensaje al service worker para que active la nueva versión
     if (_registration && _registration.waiting) {
       _registration.waiting.postMessage({ type: 'SKIP_WAITING' });
@@ -155,7 +142,6 @@ const UpdateManager = (() => {
    * Descartar la notificación temporalmente
    */
   function dismissUpdate() {
-    console.log('[UpdateManager] Descartando notificación temporalmente');
     
     // Ocultar banner
     hideUpdateBanner();

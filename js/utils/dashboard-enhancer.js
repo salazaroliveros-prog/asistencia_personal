@@ -1,7 +1,7 @@
 /**
  * CONTROL PERSONAL CAMPO — utils/dashboard-enhancer.js
  * Mejoras de visualización de datos en dashboard
- * @version 1.0.0
+ * @version 1.5.0
  */
 
 const DashboardEnhancer = (() => {

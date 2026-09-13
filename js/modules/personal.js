@@ -1,7 +1,7 @@
-/**
+﻿/**
  * CONTROL PERSONAL CAMPO — modules/personal.js
  * Módulo CRUD de Trabajadores + Generación de Carnés QR.
- * @version 1.0.0
+ * @version 1.5.0
  */
 
 const ModuloPersonal = (() => {
@@ -825,7 +825,7 @@ const ModuloPersonal = (() => {
         // Reintentar sin restricciones de facing mode
         try {
           _cameraStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
-          if (videoEl) { videoEl.srcObject = _cameraStream; videoEl.play().catch(() => {}); }
+          if (videoEl) { videoEl.srcObject = _cameraStream; videoEl.play().catch(e => console.warn('[Personal] Error reproduciendo video:', e.message)); }
           if (statusLabel) statusLabel.textContent = 'Cámara activa';
           return;
         } catch (_) { msg = 'No se pudo configurar la cámara. Intenta voltear.'; }

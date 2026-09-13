@@ -1,7 +1,7 @@
-/**
+﻿/**
  * CONTROL PERSONAL CAMPO — utils/qr-generator.js
  * Helper para generación y renderizado de códigos QR usando QRCode.js
- * @version 1.0.0
+ * @version 1.5.0
  */
 
 const QRGenerator = (() => {

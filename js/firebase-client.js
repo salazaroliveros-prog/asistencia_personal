@@ -2,7 +2,7 @@
  * CONTROL PERSONAL CAMPO — firebase-client.js
  * Cliente Firebase para Firestore y Authentication
  * Implementación JavaScript para reemplazar TypeScript eliminado
- * @version 1.0.0
+ * @version 1.5.0
  */
 
 (() => {
@@ -14,6 +14,8 @@
   let app = null;
   let connectionState = 'idle';
   let healthCheckInterval = null;
+  let connectionChangeListeners = [];
+  let connectionPollInterval = null;
   let healthCheckData = {
     healthy: false,
     lastCheck: 0,
@@ -22,9 +24,15 @@
   };
 
   // ─── Inicialización ─────────────────────────────────────────────────────
+  let _initialized = false;
   function initialize() {
     try {
       const config = window.FIREBASE_CONFIG || {};
+      
+      // Evitar inicialización doble
+      if (_initialized && db) {
+        return { success: true, message: 'Firebase ya inicializado' };
+      }
       
       // Validar que Firebase SDK esté cargado
       if (typeof firebase === 'undefined') {
@@ -41,14 +49,13 @@
 
       if (!firebase.apps.length) {
         app = firebase.initializeApp(config);
-        console.log('[FirebaseClient] Firebase app inicializada correctamente');
       } else {
         app = firebase.apps[0];
-        console.log('[FirebaseClient] Usando Firebase app existente');
       }
 
       db = firebase.firestore();
       auth = firebase.auth();
+      _initialized = true;
 
       // Habilitar persistencia para modo offline
       if (db.enablePersistence) {
@@ -80,8 +87,9 @@
     
     healthCheckInterval = setInterval(async () => {
       try {
+        // Use a lightweight read instead of querying a potentially empty collection
         const start = Date.now();
-        await db.collection('health').limit(1).get();
+        await db.collection('configuracion').doc('general').get();
         const latency = Date.now() - start;
         
         healthCheckData = {
@@ -111,7 +119,7 @@
   async function checkHealth() {
     try {
       const start = Date.now();
-      await db.collection('health').limit(1).get();
+      await db.collection('configuracion').doc('general').get();
       const latency = Date.now() - start;
       
       healthCheckData = {
@@ -150,11 +158,11 @@
     return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
   }
 
-  async function save(collection, id, data) {
+  async function save(collection, id, data, merge = true) {
     if (!db) throw new Error('Firebase no inicializado');
     
     const docRef = db.collection(collection).doc(id);
-    await docRef.set(data);
+    await docRef.set(data, { merge });
     return { id, ...data };
   }
 
@@ -189,14 +197,26 @@
   }
 
   function onConnectionChange(callback) {
-    // Firebase Firestore no tiene evento nativo de conexión
-    // Usamos health check para detectar cambios
-    const interval = setInterval(() => {
-      const newState = getConnectionState();
-      callback(newState);
-    }, 5000);
+    connectionChangeListeners.push(callback);
     
-    return () => clearInterval(interval);
+    // Start polling only once
+    if (!connectionPollInterval) {
+      connectionPollInterval = setInterval(() => {
+        const newState = getConnectionState();
+        connectionChangeListeners.forEach(cb => {
+          try { cb(newState); } catch (e) { console.error('[FirebaseClient] Listener error:', e); }
+        });
+      }, 5000);
+    }
+    
+    // Return cleanup function
+    return () => {
+      connectionChangeListeners = connectionChangeListeners.filter(cb => cb !== callback);
+      if (connectionChangeListeners.length === 0 && connectionPollInterval) {
+        clearInterval(connectionPollInterval);
+        connectionPollInterval = null;
+      }
+    };
   }
 
   // ─── Authentication ───────────────────────────────────────────────────────
@@ -232,6 +252,12 @@
       clearInterval(healthCheckInterval);
       healthCheckInterval = null;
     }
+    if (connectionPollInterval) {
+      clearInterval(connectionPollInterval);
+      connectionPollInterval = null;
+    }
+    connectionChangeListeners = [];
+    _initialized = false;
     connectionState = 'idle';
   }
 
@@ -253,8 +279,6 @@
     getConfig,
     stop
   };
-
-  console.log('[FirebaseClient] Módulo cargado correctamente');
 
   // Auto-inicializar en cuanto el módulo se carga.
   // Los SDKs de Firebase y firebase-config.js ya fueron ejecutados antes

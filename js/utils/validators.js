@@ -1,7 +1,7 @@
 /**
  * CONTROL PERSONAL CAMPO — utils/validators.js
  * Módulo de validaciones compartido para consistencia en toda la aplicación.
- * @version 1.0.0
+ * @version 1.5.0
  */
 
 const Validators = (() => {

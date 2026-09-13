@@ -1,11 +1,9 @@
 {
   "name": "Escáner de Campo — Control Personal",
   "short_name": "Escáner Campo",
-  "description": "Escanea códigos QR de trabajadores y registra asistencia en tiempo real",
-  "version": "2.0.0",
-  "id": "/field-scanner.html",
+  "id": "https://controlasistencia-evexmkwgu-proyectoswm.vercel.app/field-scanner.html",
   "scope": "/",
-  "start_url": "/field-scanner.html?utm_source=pwa",
+  "start_url": "/field-scanner.html",
   "display": "standalone",
   "display_override": ["standalone", "minimal-ui"],
   "orientation": "portrait",

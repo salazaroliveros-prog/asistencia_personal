@@ -1,7 +1,7 @@
 /**
  * CONTROL PERSONAL CAMPO — utils/map-viewer.js
  * Map visualization utility using Leaflet.js for GPS locations.
- * @version 1.0.0
+ * @version 1.5.0
  */
 
 const MapViewer = (() => {

@@ -1,7 +1,7 @@
 /**
  * CONTROL PERSONAL CAMPO — utils/performance-optimizer.js
  * Sistema de optimización de performance
- * @version 1.0.0
+ * @version 1.5.0
  */
 
 const PerformanceOptimizer = (() => {

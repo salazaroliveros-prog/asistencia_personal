@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Control Personal Campo — String helpers globales.
  * Utilidades compartidas para formateo y saneamiento de strings.
  */

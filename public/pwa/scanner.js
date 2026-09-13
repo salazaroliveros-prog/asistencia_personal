@@ -30,42 +30,87 @@ const flashBtn = document.getElementById("flash-toggle");
 const toastContainer = document.getElementById("toast-container");
 
 /**
- * Inicializar Firebase con configuración del entorno
+ * Inicializar Firebase con configuración del entorno.
+ * Usa window.FIREBASE_CONFIG (definido por firebase-config.js) si está disponible,
+ * o intenta leer /js/config.js como respaldo.
+ * Usa la SDK compat (ya cargada por las etiquetas <script> del HTML),
+ * no la modular — evita el mismatch de API.
  */
 async function initFirebase() {
-  const response = await fetch("/js/config.js");
-  const text = await response.text();
-  const match = text.match(/window\.firebaseConfig\s*=\s*(\{[^;]+\})/);
-  if (!match) throw new Error("No se pudo obtener configuración de Firebase");
+  // 1. Obtener la configuración desde window.FIREBASE_CONFIG (canónico)
+  let config = (typeof window !== "undefined" && window.FIREBASE_CONFIG) ? window.FIREBASE_CONFIG : null;
 
-  const config = JSON.parse(
-    match[1]
-      .replace(/(['"])([a-zA-Z0-9_-]+)\1\s*:/g, '$2:')
-      .replace(/,\s*([}\]])/g, '$1')
-  );
+  // 2. Respaldo: parsear /js/config.js buscando FIREBASE_CONFIG (mayúsculas) o firebaseConfig
+  if (!config || !config.apiKey) {
+    try {
+      const response = await fetch("/js/config.js");
+      const text = await response.text();
+      // Intentar window.FIREBASE_CONFIG primero (uso real del proyecto)
+      let match = text.match(/window\.FIREBASE_CONFIG\s*=\s*window\.FIREBASE_CONFIG\s*\|\|\s*(\{[\s\S]*?\});/);
+      if (!match) {
+        match = text.match(/window\.FIREBASE_CONFIG\s*=\s*(\{[\s\S]*?\})\s*;/);
+      }
+      if (!match) {
+        // Respaldo legacy: window.firebaseConfig en minúsculas
+        match = text.match(/window\.firebaseConfig\s*=\s*(\{[^;]+\})/);
+      }
+      if (match) {
+        config = JSON.parse(
+          match[1]
+            .replace(/(['"])([a-zA-Z0-9_-]+)\1\s*:/g, '"$2":')
+            .replace(/([{,]\s*)([a-zA-Z0-9_-]+)\s*:/g, '$1"$2":')
+            .replace(/,\s*([}\]])/g, '$1')
+        );
+      }
+    } catch (e) {
+      console.warn("No se pudo leer /js/config.js:", e);
+    }
+  }
 
-  const { initializeApp } = await import("https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js");
-  app = initializeApp(config);
+  if (!config || !config.apiKey) {
+    throw new Error("No se pudo obtener configuración de Firebase. Verifica firebase-config.js.");
+  }
 
-  const firestore = await import("https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js");
-  const authMod = await import("https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js");
+  // 3. Usar la SDK compat ya cargada como <script> en el HTML (no como import dinámico modular)
+  //    firebase, firebase.firestore(), firebase.auth() son la API compat.
+  if (typeof firebase === "undefined") {
+    throw new Error("Firebase SDK compat no está cargada. Verifica los <script> en scanner.html.");
+  }
 
-  db = firestore.getFirestore(app);
-  auth = authMod.getAuth(app);
+  if (!firebase.apps.length) {
+    app = firebase.initializeApp(config);
+  } else {
+    app = firebase.apps[0];
+  }
 
-  try { await firestore.enableNetwork(db); } catch (e) { console.warn("Firestore offline:", e); }
-  await authMod.signInAnonymously(auth).catch(e => console.error("Auth fallida:", e));
+  db = firebase.firestore();
+  auth = firebase.auth();
+
+  // Habilitar offline persistence
+  db.enablePersistence({ synchronizeTabs: false }).catch(e => {
+    if (e.code !== "failed-precondition" && e.code !== "unimplemented") {
+      console.warn("Firestore persistence error:", e.code);
+    }
+  });
+
+  // Iniciar sesión anónima para cumplir con las reglas de Firestore
+  try {
+    await auth.signInAnonymously();
+  } catch (e) {
+    console.error("Auth anónima fallida:", e);
+  }
 
   setConnectionStatus(true);
-  console.log("Firebase inicializado para escáner");
+  console.log("Firebase (compat) inicializado para escáner");
 }
 
 /**
  * Wrapper: obtener documento de Firestore (trabajadores)
+ * Usa la API compat: db.collection().doc().get() en lugar de funciones modulares.
  */
 async function getWorkerDoc(workerId) {
-  const firestore = await import("https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js");
-  return await firestore.getDoc(firestore.doc(db, "trabajadores", String(workerId)));
+  const snap = await db.collection("trabajadores").doc(String(workerId)).get();
+  return snap;
 }
 
 /**
@@ -211,7 +256,7 @@ async function processAttendance(qrData) {
       throw new Error(`Trabajador ${workerId} no encontrado en la base de datos`);
     }
 
-    worker = workerDoc.data;
+    worker = workerDoc.data();
     showToast(`Asistencia registrada: ${worker.Nombre_Completo}`, "success");
 
     lastScanDiv.innerHTML = `
@@ -246,23 +291,22 @@ async function processAttendance(qrData) {
 
 /**
  * Registrar asistencia en Firestore con transacción (atomicidad garantizada)
- * Compatible con el esquema del sistema principal y sincronización en tiempo real
+ * Compatible con el esquema del sistema principal y sincronización en tiempo real.
+ * Usa la API compat (db.collection, db.runTransaction, etc.) — NO la modular.
+ * COLECCIÓN: "asistencias" (plural) — igual que api.js y las reglas de Firestore.
  */
 async function registrarAsistencia(workerId, worker) {
-  const firestore = await import("https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js");
-  const { collection, doc, runTransaction } = firestore;
-
   const fechaHoy = new Date().toISOString().split("T")[0];
   const ahora = new Date();
   const hora = ahora.toLocaleTimeString("es-GT", { hour: "2-digit", minute: "2-digit" });
   const timestamp = ahora.getTime();
+  const dpiLimpio = String(workerId).replace(/[^0-9]/g, "");
+  const asistenciaId = `${fechaHoy}_${dpiLimpio}`;
 
-  await runTransaction(db, async (transaction) => {
-    const asistenciaRef = collection(db, "asistencia");
-    const dpiLimpio = String(workerId).replace(/[^0-9]/g, "");
-    const asistenciaId = `${fechaHoy}_${dpiLimpio}`;
-
-    const asistenciaDoc = await transaction.get(doc(asistenciaRef, asistenciaId));
+  await db.runTransaction(async (transaction) => {
+    // COLECCIÓN CORRECTA: "asistencias" (plural, igual que api.js y firestore.rules)
+    const asistenciaRef = db.collection("asistencias").doc(asistenciaId);
+    const asistenciaDoc = await transaction.get(asistenciaRef);
 
     let historial = [];
     let metodosRegistro = [];
@@ -300,7 +344,7 @@ async function registrarAsistencia(workerId, worker) {
       updated_at: new Date().toISOString()
     };
 
-    transaction.set(doc(asistenciaRef, asistenciaId), asistenciaData, { merge: true });
+    transaction.set(asistenciaRef, asistenciaData, { merge: true });
   });
 
   window.dispatchEvent(new CustomEvent("asistencia-registrada", {
@@ -353,17 +397,15 @@ async function processOfflineQueue() {
   if (!queue.length || !db) return;
   
   const pending = [...queue];
-  const firestore = await import("https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js");
-  const { collection, doc, runTransaction } = firestore;
-  
   let successCount = 0;
+
   for (const item of pending) {
     try {
       let workerData = item.workerData;
       if (!workerData || !workerData.Nombre_Completo) {
         const workerDoc = await getWorkerDoc(item.workerId);
         if (workerDoc.exists) {
-          workerData = workerDoc.data;
+          workerData = workerDoc.data();
         }
       }
       
@@ -372,10 +414,12 @@ async function processOfflineQueue() {
         continue;
       }
       
-      await runTransaction(db, async (transaction) => {
-        const asistenciaRef = collection(db, "asistencia");
-        const asistenciaId = `${item.fechaHoy}_${item.dpiLimpio}`;
-        const asistenciaDoc = await transaction.get(doc(asistenciaRef, asistenciaId));
+      // COLECCIÓN CORRECTA: "asistencias" (plural) — API compat
+      const asistenciaId = `${item.fechaHoy}_${item.dpiLimpio}`;
+      const asistenciaRef = db.collection("asistencias").doc(asistenciaId);
+
+      await db.runTransaction(async (transaction) => {
+        const asistenciaDoc = await transaction.get(asistenciaRef);
         
         let historial = [];
         let metodosRegistro = [];
@@ -409,7 +453,7 @@ async function processOfflineQueue() {
           Ultima_Actualizacion: item.timestamp,
           updated_at: new Date().toISOString()
         };
-        transaction.set(doc(asistenciaRef, asistenciaId), asistenciaData, { merge: true });
+        transaction.set(asistenciaRef, asistenciaData, { merge: true });
       });
       successCount++;
     } catch (err) {
@@ -432,30 +476,34 @@ function processOfflineListener() {
 }
 
 /**
- * Escuchar cambios de asistencia en tiempo real (Firestore onSnapshot)
+ * Escuchar cambios de asistencia en tiempo real (Firestore onSnapshot — API compat)
+ * COLECCIÓN: "asistencias" (plural, igual que api.js y firestore.rules)
  */
 function setupRealtimeListener() {
   if (!db) return;
 
-  import("https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js")
-    .then(firestore => {
-      const unsub = firestore.onSnapshot(
-        firestore.collection(db, "asistencia"),
-        (snapshot) => {
-          snapshot.docChanges().forEach((change) => {
-            console.log("RT change:", change.type, change.doc.id);
-            if (change.type === "modified" || change.type === "added") {
-              const data = change.doc.data();
+  try {
+    // API compat: db.collection().onSnapshot()
+    db.collection("asistencias").onSnapshot(
+      (snapshot) => {
+        snapshot.docChanges().forEach((change) => {
+          console.log("RT change:", change.type, change.doc.id);
+          if (change.type === "modified" || change.type === "added") {
+            const data = change.doc.data();
+            // Solo mostrar toast si tiene nombre (evita notificaciones vacías)
+            if (data.Nombre_Completo) {
               showToast(`Asistencia actualizada: ${data.Nombre_Completo}`, "success");
             }
-          });
-        }
-      );
-      return unsub;
-    })
-    .catch(err => {
-      console.warn("Listener tiempo real fallido:", err);
-    });
+          }
+        });
+      },
+      (err) => {
+        console.warn("Listener tiempo real fallido:", err.message);
+      }
+    );
+  } catch (err) {
+    console.warn("No se pudo iniciar listener de tiempo real:", err.message);
+  }
 }
 
 /**

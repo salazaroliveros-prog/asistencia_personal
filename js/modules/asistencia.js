@@ -1,8 +1,8 @@
-/**
+﻿/**
  * CONTROL PERSONAL CAMPO — modules/asistencia.js
  * Módulo de control de asistencia: escáner QR móvil + marcación manual.
  * Lógica de horarios, tolerancias y horas extra.
- * @version 1.0.0
+ * @version 1.5.0
  */
 
 const ModuloAsistencia = (() => {
@@ -248,9 +248,6 @@ const ModuloAsistencia = (() => {
   function _onQRError(error) {
     // Errores silenciosos durante el escaneo continuo (normal)
     // Solo loggear errores significativos
-    if (!error.includes('No QR code found')) {
-      console.debug('[Scanner]', error);
-    }
   }
 
   function _mostrarResultadoScan(trabajador) {

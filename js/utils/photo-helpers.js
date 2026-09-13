@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Control Personal Campo — Photo helpers globales.
  * Utilidades para captura, compresión y preview de imágenes.
  */

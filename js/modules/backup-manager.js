@@ -1,7 +1,7 @@
 /**
  * CONTROL PERSONAL CAMPO — modules/backup-manager.js
  * Módulo de gestión de backup y exportación de datos
- * @version 1.0.0
+ * @version 1.5.0
  */
 
 const BackupManager = (() => {

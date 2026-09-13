@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Control Personal Campo — Reglas de validación centralizadas.
  * Fuente única para constantes usadas por validadores y formularios.
  */

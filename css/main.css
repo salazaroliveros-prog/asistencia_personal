@@ -1,4 +1,4 @@
-/* ═══════════════════════════════════════════════════════════════════════════
+﻿/* ═══════════════════════════════════════════════════════════════════════════
    CONTROL PERSONAL CAMPO — main.css
    Reset, variables CSS, tipografía y estilos base
    ═══════════════════════════════════════════════════════════════════════════ */
@@ -54,9 +54,9 @@ input, button, textarea, select {
 .user-claims-status {
   margin: 15px 0;
   padding: 15px;
-  background: rgba(0, 52, 89, 0.1);
+  background: var(--color-dark-10);
   border-radius: 8px;
-  border: 1px solid rgba(0, 52, 89, 0.2);
+  border: 1px solid var(--color-dark-20);
 }
 
 .claims-info p {
@@ -65,7 +65,7 @@ input, button, textarea, select {
 }
 
 .claims-info strong {
-  color: #003459;
+  color: var(--color-dark);
 }
 
 #current-user-role {
@@ -76,12 +76,12 @@ input, button, textarea, select {
 }
 
 #current-user-role.admin {
-  background: #28a745;
+  background: var(--color-accent-green);
   color: white;
 }
 
 #current-user-role.user {
-  background: #6c757d;
+  background: var(--color-text-muted);
   color: white;
 }
 
@@ -94,7 +94,7 @@ input, button, textarea, select {
 .users-management-container {
   margin-top: 20px;
   padding-top: 20px;
-  border-top: 1px solid rgba(0, 52, 89, 0.2);
+  border-top: 1px solid var(--color-dark-20);
 }
 
 .users-header {
@@ -106,7 +106,7 @@ input, button, textarea, select {
 
 .users-header h4 {
   margin: 0;
-  color: #003459;
+  color: var(--color-dark);
 }
 
 .users-table-container {
@@ -124,41 +124,20 @@ input, button, textarea, select {
 .users-table td {
   padding: 12px;
   text-align: left;
-  border-bottom: 1px solid #e0e0e0;
+   border-bottom: 1px solid var(--color-border);
 }
 
 .users-table th {
-  background: #f8f9fa;
+  background: var(--glass-bg);
   font-weight: 600;
-  color: #003459;
+  color: var(--color-dark);
 }
 
 .users-table tr:hover {
-  background: #f8f9fa;
+  background: var(--glass-bg);
 }
 
-.badge {
-  display: inline-block;
-  padding: 4px 8px;
-  border-radius: 4px;
-  font-size: 12px;
-  font-weight: 600;
-}
-
-.badge-green {
-  background: #28a745;
-  color: white;
-}
-
-.badge-gray {
-  background: #6c757d;
-  color: white;
-}
-
-.badge-red {
-  background: #dc3545;
-  color: white;
-}
+/* Badge styles moved to components.css */
 
 .user-actions {
   display: flex;
@@ -174,13 +153,13 @@ input, button, textarea, select {
    ESTILOS PARA VALIDACIÓN EN TIEMPO REAL
    ───────────────────────────────────────────────────────────────────────────── */
 input.valid {
-  border-color: #28a745 !important;
-  box-shadow: 0 0 0 2px rgba(40, 167, 69, 0.1);
+  border-color: var(--color-accent-green) !important;
+  box-shadow: 0 0 0 2px rgba(var(--color-accent-green-rgb), 0.1);
 }
 
 input.invalid {
-  border-color: #dc3545 !important;
-  box-shadow: 0 0 0 2px rgba(220, 53, 69, 0.1);
+  border-color: var(--color-accent-red) !important;
+  box-shadow: 0 0 0 2px rgba(var(--color-accent-red-rgb), 0.1);
 }
 
 .validation-feedback {
@@ -191,11 +170,11 @@ input.invalid {
 }
 
 .validation-feedback.success {
-  color: #28a745;
+  color: var(--color-accent-green);
 }
 
 .validation-feedback.error {
-  color: #dc3545;
+  color: var(--color-accent-red);
 }
 
 @keyframes fadeIn {
@@ -254,7 +233,7 @@ input.invalid {
   position: fixed;
   top: 20px;
   right: 20px;
-  z-index: 1000;
+  z-index: var(--z-sticky);
   background: var(--bg-secondary);
   border: 2px solid var(--accent);
   border-radius: 50%;
@@ -269,7 +248,7 @@ input.invalid {
 
 .theme-toggle:hover {
   transform: scale(1.1);
-  box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+  box-shadow: 0 2px 10px rgba(var(--color-black-rgb), 0.2);
 }
 
 .theme-toggle-sidebar {
@@ -284,7 +263,7 @@ input.invalid {
 }
 
 .theme-toggle-sidebar:hover {
-  background: rgba(255,255,255,0.1);
+  background: rgba(var(--color-surface-rgb), 0.1);
   color: var(--text-primary);
   transform: scale(1.1);
 }
@@ -329,30 +308,47 @@ table {
   --color-accent-green-light: #40C9BB;
 
   /* RGB equivalents for rgba() usage */
-  --color-accent-amber-rgb:   255, 183, 3;
-  --color-accent-red-rgb:     230, 57, 70;
-  --color-accent-green-rgb:   42, 157, 143;
+  --color-primary-rgb:       0, 126, 167;
+  --color-primary-dark-rgb:  0, 95, 122;
+  --color-secondary-rgb:     0, 168, 232;
+  --color-dark-rgb:          0, 52, 89;
+  --color-darker-rgb:        10, 22, 40;
+  --color-accent-amber-rgb:  255, 183, 3;
+  --color-accent-red-rgb:    230, 57, 70;
+  --color-accent-green-rgb:  42, 157, 143;
+  --color-surface-rgb:       255, 255, 255;
+  --color-black-rgb:         0, 0, 0;
+  --color-navy-rgb:          0, 34, 58;
+  --color-navy-dark-rgb:     0, 20, 40;
+  --color-navy-deep-rgb:     0, 40, 70;
+  --color-red-muted-rgb:     239, 68, 68;
+  --color-green-soft-rgb:    56, 203, 137;
+  --color-teal-rgb:          15, 163, 212;
+  --color-cyan-rgb:          11, 110, 158;
 
   /* Texto */
   --color-text-primary:   #FFFFFF;
-  --color-text-secondary: rgba(255, 255, 255, 0.82);
-  --color-text-muted:     rgba(255, 255, 255, 0.68);
-  --color-text-disabled:  rgba(255, 255, 255, 0.45);
+  --color-text-secondary: rgba(var(--color-surface-rgb), 0.82);
+  --color-text-muted:     rgba(var(--color-surface-rgb), 0.68);
+  --color-text-disabled:  rgba(var(--color-surface-rgb), 0.45);
   /* Texto principal */
   --color-text: var(--color-text-primary);
 
   /* Superficie y bordes */
   --color-surface: #fff;
   --color-border: #e2e8f0;
+  --color-bg-light: #f0f4f8;
+  --color-dark-10: rgba(var(--color-dark-rgb), 0.1);
+  --color-dark-20: rgba(var(--color-dark-rgb), 0.2);
 
   /* Glassmorphism — ajustado para el nuevo fondo más oscuro */
-  --glass-bg:             rgba(255, 255, 255, 0.08);
-  --glass-bg-hover:       rgba(255, 255, 255, 0.14);
-  --glass-bg-active:      rgba(255, 255, 255, 0.20);
-  --glass-border:         rgba(255, 255, 255, 0.22);
-  --glass-border-light:   rgba(255, 255, 255, 0.12);
-  --glass-shadow:         0 8px 32px 0 rgba(0, 20, 50, 0.35);
-  --glass-shadow-hover:   0 16px 48px 0 rgba(0, 20, 50, 0.50);
+  --glass-bg:             rgba(var(--color-surface-rgb), 0.08);
+  --glass-bg-hover:       rgba(var(--color-surface-rgb), 0.14);
+  --glass-bg-active:      rgba(var(--color-surface-rgb), 0.20);
+  --glass-border:         rgba(var(--color-surface-rgb), 0.22);
+  --glass-border-light:   rgba(var(--color-surface-rgb), 0.12);
+  --glass-shadow:         0 8px 32px 0 rgba(var(--color-navy-dark-rgb), 0.35);
+  --glass-shadow-hover:   0 16px 48px 0 rgba(var(--color-navy-dark-rgb), 0.50);
   --glass-blur:           16px;
 
   /* ─── NUEVO FONDO GLASSMORPHISM OPTIMIZADO ───────────────────────────────
@@ -438,10 +434,10 @@ table {
   left: -999px;
   top: 8px;
   background: var(--color-primary);
-  color: #fff;
+  color: var(--color-text-primary);
   padding: var(--space-2) var(--space-4);
   border-radius: var(--radius-sm);
-  z-index: 9999;
+  z-index: var(--z-toast);
   font-weight: 600;
   text-decoration: none;
 }
@@ -499,19 +495,19 @@ body::before {
     /* Orbe de luz superior-izquierdo (frío, celeste) */
     radial-gradient(
       ellipse 60% 50% at 15% 10%,
-      rgba(15, 163, 212, 0.18) 0%,
+      rgba(var(--color-teal-rgb), 0.18) 0%,
       transparent 70%
     ),
     /* Orbe de luz central-derecho (cálido, azul medio) */
     radial-gradient(
       ellipse 50% 60% at 85% 40%,
-      rgba(11, 110, 158, 0.22) 0%,
+      rgba(var(--color-cyan-rgb), 0.22) 0%,
       transparent 65%
     ),
     /* Orbe inferior profundo (muy oscuro, ancla las sombras) */
     radial-gradient(
       ellipse 70% 40% at 40% 95%,
-      rgba(10, 22, 40, 0.45) 0%,
+      rgba(var(--color-darker-rgb), 0.45) 0%,
       transparent 70%
     ),
     /* Textura noise SVG — aumenta granularidad para potenciar el efecto glass */
@@ -656,7 +652,6 @@ p {
   max-width: var(--content-max-width);
   width: 100%;
   position: relative; /* Necesario para animaciones page-exit (position:absolute) */
-  padding-bottom: var(--space-6);
 }
 
 .page {
@@ -746,7 +741,7 @@ p {
   font-size: var(--text-3xl);
   font-weight: 800;
   letter-spacing: 0.08em;
-  color: #fff;
+  color: var(--color-text-primary);
   margin: 0;
 }
 
@@ -801,11 +796,7 @@ p {
   border: 0 !important;
 }
 
-:focus-visible {
-  outline: 2px solid var(--color-secondary);
-  outline-offset: 3px;
-  border-radius: var(--radius-sm);
-}
+/* Duplicate :focus-visible removed — canonical definition at line 455 */
 
 /* ─────────────────────────────────────────────────────────────────────────────
    SCROLLBAR PERSONALIZADO
@@ -820,12 +811,12 @@ p {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.20);
+  background: rgba(var(--color-surface-rgb), 0.20);
   border-radius: var(--radius-full);
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(255, 255, 255, 0.35);
+  background: rgba(var(--color-surface-rgb), 0.35);
 }
 
 /* ─────────────────────────────────────────────────────────────────────────────
@@ -860,6 +851,16 @@ p {
    Desktop: 1024px - 1199px
    Large desktop: 1200px+
    ───────────────────────────────────────────────────────────────────────────── */
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   UTILITY CLASSES
+   ───────────────────────────────────────────────────────────────────────────── */
+.flex-center { display: flex; align-items: center; gap: var(--space-3); }
+.flex-col    { display: flex; flex-direction: column; }
+.gap-3       { gap: var(--space-3); }
+.mt-3        { margin-top: var(--space-3); }
+.mt-4        { margin-top: var(--space-4); }
+.p-0         { padding: 0; }
 
 /* ─────────────────────────────────────────────────────────────────────────────
    RESPONSIVE — SMALL MOBILE (< 480px)
@@ -1016,7 +1017,7 @@ p {
   align-items: center;
   gap: var(--space-3);
   box-shadow: var(--glass-shadow);
-  z-index: 9999;
+  z-index: var(--z-toast);
   animation: slideInDown 0.3s ease-out;
 }
 
@@ -1040,7 +1041,7 @@ p {
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
-  color: #fff;
+  color: var(--color-text-primary);
 }
 
 .update-icon svg {

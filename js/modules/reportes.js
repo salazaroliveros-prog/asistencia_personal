@@ -1,7 +1,7 @@
-/**
+﻿/**
  * CONTROL PERSONAL CAMPO — modules/reportes.js
  * Módulo de exportación de reportes: PDF diario, semanal, mensual y CSV.
- * @version 1.0.0
+ * @version 1.5.0
  */
 
 const ModuloReportes = (() => {

@@ -1,7 +1,7 @@
 /**
  * CONTROL PERSONAL CAMPO — utils/constants.js
  * Constantes compartidas para evitar magic numbers en el código.
- * @version 1.0.0
+ * @version 1.5.0
  */
 
 // ─── Tiempos y Duraciones ────────────────────────────────────────────────────

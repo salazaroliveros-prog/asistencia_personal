@@ -1,7 +1,7 @@
 /**
  * CONTROL PERSONAL CAMPO — utils/theme-manager.js
  * Sistema de temas personalizados
- * @version 1.0.0
+ * @version 1.5.0
  */
 
 const ThemeManager = (() => {

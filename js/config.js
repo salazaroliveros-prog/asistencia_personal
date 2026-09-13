@@ -1,13 +1,13 @@
-/**
+﻿/**
  * CONTROL PERSONAL CAMPO — config.js
  * Constantes globales y estado de la aplicación.
- * @version 1.0.0
+ * @version 1.5.0
  */
 
 // ─────────────────────────────────────────────────────────────────────────────
 // CONSTANTES DE VERSIÓN
 // ─────────────────────────────────────────────────────────────────────────────
-const APP_VERSION  = '1.0.0';
+const APP_VERSION  = '1.5.0';
 const APP_NAME     = 'CONTROL PERSONAL CAMPO';
 const TIMEZONE     = 'America/Guatemala'; // GMT-6
 
@@ -19,6 +19,7 @@ const LS_KEYS = {
   CONFIG:          'cpc_config',
   PERSONAL_CACHE:  'cpc_personal_cache',
   ATTENDANCE_CACHE: 'cpc_attendance_cache',
+  ALERTS_CACHE:    'cpc_alerts_cache',
   LAST_SYNC:       'cpc_last_sync',
   OFFLINE_QUEUE:   'cpc_offline_queue',
 };
@@ -285,7 +286,6 @@ window.AppState = AppState;
         localStorage.removeItem(k);
       });
       localStorage.removeItem(LS_KEYS.FIREBASE_CONFIG);
-      console.info('[Config] Datos demo eliminados del localStorage — continuando con estado normal.');
     }
 
     // ── Restaurar estado normal ────────────────────────────────────────────
@@ -307,6 +307,12 @@ window.AppState = AppState;
     if (cachedAttendance) {
       const parsed = JSON.parse(cachedAttendance);
       if (Array.isArray(parsed)) AppState.set('asistencias', parsed);
+    }
+
+    const cachedAlerts = localStorage.getItem(LS_KEYS.ALERTS_CACHE);
+    if (cachedAlerts) {
+      const parsed = JSON.parse(cachedAlerts);
+      if (Array.isArray(parsed)) AppState.set('alertas', parsed);
     }
   } catch (e) {
     console.warn('[Config] Error al restaurar estado desde localStorage:', e.message);

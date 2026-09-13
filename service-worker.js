@@ -1,11 +1,11 @@
 /**
  * CONTROL PERSONAL CAMPO — service-worker.js
  * Estrategia: Cache-First para assets locales, Network-First para navegación.
- * @version 1.5.3
+ * @version 1.5.0
  */
 
-const CACHE_STATIC  = 'cpc-static-v1.5.3';
-const CACHE_DYNAMIC = 'cpc-dynamic-v1.5.3';
+const CACHE_STATIC  = 'cpc-static-v1.5.0';
+const CACHE_DYNAMIC = 'cpc-dynamic-v1.5.0';
 
 // Assets críticos que se precargan en el install.
 // ⚠️ Solo rutas locales — CDN externos se manejan con Stale-While-Revalidate en fetch.
@@ -82,7 +82,7 @@ const PRECACHE_ASSETS = [
 
 // ─── INSTALL ─────────────────────────────────────────────────────────────────
 self.addEventListener('install', (event) => {
-  console.log('[SW] Instalando v1.5.3...');
+  console.log('[SW] Instalando v1.5.0...');
   event.waitUntil(
     caches.open(CACHE_STATIC).then((cache) => {
       console.log('[SW] Pre-cacheando assets estáticos...');
@@ -102,7 +102,7 @@ self.addEventListener('install', (event) => {
 
 // ─── ACTIVATE ────────────────────────────────────────────────────────────────
 self.addEventListener('activate', (event) => {
-  console.log('[SW] Activando v1.5.3...');
+  console.log('[SW] Activando v1.5.0...');
   const VALID_CACHES = [CACHE_STATIC, CACHE_DYNAMIC];
   event.waitUntil(
     caches.keys().then((keys) =>

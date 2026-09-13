@@ -125,14 +125,14 @@
   <meta http-equiv="Content-Security-Policy" content="
     default-src 'self';
     script-src 'self' 'unsafe-inline' 'unsafe-eval' blob:
-      https://unpkg.com 
-      https://cdnjs.cloudflare.com 
+      https://unpkg.com
+      https://cdnjs.cloudflare.com
       https://cdn.jsdelivr.net
       https://www.gstatic.com;
     style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://unpkg.com;
     font-src 'self' https://fonts.gstatic.com;
     img-src 'self' data: https: blob: https://unpkg.com;
-        connect-src 'self' https://script.google.com https://script.googleusercontent.com https://*.googleapis.com https://*.firebaseio.com wss://*.googleapis.com wss://*.firebaseio.com https://unpkg.com https://www.gstatic.com;
+    connect-src 'self' https://script.google.com https://script.googleusercontent.com https://*.googleapis.com https://*.firebaseio.com wss://*.googleapis.com wss://*.firebaseio.com https://unpkg.com https://www.gstatic.com;
     frame-src 'self';
     base-uri 'self';
     form-action 'self';
@@ -244,7 +244,7 @@
       <div class="splash-loader" aria-hidden="true">
         <div class="loader-bar"></div>
       </div>
-      <p class="splash-version">v1.0.0</p>
+      <p class="splash-version">v1.5.0</p>
     </div>
   </div>
 
@@ -322,7 +322,7 @@
         <button type="button" id="theme-toggle-sidebar" class="theme-toggle-sidebar" aria-label="Cambiar tema" title="Cambiar tema claro/oscuro">
           <i data-lucide="moon" aria-hidden="true"></i>
         </button>
-        <p class="sidebar-version">v1.0.0</p>
+        <p class="sidebar-version">v1.5.0</p>
       </div>
     </nav>
 
@@ -513,8 +513,8 @@
           <div class="glass-card turno-card">
             <div class="card-header">
               <h3><i data-lucide="hard-hat" aria-hidden="true"></i> ¿Quién está en obra ahora?</h3>
-              <div style="display:flex;align-items:center;gap:var(--space-3)">
-                <span id="turno-last-update" class="text-muted" style="font-size:var(--text-xs)"></span>
+              <div class="flex-center">
+                <span id="turno-last-update" class="text-muted text-xs"></span>
                   <button type="button" id="btn-refresh-turno" class="btn btn-ghost btn-sm" aria-label="Actualizar estado de turno">
                   <i data-lucide="refresh-cw" aria-hidden="true"></i>
                 </button>
@@ -1103,7 +1103,7 @@
                 </div>
               </div>
 
-              <div class="form-group" style="margin-top: 12px;">
+              <div class="form-group mt-3">
                 <button type="button" id="btn-share-scanner-whatsapp" class="btn btn-primary btn-block">
                   <i data-lucide="message-circle" aria-hidden="true"></i> Enviar link de descarga por WhatsApp
                 </button>
@@ -1146,7 +1146,7 @@
                 <input type="file" id="import-backup-input" accept=".json" class="visually-hidden" aria-label="Archivo de backup JSON" />
               </div>
               
-              <div class="export-actions" style="margin-top: 15px;">
+              <div class="export-actions mt-4">
                 <button type="button" id="btn-export-trabajadores" class="btn btn-ghost btn-sm">
                   <i data-lucide="file-spreadsheet" aria-hidden="true"></i> Exportar Trabajadores (CSV)
                 </button>
@@ -1210,7 +1210,7 @@
       <div class="modal-header">
         <div>
           <h2 id="modal-historial-title">Historial de Marcaciones</h2>
-          <p id="modal-historial-sub" class="text-muted" style="font-size:var(--text-sm);margin:0"></p>
+          <p id="modal-historial-sub" class="text-muted text-sm p-0"></p>
         </div>
         <button type="button" class="modal-close" aria-label="Cerrar modal" data-modal="modal-historial">
           <i data-lucide="x" aria-hidden="true"></i>
@@ -1218,13 +1218,13 @@
       </div>
       <div class="modal-body">
         <!-- Filtros de rango de fechas -->
-        <div class="historial-filtros glass-card" style="padding:var(--space-4);margin-bottom:var(--space-5)">
-          <div style="display:flex;gap:var(--space-3);flex-wrap:wrap;align-items:flex-end">
-            <div class="form-group" style="margin:0;flex:1;min-width:140px">
+        <div class="historial-filtros glass-card historial-filtros-layout">
+          <div class="historial-filtros-row">
+            <div class="form-group historial-filtros-field">
               <label class="form-label">Desde</label>
               <input type="date" id="historial-fecha-inicio" class="input-glass" aria-label="Fecha inicio historial" />
             </div>
-            <div class="form-group" style="margin:0;flex:1;min-width:140px">
+            <div class="form-group historial-filtros-field">
               <label class="form-label">Hasta</label>
               <input type="date" id="historial-fecha-fin" class="input-glass" aria-label="Fecha fin historial" />
             </div>
@@ -1256,7 +1256,7 @@
 
         <!-- Timeline de marcaciones -->
         <div id="historial-content">
-          <div class="empty-state" style="padding:var(--space-10)">
+          <div class="empty-state historial-empty-state">
             <i data-lucide="clock" aria-hidden="true"></i>
             <p>Selecciona un rango de fechas y haz click en Buscar</p>
           </div>
@@ -1302,7 +1302,7 @@
                 <i data-lucide="image" aria-hidden="true"></i> Subir Foto
               </label>
               <input type="file" id="foto-input" accept="image/*" class="visually-hidden" aria-label="Seleccionar fotografía desde galería" />
-              <span class="text-muted" style="font-size:var(--text-xs)">JPG/PNG · Se comprime automáticamente</span>
+              <span class="text-muted text-xs">JPG/PNG · Se comprime automáticamente</span>
             </div>
           </div>
 
@@ -1775,7 +1775,7 @@
           <button id="btn-flip-camera" class="btn btn-ghost btn-sm" type="button" aria-label="Cambiar cámara">
             <i data-lucide="flip-horizontal-2" aria-hidden="true"></i> Voltear
           </button>
-          <span id="camera-status-label" class="text-muted" style="font-size:var(--text-xs)">Iniciando cámara...</span>
+          <span id="camera-status-label" class="text-muted text-xs">Iniciando cámara...</span>
         </div>
 
         <!-- Visor de video -->
@@ -1799,7 +1799,7 @@
         <div id="camera-error-msg" class="camera-error-msg" hidden role="alert">
           <i data-lucide="camera-off" aria-hidden="true"></i>
           <p id="camera-error-text">No se pudo acceder a la cámara.</p>
-          <p class="text-muted" style="font-size:var(--text-xs)">Verifica los permisos del navegador o sube la foto desde la galería.</p>
+          <p class="text-muted text-xs">Verifica los permisos del navegador o sube la foto desde la galería.</p>
         </div>
 
       </div>

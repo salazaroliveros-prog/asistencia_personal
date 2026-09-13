@@ -1,7 +1,7 @@
 /**
  * CONTROL PERSONAL CAMPO — utils/keyboard-shortcuts.js
  * Sistema de atajos de teclado para mejorar productividad
- * @version 1.0.0
+ * @version 1.5.0
  */
 
 const KeyboardShortcuts = (() => {

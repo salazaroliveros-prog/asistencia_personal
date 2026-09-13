@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Control Personal Campo — Date helpers globales.
  * Utilidades compartidas para formateo y manipulación de fechas.
  */

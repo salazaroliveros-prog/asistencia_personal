@@ -1,7 +1,7 @@
 /**
  * CONTROL PERSONAL CAMPO — utils/error-handler.js
  * Sistema de manejo de errores específico con tipos y recovery
- * @version 1.0.0
+ * @version 1.5.0
  */
 
 const ErrorHandler = (() => {
