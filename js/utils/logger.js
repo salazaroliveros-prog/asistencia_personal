@@ -230,8 +230,8 @@ const Logger = (() => {
   function getStats() {
     const stats = {
       total: logEntries.length,
-      byLevel: {} as Record<string, number>,
-      byCategory: {} as Record<string, number>,
+      byLevel: {},
+      byCategory: {},
       recentErrors: logEntries.filter(e => e.level === 'ERROR' || e.level === 'FATAL').slice(-10)
     };
     

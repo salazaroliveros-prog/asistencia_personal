@@ -13,38 +13,38 @@
   "lang": "es",
   "icons": [
     {
-      "src": "/public/pwa/icons/icon-72.png",
+      "src": "/pwa/icons/icon-72.png",
       "sizes": "72x72",
       "type": "image/png"
     },
     {
-      "src": "/public/pwa/icons/icon-96.png",
+      "src": "/pwa/icons/icon-96.png",
       "sizes": "96x96",
       "type": "image/png"
     },
     {
-      "src": "/public/pwa/icons/icon-128.png",
+      "src": "/pwa/icons/icon-128.png",
       "sizes": "128x128",
       "type": "image/png"
     },
     {
-      "src": "/public/pwa/icons/icon-144.png",
+      "src": "/pwa/icons/icon-144.png",
       "sizes": "144x144",
       "type": "image/png"
     },
     {
-      "src": "/public/pwa/icons/icon-192.png",
+      "src": "/pwa/icons/icon-192.png",
       "sizes": "192x192",
       "type": "image/png",
       "purpose": "any maskable"
     },
     {
-      "src": "/public/pwa/icons/icon-384.png",
+      "src": "/pwa/icons/icon-384.png",
       "sizes": "384x384",
       "type": "image/png"
     },
     {
-      "src": "/public/pwa/icons/icon-512.png",
+      "src": "/pwa/icons/icon-512.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any maskable"
@@ -59,21 +59,21 @@
       "short_name": "Asistencia",
       "description": "Ir directamente al escáner QR",
       "url": "/#asistencia",
-      "icons": [{ "src": "/public/pwa/icons/icon-192.png", "sizes": "192x192" }]
+      "icons": [{ "src": "/pwa/icons/icon-192.png", "sizes": "192x192" }]
     },
     {
       "name": "Marcar en Campo",
       "short_name": "Campo",
       "description": "Escáner de campo: registrar asistencia en tiempo real",
       "url": "/#campo",
-      "icons": [{ "src": "/public/pwa/icons/icon-192.png", "sizes": "192x192" }]
+      "icons": [{ "src": "/pwa/icons/icon-192.png", "sizes": "192x192" }]
     },
     {
       "name": "Dashboard",
       "short_name": "Dashboard",
       "description": "Ver panel de control",
       "url": "/#dashboard",
-      "icons": [{ "src": "/public/pwa/icons/icon-192.png", "sizes": "192x192" }]
+      "icons": [{ "src": "/pwa/icons/icon-192.png", "sizes": "192x192" }]
     }
   ]
 }

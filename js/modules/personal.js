@@ -18,7 +18,22 @@ const ModuloPersonal = (() => {
   const fmtTel = (tel) => CPC.StringHelpers?.formatTelefono?.(tel) ?? _formatTelefono(tel);
   const compress = (img, maxW = 600, maxH = 600, quality = 0.75) =>
     CPC.PhotoHelpers?.compressImage?.(img, maxW, maxH, quality) ?? _comprimirFoto(img, maxW, maxH, quality);
-  const updatePreview = (src) => CPC.PhotoHelpers?.updatePhotoPreview?.(src) ?? _actualizarFotoPreview(src);
+  const updatePreview = (src) => {
+    if (CPC.PhotoHelpers?.updatePhotoPreview) {
+      return CPC.PhotoHelpers.updatePhotoPreview(src);
+    }
+    // Implementación directa para evitar recursión
+    const preview = document.getElementById('foto-preview');
+    if (preview) {
+      if (src) {
+        preview.src = src;
+        preview.style.display = 'block';
+      } else {
+        preview.src = '';
+        preview.style.display = 'none';
+      }
+    }
+  };
   const genId = () => CPC.StringHelpers?.generateLocalId?.() ?? _generarIdLocal();
 
   // ─── Inicialización ───────────────────────────────────────────────────────
@@ -980,7 +995,16 @@ const ModuloPersonal = (() => {
   }
 
   function _actualizarFotoPreview(src) {
-    updatePreview(src);
+    const preview = document.getElementById('foto-preview');
+    if (preview) {
+      if (src) {
+        preview.src = src;
+        preview.style.display = 'block';
+      } else {
+        preview.src = '';
+        preview.style.display = 'none';
+      }
+    }
   }
 
   // ─────────────────────────────────────────────────────────────────────────
