@@ -4,7 +4,7 @@ import { resolve } from 'node:path';
 
 function copyLegacyRuntime() {
   const directories = ['js', 'assets', 'css'];
-  const files = ['service-worker.js', 'manifest.json', 'field-scanner.html', 'field-scanner.js', 'field-scanner-manifest.json', 'campo.css'];
+  const files = ['service-worker.js', 'manifest.json', 'field-scanner.html', 'field-scanner.js', 'field-scanner-manifest.json', 'field-scanner-sw.js', 'campo.css'];
   return {
     name: 'copy-legacy-runtime',
     closeBundle() {
@@ -28,8 +28,7 @@ export default defineConfig(({ mode }) => ({
   build: {
     outDir: 'dist',
     emptyOutDir: true,
-    // Generar sourcemaps solo en desarrollo; en producción evitar exponer
-    // los mapas del bundle (u or 'hidden' si se necesita trazabilidad interna).
     sourcemap: mode === 'development',
+    modulePreload: false,
   },
 }));

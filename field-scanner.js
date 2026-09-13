@@ -164,7 +164,9 @@
         firebase.initializeApp(config);
       }
       db = firebase.firestore();
-      db.enablePersistence?.({ synchronizeTabs: true }).catch(() => {});
+      db.enablePersistence?.({ synchronizeTabs: true }).catch((err) => {
+        console.warn('[FieldScanner] Persistence no disponible:', err?.message || err);
+      });
       updateStatusPill(true);
       subscribeRealtime();
     } catch (error) {

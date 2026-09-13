@@ -32,8 +32,8 @@ const PRECACHE_ASSETS = [
   '/js/modules/reportes.js',
   '/js/modules/ajustes.js',
   '/css/campo.css',
-  '/assets/vendor/jspdf.umd.min.js',
-  '/assets/vendor/jspdf.plugin.autotable.min.js',
+  '/vendor/jspdf.umd.min.js',
+  '/vendor/jspdf.plugin.autotable.min.js',
 ];
 
 // ─── INSTALL ─────────────────────────────────────────────────────────────────

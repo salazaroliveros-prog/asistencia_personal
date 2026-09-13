@@ -20,7 +20,7 @@
 
   <!-- ═══════════════════ ICONOS ═══════════════════ -->
   <!-- Lucide Icons (local vendor + CDN fallback) -->
-  <script src="vendor/lucide.min.js" type="text/javascript"></script>
+  <script src="assets/vendor/lucide.min.js"></script>
   <script>
     if (typeof window.lucide === 'undefined') {
       document.write('<script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"><\/script>');
@@ -29,7 +29,7 @@
 
   <!-- ═══════════════════ QR CODE - Generación ═══════════════════ -->
   <!-- qrcode.js para generar QR (local + CDN fallback) -->
-  <script src="vendor/qrcode.min.js" type="text/javascript"></script>
+  <script src="assets/vendor/qrcode.min.js"></script>
   <script>
     if (typeof window.QRCode === 'undefined') {
       document.write('<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"><\/script>');
@@ -38,7 +38,7 @@
 
   <!-- ═══════════════════ QR CODE - Lectura/Escáner ═══════════════════ -->
   <!-- html5-qrcode para escanear con cámara (local + CDN fallback) -->
-  <script src="vendor/html5-qrcode.min.js" type="text/javascript"></script>
+  <script src="assets/vendor/html5-qrcode.min.js"></script>
   <script>
     if (typeof window.Html5Qrcode === 'undefined') {
       document.write('<script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"><\/script>');
@@ -47,7 +47,7 @@
 
   <!-- ═══════════════════ MAPA (Leaflet.js) ═══════════════════ -->
   <!-- Leaflet CSS y JS para visualización de mapas (local + CDN fallback) -->
-  <link rel="stylesheet" href="vendor/leaflet/leaflet.css" />
+  <link rel="stylesheet" href="assets/vendor/leaflet/leaflet.css" />
   <script>
     (function () {
       var cssOk = !!document.querySelector('link[href*="leaflet.css"]');
@@ -59,7 +59,7 @@
       }
     })();
   </script>
-  <script src="vendor/leaflet/leaflet.js" type="text/javascript"></script>
+  <script src="assets/vendor/leaflet/leaflet.js"></script>
   <script>
     if (typeof window.L === 'undefined') {
       document.write('<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"><\/script>');
@@ -68,7 +68,7 @@
 
   <!-- ═══════════════════ CHART.JS - Gráficas ═══════════════════ -->
   <!-- Chart.js local (vendor) con fallback CDN -->
-  <script src="vendor/chart.umd.min.js" type="text/javascript"></script>
+  <script src="assets/vendor/chart.umd.min.js"></script>
   <script>
     if (typeof window.Chart === 'undefined') {
       document.write('<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"><\/script>');
@@ -76,7 +76,7 @@
   </script>
 
   <!-- ═══════════════════ HTML2CANVAS - Captura de pantalla ═══════════════════ -->
-  <script src="vendor/html2canvas.min.js" type="text/javascript"></script>
+  <script src="assets/vendor/html2canvas.min.js"></script>
   <script>
     if (typeof window.html2canvas === 'undefined') {
       document.write('<script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"><\/script>');
@@ -85,13 +85,13 @@
 
   <!-- ═══════════════════ PDF - Exportación ═══════════════════ -->
   <!-- jsPDF + jsPDF AutoTable para reportes PDF (local + CDN fallback) -->
-  <script src="vendor/jspdf.umd.min.js" type="text/javascript"></script>
+  <script src="assets/vendor/jspdf.umd.min.js"></script>
   <script>
     if (typeof window.jspdf === 'undefined') {
       document.write('<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"><\/script>');
     }
   </script>
-  <script src="vendor/jspdf.plugin.autotable.min.js" type="text/javascript"></script>
+  <script src="assets/vendor/jspdf.plugin.autotable.min.js"></script>
   <script>
     if (typeof window.jspdf === 'undefined' || !window.jspdf.jsPDF) {
       document.write('<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"><\/script>');
@@ -125,34 +125,34 @@
   " />
 
   <!-- ═══════════════════ SCRIPTS PROPIOS ═══════════════════ -->
-  <script src="js/config.js" type="text/javascript"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js" type="text/javascript"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js" type="text/javascript"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js" type="text/javascript"></script>
-  <script src="js/firebase-config.js" type="text/javascript"></script>
+  <script src="js/config.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+  <script src="js/firebase-config.js"></script>
   <script type="module" src="/src/firebase.ts"></script>
   <script type="module" src="/src/api.ts"></script>
-  <script src="js/utils/constants.js" type="text/javascript"></script>
-  <script src="js/utils/validators.js" type="text/javascript"></script>
-  <script src="js/utils/alerts.js" type="text/javascript"></script>
-  <script src="js/utils/qr-generator.js" type="text/javascript"></script>
-  <script src="js/utils/gps.js" type="text/javascript"></script>
-  <script src="js/utils/map-viewer.js" type="text/javascript"></script>
-  <script src="js/utils/pdf-builder.js" type="text/javascript"></script>
-  <script src="js/utils/request-optimizer.js" type="text/javascript"></script>
-  <script src="js/utils/data-validator.js" type="text/javascript"></script>
-  <script src="js/utils/cache-manager.js" type="text/javascript"></script>
-  <script src="js/utils/validation-rules.js" type="text/javascript"></script>
-  <script src="js/utils/string-helpers.js" type="text/javascript"></script>
-  <script src="js/utils/photo-helpers.js" type="text/javascript"></script>
-  <script src="js/utils/date-helpers.js" type="text/javascript"></script>
-  <script src="js/modules/dashboard.js" type="text/javascript"></script>
-  <script src="js/modules/personal.js" type="text/javascript"></script>
-  <script src="js/modules/asistencia.js" type="text/javascript"></script>
-  <script src="js/modules/campo.js" type="text/javascript"></script>
-  <script src="js/modules/reportes.js" type="text/javascript"></script>
-  <script src="js/modules/ajustes.js" type="text/javascript"></script>
-  <script src="js/app.js" type="text/javascript"></script>
+  <script src="js/utils/constants.js"></script>
+  <script src="js/utils/validators.js"></script>
+  <script src="js/utils/alerts.js"></script>
+  <script src="js/utils/qr-generator.js"></script>
+  <script src="js/utils/gps.js"></script>
+  <script src="js/utils/map-viewer.js"></script>
+  <script src="js/utils/pdf-builder.js"></script>
+  <script src="js/utils/request-optimizer.js"></script>
+  <script src="js/utils/data-validator.js"></script>
+  <script src="js/utils/cache-manager.js"></script>
+  <script src="js/utils/validation-rules.js"></script>
+  <script src="js/utils/string-helpers.js"></script>
+  <script src="js/utils/photo-helpers.js"></script>
+  <script src="js/utils/date-helpers.js"></script>
+  <script src="js/modules/dashboard.js"></script>
+  <script src="js/modules/personal.js"></script>
+  <script src="js/modules/asistencia.js"></script>
+  <script src="js/modules/campo.js"></script>
+  <script src="js/modules/reportes.js"></script>
+  <script src="js/modules/ajustes.js"></script>
+  <script src="js/app.js"></script>
 </head>
 <body>
   <a class="skip-link" href="#app">Saltar al contenido</a>
