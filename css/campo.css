@@ -1,9 +1,10 @@
-/* ═══════════════════════════════════════════════════════════════════
+/* ═══════════════════════════════════════════════════════════════════════════
    CONTROL PERSONAL CAMPO — css/campo.css
    Vista "Marcador de Campo": sub-app instalable móvil para escaneo QR
    y registro de asistencia en tiempo real (Firestore) con cola offline.
    Mobile-first; pensada para operarse con una mano en obra.
-   ═══════════════════════════════════════════════════════════════════ */
+   Usa SOLO variables CSS de main.css / glassmorphism.css / components.css
+   ═══════════════════════════════════════════════════════════════════════════ */
 
 #page-campo .page-inner {
   max-width: 480px;
@@ -19,23 +20,23 @@
 }
 .campo-topbar .campo-title {
   margin: 0;
-  font-size: 1.15rem;
-  color: var(--color-text);
+  font-size: var(--text-lg);
+  color: var(--color-text-primary);
 }
 .campo-status-pill {
   margin-left: auto;
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  font-size: 0.72rem;
+  font-size: var(--text-xs);
   font-weight: 600;
   padding: 4px 10px;
-  border-radius: 999px;
-  background: rgba(230, 57, 70, 0.12);
+  border-radius: var(--radius-full);
+  background: rgba(var(--color-accent-red-rgb, 230, 57, 70), 0.12);
   color: var(--color-accent-red);
 }
 .campo-status-pill.connected {
-  background: rgba(42, 157, 143, 0.14);
+  background: rgba(var(--color-accent-green-rgb, 42, 157, 143), 0.14);
   color: var(--color-accent-green);
 }
 .campo-status-pill .dot {
@@ -45,10 +46,10 @@
 
 /* ── Escáner ─────────────────────────────────────────────────────── */
 .campo-scanner-card {
-  background: var(--color-dark, #001c33);
-  border-radius: 18px;
+  background: var(--color-darker);
+  border-radius: var(--radius-xl);
   overflow: hidden;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.18);
+  box-shadow: var(--glass-shadow);
   margin-bottom: var(--space-4);
 }
 .campo-scanner-wrap {
@@ -58,13 +59,13 @@
 #campo-qr-reader {
   width: 100%;
   min-height: 200px;
-  border-radius: 12px;
+  border-radius: var(--radius-md);
   overflow: hidden;
 }
 .campo-scan-hint {
   text-align: center;
-  color: #cfe0ee;
-  font-size: 0.8rem;
+  color: var(--color-text-muted);
+  font-size: var(--text-sm);
   padding: 8px var(--space-2) 6px;
   letter-spacing: 0.3px;
 }
@@ -78,21 +79,23 @@
 
 /* ── Tarjeta del trabajador ──────────────────────────────────────── */
 .campo-worker-card {
-  background: var(--surface, #fff);
-  border: 1px solid var(--border-color, #e2e8f0);
-  border-radius: 16px;
+  background: var(--glass-bg);
+  backdrop-filter: blur(var(--glass-blur));
+  -webkit-backdrop-filter: blur(var(--glass-blur));
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-lg);
   padding: var(--space-4);
   display: flex;
   gap: var(--space-3);
   align-items: center;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
+  box-shadow: var(--glass-shadow);
   margin-bottom: var(--space-4);
 }
 .campo-worker-photo {
   width: 64px; height: 64px;
   border-radius: 50%;
   object-fit: cover;
-  background: #eef2f6;
+  background: var(--glass-bg-hover);
   flex-shrink: 0;
   display: none;
 }
@@ -100,7 +103,7 @@
 .campo-worker-avatar {
   width: 64px; height: 64px;
   border-radius: 50%;
-  background: var(--color-primary, #003459);
+  background: linear-gradient(135deg, var(--color-primary), var(--color-secondary));
   color: #fff;
   font-weight: 700;
   display: inline-flex;
@@ -109,11 +112,11 @@
   font-size: 1.4rem;
   flex-shrink: 0;
 }
-.campo-worker-info h3 { margin: 0 0 4px; font-size: 1.05rem; }
-.campo-worker-info p { margin: 0; color: var(--color-text-muted); font-size: 0.82rem; }
+.campo-worker-info h3 { margin: 0 0 4px; font-size: var(--text-md); }
+.campo-worker-info p { margin: 0; color: var(--color-text-muted); font-size: var(--text-sm); }
 .campo-worker-id {
-  font-family: monospace;
-  font-size: 0.72rem;
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
   color: var(--color-text-muted);
   margin-top: 2px;
 }
@@ -132,22 +135,30 @@
   gap: 6px;
   padding: 14px 4px;
   border: none;
-  border-radius: 14px;
+  border-radius: var(--radius-md);
   font-weight: 700;
-  font-size: 0.74rem;
+  font-size: var(--text-xs);
   color: #fff;
   cursor: pointer;
   box-shadow: 0 4px 10px rgba(0, 0, 0, 0.14);
-  transition: transform 0.08s ease, opacity 0.15s ease;
+  transition: transform var(--transition-fast), opacity var(--transition-fast);
   min-height: 72px;
 }
 .campo-mark-btn:active { transform: scale(0.96); }
 .campo-mark-btn:disabled { opacity: 0.5; cursor: not-allowed; }
 .campo-mark-btn svg { width: 22px; height: 22px; }
-.campo-mark-entry     { background: #2a9d8f; }
-.campo-mark-break     { background: #f4a261; }
-.campo-mark-resume    { background: #00a8e8; }
-.campo-mark-exit      { background: #e63946; }
+
+/* Usar variables de acento en lugar de hardcoded */
+.campo-mark-entry     { background: var(--color-accent-green); }
+.campo-mark-break     { background: var(--color-accent-amber); }
+.campo-mark-resume    { background: var(--color-secondary); }
+.campo-mark-exit      { background: var(--color-accent-red); }
+
+.campo-mark-entry:hover     { filter: brightness(1.15); }
+.campo-mark-break:hover     { filter: brightness(1.15); }
+.campo-mark-resume:hover    { filter: brightness(1.15); }
+.campo-mark-exit:hover      { filter: brightness(1.15); }
+
 .campo-mark-time { font-size: 0.62rem; opacity: 0.9; font-weight: 500; }
 
 /* ── GPS / geocerca ──────────────────────────────────────────────── */
@@ -155,7 +166,7 @@
   display: flex;
   align-items: center;
   gap: var(--space-2);
-  font-size: 0.78rem;
+  font-size: var(--text-sm);
   color: var(--color-text-muted);
   margin-bottom: var(--space-4);
 }
@@ -165,7 +176,7 @@
 /* ── Marca registrada (feed en vivo) ─────────────────────────────── */
 .campo-feed { margin-top: var(--space-2); }
 .campo-feed-title {
-  font-size: 0.82rem;
+  font-size: var(--text-xs);
   font-weight: 700;
   color: var(--color-text-muted);
   text-transform: uppercase;
@@ -174,14 +185,16 @@
 }
 .campo-feed-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
 .campo-feed-item {
-  background: var(--surface, #fff);
-  border: 1px solid var(--border-color, #e2e8f0);
-  border-radius: 12px;
+  background: var(--glass-bg);
+  backdrop-filter: blur(var(--glass-blur));
+  -webkit-backdrop-filter: blur(var(--glass-blur));
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-md);
   padding: 10px 12px;
   display: flex;
   align-items: center;
   gap: 10px;
-  font-size: 0.82rem;
+  font-size: var(--text-sm);
 }
 .campo-feed-item .feed-dot {
   width: 10px; height: 10px; border-radius: 50%;
@@ -189,11 +202,11 @@
   flex-shrink: 0;
 }
 .campo-feed-item.pending .feed-dot { background: var(--color-accent-amber); }
-.campo-feed-item b { color: var(--color-text); }
+.campo-feed-item b { color: var(--color-text-primary); }
 .campo-feed-item .feed-meta { margin-left: auto; text-align: right; color: var(--color-text-muted); }
 .campo-feed-empty {
   color: var(--color-text-muted);
-  font-size: 0.8rem;
+  font-size: var(--text-sm);
   text-align: center;
   padding: 12px;
 }

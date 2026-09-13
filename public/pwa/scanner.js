@@ -11,6 +11,14 @@ let lastScanTime = 0;
 let animationId = null;
 let db, auth, app;
 
+// Configuración de detección QR optimizada
+const QR_DETECTION_CONFIG = {
+  maxWidth: 640,           // Downscale para rendimiento
+  maxHeight: 480,
+  throttleMs: 100,         // ~10fps max
+  lastDetectionTime: 0
+};
+
 // Elementos del DOM
 const video = document.getElementById("preview");
 const canvas = document.getElementById("canvas");
@@ -107,7 +115,7 @@ function stopCamera() {
 }
 
 /**
- * Detección continua de códigos QR en el stream de video
+ * Detección continua de códigos QR en el stream de video (optimizada)
  */
 function detectQRCode() {
   if (!video.videoWidth || !video.videoHeight) {
@@ -115,12 +123,30 @@ function detectQRCode() {
     return;
   }
 
-  const context = canvas.getContext("2d");
-  canvas.width = video.videoWidth;
-  canvas.height = video.videoHeight;
+  const now = performance.now();
+  if (now - QR_DETECTION_CONFIG.lastDetectionTime < QR_DETECTION_CONFIG.throttleMs) {
+    animationId = requestAnimationFrame(detectQRCode);
+    return;
+  }
+  QR_DETECTION_CONFIG.lastDetectionTime = now;
 
-  context.drawImage(video, 0, 0, canvas.width, canvas.height);
-  const imageData = context.getImageData(0, 0, canvas.width, canvas.height);
+  const context = canvas.getContext("2d");
+  
+  // Calcular dimensiones escaladas manteniendo aspect ratio
+  const scale = Math.min(
+    QR_DETECTION_CONFIG.maxWidth / video.videoWidth,
+    QR_DETECTION_CONFIG.maxHeight / video.videoHeight,
+    1
+  );
+  
+  const scaledWidth = Math.round(video.videoWidth * scale);
+  const scaledHeight = Math.round(video.videoHeight * scale);
+  
+  canvas.width = scaledWidth;
+  canvas.height = scaledHeight;
+
+  context.drawImage(video, 0, 0, scaledWidth, scaledHeight);
+  const imageData = context.getImageData(0, 0, scaledWidth, scaledHeight);
 
   if (window.jsQR) {
     const code = window.jsQR(imageData.data, imageData.width, imageData.height);
@@ -129,7 +155,7 @@ function detectQRCode() {
     }
   }
 
-    animationId = requestAnimationFrame(detectQRCode);
+  animationId = requestAnimationFrame(detectQRCode);
 }
 
 /**
@@ -200,7 +226,12 @@ async function processAttendance(qrData) {
 
   } catch (error) {
     console.error("Error en asistencia:", error);
-    showToast(`Error: ${error.message}`, "error");
+    // Si es error de red, encolar para sincronización posterior
+    if (!navigator.onLine || error.message.includes('network') || error.message.includes('offline') || error.message.includes('permission')) {
+      await queueOfflineAttendance(workerId, worker);
+    } else {
+      showToast(`Error: ${error.message}`, "error");
+    }
 
         lastScanDiv.innerHTML = `
       <div class="scan-result" style="background: #7f1d1d;">
@@ -276,6 +307,114 @@ async function registrarAsistencia(workerId, worker) {
   }));
 
   console.log("Asistencia registrada:", { workerId, fecha: fechaHoy, hora });
+}
+
+/**
+ * Cola offline para sincronización posterior
+ */
+const OFFLINE_QUEUE_KEY = 'pwa_scanner_offline_queue';
+
+function getOfflineQueue() {
+  try {
+    return JSON.parse(localStorage.getItem(OFFLINE_QUEUE_KEY) || '[]');
+  } catch { return []; }
+}
+
+function saveOfflineQueue(queue) {
+  try {
+    localStorage.setItem(OFFLINE_QUEUE_KEY, JSON.stringify(queue.slice(-100)));
+  } catch { /* ignore */ }
+}
+
+async function queueOfflineAttendance(workerId, worker) {
+  const queue = getOfflineQueue();
+  const fechaHoy = new Date().toISOString().split("T")[0];
+  const ahora = new Date();
+  const hora = ahora.toLocaleTimeString("es-GT", { hour: "2-digit", minute: "2-digit" });
+  const timestamp = ahora.getTime();
+  const dpiLimpio = String(workerId).replace(/[^0-9]/g, "");
+  
+  queue.push({
+    workerId,
+    workerData: worker,
+    fechaHoy,
+    hora,
+    timestamp,
+    dpiLimpio,
+    queuedAt: Date.now()
+  });
+  saveOfflineQueue(queue);
+  showToast(`Sin conexión: marca encolada (${queue.length} pendientes)`, "error");
+}
+
+async function processOfflineQueue() {
+  const queue = getOfflineQueue();
+  if (!queue.length || !db) return;
+  
+  const pending = [...queue];
+  const firestore = await import("https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js");
+  const { collection, doc, runTransaction } = firestore;
+  
+  let successCount = 0;
+  for (const item of pending) {
+    try {
+      await runTransaction(db, async (transaction) => {
+        const asistenciaRef = collection(db, "asistencia");
+        const asistenciaId = `${item.fechaHoy}_${item.dpiLimpio}`;
+        const asistenciaDoc = await transaction.get(doc(asistenciaRef, asistenciaId));
+        
+        let historial = [];
+        let metodosRegistro = [];
+        if (asistenciaDoc.exists) {
+          const data = asistenciaDoc.data();
+          historial = data.Historial_Marcaciones || [];
+          metodosRegistro = data.Metodos_Registro || [];
+        }
+        historial.push({
+          Fecha: item.fechaHoy,
+          Hora: item.hora,
+          Timestamp: item.timestamp,
+          Metodo_Registro: "QR_ESCANER_MOVIL",
+          Origen: "SUB_APP_ESCANER_OFFLINE"
+        });
+        metodosRegistro.push("QR_ESCANER_MOVIL");
+        
+        const asistenciaData = {
+          ID_Trabajador: item.workerId,
+          Documento: item.workerData.DPI || item.workerData.Documento || item.dpiLimpio,
+          Nombre_Completo: item.workerData.Nombre_Completo || "Desconocido",
+          Puesto: item.workerData.Puesto || "N/A",
+          Fecha: item.fechaHoy,
+          Jefe: item.workerData.Jefe || "",
+          Telefono: item.workerData.Telefono || "",
+          Estado_General: "Presente",
+          Metodo_Registro: "QR_ESCANER_MOVIL",
+          Ubicacion_Obra: item.workerData.Ubicacion_Obra || "GPS: desconocida",
+          Historial_Marcaciones: historial,
+          Metodos_Registro: [...new Set(metodosRegistro)],
+          Ultima_Actualizacion: item.timestamp,
+          updated_at: new Date().toISOString()
+        };
+        transaction.set(doc(asistenciaRef, asistenciaId), asistenciaData, { merge: true });
+      });
+      successCount++;
+    } catch (err) {
+      console.error('Error syncing offline item:', err);
+    }
+  }
+  
+  if (successCount > 0) {
+    const remaining = queue.slice(successCount);
+    saveOfflineQueue(remaining);
+    showToast(`${successCount} marcas sincronizadas`, "success");
+  }
+}
+
+// Detectar conexión y procesar cola
+window.addEventListener('online', processOfflineListener);
+
+function processOfflineListener() {
+  processOfflineQueue();
 }
 
 /**

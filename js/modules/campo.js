@@ -109,20 +109,38 @@ const ModuloCampo = (() => {
 
     const btnStart = document.getElementById('campo-btn-scan');
     const btnStop  = document.getElementById('campo-btn-stop');
-    try {
+    
+    const tryStart = async (facingMode) => {
       _scanner = new Html5Qrcode('campo-qr-reader');
       await _scanner.start(
-        { facingMode: 'environment' },
+        { facingMode },
         { fps: 10, qrbox: { width: 220, height: 220 }, aspectRatio: 1.0, disableFlip: false },
         _onQRSuccess,
         () => {}
       );
-      _scannerActive = true;
-      if (btnStart) btnStart.hidden = true;
-      if (btnStop)  btnStop.hidden  = false;
+    };
+
+    try {
+      await tryStart('environment');
     } catch (err) {
-      Alerts.error(err.message || 'No se pudo iniciar la cámara.', 'Error de cámara');
+      if (err.name === 'OverconstrainedError' || err.name === 'NotFoundError') {
+        try {
+          await tryStart('user');
+        } catch (err2) {
+          Alerts.error(err2.message || 'No se pudo iniciar la cámara.', 'Error de cámara');
+          return;
+        }
+      } else {
+        Alerts.error(err.message || 'No se pudo iniciar la cámara.', 'Error de cámara');
+        return;
+      }
     }
+    _scannerActive = true;
+    if (btnStart) btnStart.hidden = true;
+    if (btnStop)  btnStop.hidden  = false;
+    
+    // Inyectar botón de flash
+    _injectTorchButton();
   }
 
   async function _detenerScanner() {
@@ -134,6 +152,79 @@ const ModuloCampo = (() => {
     const btnStop  = document.getElementById('campo-btn-stop');
     if (btnStart) btnStart.hidden = false;
     if (btnStop)  btnStop.hidden  = true;
+    _removeTorchButton();
+  }
+
+  // ─── Torch/Flash Support ─────────────────────────────────────────────
+  let _torchEnabled = false;
+  let _videoTrack = null;
+
+  function _injectTorchButton() {
+    const actionsDiv = document.querySelector('.campo-scanner-actions');
+    if (!actionsDiv || document.getElementById('campo-btn-torch')) return;
+    
+    const torchBtn = document.createElement('button');
+    torchBtn.type = 'button';
+    torchBtn.id = 'campo-btn-torch';
+    torchBtn.className = 'campo-btn ghost';
+    torchBtn.innerHTML = '<i data-lucide="flashlight" aria-hidden="true"></i> Flash';
+    torchBtn.hidden = true;
+    torchBtn.addEventListener('click', _toggleTorch);
+    actionsDiv.appendChild(torchBtn);
+    
+    setTimeout(_checkTorchSupport, 500);
+  }
+
+  function _removeTorchButton() {
+    const torchBtn = document.getElementById('campo-btn-torch');
+    if (torchBtn) torchBtn.remove();
+  }
+
+  async function _checkTorchSupport() {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
+      const track = stream.getVideoTracks()[0];
+      const capabilities = track.getCapabilities?.();
+      stream.getTracks().forEach(t => t.stop());
+      
+      if (capabilities?.torch) {
+        _videoTrack = track;
+        const torchBtn = document.getElementById('campo-btn-torch');
+        if (torchBtn) torchBtn.hidden = false;
+      }
+    } catch {
+      // Torch no soportado
+    }
+  }
+
+  async function _toggleTorch() {
+    if (!_videoTrack) {
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
+        _videoTrack = stream.getVideoTracks()[0];
+      } catch {
+        Alerts.error('No se pudo acceder a la cámara para activar flash');
+        return;
+      }
+    }
+    
+    try {
+      const capabilities = _videoTrack.getCapabilities?.();
+      if (!capabilities?.torch) {
+        Alerts.warning('Flash no disponible en este dispositivo');
+        return;
+      }
+      _torchEnabled = !_torchEnabled;
+      await _videoTrack.applyConstraints({ advanced: [{ torch: _torchEnabled }] });
+      const torchBtn = document.getElementById('campo-btn-torch');
+      if (torchBtn) {
+        torchBtn.innerHTML = `<i data-lucide="${_torchEnabled ? 'flashlight-off' : 'flashlight'}" aria-hidden="true"></i> ${_torchEnabled ? 'Apagar flash' : 'Flash'}`;
+      }
+      if (window.lucide) lucide.createIcons({ nodes: [torchBtn] });
+    } catch (err) {
+      console.error('[Campo] Error toggle torch:', err);
+      Alerts.error('Error al cambiar flash: ' + err.message);
+    }
   }
 
   function _onQRSuccess(decodedText) {

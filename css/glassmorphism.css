@@ -622,22 +622,3 @@
     pointer-events: auto;
   }
 }
-
-/* ─────────────────────────────────────────────────────────────────────────────
-   REDUCED MOTION
-   ───────────────────────────────────────────────────────────────────────────── */
-@media (prefers-reduced-motion: reduce) {
-  .glass-card,
-  .glass-card:hover,
-  .glass-sidebar,
-  .modal-overlay,
-  .glass-modal,
-  .connection-dot.connected,
-  .connection-dot.connecting,
-  .pwa-install-banner,
-  .toast {
-    animation-duration: 0.01ms !important;
-    animation-iteration-count: 1 !important;
-    transition-duration: 0.01ms !important;
-  }
-}

@@ -9,11 +9,11 @@ const GPS = (() => {
   
   // ─── Constants ──────────────────────────────────────────────────────────
   const DEFAULT_GEOFENCE_RADIUS = 200; // meters
-  const GPS_TIMEOUT = 10000; // 10 seconds
+  const GPS_TIMEOUT = 15000; // 15 seconds (longer for poor GPS conditions)
   const GPS_OPTIONS = {
     enableHighAccuracy: true,
     timeout: GPS_TIMEOUT,
-    maximumAge: 30000, // Accept 30-second-old cached positions
+    maximumAge: 5000, // 5 seconds - fresh position for field use
   };
 
   // ─── Public API ─────────────────────────────────────────────────────────

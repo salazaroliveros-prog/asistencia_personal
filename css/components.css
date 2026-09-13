@@ -662,18 +662,7 @@ input[type="month"].input-glass {
   .data-table .table-actions { gap: 0; flex-wrap: nowrap; }
   .data-table .table-action-btn:not(.historial) { display: none; }
   .data-table .table-action-btn.historial { width: 44px; height: 44px; }
-  #modal-historial .modal { width: 100%; max-width: none; max-height: 100dvh; border-radius: 16px 16px 0 0; align-self: end; }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  *,
-  *::before,
-  *::after {
-    animation-duration: 0.01ms !important;
-    animation-iteration-count: 1 !important;
-    transition-duration: 0.01ms !important;
-    scroll-behavior: auto !important;
-  }
+#modal-historial .modal { width: 100%; max-width: none; max-height: 100dvh; border-radius: 16px 16px 0 0; align-self: end; }
 }
 
 /* Foto en tabla */

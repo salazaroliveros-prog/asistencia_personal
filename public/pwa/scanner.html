@@ -7,6 +7,12 @@
   <meta name="theme-color" content="#1e40af" />
   <link rel="manifest" href="/pwa/manifest.json" />
   <link rel="stylesheet" href="/pwa/scanner.css" />
+  <style>
+    :root { --safe-bottom: env(safe-area-inset-bottom, 0px); --safe-top: env(safe-area-inset-top, 0px); }
+    html, body { overscroll-behavior: none; }
+    body { padding-bottom: calc(16px + var(--safe-bottom)); }
+    .toast-container { padding-bottom: calc(20px + var(--safe-bottom)); }
+  </style>
 </head>
 <body>
   <div class="scanner-app">
