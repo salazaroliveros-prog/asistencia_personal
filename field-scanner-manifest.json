@@ -2,6 +2,7 @@
   "name": "Escáner de Campo - Control Personal",
   "short_name": "Escáner Campo",
   "description": "Subaplicación para escaneo de QR de trabajadores en campo",
+  "version": "2.0.0",
   "start_url": "/field-scanner.html",
   "display": "standalone",
   "orientation": "portrait",

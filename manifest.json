@@ -2,6 +2,7 @@
   "name": "Control Personal Campo",
   "short_name": "CtrlCampo",
   "description": "Sistema de gestión y asistencia de personal en obra",
+  "version": "1.5.0",
   "id": "/",
   "scope": "/",
   "start_url": "/",

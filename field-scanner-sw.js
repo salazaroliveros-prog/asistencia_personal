@@ -1,4 +1,4 @@
-const CACHE_NAME = 'field-scanner-v1';
+const CACHE_NAME = 'field-scanner-v2';
 const STATIC_ASSETS = [
   '/',
   '/field-scanner.html',
