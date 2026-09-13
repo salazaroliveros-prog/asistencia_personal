@@ -4,9 +4,9 @@
  * @version 1.0.0
  */
 
-const CACHE_NAME    = 'cpc-v1.4.1';
-const CACHE_STATIC  = 'cpc-static-v1.4.1';
-const CACHE_DYNAMIC = 'cpc-dynamic-v1.4.1';
+const CACHE_NAME    = 'cpc-v1.4.2';
+const CACHE_STATIC  = 'cpc-static-v1.4.2';
+const CACHE_DYNAMIC = 'cpc-dynamic-v1.4.2';
 
 // Assets críticos que se precargan en el install
 const PRECACHE_ASSETS = [
@@ -50,6 +50,7 @@ const PRECACHE_ASSETS = [
   '/js/modules/ajustes.js',
   '/js/modules/user-management.js',
   '/js/modules/backup-manager.js',
+  '/js/modules/gas-assistant.js',
   '/vendor/jspdf.umd.min.js',
   '/vendor/jspdf.plugin.autotable.min.js',
 ];

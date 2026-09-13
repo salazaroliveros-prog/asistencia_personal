@@ -15,8 +15,16 @@ const ModuloAjustes = (() => {
   function _bindEvents() {
     const btnFirebase = document.getElementById('btn-connect-firebase');
     const btnLocal = document.getElementById('btn-use-local');
+    const btnGasAssistant = document.getElementById('btn-open-gas-assistant');
     if (btnFirebase) btnFirebase.addEventListener('click', _conectarFirebase);
     if (btnLocal) btnLocal.addEventListener('click', _usarModoLocal);
+    if (btnGasAssistant) btnGasAssistant.addEventListener('click', () => {
+      if (window.GasAssistant) {
+        window.GasAssistant.open();
+      } else {
+        Alerts.error('Módulo de asistente GAS no disponible', 'Error');
+      }
+    });
 
     // ─── Configuración General ─────────────────────────────────────────
     const btnSaveGeneral = document.getElementById('btn-save-general');
