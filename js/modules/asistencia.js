@@ -313,16 +313,16 @@ const ModuloAsistencia = (() => {
       const ini = inicialesDeNombre(p.Nombre_Completo);
       const col = colorPorPuesto(p.Puesto);
       return `
-      <li class="autocomplete-item" data-id="${p.ID_Trabajador}" role="option" tabindex="0">
+      <li class="autocomplete-item" data-id="${_escHtml(p.ID_Trabajador)}" role="option" tabindex="0">
         ${p.Fotografia_URL
-          ? `<img src="${p.Fotografia_URL}" alt="" style="width:32px;height:32px;border-radius:50%;object-fit:cover;border:2px solid ${col};"
+          ? `<img src="${_escHtml(p.Fotografia_URL)}" alt="" style="width:32px;height:32px;border-radius:50%;object-fit:cover;border:2px solid ${col};"
                  onerror="this.onerror=null;this.style.display='none';this.nextElementSibling.style.display='flex';" />
              <span style="display:none;width:32px;height:32px;border-radius:50%;border:2px solid ${col};background:var(--glass-bg);align-items:center;justify-content:center;font-size:11px;font-weight:700;color:${col};flex-shrink:0;">${ini}</span>`
           : `<span style="display:flex;width:32px;height:32px;border-radius:50%;border:2px solid ${col};background:var(--glass-bg);align-items:center;justify-content:center;font-size:11px;font-weight:700;color:${col};flex-shrink:0;">${ini}</span>`
         }
         <div>
-          <div class="item-name">${p.Nombre_Completo}</div>
-          <div class="item-detail">${p.Puesto} · ${p.DPI_CUI}</div>
+          <div class="item-name">${_escHtml(p.Nombre_Completo)}</div>
+          <div class="item-detail">${_escHtml(p.Puesto)} · ${_escHtml(p.DPI_CUI)}</div>
         </div>
       </li>`;
     }).join('');

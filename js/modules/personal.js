@@ -1229,10 +1229,10 @@ const ModuloPersonal = (() => {
                   <span class="historial-icono" style="color:${estadoColor[m.Estado_Marcacion] || 'var(--color-text-muted)'}">
                     <i data-lucide="${tipoIcono[m.Tipo_Marcacion] || 'clock'}" style="width:14px;height:14px"></i>
                   </span>
-                  <span class="historial-tipo">${tipoLabel[m.Tipo_Marcacion] || m.Tipo_Marcacion}</span>
-                  ${m.Estado_Marcacion ? `<span class="badge" style="font-size:0.65rem;padding:2px 6px;background:${estadoColor[m.Estado_Marcacion]}20;color:${estadoColor[m.Estado_Marcacion]};border:1px solid ${estadoColor[m.Estado_Marcacion]}40">${m.Estado_Marcacion}</span>` : ''}
+                  <span class="historial-tipo">${_escHtml(tipoLabel[m.Tipo_Marcacion] || m.Tipo_Marcacion)}</span>
+                  ${m.Estado_Marcacion ? `<span class="badge" style="font-size:0.65rem;padding:2px 6px;background:${estadoColor[m.Estado_Marcacion]}20;color:${estadoColor[m.Estado_Marcacion]};border:1px solid ${estadoColor[m.Estado_Marcacion]}40">${_escHtml(m.Estado_Marcacion)}</span>` : ''}
                   ${m.Horas_Extra && parseFloat(m.Horas_Extra) > 0 ? `<span class="badge badge-blue" style="font-size:0.65rem;padding:2px 6px">+${m.Horas_Extra}h extra</span>` : ''}
-                  <span class="historial-metodo text-muted">${m.Metodo_Registro || ''}</span>
+                  <span class="historial-metodo text-muted">${_escHtml(m.Metodo_Registro || '')}</span>
                 </div>`).join('')}
             </div>
           </div>`;
@@ -1244,7 +1244,7 @@ const ModuloPersonal = (() => {
       }
 
     } catch (err) {
-      if (content) content.innerHTML = `<p class="text-muted text-center" style="padding:var(--space-6)">Error al cargar historial: ${err.message}</p>`;
+      if (content) content.innerHTML = `<p class="text-muted text-center" style="padding:var(--space-6)">Error al cargar historial: ${_escHtml(err.message)}</p>`;
       console.error('[Personal] Error cargando historial:', err);
     }
   }
