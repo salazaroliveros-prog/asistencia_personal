@@ -26,15 +26,25 @@
     try {
       const config = window.FIREBASE_CONFIG || {};
       
+      // Validar que Firebase SDK esté cargado
+      if (typeof firebase === 'undefined') {
+        console.warn('[FirebaseClient] Firebase SDK no cargado, usando modo local');
+        connectionState = 'error';
+        return { success: false, message: 'Firebase SDK no disponible' };
+      }
+      
       if (!config.apiKey || !config.projectId) {
         console.warn('[FirebaseClient] Configuración incompleta, usando modo local');
-        return { success: false, message: 'Configuración incompleta' };
+        connectionState = 'disconnected';
+        return { success: false, message: 'Configuración incompleta - modo local activado' };
       }
 
       if (!firebase.apps.length) {
         app = firebase.initializeApp(config);
+        console.log('[FirebaseClient] Firebase app inicializada correctamente');
       } else {
         app = firebase.apps[0];
+        console.log('[FirebaseClient] Usando Firebase app existente');
       }
 
       db = firebase.firestore();
@@ -47,6 +57,8 @@
             console.warn('[FirebaseClient] Persistencia ya habilitada en otra pestaña');
           } else if (err.code === 'unimplemented') {
             console.warn('[FirebaseClient] Persistencia no soportada por navegador');
+          } else {
+            console.warn('[FirebaseClient] Error persistencia:', err.message);
           }
         });
       }
@@ -58,7 +70,7 @@
     } catch (error) {
       console.error('[FirebaseClient] Error de inicialización:', error);
       connectionState = 'error';
-      return { success: false, message: error.message };
+      return { success: false, message: error.message, fallback: 'modo local' };
     }
   }
 

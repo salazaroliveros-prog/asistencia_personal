@@ -11,6 +11,9 @@
  * NO se puede usar `import.meta.env` (ni siquiera `typeof import`): el navegador
  * lanza "Cannot use import/import.meta outside a module". Por eso estos valores
  * se definen literalmente aquí (equivalentes a los de .env / VITE_*).
+ * 
+ * SEGURIDAD: Las credenciales de Firebase web son públicas por diseño. La seguridad
+ * real se maneja con Firebase Authentication y Firestore Rules.
  */
 window.FIREBASE_CONFIG = window.FIREBASE_CONFIG || {
   apiKey: "AIzaSyDriDh1SC5_8T1rx5EmgFi0pUEKUGQU5xg",

@@ -34,9 +34,14 @@
   }
 
   function connected() {
-    return FirebaseClient && FirebaseClient.isReady() && 
-           (FirebaseClient.getConnectionState() === 'connected' || FirebaseClient.getConnectionState() === 'degraded') &&
-           Boolean(AppState.get('connected'));
+    if (!FirebaseClient) return false;
+    if (!FirebaseClient.isReady()) return false;
+    
+    const state = FirebaseClient.getConnectionState();
+    const isConnected = state === 'connected' || state === 'degraded';
+    const appConnected = Boolean(AppState.get('connected'));
+    
+    return isConnected && appConnected;
   }
 
   // ─── Trabajadores ───────────────────────────────────────────────────────
