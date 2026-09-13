@@ -4,7 +4,7 @@ import { resolve } from 'node:path';
 
 function copyLegacyRuntime() {
   const directories = ['js', 'assets', 'css'];
-  const files = ['service-worker.js', 'manifest.json', 'field-scanner.html', 'field-scanner.js', 'campo.css'];
+  const files = ['service-worker.js', 'manifest.json', 'field-scanner.html', 'field-scanner.js', 'field-scanner-manifest.json', 'campo.css'];
   return {
     name: 'copy-legacy-runtime',
     closeBundle() {

@@ -106,12 +106,54 @@ const HEALTH_FAILURE_THRESHOLD = 3;
 // ─────────────────────────────────────────────────────────────────────────────
 
 function getConfig(): FirebaseConfig {
+  const base = (window as Window & { FIREBASE_CONFIG?: FirebaseConfig }).FIREBASE_CONFIG || {};
   try {
     const saved = JSON.parse(localStorage.getItem(window.LS_KEYS.FIREBASE_CONFIG) || '{}') as FirebaseConfig;
-    return { ...(window as Window & { FIREBASE_CONFIG?: FirebaseConfig }).FIREBASE_CONFIG, ...saved };
-  } catch { 
-    return {}; 
+    // Prioridad: localStorage (config editada en Ajustes) > variables de entorno
+    // de Vite (VITE_FIREBASE_*, inyectadas en build por Vercel) > defaults.
+    const merged = { ...base, ...envConfig(), ...saved };
+    // Respaldo defensivo: si con las env el config queda inválido, se descartan
+    // las env y se dejan los defaults (la app sigue funcionando en local).
+    if (validateConfig(merged).valid) return merged;
+    return { ...base, ...saved };
+  } catch {
+    return { ...base };
   }
+}
+
+/**
+ * Lee la configuración de Firebase desde variables de entorno de Vite.
+ * Se cargan desde `import.meta.env.VITE_FIREBASE_*` (inyectadas en el build por
+ * Vite/Vercel). Solo se incluyen valores no vacíos; si no hay env, devuelve {}.
+ * Los módulos SÍ pueden usar `import.meta.env` (a diferencia de js/firebase-config.js,
+ * que es un script clásico y por eso usa valores literales como respaldo).
+ */
+function envConfig(): FirebaseConfig {
+  // `import.meta.env` es el token mágico de Vite: Vite lo reemplaza en build por
+  // el objeto JSON con las variables VITE_* (inyectadas por Vercel). Debe usarse
+  // como token ÚNICO (no separado en `(import.meta as X).env`, que rompe el reemplazo).
+  const env = import.meta.env as Record<string, string | undefined> | undefined;
+  if (!env) return {};
+  const pick = (name: string): string | undefined => {
+    const v = env[name];
+    return (typeof v === 'string' && v.length > 0) ? v : undefined;
+  };
+  const c: FirebaseConfig = {};
+  const apiKey = pick('VITE_FIREBASE_API_KEY');
+  const authDomain = pick('VITE_FIREBASE_AUTH_DOMAIN');
+  const projectId = pick('VITE_FIREBASE_PROJECT_ID');
+  const appId = pick('VITE_FIREBASE_APP_ID');
+  const storageBucket = pick('VITE_FIREBASE_STORAGE_BUCKET');
+  const messagingSenderId = pick('VITE_FIREBASE_MESSAGING_SENDER_ID');
+  const measurementId = pick('VITE_FIREBASE_MEASUREMENT_ID');
+  if (apiKey) c.apiKey = apiKey;
+  if (authDomain) c.authDomain = authDomain;
+  if (projectId) c.projectId = projectId;
+  if (appId) c.appId = appId;
+  if (storageBucket) c.storageBucket = storageBucket;
+  if (messagingSenderId) c.messagingSenderId = messagingSenderId;
+  if (measurementId) c.measurementId = measurementId;
+  return c;
 }
 
 function isConfigured(config = getConfig()): boolean {

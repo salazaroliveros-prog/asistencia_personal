@@ -33,7 +33,7 @@
     bindEvents();
     initAudio();
     renderMarkButtons();
-    updateStatus();
+    updateStatusPill(false);
     lucide?.createIcons?.();
 
     if (isSessionValid()) {
@@ -415,7 +415,7 @@
   }
 
   // ─── GPS ───────────────────────────────────────────────────────────
-  function captureGPS() {
+  async function captureGPS() {
     const gpsEl = document.getElementById('campo-gps');
     const lbl = document.getElementById('campo-gps-label');
     if (gpsEl) gpsEl.hidden = true;
@@ -589,4 +589,11 @@
   }
 
   window.FieldScanner = { init, cargar, cleanup, showLogin, handleLogout };
+
+  // Arranque automatico al cargar la pagina
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', () => init());
+  } else {
+    init();
+  }
 })();
