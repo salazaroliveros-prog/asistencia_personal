@@ -89,6 +89,13 @@ const ModuloAjustes = (() => {
     if (btnExport) btnExport.addEventListener('click', _exportarBackup);
     if (btnImport) btnImport.addEventListener('click', () => importInput?.click());
     if (importInput) importInput.addEventListener('change', _importarBackup);
+
+    // ─── Exportación CSV ──────────────────────────────────────────────
+    const btnExportTrabajadores = document.getElementById('btn-export-trabajadores');
+    const btnExportAsistencias = document.getElementById('btn-export-asistencias');
+
+    if (btnExportTrabajadores) btnExportTrabajadores.addEventListener('click', _exportarTrabajadoresCSV);
+    if (btnExportAsistencias) btnExportAsistencias.addEventListener('click', _exportarAsistenciasCSV);
   }
 
   // ─────────────────────────────────────────────────────────────────────────
@@ -631,6 +638,130 @@ const ModuloAjustes = (() => {
     } catch {
       Alerts.error('No se pudo abrir WhatsApp.');
     }
+  }
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // EXPORTACIÓN CSV TRABAJADORES
+  // ─────────────────────────────────────────────────────────────────────────
+  function _exportarTrabajadoresCSV() {
+    const personal = AppState.get('personal') || [];
+    
+    if (personal.length === 0) {
+      Alerts.warning('No hay trabajadores para exportar');
+      return;
+    }
+
+    // Headers del CSV
+    const headers = [
+      'ID_Trabajador',
+      'Nombre_Completo', 
+      'DPI_CUI',
+      'Puesto',
+      'Jefe_Inmediato',
+      'Telefono',
+      'WhatsApp',
+      'Direccion',
+      'Estado',
+      'Fecha_Registro'
+    ];
+
+    // Convertir datos a CSV
+    const csvRows = [headers.join(',')];
+    
+    personal.forEach(trabajador => {
+      const row = [
+        trabajador.ID_Trabajador || '',
+        `"${(trabajador.Nombre_Completo || '').replace(/"/g, '""')}"`,
+        trabajador.DPI_CUI || '',
+        `"${(trabajador.Puesto || '').replace(/"/g, '""')}"`,
+        `"${(trabajador.Jefe_Inmediato || '').replace(/"/g, '""')}"`,
+        trabajador.Telefono || '',
+        trabajador.WhatsApp || '',
+        `"${(trabajador.Direccion || '').replace(/"/g, '""')}"`,
+        trabajador.Estado || 'Activo',
+        trabajador.Fecha_Registro || ''
+      ];
+      csvRows.push(row.join(','));
+    });
+
+    const csvContent = csvRows.join('\n');
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const filename = `trabajadores-${AppState.today()}.csv`;
+
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+
+    Alerts.success(`CSV "${filename}" descargado correctamente`);
+  }
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // EXPORTACIÓN CSV ASISTENCIAS
+  // ─────────────────────────────────────────────────────────────────────────
+  function _exportarAsistenciasCSV() {
+    const asistencias = AppState.get('asistencias') || [];
+    
+    if (asistencias.length === 0) {
+      Alerts.warning('No hay asistencias para exportar');
+      return;
+    }
+
+    // Headers del CSV
+    const headers = [
+      'ID_Marcacion',
+      'ID_Trabajador',
+      'Nombre_Trabajador',
+      'Fecha',
+      'Tipo_Marcacion',
+      'Hora_Programada',
+      'Hora_Real',
+      'Estado_Marcacion',
+      'Metodo_Registro',
+      'Horas_Extra',
+      'GPS_Latitud',
+      'GPS_Longitud'
+    ];
+
+    // Convertir datos a CSV
+    const csvRows = [headers.join(',')];
+    
+    asistencias.forEach(asistencia => {
+      const row = [
+        asistencia.ID_Marcacion || asistencia.ID_Asistencia || '',
+        asistencia.ID_Trabajador || '',
+        `"${(asistencia.Nombre_Trabajador || '').replace(/"/g, '""')}"`,
+        asistencia.Fecha || '',
+        `"${(asistencia.Tipo_Marcacion || '').replace(/"/g, '""')}"`,
+        asistencia.Hora_Programada || '',
+        asistencia.Hora_Real || '',
+        `"${(asistencia.Estado_Marcacion || '').replace(/"/g, '""')}"`,
+        `"${(asistencia.Metodo_Registro || '').replace(/"/g, '""')}"`,
+        asistencia.Horas_Extra || '0',
+        asistencia.GPS_Latitud || '',
+        asistencia.GPS_Longitud || ''
+      ];
+      csvRows.push(row.join(','));
+    });
+
+    const csvContent = csvRows.join('\n');
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const filename = `asistencias-${AppState.today()}.csv`;
+
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+
+    Alerts.success(`CSV "${filename}" descargado correctamente`);
   }
 
   return { init, cargar };

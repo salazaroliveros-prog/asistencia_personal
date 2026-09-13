@@ -663,7 +663,7 @@ const ModuloAsistencia = (() => {
       }
 
       return `
-        <tr>
+        <tr data-id="${_escHtml(m.ID_Marcacion || m.ID_Asistencia || '')}">
           <td data-label="Trabajador"><strong>${_escHtml(m.Nombre_Trabajador || '--')}</strong></td>
           <td data-label="Tipo"><span class="badge badge-blue">${_escHtml(tipoLabel[m.Tipo_Marcacion] || m.Tipo_Marcacion || '--')}</span></td>
           <td data-label="Programada">${_escHtml(m.Hora_Programada || '--')}</td>
@@ -677,11 +677,36 @@ const ModuloAsistencia = (() => {
           </td>
           <td data-label="Horas Extra">${parseFloat(m.Horas_Extra || 0) > 0 ? `<strong style="color:var(--color-accent-amber)">${m.Horas_Extra}h</strong>` : '—'}</td>
           <td data-label="Ubicación">${locationDisplay}</td>
+          <td class="actions-col" data-label="Acciones">
+            <div class="table-actions">
+              <button class="table-action-btn edit" data-action="edit" data-id="${_escHtml(m.ID_Marcacion || m.ID_Asistencia || '')}" title="Editar marcación" aria-label="Editar marcación">
+                <i data-lucide="pencil"></i>
+              </button>
+              <button class="table-action-btn delete" data-action="delete" data-id="${_escHtml(m.ID_Marcacion || m.ID_Asistencia || '')}" title="Eliminar marcación" aria-label="Eliminar marcación">
+                <i data-lucide="trash-2"></i>
+              </button>
+            </div>
+          </td>
         </tr>
       `;
     }).join('');
 
     if (window.lucide) lucide.createIcons({ nodes: [tbody] });
+
+    // Agregar event listeners para botones de editar/eliminar
+    tbody.onclick = (e) => {
+      const btn = e.target.closest('[data-action]');
+      if (!btn) return;
+      
+      const id = btn.dataset.id;
+      const action = btn.dataset.action;
+      
+      if (action === 'edit') {
+        _editarMarcacion(id);
+      } else if (action === 'delete') {
+        _eliminarMarcacion(id);
+      }
+    };
   }
 
   function _renderTablaVacia() {
@@ -689,7 +714,7 @@ const ModuloAsistencia = (() => {
     if (!tbody) return;
     tbody.innerHTML = `
       <tr class="empty-row">
-        <td colspan="8" class="text-center">
+        <td colspan="9" class="text-center">
           <div class="empty-state">
             <i data-lucide="clock"></i>
             <p>No hay marcaciones para esta fecha</p>
@@ -833,6 +858,90 @@ const ModuloAsistencia = (() => {
   function cleanup() {
     if (_scannerActive) _detenerScanner();
     MapViewer.closeMap();
+  }
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // EDITAR MARCACIÓN
+  // ─────────────────────────────────────────────────────────────────────────
+  async function _editarMarcacion(id) {
+    const asistencias = AppState.get('asistencias') || [];
+    const marcacion = asistencias.find(a => (a.ID_Marcacion === id || a.ID_Asistencia === id));
+    
+    if (!marcacion) {
+      Alerts.error('Marcación no encontrada');
+      return;
+    }
+
+    // Aquí podrías abrir un modal para editar la marcación
+    // Por ahora, vamos a implementar una edición simple de hora real
+    const nuevaHora = prompt(`Editar hora real para ${marcacion.Nombre_Trabajador} - ${marcacion.Tipo_Marcacion}:\nHora actual: ${marcacion.Hora_Real?.substring(0, 5) || '--'}\n\nIngresa la nueva hora (formato HH:MM):`, marcacion.Hora_Real?.substring(0, 5) || '');
+    
+    if (!nuevaHora) return; // Usuario canceló
+    
+    // Validar formato de hora
+    const horaRegex = /^([01]?[0-9]|2[0-3]):[0-5][0-9]$/;
+    if (!horaRegex.test(nuevaHora)) {
+      Alerts.error('Formato de hora inválido. Usa el formato HH:MM (ej: 08:30)');
+      return;
+    }
+
+    // Actualizar localmente
+    const index = asistencias.findIndex(a => (a.ID_Marcacion === id || a.ID_Asistencia === id));
+    if (index !== -1) {
+      asistencias[index].Hora_Real = nuevaHora + ':00';
+      
+      // Recalcular estado
+      const config = AppState.get('config');
+      const tolerancia = parseInt(config.Tolerancia_Minutos || 15);
+      const estadoNuevo = _calcularEstado(marcacion.Hora_Programada, nuevaHora, tolerancia);
+      asistencias[index].Estado_Marcacion = estadoNuevo;
+      
+      AppState.set('asistencias', asistencias);
+      
+      try {
+        localStorage.setItem(LS_KEYS.ASISTENCIA_CACHE, JSON.stringify(asistencias));
+      } catch (e) {}
+      
+      // Recargar tabla
+      const fecha = document.getElementById('asistencia-filter-date')?.value || AppState.today();
+      _cargarMarcaciones(fecha);
+      
+      Alerts.success('Marcación actualizada correctamente');
+    }
+  }
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // ELIMINAR MARCACIÓN
+  // ─────────────────────────────────────────────────────────────────────────
+  async function _eliminarMarcacion(id) {
+    const asistencias = AppState.get('asistencias') || [];
+    const marcacion = asistencias.find(a => (a.ID_Marcacion === id || a.ID_Asistencia === id));
+    
+    if (!marcacion) {
+      Alerts.error('Marcación no encontrada');
+      return;
+    }
+
+    const confirmed = await Alerts.confirm(
+      `¿Eliminar la marcación de "${marcacion.Nombre_Trabajador}" - ${marcacion.Tipo_Marcacion}?\n\nHora: ${marcacion.Hora_Real?.substring(0, 5) || '--'}\nEsta acción no se puede deshacer.`,
+      'Confirmar eliminación'
+    );
+
+    if (!confirmed) return;
+
+    // Eliminar localmente
+    const nuevasAsistencias = asistencias.filter(a => (a.ID_Marcacion !== id && a.ID_Asistencia !== id));
+    AppState.set('asistencias', nuevasAsistencias);
+    
+    try {
+      localStorage.setItem(LS_KEYS.ASISTENCIA_CACHE, JSON.stringify(nuevasAsistencias));
+    } catch (e) {}
+    
+    // Recargar tabla
+    const fecha = document.getElementById('asistencia-filter-date')?.value || AppState.today();
+    _cargarMarcaciones(fecha);
+    
+    Alerts.success('Marcación eliminada correctamente');
   }
 
   return { init, cargar, cleanup };
