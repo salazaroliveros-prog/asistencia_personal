@@ -255,4 +255,10 @@
   };
 
   console.log('[FirebaseClient] Módulo cargado correctamente');
+
+  // Auto-inicializar en cuanto el módulo se carga.
+  // Los SDKs de Firebase y firebase-config.js ya fueron ejecutados antes
+  // (están declarados antes en el HTML), por lo que la config y el SDK
+  // compat están disponibles en este punto.
+  initialize();
 })();

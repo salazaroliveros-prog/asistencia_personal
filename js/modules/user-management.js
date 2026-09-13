@@ -38,9 +38,15 @@ const UserManagement = (() => {
   // ─── Verificar claims del usuario actual ─────────────────────────────────
   async function _checkCurrentUserClaims() {
     try {
-      // Para plan gratuito, cualquier usuario autenticado es considerado admin
-      const auth = window.firebase.auth();
-      const user = auth.currentUser;
+      // Usar FirebaseClient como puerta de acceso a Auth en lugar de
+      // llamar window.firebase.auth() directamente, que falla si Firebase
+      // App aún no fue inicializada.
+      if (!window.FirebaseClient || !window.FirebaseClient.isReady()) {
+        console.warn('[UserManagement] FirebaseClient no está listo todavía');
+        return;
+      }
+
+      const user = window.FirebaseClient.getCurrentUser();
       
       if (user) {
         const idTokenResult = await user.getIdTokenResult();
@@ -206,9 +212,10 @@ const UserManagement = (() => {
         Alerts.success(result.message || 'Rol cambiado exitosamente');
         
         // Forzar refresh token para aplicar cambios
-        if (window.firebase && window.firebase.auth()) {
+        if (window.FirebaseClient && window.FirebaseClient.isReady()) {
           try {
-            await window.firebase.auth().currentUser.getIdToken(true);
+            const currentUser = window.FirebaseClient.getCurrentUser();
+            if (currentUser) await currentUser.getIdToken(true);
           } catch (e) {
             console.warn('[UserManagement] Error refreshing token:', e);
           }

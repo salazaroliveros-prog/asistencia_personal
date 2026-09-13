@@ -18,6 +18,14 @@ document.addEventListener('DOMContentLoaded', async () => {
       lucide.createIcons();
     }
 
+    // 1.5 Garantizar que Firebase esté inicializado antes de que cualquier
+    // módulo intente usarlo. firebase-client.js llama initialize() automáticamente
+    // al cargarse, pero si por cualquier motivo no lo hizo (p. ej. timing), lo
+    // llamamos aquí explícitamente. La función es idempotente.
+    if (typeof FirebaseClient !== 'undefined' && !FirebaseClient.isReady()) {
+      FirebaseClient.initialize();
+    }
+
     // 2. Inicializar todos los módulos
     _initModules();
 
