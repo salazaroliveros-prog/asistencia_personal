@@ -301,7 +301,9 @@
 
 .sidebar-open .sidebar-overlay {
   display: block;
-  z-index: calc(var(--z-modal) + 1);
+  /* Debe quedar POR DEBAJO del sidebar (z-index: var(--z-modal)); con +1 el
+     overlay interceptaba los toques y bloqueaba todo el menu en movil (bug QA). */
+  z-index: calc(var(--z-modal) - 1);
 }
 
 /* ─────────────────────────────────────────────────────────────────────────────
