@@ -198,11 +198,12 @@ async function processAttendance(qrData) {
   lastScanDiv.innerHTML = `
     <div class="scan-result">
       <h3>Procesando asistencia...</h3>
-      <p>ID Trabajador: ${workerId}</p>
+      <p>ID Trabajador: ${String(workerId).replace(/[<>&"']/g, c => ({'<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;',"'":'&#39;'}[c]))}</p>
       <p class="timestamp">${new Date().toLocaleTimeString()}</p>
     </div>
   `;
 
+  let worker = null;
   try {
     const workerDoc = await getWorkerDoc(workerId);
 
@@ -210,14 +211,14 @@ async function processAttendance(qrData) {
       throw new Error(`Trabajador ${workerId} no encontrado en la base de datos`);
     }
 
-    const worker = workerDoc.data;
+    worker = workerDoc.data;
     showToast(`Asistencia registrada: ${worker.Nombre_Completo}`, "success");
 
     lastScanDiv.innerHTML = `
       <div class="scan-result">
-        <h3>${worker.Nombre_Completo}</h3>
-        <p>Puesto: ${worker.Puesto || "N/A"}</p>
-        <p>DPI: ${workerId}</p>
+        <h3>${String(worker.Nombre_Completo || '').replace(/[<>&"']/g, c => ({'<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;',"'":'&#39;'}[c]))}</h3>
+        <p>Puesto: ${String(worker.Puesto || 'N/A').replace(/[<>&"']/g, c => ({'<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;',"'":'&#39;'}[c]))}</p>
+        <p>DPI: ${String(workerId).replace(/[<>&"']/g, c => ({'<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;',"'":'&#39;'}[c]))}</p>
         <p class="timestamp">${new Date().toLocaleTimeString()}</p>
       </div>
     `;
@@ -226,8 +227,8 @@ async function processAttendance(qrData) {
 
   } catch (error) {
     console.error("Error en asistencia:", error);
-    // Si es error de red, encolar para sincronización posterior
-    if (!navigator.onLine || error.message.includes('network') || error.message.includes('offline') || error.message.includes('permission')) {
+    // Si es error de red y tenemos datos del trabajador, encolar para sincronización posterior
+    if (worker && (!navigator.onLine || error.message.includes('network') || error.message.includes('offline') || error.message.includes('permission'))) {
       await queueOfflineAttendance(workerId, worker);
     } else {
       showToast(`Error: ${error.message}`, "error");
@@ -462,7 +463,8 @@ toggleCameraBtn.addEventListener("click", () => {
 
 flashBtn.addEventListener("click", async () => {
   const track = video.srcObject?.getVideoTracks()[0];
-  if (track && track.getCapabilities().torch) {
+  const capabilities = track?.getCapabilities?.();
+  if (capabilities?.torch) {
     const imageCapture = new ImageCapture(track);
     const photoCapabilities = await imageCapture.getPhotoCapabilities();
     const torch = !photoCapabilities.torch;
