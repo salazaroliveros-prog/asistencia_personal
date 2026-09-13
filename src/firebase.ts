@@ -80,7 +80,7 @@ declare global {
 // ESTADO INTERNO
 // ─────────────────────────────────────────────────────────────────────────────
 
-let database: ReturnType<NonNullable<Window['firebase']>['firestore']> | null = null;
+let database: any = null;
 let initialized = false;
 let connectionState: ConnectionState = 'idle';
 const listeners: Array<() => void> = [];
@@ -97,11 +97,11 @@ const health: FirebaseHealth = {
 // Reconnection state
 let reconnectAttempts = 0;
 const MAX_RECONNECT_ATTEMPTS = 10;
-const BASE_RECONNECT_DELAY = 1000; // 1 second
-const MAX_RECONNECT_DELAY = 30000; // 30 seconds
+const BASE_RECONNECT_DELAY = 1000;
+const MAX_RECONNECT_DELAY = 30000;
 let reconnectTimer: ReturnType<typeof setTimeout> | null = null;
 let healthCheckInterval: ReturnType<typeof setInterval> | null = null;
-const HEALTH_CHECK_INTERVAL = 30000; // 30 seconds
+const HEALTH_CHECK_INTERVAL = 30000;
 const HEALTH_FAILURE_THRESHOLD = 3;
 
 // ─────────────────────────────────────────────────────────────────────────────
