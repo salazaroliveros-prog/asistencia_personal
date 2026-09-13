@@ -4,9 +4,9 @@
  * @version 1.0.0
  */
 
-const CACHE_NAME    = 'cpc-v1.3.0';
-const CACHE_STATIC  = 'cpc-static-v1.3.0';
-const CACHE_DYNAMIC = 'cpc-dynamic-v1.3.0';
+const CACHE_NAME    = 'cpc-v1.4.0';
+const CACHE_STATIC  = 'cpc-static-v1.4.0';
+const CACHE_DYNAMIC = 'cpc-dynamic-v1.4.0';
 
 // Assets críticos que se precargan en el install
 const PRECACHE_ASSETS = [
@@ -14,7 +14,12 @@ const PRECACHE_ASSETS = [
   '/index.html',
   '/manifest.json',
   '/favicon.svg',
+  '/public/pwa/icons/icon-72.png',
+  '/public/pwa/icons/icon-96.png',
+  '/public/pwa/icons/icon-128.png',
+  '/public/pwa/icons/icon-144.png',
   '/public/pwa/icons/icon-192.png',
+  '/public/pwa/icons/icon-384.png',
   '/public/pwa/icons/icon-512.png',
   '/css/main.css',
   '/css/glassmorphism.css',
@@ -51,7 +56,7 @@ const PRECACHE_ASSETS = [
 
 // ─── INSTALL ─────────────────────────────────────────────────────────────────
 self.addEventListener('install', (event) => {
-  console.log('[SW] Instalando v1.3.0...');
+  console.log('[SW] Instalando v1.4.0...');
   event.waitUntil(
     caches.open(CACHE_STATIC).then((cache) => {
       console.log('[SW] Pre-cacheando assets estáticos...');
