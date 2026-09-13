@@ -50,7 +50,9 @@ self.addEventListener('install', (event) => {
           })
         )
       );
-    }).then(() => self.skipWaiting())
+    })
+    // NO skipWaiting() aquí: la nueva versión espera a que el usuario
+    // confirme desde la UI ("Actualizar ahora") para activarse.
   );
 });
 

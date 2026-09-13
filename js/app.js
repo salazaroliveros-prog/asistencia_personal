@@ -220,6 +220,176 @@ function _hidePwaUi(installButton, banner) {
   if (banner) banner.hidden = true;
 }
 
+/**
+ * Inicializa el listener de actualizaciones del Service Worker.
+ *
+ * Muestra una notificación / modal cuando el SW detecta una nueva versión
+ * disponible y permite al usuario seleccionar si quiere actualizar o volver
+ * a usar la versión actual.
+ */
+async function _initServiceWorkerUpdates() {
+  if (!('serviceWorker' in navigator)) {
+    return;
+  }
+
+  try {
+    const registration = await navigator.serviceWorker.ready;
+  } catch (err) {
+    console.warn('[App] No se pudo obtener la registration del Service Worker:', err);
+    return;
+  }
+
+  // Escuchar actualizaciones durante la sesión
+  registration.addEventListener('updatefound', () => {
+    const newWorker = registration.installing;
+    if (!newWorker) return;
+
+    newWorker.addEventListener('statechange', () => {
+      if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+        // Hay una nueva versión lista para activarse.
+        _showUpdateNotification(registration, newWorker);
+      }
+    });
+  });
+
+  // Si al cargar ya existe un SW con nueva versión instalada pero esperando,
+  // mostramos la notificación inmediatamente.
+  if (registration.waiting) {
+    _showUpdateNotification(registration, registration.waiting);
+  }
+}
+
+/**
+ * Muestra una notificación / modal de actualización de la aplicación.
+ *
+ * El usuario puede elegir:
+ *   - "Actualizar ahora": activa el SW más reciente y recarga la página.
+ *   - "Más tarde": descarta la notificación (la app continúa con la versión
+ *     actual hasta la próxima actualización o el siguiente reinicio del SW).
+ */
+function _showUpdateNotification(registration, newWorker) {
+  const existing = document.getElementById('sw-update-notification');
+  if (existing) return;
+
+  // Modal simple con botones "Actualizar ahora" y "Más tarde"
+  const modal = document.createElement('div');
+  modal.id = 'sw-update-notification';
+  modal.innerHTML = `
+    <div class="update-modal-overlay">
+      <div class="update-modal" role="dialog" aria-modal="true" aria-labelledby="update-modal-title">
+        <div class="update-modal-header">
+          <h3 id="update-modal-title">Nueva versión disponible</h3>
+          <button class="update-modal-close" aria-label="Cerrar notificación de actualización">&times;</button>
+        </div>
+        <div class="update-modal-body">
+          <p>Hay una nueva versión de la aplicación. ¿Desea actualizar ahora para obtener las últimas mejoras?</p>
+        </div>
+        <div class="update-modal-footer">
+          <button class="update-modal-dismiss" data-action="dismiss">Más tarde</button>
+          <button class="update-modal-confirm" data-action="update">Actualizar ahora</button>
+        </div>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(modal);
+
+  // Aplicar estilos mínimos para el modal
+  const style = document.createElement('style');
+  style.textContent = `
+    .update-modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.5);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 9999;
+    }
+    .update-modal {
+      background: #fff;
+      border-radius: 8px;
+      max-width: 400px;
+      padding: 20px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+      color: #333;
+    }
+    .update-modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+    }
+    .update-modal-header h3 {
+      margin: 0;
+    }
+    .update-modal-close {
+      background: none;
+      border: none;
+      font-size: 20px;
+      cursor: pointer;
+      color: #666;
+    }
+    .update-modal-body {
+      margin-bottom: 16px;
+    }
+    .update-modal-footer {
+      display: flex;
+      justify-content: flex-end;
+      gap: 8px;
+    }
+    .update-modal-dismiss,
+    .update-modal-confirm {
+      padding: 8px 16px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      background: #f5f5f5;
+      cursor: pointer;
+    }
+    .update-modal-confirm {
+      background: #007bff;
+      color: #fff;
+      border-color: #007bff;
+    }
+  `;
+  document.head.appendChild(style);
+
+  // Botón cerrar (X)
+  modal.querySelector('.update-modal-close').addEventListener('click', () => {
+    modal.remove();
+    style.remove();
+  });
+
+  // Botón "Más tarde"
+  modal.querySelector('[data-action="dismiss"]').addEventListener('click', () => {
+    modal.remove();
+    style.remove();
+  });
+
+  // Botón "Actualizar ahora"
+  modal.querySelector('[data-action="update"]').addEventListener('click', async () => {
+    modal.remove();
+    style.remove();
+    // Forzar que el SW pase a la nueva versión y recargar
+    if (newWorker.state === 'installed') {
+      try {
+        await newWorker.postMessage({ type: 'SKIP_WAITING' });
+        // Esperar a que el SW se active y luego recargar la página
+        newWorker.addEventListener('statechange', function waitForActive() {
+          if (newWorker.state === 'activated') {
+            window.location.reload();
+          }
+        });
+      } catch (err) {
+        console.error('[App] Error al forzar actualización:', err);
+        Alerts.error('No se pudo actualizar automáticamente. Reinicia la aplicación para obtener la nueva versión.', 'Error');
+      }
+    } else {
+      // Fallback: recargar directamente
+      window.location.reload();
+    }
+  });
+}
+
 async function _triggerInstall() {
   if (!_deferredInstallPrompt) return;
   _deferredInstallPrompt.prompt();

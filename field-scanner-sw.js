@@ -21,9 +21,10 @@ self.addEventListener('install', (event) => {
       return cache.addAll([...STATIC_ASSETS, ...CDN_ASSETS]).catch(() => {
         console.warn('[SW] No se pudieron precachear todos los assets');
       });
+      // NO skipWaiting() aquí: la nueva versión espera la confirmación del
+      // usuario para activarse.
     })
   );
-  self.skipWaiting();
 });
 
 self.addEventListener('activate', (event) => {
