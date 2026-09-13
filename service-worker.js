@@ -4,9 +4,9 @@
  * @version 1.5.0
  */
 
-const CACHE_NAME    = 'cpc-v1.5.0';
-const CACHE_STATIC  = 'cpc-static-v1.5.0';
-const CACHE_DYNAMIC = 'cpc-dynamic-v1.5.0';
+const CACHE_NAME    = 'cpc-v1.5.1';
+const CACHE_STATIC  = 'cpc-static-v1.5.1';
+const CACHE_DYNAMIC = 'cpc-dynamic-v1.5.1';
 
 // Assets críticos que se precargan en el install
 const PRECACHE_ASSETS = [
@@ -28,6 +28,8 @@ const PRECACHE_ASSETS = [
   '/css/accessibility.css',
   '/css/campo.css',
   '/js/config.js',
+  '/js/firebase-client.js',
+  '/js/api.js',
   '/js/app.js',
   '/js/utils/alerts.js',
   '/js/utils/qr-generator.js',
@@ -57,7 +59,7 @@ const PRECACHE_ASSETS = [
 
 // ─── INSTALL ─────────────────────────────────────────────────────────────────
 self.addEventListener('install', (event) => {
-  console.log('[SW] Instalando v1.5.0...');
+  console.log('[SW] Instalando v1.5.1...');
   event.waitUntil(
     caches.open(CACHE_STATIC).then((cache) => {
       console.log('[SW] Pre-cacheando assets estáticos...');
