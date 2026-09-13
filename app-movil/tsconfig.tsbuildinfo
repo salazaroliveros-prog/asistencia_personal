@@ -1,1 +1,0 @@
-{"root":["./src/api.ts","./src/app-state.ts","./src/firebase.ts","./src/main.ts","./src/domain/attendance.ts","./src/domain/types.ts","./src/scanner/gps.ts","./src/scanner/qr.ts","./src/sync/backoff.ts","./src/sync/queue.ts","./src/utils/constants.ts"],"errors":true,"version":"5.6.3"}
