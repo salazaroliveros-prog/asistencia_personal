@@ -56,6 +56,11 @@ document.addEventListener('DOMContentLoaded', async () => {
     // 10.1 Instalación PWA cuando el navegador la ofrece
     _initPwaInstall();
 
+    // 10.2 Gestión de actualizaciones del service worker
+    if (typeof UpdateManager !== 'undefined') {
+      UpdateManager.init();
+    }
+
     // 9. Navegar a la página según el hash actual o dashboard
     _navigateToHash();
 

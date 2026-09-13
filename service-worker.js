@@ -4,9 +4,9 @@
  * @version 1.0.0
  */
 
-const CACHE_NAME    = 'cpc-v1.2.0';
-const CACHE_STATIC  = 'cpc-static-v1.2.0';
-const CACHE_DYNAMIC = 'cpc-dynamic-v1.2.0';
+const CACHE_NAME    = 'cpc-v1.3.0';
+const CACHE_STATIC  = 'cpc-static-v1.3.0';
+const CACHE_DYNAMIC = 'cpc-dynamic-v1.3.0';
 
 // Assets críticos que se precargan en el install
 const PRECACHE_ASSETS = [
@@ -20,25 +20,38 @@ const PRECACHE_ASSETS = [
   '/css/glassmorphism.css',
   '/css/components.css',
   '/css/print.css',
+  '/css/accessibility.css',
+  '/css/campo.css',
   '/js/config.js',
   '/js/app.js',
   '/js/utils/alerts.js',
   '/js/utils/qr-generator.js',
   '/js/utils/pdf-builder.js',
+  '/js/utils/logger.js',
+  '/js/utils/error-handler.js',
+  '/js/utils/realtime-validation.js',
+  '/js/utils/data-export.js',
+  '/js/utils/bulk-operations.js',
+  '/js/utils/theme-manager.js',
+  '/js/utils/keyboard-shortcuts.js',
+  '/js/utils/performance-optimizer.js',
+  '/js/utils/dashboard-enhancer.js',
+  '/js/utils/update-manager.js',
   '/js/modules/personal.js',
   '/js/modules/asistencia.js',
   '/js/modules/campo.js',
   '/js/modules/dashboard.js',
   '/js/modules/reportes.js',
   '/js/modules/ajustes.js',
-  '/css/campo.css',
+  '/js/modules/user-management.js',
+  '/js/modules/backup-manager.js',
   '/vendor/jspdf.umd.min.js',
   '/vendor/jspdf.plugin.autotable.min.js',
 ];
 
 // ─── INSTALL ─────────────────────────────────────────────────────────────────
 self.addEventListener('install', (event) => {
-  console.log('[SW] Instalando v1.2.0...');
+  console.log('[SW] Instalando v1.3.0...');
   event.waitUntil(
     caches.open(CACHE_STATIC).then((cache) => {
       console.log('[SW] Pre-cacheando assets estáticos...');
