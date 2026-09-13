@@ -359,6 +359,19 @@ async function processOfflineQueue() {
   let successCount = 0;
   for (const item of pending) {
     try {
+      let workerData = item.workerData;
+      if (!workerData || !workerData.Nombre_Completo) {
+        const workerDoc = await getWorkerDoc(item.workerId);
+        if (workerDoc.exists) {
+          workerData = workerDoc.data;
+        }
+      }
+      
+      if (!workerData) {
+        console.warn('No se pudo obtener datos del trabajador para', item.workerId);
+        continue;
+      }
+      
       await runTransaction(db, async (transaction) => {
         const asistenciaRef = collection(db, "asistencia");
         const asistenciaId = `${item.fechaHoy}_${item.dpiLimpio}`;
@@ -382,15 +395,15 @@ async function processOfflineQueue() {
         
         const asistenciaData = {
           ID_Trabajador: item.workerId,
-          Documento: item.workerData.DPI || item.workerData.Documento || item.dpiLimpio,
-          Nombre_Completo: item.workerData.Nombre_Completo || "Desconocido",
-          Puesto: item.workerData.Puesto || "N/A",
+          Documento: workerData.DPI || workerData.Documento || item.dpiLimpio,
+          Nombre_Completo: workerData.Nombre_Completo || "Desconocido",
+          Puesto: workerData.Puesto || "N/A",
           Fecha: item.fechaHoy,
-          Jefe: item.workerData.Jefe || "",
-          Telefono: item.workerData.Telefono || "",
+          Jefe: workerData.Jefe || "",
+          Telefono: workerData.Telefono || "",
           Estado_General: "Presente",
           Metodo_Registro: "QR_ESCANER_MOVIL",
-          Ubicacion_Obra: item.workerData.Ubicacion_Obra || "GPS: desconocida",
+          Ubicacion_Obra: workerData.Ubicacion_Obra || "GPS: desconocida",
           Historial_Marcaciones: historial,
           Metodos_Registro: [...new Set(metodosRegistro)],
           Ultima_Actualizacion: item.timestamp,
