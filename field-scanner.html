@@ -1,28 +1,33 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <title>Escáner de Campo — Control Personal</title>
-  <meta name="theme-color" content="#2563eb">
-  <link rel="manifest" href="/field-scanner-manifest.json">
-  <link rel="icon" type="image/svg+xml" href="/field-scanner-favicon.svg">
-  <link rel="stylesheet" href="/css/main.css">
-  <link rel="stylesheet" href="/css/campo.css">
+  <meta name="theme-color" content="#2563eb" />
+  <link rel="manifest" href="/field-scanner-manifest.json" />
+  <link rel="icon" type="image/svg+xml" href="/field-scanner-favicon.svg" />
+  <link rel="stylesheet" href="/css/main.css" />
+  <link rel="stylesheet" href="/css/campo.css" />
   <style>
-    :root { --safe-bottom: env(safe-area-inset-bottom, 0px); }
+    :root { --safe-bottom: env(safe-area-inset-bottom, 0px); --safe-top: env(safe-area-inset-top, 0px); }
     html, body { overscroll-behavior: none; }
-    body { padding-bottom: calc(16px + var(--safe-bottom)); }
+    body { padding-bottom: calc(24px + var(--safe-bottom)); }
+    .campo-header { top: calc(12px + var(--safe-top)); }
+    .campo-footer { bottom: calc(14px + var(--safe-bottom)); }
+    .campo-scanner-actions, .campo-worker-actions { padding-bottom: calc(16px + var(--safe-bottom)); }
   </style>
 </head>
 <body>
   <div id="app" class="campo-app">
     <header class="campo-header">
-      <h1>Escáner de Campo</h1>
-      <span id="campo-status" class="campo-status" role="status" aria-label="Estado de conexión">
-        <span class="dot disconnected" aria-hidden="true"></span>Offline
-      </span>
-      <button type="button" id="logout-btn" class="campo-btn ghost" hidden>Cerrar sesión</button>
+      <div class="campo-header-top">
+        <h1>Escáner de Campo</h1>
+        <span id="campo-status" class="campo-status" role="status" aria-label="Estado de conexión">
+          <span class="dot disconnected" aria-hidden="true"></span><span id="campo-status-text">Offline</span>
+        </span>
+      </div>
+      <button type="button" id="logout-btn" class="campo-btn ghost" hidden aria-label="Cerrar sesión">Cerrar sesión</button>
     </header>
 
     <main class="campo-main">
@@ -30,9 +35,9 @@
         <div class="login-card">
           <h2>Acceso restringido</h2>
           <p class="campo-hint">Ingresá el PIN del operador para habilitar el escáner.</p>
-          <form id="login-form" autocomplete="off">
+          <form id="login-form" autocomplete="off" class="login-form">
             <label for="login-pin">PIN</label>
-            <input id="login-pin" type="password" inputmode="numeric" pattern="[0-9]*" maxlength="10" placeholder="Ej: 1234" required>
+            <input id="login-pin" type="password" inputmode="numeric" pattern="[0-9]*" maxlength="10" placeholder="Ej: 1234" required />
             <button type="submit" class="campo-btn primary">Ingresar</button>
             <p id="login-error" class="login-error" hidden>PIN incorrecto</p>
           </form>
@@ -50,7 +55,7 @@
 
       <section class="campo-worker" id="campo-worker" hidden>
         <div class="campo-worker-header">
-          <img id="campo-worker-photo" class="campo-worker-photo" alt="" hidden>
+          <img id="campo-worker-photo" class="campo-worker-photo" alt="" hidden />
           <div id="campo-worker-avatar" class="campo-worker-avatar" aria-hidden="true"></div>
           <div class="campo-worker-info">
             <h2 id="campo-worker-name"></h2>
@@ -66,7 +71,7 @@
         </div>
       </section>
 
-      <section class="campo-feed" id="campo-feed">
+      <section class="campo-feed" id="campo-feed" hidden>
         <h3>Marcaciones recientes</h3>
         <ul id="campo-feed-list" class="campo-feed-list">
           <li class="campo-feed-empty">Aún no hay marcaciones hoy.</li>

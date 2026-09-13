@@ -9,6 +9,9 @@
   'use strict';
 
   // ─── Estado ─────────────────────────────────────────────────────────
+  let _statusTimer = null;
+
+  // ─── Estado ─────────────────────────────────────────────────────────
   let scanner = null;
   let scannerActive = false;
   let currentWorker = null;
@@ -86,7 +89,7 @@
     if (workerSection) workerSection.hidden = true;
     if (pinInput) {
       pinInput.value = '';
-      pinInput.focus();
+      setTimeout(() => pinInput.focus(), 50);
     }
     if (loginError) loginError.hidden = true;
 
@@ -178,8 +181,8 @@
   function subscribeRealtime() {
     if (!db) return;
     try {
-      unsubscribe = db.collection('asistencias')
-        .orderBy('Fecha_Registro', 'desc')
+      unsubscribe = db.collection('asistencia')
+        .orderBy('Fecha', 'desc')
         .limit(50)
         .onSnapshot((snapshot) => {
           const records = snapshot.docs.map(doc => ({ ID_Marcacion: doc.id, ...doc.data() }));
@@ -263,21 +266,19 @@
   async function startScanner() {
     if (typeof Html5Qrcode === 'undefined') {
       saveErrorLog(new Error('Html5Qrcode no disponible'), 'startScanner');
-      alert('El escáner QR no está disponible.');
+      showStatusMessage('Escáner QR no disponible', 'error');
       return;
     }
-    try {
-      await navigator.mediaDevices.getUserMedia({ video: true });
-    } catch (err) {
+    try { await navigator.mediaDevices.getUserMedia({ video: true }); }
+    catch (err) {
       saveErrorLog(err, 'cameraPermission');
-      alert('No se pudo acceder a la cámara. Verifica los permisos.');
+      showStatusMessage('Sin acceso a cámara', 'error');
       return;
     }
 
     const btnStart = document.getElementById('campo-btn-scan');
     const btnStop = document.getElementById('campo-btn-stop');
     
-    // Intentar cámara trasera primero, con fallback a frontal
     const tryStart = async (facingMode) => {
       scanner = new Html5Qrcode('campo-qr-reader');
       await scanner.start(
@@ -296,12 +297,12 @@
           await tryStart('user');
         } catch (err2) {
           saveErrorLog(err2, 'scannerStartFallback');
-          alert('No se pudo iniciar la cámara: ' + (err2.message || err2));
+          showStatusMessage('No se pudo iniciar la cámara', 'error');
           return;
         }
       } else {
         saveErrorLog(err, 'scannerStart');
-        alert('No se pudo iniciar la cámara: ' + (err.message || err));
+        showStatusMessage('No se pudo iniciar la cámara', 'error');
         return;
       }
     }
@@ -309,7 +310,6 @@
     if (btnStart) btnStart.hidden = true;
     if (btnStop) btnStop.hidden = false;
     
-    // Inyectar botón de flash si el dispositivo lo soporta
     injectTorchButton();
   }
 
@@ -371,12 +371,11 @@
 
   async function toggleTorch() {
     if (!_videoTrack) {
-      // Re-obtener el track actual
       try {
         const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
         _videoTrack = stream.getVideoTracks()[0];
       } catch {
-        alert('No se pudo acceder a la cámara para activar flash');
+        showStatusMessage('No se pudo acceder a la cámara para flash', 'error');
         return;
       }
     }
@@ -384,7 +383,7 @@
     try {
       const capabilities = _videoTrack.getCapabilities?.();
       if (!capabilities?.torch) {
-        alert('Flash no disponible en este dispositivo');
+        showStatusMessage('Flash no disponible', 'error');
         return;
       }
       _torchEnabled = !_torchEnabled;
@@ -396,7 +395,7 @@
       if (window.lucide) lucide.createIcons({ nodes: [torchBtn] });
     } catch (err) {
       console.error('[FieldScanner] Error toggle torch:', err);
-      alert('Error al cambiar flash: ' + err.message);
+      showStatusMessage('Error al cambiar flash', 'error');
     }
   }
 
@@ -408,7 +407,7 @@
     if (!qrData) {
       if (audio) audio.beepError();
       saveErrorLog(new Error('QR no reconocido: ' + decodedText), 'qrParse');
-      alert('QR no reconocido. Usa un carné de este sistema.');
+      showStatusMessage('QR no reconocido', 'error');
       return;
     }
 
@@ -416,7 +415,7 @@
     if (!trabajador) {
       if (audio) audio.beepError();
       saveErrorLog(new Error('Trabajador no encontrado: ' + (qrData.id || '—')), 'qrWorkerLookup');
-      alert('Trabajador no encontrado. ID: ' + (qrData.id || '—'));
+      showStatusMessage('Trabajador no encontrado', 'error');
       return;
     }
 
@@ -591,7 +590,7 @@
 
   // ─── Marcación ─────────────────────────────────────────────────────
   async function procesarMarcacion(tipo) {
-    if (!currentWorker) { alert('Escanea primero el QR del trabajador.'); return; }
+    if (!currentWorker) { showStatusMessage('Escanea primero el QR', 'error'); return; }
     if (marking) return;
     marking = true;
     habilitaBotones(false);
@@ -612,15 +611,15 @@
     }
 
     try {
-      const id = await enviarMarcacionFirestore(payload);
+      const id = await enviarMarcacionFirestore(payload, currentWorker);
       const horaReal = new Date().toLocaleTimeString('es-GT', { hour12: false }).substring(0, 5);
       if (audio) audio.beepSuccess();
-      alert(`Marcación registrada:\n${currentWorker.Nombre_Completo}\n${tipo} ${horaReal}`);
+      showStatusMessage('Marcación registrada', 'success');
       renderFeed([{ ID_Marcacion: id, ...payload, Hora_Real: horaReal, Estado_Marcacion: 'A Tiempo' }]);
     } catch (err) {
       saveErrorLog(err, 'enviarMarcacion');
       if (audio) audio.beepError();
-      alert('No se pudo registrar la marca: ' + (err.message || err));
+      showStatusMessage('No se pudo registrar la marca', 'error');
     } finally {
       marking = false;
       currentWorker = null;
@@ -629,17 +628,37 @@
     }
   }
 
-  async function enviarMarcacionFirestore(payload) {
+  async function enviarMarcacionFirestore(payload, worker) {
     if (!db) throw new Error('Firebase no disponible');
+    const docRef = db.collection('asistencia').doc();
     const doc = {
-      ...payload,
-      Operador: getOperatorInfo(),
-      Dispositivo: getDeviceInfo(),
-      Fecha_Registro: firebase.firestore.FieldValue.serverTimestamp(),
+      ID_Trabajador: payload.ID_Trabajador,
+      Documento: worker?.DPI || worker?.Documento || payload.ID_Trabajador,
+      Nombre_Completo: payload.Nombre_Trabajador || 'Desconocido',
+      Puesto: currentWorker?.Puesto || 'N/A',
+      Fecha: payload.Fecha,
+      Jefe: currentWorker?.Jefe || '',
+      Telefono: currentWorker?.Telefono || '',
+      Estado_General: 'Presente',
+      Metodo_Registro: payload.Metodo_Registro,
+      Ubicacion_Obra: payload.Ubicacion_Obra || 'GPS: desconocida',
+      Historial_Marcaciones: [
+        {
+          Fecha: payload.Fecha,
+          Hora: new Date().toLocaleTimeString('es-GT', { hour12: false }).substring(0, 5),
+          Timestamp: Date.now(),
+          Metodo_Registro: payload.Metodo_Registro,
+          Origen: 'ESCANER_CAMPO',
+        },
+      ],
+      Metodos_Registro: [payload.Metodo_Registro],
+      Ultima_Actualizacion: Date.now(),
+      updated_at: new Date().toISOString(),
     };
-    const ref = await db.collection('asistencias').add(doc);
-    saveAuditLog({ ...doc, ID_Marcacion: ref.id });
-    return ref.id;
+
+    await docRef.set(doc);
+    saveAuditLog({ ...doc, ID_Marcacion: docRef.id });
+    return docRef.id;
   }
 
   // ─── Feed ──────────────────────────────────────────────────────────
@@ -654,10 +673,10 @@
       return;
     }
     list.innerHTML = today.map(a => {
-      const hora = (a.Hora_Real || '').substring(0, 5);
+      const hora = (a.Historial_Marcaciones?.[0]?.Hora || a.Hora_Real || '').substring(0, 5);
       return `<li class="campo-feed-item">
         <span class="feed-dot" aria-hidden="true"></span>
-        <span><b>${a.Nombre_Trabajador || '—'}</b> · ${a.Tipo_Marcacion || ''}</span>
+        <span><b>${a.Nombre_Completo || a.Nombre_Trabajador || '—'}</b> · ${a.Tipo_Marcacion || ''}</span>
         <span class="feed-meta">${hora || 'registrada'}</span>
       </li>`;
     }).join('');
@@ -666,10 +685,23 @@
   // ─── Estado ────────────────────────────────────────────────────────
   function updateStatusPill(connected) {
     const pill = document.getElementById('campo-status');
-    if (pill) {
+    const text = document.getElementById('campo-status-text');
+    if (pill && text) {
       pill.classList.toggle('connected', connected);
-      pill.innerHTML = `<span class="dot ${connected ? 'connected' : 'disconnected'}" aria-hidden="true"></span>${connected ? 'En vivo' : 'Offline'}`;
+      pill.classList.toggle('disconnected', !connected);
+      text.textContent = connected ? 'En vivo' : 'Offline';
     }
+  }
+
+  function showStatusMessage(message, type = 'error') {
+    const pill = document.getElementById('campo-status');
+    const text = document.getElementById('campo-status-text');
+    if (!pill || !text) return;
+    clearTimeout(_statusTimer);
+    pill.classList.add(type === 'error' ? 'disconnected' : 'connected');
+    pill.classList.remove(type === 'error' ? 'connected' : 'disconnected');
+    text.textContent = message;
+    _statusTimer = setTimeout(() => updateStatusPill(!!db), 4000);
   }
 
   // ─── Ciclo de vida ─────────────────────────────────────────────────

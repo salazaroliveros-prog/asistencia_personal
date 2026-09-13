@@ -10,8 +10,9 @@
   <style>
     :root { --safe-bottom: env(safe-area-inset-bottom, 0px); --safe-top: env(safe-area-inset-top, 0px); }
     html, body { overscroll-behavior: none; }
-    body { padding-bottom: calc(16px + var(--safe-bottom)); }
-    .toast-container { padding-bottom: calc(20px + var(--safe-bottom)); }
+    body { padding-bottom: calc(24px + var(--safe-bottom)); }
+    .scanner-header { top: calc(12px + var(--safe-top)); }
+    .toast-container { padding-bottom: calc(24px + var(--safe-bottom)); }
   </style>
 </head>
 <body>
@@ -29,7 +30,7 @@
 
     <main class="scanner-main">
       <div class="camera-container">
-        <video id="preview" playsinline autoplay></video>
+        <video id="preview" playsinline autoplay muted></video>
         <canvas id="canvas" style="display:none;"></canvas>
         <div class="overlay">
           <div class="scan-frame">

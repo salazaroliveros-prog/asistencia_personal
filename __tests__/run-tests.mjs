@@ -191,8 +191,8 @@ function fieldScannerChecks() {
   check('field-scanner enlaza a field-scanner.js', scannerHtml.includes('field-scanner.js'));
   check('field-scanner expone FieldScanner global', scannerJs.includes('window.FieldScanner'));
   check('field-scanner inicializa Firestore', scannerJs.includes('firebase.firestore()'));
-  check('field-scanner suscribe a asistencias', scannerJs.includes("db.collection('asistencias')"));
-  check('field-scanner guarda en Firestore', scannerJs.includes("collection('asistencias').add"));
+  check('field-scanner suscribe a asistencia', scannerJs.includes("db.collection('asistencia')"));
+  check('field-scanner guarda en Firestore', scannerJs.includes("collection('asistencia').doc()") || scannerJs.includes("collection('asistencia').add"));
   check('field-scanner parsea QR', scannerJs.includes('parseQRData'));
   check('field-scanner busca trabajador local', scannerJs.includes('cpc_personal_cache'));
   check('field-scanner captura GPS', scannerJs.includes('navigator.geolocation'));
