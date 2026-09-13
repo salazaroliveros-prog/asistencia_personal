@@ -57,3 +57,5 @@ __tests__/e2e-qa-test.js.orig
 preview.log
 _browsers_install.log
 .playwright-mcp/
+
+app-movil/tsconfig.tsbuildinfo
