@@ -17,6 +17,9 @@ const ModuloAsistencia = (() => {
 
   // ─── Inicialización ───────────────────────────────────────────────────────
   function init() {
+    if (window.Logger) {
+      window.Logger.info('ModuloAsistencia', 'Inicializando módulo de asistencia');
+    }
     _bindEvents();
     _setFechaHoy();
     _initAudio();

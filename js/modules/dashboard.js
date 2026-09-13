@@ -18,6 +18,9 @@ const ModuloDashboard = (() => {
 
   // ─── Inicialización ───────────────────────────────────────────────────────
   function init() {
+    if (window.Logger) {
+      window.Logger.info('ModuloDashboard', 'Inicializando módulo de dashboard');
+    }
     _bindEvents();
     _setFechaInput();
     // Mantener las listas derivadas sincronizadas con marcaciones hechas desde
@@ -25,6 +28,11 @@ const ModuloDashboard = (() => {
     // manual del Dashboard.
     AppState.on('asistencias', _onAttendanceStateChanged);
     AppState.on('personal', _onAttendanceStateChanged);
+    
+    // Inicializar mejoras de dashboard
+    if (window.DashboardEnhancer) {
+      window.DashboardEnhancer.init();
+    }
   }
 
   function _onAttendanceStateChanged() {

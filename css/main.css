@@ -48,6 +48,247 @@ input, button, textarea, select {
   color: inherit;
 }
 
+/* ─────────────────────────────────────────────────────────────────────────────
+   ESTILOS PARA GESTIÓN DE USUARIOS Y ROLES
+   ───────────────────────────────────────────────────────────────────────────── */
+.user-claims-status {
+  margin: 15px 0;
+  padding: 15px;
+  background: rgba(0, 52, 89, 0.1);
+  border-radius: 8px;
+  border: 1px solid rgba(0, 52, 89, 0.2);
+}
+
+.claims-info p {
+  margin: 8px 0;
+  font-size: 14px;
+}
+
+.claims-info strong {
+  color: #003459;
+}
+
+#current-user-role {
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+}
+
+#current-user-role.admin {
+  background: #28a745;
+  color: white;
+}
+
+#current-user-role.user {
+  background: #6c757d;
+  color: white;
+}
+
+.admin-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 15px;
+}
+
+.users-management-container {
+  margin-top: 20px;
+  padding-top: 20px;
+  border-top: 1px solid rgba(0, 52, 89, 0.2);
+}
+
+.users-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 15px;
+}
+
+.users-header h4 {
+  margin: 0;
+  color: #003459;
+}
+
+.users-table-container {
+  background: white;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.users-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.users-table th,
+.users-table td {
+  padding: 12px;
+  text-align: left;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.users-table th {
+  background: #f8f9fa;
+  font-weight: 600;
+  color: #003459;
+}
+
+.users-table tr:hover {
+  background: #f8f9fa;
+}
+
+.badge {
+  display: inline-block;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.badge-green {
+  background: #28a745;
+  color: white;
+}
+
+.badge-gray {
+  background: #6c757d;
+  color: white;
+}
+
+.badge-red {
+  background: #dc3545;
+  color: white;
+}
+
+.user-actions {
+  display: flex;
+  gap: 5px;
+}
+
+.user-actions button {
+  padding: 4px 8px;
+  font-size: 12px;
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   ESTILOS PARA VALIDACIÓN EN TIEMPO REAL
+   ───────────────────────────────────────────────────────────────────────────── */
+input.valid {
+  border-color: #28a745 !important;
+  box-shadow: 0 0 0 2px rgba(40, 167, 69, 0.1);
+}
+
+input.invalid {
+  border-color: #dc3545 !important;
+  box-shadow: 0 0 0 2px rgba(220, 53, 69, 0.1);
+}
+
+.validation-feedback {
+  display: block;
+  font-size: 12px;
+  margin-top: 4px;
+  animation: fadeIn 0.3s ease-in;
+}
+
+.validation-feedback.success {
+  color: #28a745;
+}
+
+.validation-feedback.error {
+  color: #dc3545;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-5px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   ANIMACIONES Y TRANSICIONES
+   ───────────────────────────────────────────────────────────────────────────── */
+.fade-in {
+  animation: fadeIn 0.3s ease-in;
+}
+
+.slide-in {
+  animation: slideIn 0.3s ease-out;
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateX(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   TEMAS PERSONALIZABLES
+   ───────────────────────────────────────────────────────────────────────────── */
+[data-theme="dark"] {
+  --bg-primary: #1a1a2e;
+  --bg-secondary: #16213e;
+  --text-primary: #eaeaea;
+  --text-secondary: #a0a0a0;
+  --accent: #e94560;
+}
+
+[data-theme="light"] {
+  --bg-primary: #ffffff;
+  --bg-secondary: #f8f9fa;
+  --text-primary: #333333;
+  --text-secondary: #666666;
+  --accent: #003459;
+}
+
+.theme-toggle {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  z-index: 1000;
+  background: var(--bg-secondary);
+  border: 2px solid var(--accent);
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
+}
+
+.theme-toggle:hover {
+  transform: scale(1.1);
+  box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+}
+
+.theme-toggle-sidebar {
+  background: transparent;
+  border: none;
+  color: var(--text-secondary);
+  cursor: pointer;
+  padding: 8px;
+  border-radius: 50%;
+  transition: all 0.3s ease;
+  margin-top: 10px;
+}
+
+.theme-toggle-sidebar:hover {
+  background: rgba(255,255,255,0.1);
+  color: var(--text-primary);
+  transform: scale(1.1);
+}
+
 button {
   cursor: pointer;
   border: none;

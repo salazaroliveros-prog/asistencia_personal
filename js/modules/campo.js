@@ -30,6 +30,9 @@ const ModuloCampo = (() => {
 
   // ─── Inicialización ─────────────────────────────────────────────────────
   function init() {
+    if (window.Logger) {
+      window.Logger.info('ModuloCampo', 'Inicializando módulo de campo');
+    }
     _bindEvents();
     _initAudio();
     _renderMarkButtons();

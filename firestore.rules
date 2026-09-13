@@ -1,9 +1,122 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    // La aplicación usa Authentication anónima. Publica estas reglas después
-    // de habilitar Anonymous Authentication en Firebase Console.
-    match /{document=**} {
+    
+    // ─────────────────────────────────────────────────────────────────────────
+    // FUNCIONES DE AYUDA
+    // ─────────────────────────────────────────────────────────────────────────
+    
+    // Verifica si el usuario es administrador
+    // Para plan gratuito sin Cloud Functions, cualquier usuario autenticado tiene acceso completo
+    // TODO: Para plan Blaze con Cloud Functions, cambiar a: return request.auth != null && request.auth.token.admin == true;
+    function isAdmin() {
+      return request.auth != null;
+    }
+    
+    // Valida que un string no esté vacío y tenga longitud razonable
+    function isValidString(value, min, max) {
+      return value is string && value.length >= min && value.length <= max;
+    }
+    
+    // Valida estructura básica de trabajador
+    function isValidWorkerData(data) {
+      return data.keys().hasAll(['ID_Trabajador', 'Nombre_Completo', 'DPI_CUI', 'Puesto']) &&
+             isValidString(data.ID_Trabajador, 1, 50) &&
+             isValidString(data.Nombre_Completo, 2, 100) &&
+             isValidString(data.DPI_CUI, 10, 20) &&
+             isValidString(data.Puesto, 2, 50) &&
+             data.Estado in ['Activo', 'Inactivo', 'Eliminado'];
+    }
+    
+    // Valida estructura básica de asistencia
+    function isValidAttendanceData(data) {
+      return data.keys().hasAll(['ID_Marcacion', 'ID_Trabajador', 'Nombre_Trabajador', 'Fecha', 'Tipo_Marcacion', 'Hora_Real']) &&
+             isValidString(data.ID_Marcacion, 1, 50) &&
+             isValidString(data.ID_Trabajador, 1, 50) &&
+             isValidString(data.Nombre_Trabajador, 2, 100) &&
+             isValidString(data.Fecha, 10, 10) && // YYYY-MM-DD
+             data.Tipo_Marcacion in ['Entrada', 'Salida_Receso', 'Regreso_Receso', 'Salida_Obra'] &&
+             isValidString(data.Hora_Real, 5, 8) && // HH:MM or HH:MM:SS
+             data.Estado_Marcacion in ['A Tiempo', 'Puntual', 'Tolerancia', 'Atraso', 'Ausencia'];
+    }
+    
+    // ─────────────────────────────────────────────────────────────────────────
+    // COLECCIÓN: PERSONAL
+    // ─────────────────────────────────────────────────────────────────────────
+    match /personal/{workerId} {
+      // Cualquier usuario autenticado puede leer trabajadores
+      allow read: if request.auth != null;
+      
+      // Solo administradores pueden crear trabajadores
+      allow create: if isAdmin() && 
+                     isValidWorkerData(request.resource.data) &&
+                     request.resource.data.keys().size() <= 15; // Límite de campos
+      
+      // Solo administradores pueden actualizar, y solo campos permitidos
+      allow update: if isAdmin() &&
+                    isValidWorkerData(request.resource.data) &&
+                    request.resource.data.diff(resource.data).affectedKeys()
+                      .hasOnly(['Nombre_Completo', 'DPI_CUI', 'Puesto', 'Jefe_Inmediato', 
+                               'Telefono', 'WhatsApp', 'Direccion', 'Fotografia_URL', 'Estado']) &&
+                    request.resource.data.keys().size() <= 15;
+      
+      // Solo administradores pueden eliminar (marcar como Eliminado)
+      allow delete: if isAdmin();
+    }
+    
+    // ─────────────────────────────────────────────────────────────────────────
+    // COLECCIÓN: ASISTENCIAS
+    // ─────────────────────────────────────────────────────────────────────────
+    match /asistencias/{attendanceId} {
+      // Cualquier usuario autenticado puede leer asistencias
+      allow read: if request.auth != null;
+      
+      // Cualquier usuario autenticado puede crear asistencias (para marcación en campo)
+      allow create: if request.auth != null &&
+                     isValidAttendanceData(request.resource.data) &&
+                     request.resource.data.keys().size() <= 20; // Límite de campos
+      
+      // No permitir actualizaciones de asistencias (prevenir manipulación)
+      allow update: if false;
+      
+      // Solo administradores pueden eliminar asistencias
+      allow delete: if isAdmin();
+    }
+    
+    // ─────────────────────────────────────────────────────────────────────────
+    // COLECCIÓN: CONFIGURACIÓN
+    // ─────────────────────────────────────────────────────────────────────────
+    match /configuracion/{configId} {
+      // Solo administradores pueden leer/escribir configuración
+      allow read, write: if isAdmin() &&
+                         request.resource.data.keys().size() <= 30;
+    }
+    
+    // ─────────────────────────────────────────────────────────────────────────
+    // COLECCIÓN: ALERTAS
+    // ─────────────────────────────────────────────────────────────────────────
+    match /alertas/{alertId} {
+      // Cualquier usuario autenticado puede leer alertas
+      allow read: if request.auth != null;
+      
+      // Solo administradores pueden crear alertas
+      allow create: if isAdmin() &&
+                     request.resource.data.keys().size() <= 15;
+      
+      // Cualquier usuario puede marcar alerta como revisada
+      allow update: if request.auth != null &&
+                    request.resource.data.diff(resource.data).affectedKeys()
+                      .hasOnly(['Revisada']) &&
+                    request.resource.data.Revisada == true;
+      
+      // Solo administradores pueden eliminar alertas
+      allow delete: if isAdmin();
+    }
+    
+    // ─────────────────────────────────────────────────────────────────────────
+    // COLECCIÓN: HEALTH (para health checks)
+    // ─────────────────────────────────────────────────────────────────────────
+    match /health/{healthId} {
       allow read, write: if request.auth != null;
     }
   }

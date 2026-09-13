@@ -11,7 +11,7 @@ export default defineConfig({
   outputDir: '__e2e__/output',
   snapshotDir: '__e2e__/snapshots',
   use: {
-    baseURL: 'http://localhost:3800',
+    baseURL: 'http://localhost:3801',
     viewport: { width: 390, height: 844 }, // iPhone 12-like
     deviceScaleFactor: 3,
     isMobile: true,

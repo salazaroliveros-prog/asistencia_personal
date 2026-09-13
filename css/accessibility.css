@@ -1,0 +1,161 @@
+/* ═══════════════════════════════════════════════════════════════════════════
+   CONTROL PERSONAL CAMPO — accessibility.css
+   Mejoras de accesibilidad para WCAG 2.1 AA compliance
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* Focus visible para navegación por teclado */
+*:focus-visible {
+  outline: 2px solid #003459;
+  outline-offset: 2px;
+}
+
+/* Skip link mejorado */
+.skip-link {
+  position: absolute;
+  top: -40px;
+  left: 0;
+  background: #003459;
+  color: white;
+  padding: 8px 16px;
+  z-index: 10000;
+  transition: top 0.3s;
+}
+
+.skip-link:focus {
+  top: 0;
+}
+
+/* Contraste mejorado para elementos interactivos */
+button:focus,
+a:focus,
+input:focus,
+select:focus,
+textarea:focus {
+  outline: 2px solid #003459;
+  outline-offset: 2px;
+}
+
+/* Labels mejorados */
+.form-label {
+  font-weight: 600;
+  color: #003459;
+  margin-bottom: 4px;
+  display: block;
+}
+
+/* Indicadores de estado accesibles */
+[aria-busy="true"] {
+  cursor: wait;
+}
+
+[aria-disabled="true"] {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* Landmarks mejorados */
+[role="navigation"] a:focus,
+[role="main"] button:focus,
+[role="banner"] button:focus {
+  position: relative;
+  z-index: 1;
+}
+
+/* Animaciones que respetan prefers-reduced-motion */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* Tab index mejorado */
+.modal-content {
+  outline: none;
+}
+
+/* Color contrast checks */
+.text-muted {
+  color: #4a5568; /* Mejorado para WCAG AA */
+}
+
+/* Error states accesibles */
+input.invalid {
+  border: 2px solid #dc3545;
+}
+
+input.invalid + .validation-feedback::before {
+  content: "⚠️ ";
+  margin-right: 4px;
+}
+
+/* Success states accesibles */
+input.valid {
+  border: 2px solid #28a745;
+}
+
+input.valid + .validation-feedback::before {
+  content: "✓ ";
+  margin-right: 4px;
+}
+
+/* Loading states accesibles */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border-width: 0;
+}
+
+/* Keyboard help styles */
+.keyboard-help {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: white;
+  padding: 30px;
+  border-radius: 8px;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+  z-index: 10000;
+  max-width: 400px;
+  width: 90%;
+}
+
+.keyboard-help-content h3 {
+  margin-bottom: 20px;
+  color: #003459;
+}
+
+.keyboard-help ul {
+  list-style: none;
+  padding: 0;
+}
+
+.keyboard-help li {
+  padding: 8px 0;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.keyboard-help li:last-child {
+  border-bottom: none;
+}
+
+.keyboard-help kbd {
+  background: #f8f9fa;
+  border: 1px solid #d0d0d0;
+  border-radius: 4px;
+  padding: 2px 6px;
+  font-family: monospace;
+  font-size: 14px;
+  margin-right: 8px;
+}

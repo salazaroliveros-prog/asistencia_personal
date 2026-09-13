@@ -69,9 +69,13 @@ const PDFBuilder = (() => {
 
     // ─── Línea azul superior ─────────────────────────────────────────────
     doc.setFillColor(...COLORS.primary);
-    doc.rect(0, 0, pageW, 5, 'F');
+    doc.rect(0, 0, pageW, 6, 'F');
 
-    y = 12;
+    // ─── Línea decorativa secundaria ───────────────────────────────────
+    doc.setFillColor(...COLORS.dark);
+    doc.rect(0, 6, pageW, 2, 'F');
+
+    y = 14;
 
     // ─── Logo (si existe) ─────────────────────────────────────────────────
     const logo = config.Logo_Base64;
@@ -79,10 +83,10 @@ const PDFBuilder = (() => {
 
     if (logo && logo.startsWith('data:image')) {
       try {
-        const logoH = 20;
-        logoWidth   = 20;
+        const logoH = 25;
+        logoWidth   = 25;
         doc.addImage(logo, 'PNG', margin, y, logoWidth, logoH);
-        logoWidth += 6; // espacio después del logo
+        logoWidth += 8; // espacio después del logo
       } catch (e) {
         logoWidth = 0;
       }
@@ -94,17 +98,17 @@ const PDFBuilder = (() => {
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(FONTS.xs);
     doc.setTextColor(...COLORS.primary);
-    doc.text(APP_NAME, textX, y + 4);
+    doc.text(APP_NAME.toUpperCase(), textX, y + 4);
 
     doc.setFont('helvetica', 'bold');
-    doc.setFontSize(FONTS.h2);
+    doc.setFontSize(FONTS.h1);
     doc.setTextColor(...COLORS.dark);
-    doc.text(tipoReporte.toUpperCase(), textX, y + 11);
+    doc.text(tipoReporte.toUpperCase(), textX, y + 12);
 
     doc.setFont('helvetica', 'normal');
-    doc.setFontSize(FONTS.sm);
+    doc.setFontSize(FONTS.h3);
     doc.setTextColor(...COLORS.textMuted);
-    doc.text(config.Nombre_Obra || 'Obra Principal', textX, y + 17);
+    doc.text(config.Nombre_Obra || 'Obra Principal', textX, y + 20);
 
     // ─── Metadatos (derecha) ─────────────────────────────────────────────
     const metaX = pageW - margin;
@@ -113,10 +117,11 @@ const PDFBuilder = (() => {
       { label: 'Encargado:', value: config.Encargado || 'Administrador' },
       { label: 'Total Trabajadores:', value: String(totalTrabajadores) },
       { label: 'Emitido:', value: _formatDate(new Date()) + ' ' + _formatTime(new Date()) },
+      { label: 'Documento:', value: 'CONFIDENCIAL' },
     ];
 
     metaLines.forEach((item, i) => {
-      const lineY = y + 4 + (i * 5);
+      const lineY = y + 4 + (i * 5.5);
       doc.setFont('helvetica', 'bold');
       doc.setFontSize(FONTS.xs);
       doc.setTextColor(...COLORS.textMuted);
@@ -127,13 +132,13 @@ const PDFBuilder = (() => {
       doc.text(item.value, metaX - doc.getTextWidth(item.value), lineY);
     });
 
-    y += 24;
+    y += 28;
 
     // ─── Línea separadora ─────────────────────────────────────────────────
     doc.setDrawColor(...COLORS.primary);
-    doc.setLineWidth(0.8);
+    doc.setLineWidth(1);
     doc.line(margin, y, pageW - margin, y);
-    y += 6;
+    y += 8;
 
     return y;
   }
@@ -154,32 +159,60 @@ const PDFBuilder = (() => {
 
       // Línea superior del footer
       doc.setDrawColor(...COLORS.grayBorder);
+      doc.setLineWidth(0.5);
+      doc.line(margin, pageH - 20, pageW - margin, pageH - 20);
+
+      // Línea decorativa secundaria
+      doc.setDrawColor(...COLORS.primary);
       doc.setLineWidth(0.3);
-      doc.line(margin, pageH - 18, pageW - margin, pageH - 18);
+      doc.line(margin, pageH - 20, pageW - margin, pageH - 20);
 
       // Texto footer izquierda
       doc.setFont('helvetica', 'normal');
-      doc.setFontSize(6.5);
+      doc.setFontSize(7);
       doc.setTextColor(...COLORS.textMuted);
       doc.text(
         `${config.Nombre_Obra || 'Obra Principal'} — ${APP_NAME} v${APP_VERSION}`,
         margin,
-        pageH - 12
+        pageH - 13
+      );
+
+      // Información adicional
+      doc.setFontSize(6);
+      doc.text(
+        `Sistema de Control de Asistencia — Documento Oficial`,
+        margin,
+        pageH - 8
       );
 
       // Paginación (derecha)
+      doc.setFontSize(7);
       doc.text(
         `Página ${i} de ${pageCount}`,
         pageW - margin,
-        pageH - 12,
+        pageH - 13,
         { align: 'right' }
       );
 
-      // Firma
+      // Confidencial (centro)
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(7);
+      doc.setTextColor(...COLORS.red);
       doc.text(
-        `Confidencial — Generado el ${_formatDate(new Date())}`,
+        'DOCUMENTO CONFIDENCIAL',
         pageW / 2,
-        pageH - 12,
+        pageH - 13,
+        { align: 'center' }
+      );
+
+      // Fecha generación (centro, abajo)
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(6);
+      doc.setTextColor(...COLORS.textMuted);
+      doc.text(
+        `Generado el ${_formatDate(new Date())} a las ${_formatTime(new Date())}`,
+        pageW / 2,
+        pageH - 8,
         { align: 'center' }
       );
     }
@@ -520,8 +553,9 @@ const PDFBuilder = (() => {
   function exportarCSV(asistencias, filename = 'asistencias.csv', fechaInicio = '', fechaFin = fechaInicio) {
     const personalMap = new Map((AppState.get('personal') || []).map(p => [p.ID_Trabajador, p]));
     const headers = [
-      'ID_Marcacion', 'ID_Trabajador', 'Nombre', 'DPI_CUI', 'Puesto', 'Fecha', 'Tipo', 'H_Programada',
-      'H_Real', 'Estado', 'Metodo', 'H_Extra', 'Obra'
+      'ID_Marcacion', 'ID_Trabajador', 'Nombre_Completo', 'DPI_CUI', 'Puesto', 'Jefe_Inmediato',
+      'Fecha', 'Tipo_Marcacion', 'Hora_Programada', 'Hora_Real', 'Estado_Marcacion', 
+      'Estado_General', 'Metodo_Registro', 'Horas_Extra', 'Ubicacion_Obra', 'Ultima_Actualizacion'
     ];
 
     const presentesIds = new Set(asistencias.filter(a => a.Tipo_Marcacion === 'Entrada').map(a => a.ID_Trabajador));
@@ -530,21 +564,24 @@ const PDFBuilder = (() => {
       : [];
     const rawRows = [...asistencias, ...absentRows].map(a => a.__absence ? [
       '', a.worker.ID_Trabajador || '', a.worker.Nombre_Completo || '', a.worker.DPI_CUI || '',
-      a.worker.Puesto || '', fechaInicio, '', '', '', 'Ausencia', '', '0', '',
+      a.worker.Puesto || '', a.worker.Jefe_Inmediato || '', fechaInicio, '', '', '', 'Ausencia', '', '', '0', '', '',
     ] : [
       a.ID_Marcacion || a.ID_Asistencia || a.ID_Registro || '',
       a.ID_Trabajador    || '',
       a.Nombre_Trabajador || personalMap.get(a.ID_Trabajador)?.Nombre_Completo || '',
       a.DPI_CUI || personalMap.get(a.ID_Trabajador)?.DPI_CUI || '',
       personalMap.get(a.ID_Trabajador)?.Puesto || '',
+      personalMap.get(a.ID_Trabajador)?.Jefe_Inmediato || '',
       a.Fecha            || '',
       a.Tipo_Marcacion   || '',
       a.Hora_Programada  || '',
       a.Hora_Real        ? a.Hora_Real.substring(0, 5) : '',
       a.Estado_Marcacion || '',
-       a.Metodo_Registro  || '',
+      a.Estado_General   || '',
+      a.Metodo_Registro  || '',
       a.Horas_Extra      || '0',
       a.Ubicacion_Obra   || '',
+      a.Ultima_Actualizacion ? new Date(a.Ultima_Actualizacion).toLocaleString('es-GT') : '',
     ]);
     const rows = rawRows.map(row => row.map(v => `"${String(v).replace(/"/g, '""')}"`));
 

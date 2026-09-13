@@ -23,6 +23,9 @@ const ModuloPersonal = (() => {
 
   // ─── Inicialización ───────────────────────────────────────────────────────
   function init() {
+    if (window.Logger) {
+      window.Logger.info('ModuloPersonal', 'Inicializando módulo de personal');
+    }
     _bindEvents();
     _setDefaultDate();
   }
@@ -441,7 +444,19 @@ const ModuloPersonal = (() => {
   }
 
   async function _guardarPersonal() {
-    if (!_validateForm()) return;
+    if (window.Logger) {
+      window.Logger.info('ModuloPersonal', 'Iniciando guardado de trabajador', { 
+        isEdit: !!_editingId,
+        hasPhoto: !!_fotoBase64
+      });
+    }
+
+    if (!_validateForm()) {
+      if (window.Logger) {
+        window.Logger.warn('ModuloPersonal', 'Validación de formulario fallida');
+      }
+      return;
+    }
 
     const payload = {
       id:         _editingId,
@@ -459,6 +474,11 @@ const ModuloPersonal = (() => {
     const validation = Validators.validateTrabajador(payload);
     if (!validation.valid) {
       const firstError = validation.errors[0];
+      if (window.Logger) {
+        window.Logger.warn('ModuloPersonal', 'Validación de trabajador fallida', { 
+          error: firstError.error 
+        });
+      }
       Alerts.error(firstError.error, 'Error de validación');
       return;
     }
@@ -466,6 +486,12 @@ const ModuloPersonal = (() => {
     // Verificar que el DPI no esté registrado en otro trabajador
     const dpiCheck = _checkDPIDuplicate(payload.dpi, _editingId);
     if (dpiCheck.duplicated) {
+      if (window.Logger) {
+        window.Logger.warn('ModuloPersonal', 'DPI duplicado detectado', { 
+          dpi: payload.dpi,
+          existingWorker: dpiCheck.existingWorker.Nombre_Completo
+        });
+      }
       Alerts.error(
         `El DPI ${payload.dpi} ya está registrado a nombre de "${dpiCheck.existingWorker.Nombre_Completo}" (${dpiCheck.existingWorker.ID_Trabajador}). No se permiten DPI duplicados.`,
         'DPI duplicado'
@@ -479,20 +505,30 @@ const ModuloPersonal = (() => {
       payload.whatsapp = `https://wa.me/502${numWA}`;
     }
 
-    // ── Modo offline: sin URL configurada, guardar localmente ──────────────
+    // ── Modo offline: sin URL configurado, guardar localmente ──────────────
     if (AppState.get('backendMode') !== 'firestore') {
       const result = _guardarPersonalLocal(payload, !!_editingId);
       if (result.success) {
+        if (window.Logger) {
+          window.Logger.info('ModuloPersonal', 'Trabajador guardado localmente', { 
+            isEdit: !!_editingId 
+          });
+        }
         Alerts.success(result.message);
         _cerrarModal('modal-personal');
         _filtrarTabla();
       } else {
+        if (window.Logger) {
+          window.Logger.error('ModuloPersonal', 'Error al guardar localmente', { 
+            error: result.error 
+          });
+        }
         Alerts.error(result.error || 'Error al guardar localmente', 'Error');
       }
       return;
     }
 
-    // ── Modo online: enviar al GAS ─────────────────────────────────────────
+    // ── Modo online: enviar a Firestore ─────────────────────────────────────────
     const loader  = Alerts.loading(_editingId ? 'Actualizando trabajador...' : 'Registrando trabajador...');
     const btnSave = document.getElementById('btn-guardar-personal');
     if (btnSave) btnSave.disabled = true;
@@ -508,15 +544,37 @@ const ModuloPersonal = (() => {
       loader.close();
 
       if (result.success) {
+        if (window.Logger) {
+          window.Logger.info('ModuloPersonal', 'Trabajador guardado exitosamente en Firestore', { 
+            isEdit: !!_editingId,
+            workerId: payload.id
+          });
+        }
         Alerts.success(result.message || (_editingId ? 'Trabajador actualizado' : 'Trabajador registrado'));
         _cerrarModal('modal-personal');
         _filtrarTabla();
       } else {
+        if (window.Logger) {
+          window.Logger.error('ModuloPersonal', 'Error al guardar en Firestore', { 
+            error: result.error 
+          });
+        }
         Alerts.error(result.error || 'Error al guardar', 'Error');
       }
     } catch (err) {
       loader.close();
-      Alerts.error(err.message, 'Error de conexión');
+      if (window.Logger) {
+        window.Logger.error('ModuloPersonal', 'Excepción al guardar trabajador', { 
+          error: err.message,
+          stack: err.stack
+        });
+      }
+      if (window.ErrorHandler) {
+        const handled = window.ErrorHandler.handle(err, { context: 'guardarPersonal' });
+        Alerts.error(handled.message, 'Error de conexión');
+      } else {
+        Alerts.error(err.message, 'Error de conexión');
+      }
     } finally {
       if (btnSave) btnSave.disabled = false;
     }

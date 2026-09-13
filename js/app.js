@@ -82,6 +82,11 @@ function _initModules() {
   ModuloDashboard.init();
   ModuloReportes.init();
   ModuloAjustes.init();
+  UserManagement.init();
+  BackupManager.init();
+  ThemeManager.init();
+  KeyboardShortcuts.init();
+  PerformanceOptimizer.init();
 }
 
 // ─────────────────────────────────────────────────────────────────────────────

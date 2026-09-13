@@ -68,6 +68,9 @@ declare global {
       };
         FieldValue: { serverTimestamp(): unknown };
       };
+      functions(): {
+        httpsCallable(name: string): (data: unknown) => Promise<{ data: unknown }>;
+      };
     };
     FirebaseClient: FirebaseAdapter;
   }
