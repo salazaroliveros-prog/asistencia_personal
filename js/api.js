@@ -183,16 +183,31 @@
   }
 
   async function eliminarPersonal(workerId) {
-    const update = { Estado: 'Inactivo', Fecha_Eliminacion: new Date().toISOString() };
     try {
       if (connected()) {
-        await FirebaseClient.save('personal', workerId, update);
+        // Firestore allow update requiere isValidWorkerData → documento completo
+        const personal = AppState.get('personal') || [];
+        const existing = personal.find(w => w.ID_Trabajador === workerId);
+        if (!existing) return { success: false, error: 'Trabajador no encontrado en cache' };
+        const updateFields = {
+          ID_Trabajador:   existing.ID_Trabajador,
+          Nombre_Completo: existing.Nombre_Completo,
+          DPI_CUI:         existing.DPI_CUI,
+          Puesto:          existing.Puesto,
+          Jefe_Inmediato:  existing.Jefe_Inmediato  || '',
+          Telefono:        existing.Telefono        || '',
+          WhatsApp:        existing.WhatsApp        || '',
+          Direccion:       existing.Direccion       || '',
+          Fotografia_URL:  existing.Fotografia_URL  || '',
+          Estado:          'Inactivo',
+        };
+        await FirebaseClient.save('personal', workerId, updateFields, true);
         await obtenerPersonal();
         return { success: true };
       } else {
         const personal = AppState.get('personal') || [];
         const updated = personal.map(w =>
-          w.ID_Trabajador === workerId ? { ...w, ...update } : w
+          w.ID_Trabajador === workerId ? { ...w, Estado: 'Inactivo' } : w
         );
         AppState.set('personal', updated);
         write(LS_KEYS.PERSONAL_CACHE, updated);
@@ -235,11 +250,14 @@
   async function obtenerAsistenciaRango(fechaInicio, fechaFin) {
     try {
       if (connected()) {
-        // Query eficiente con rango de fechas en Firestore
+        // Rango de fechas: orderBy omitido para evitar requerir índice compuesto.
+        // Firestore permite where+where sobre el mismo campo sin índice adicional
+        // cuando no hay orderBy. El orden se aplica en cliente.
         const asistencias = await FirebaseClient.list(
-          'asistencias', 'Fecha', null,
+          'asistencias', null, null,
           [['Fecha', '>=', fechaInicio], ['Fecha', '<=', fechaFin]]
         );
+        asistencias.sort((a, b) => (a.Fecha || '').localeCompare(b.Fecha || ''));
         return { success: true, data: asistencias };
       } else {
         const cached = read(LS_KEYS.ATTENDANCE_CACHE, []);
@@ -299,13 +317,19 @@
         const asistencias = AppState.get('asistencias') || [];
         const existing = asistencias.find(a => a.ID_Marcacion === marcacionId);
         if (!existing) return { success: false, error: 'Marcación no encontrada' };
-        const updated = {
+        const horaReal       = payload.horaReal       || existing.Hora_Real;
+        const estadoMarcacion = payload.estadoMarcacion || existing.Estado_Marcacion;
+        const horasExtra     = payload.horasExtra !== undefined ? payload.horasExtra : existing.Horas_Extra;
+        // Firestore allow update valida isValidAttendanceData sobre el documento completo
+        // → enviamos el documento completo con merge=true (solo los 3 campos cambian)
+        const fullDoc = {
           ...existing,
-          Hora_Real: payload.horaReal || existing.Hora_Real,
-          Estado_Marcacion: payload.estadoMarcacion || existing.Estado_Marcacion,
-          Horas_Extra: payload.horasExtra !== undefined ? payload.horasExtra : existing.Horas_Extra,
+          Hora_Real:        horaReal,
+          Estado_Marcacion: estadoMarcacion,
+          Horas_Extra:      horasExtra,
         };
-        await FirebaseClient.save('asistencias', marcacionId, updated);
+        await FirebaseClient.save('asistencias', marcacionId, fullDoc, true);
+        const updated = { ...existing, Hora_Real: horaReal, Estado_Marcacion: estadoMarcacion, Horas_Extra: horasExtra };
         const newCache = asistencias.map(a => a.ID_Marcacion === marcacionId ? updated : a);
         AppState.set('asistencias', newCache);
         write(LS_KEYS.ATTENDANCE_CACHE, newCache);
@@ -446,7 +470,25 @@
           };
           await FirebaseClient.save('personal', worker.ID_Trabajador, updateFields, true);
         } else if (item.type === 'personal-delete') {
-          await FirebaseClient.save('personal', item.payload.id, { Estado: 'Inactivo' }, true);
+          // Igual que eliminarPersonal: necesita documento completo para isValidWorkerData
+          const existingW = (AppState.get('personal') || []).find(w => w.ID_Trabajador === item.payload.id);
+          if (existingW) {
+            const delFields = {
+              ID_Trabajador:   existingW.ID_Trabajador,
+              Nombre_Completo: existingW.Nombre_Completo,
+              DPI_CUI:         existingW.DPI_CUI,
+              Puesto:          existingW.Puesto,
+              Jefe_Inmediato:  existingW.Jefe_Inmediato  || '',
+              Telefono:        existingW.Telefono        || '',
+              WhatsApp:        existingW.WhatsApp        || '',
+              Direccion:       existingW.Direccion       || '',
+              Fotografia_URL:  existingW.Fotografia_URL  || '',
+              Estado:          'Inactivo',
+            };
+            await FirebaseClient.save('personal', item.payload.id, delFields, true);
+          } else {
+            await FirebaseClient.save('personal', item.payload.id, { Estado: 'Inactivo' }, true);
+          }
         } else if (item.type === 'attendance-create') {
           const marcacion = normalizeAttendance(item.payload);
           await FirebaseClient.save('asistencias', marcacion.ID_Marcacion, marcacion, false);
@@ -454,10 +496,12 @@
           const existing = (AppState.get('asistencias') || []).find(a => a.ID_Marcacion === item.payload.id);
           if (!existing) throw new Error('Marcación pendiente no encontrada para actualizar');
           const patch = item.payload.payload || {};
+          // Documento completo para pasar isValidAttendanceData en Firestore
           await FirebaseClient.save('asistencias', item.payload.id, {
-            Hora_Real: patch.horaReal || existing.Hora_Real,
+            ...existing,
+            Hora_Real:        patch.horaReal        || existing.Hora_Real,
             Estado_Marcacion: patch.estadoMarcacion || existing.Estado_Marcacion,
-            Horas_Extra: patch.horasExtra !== undefined ? patch.horasExtra : existing.Horas_Extra,
+            Horas_Extra:      patch.horasExtra !== undefined ? patch.horasExtra : existing.Horas_Extra,
           }, true);
         } else if (item.type === 'attendance-delete') {
           await FirebaseClient.remove('asistencias', item.payload.id);

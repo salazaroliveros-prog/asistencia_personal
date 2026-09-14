@@ -401,7 +401,13 @@
   function _renderMarkButtons() {
     const grid = document.getElementById('campo-mark-grid');
     if (!grid) return;
-    const config = JSON.parse(localStorage.getItem('cpc_config_cache') || '{}');
+    // Lee 'cpc_config' (clave canónica de la app principal) con fallback a
+    // 'cpc_config_cache' por compatibilidad con versiones anteriores del scanner.
+    const config = JSON.parse(
+      localStorage.getItem('cpc_config') ||
+      localStorage.getItem('cpc_config_cache') ||
+      '{}'
+    );
     grid.innerHTML = MARK_TYPES.map(m => {
       const hora = config[m.horaKey] || m.fallback;
       return `

@@ -26,9 +26,9 @@ service cloud.firestore {
       return value is string && value.length >= min && value.length <= max;
     }
     
-    // Valida estructura básica de trabajador
+    // Valida estructura básica de trabajador (sobre el documento resultante)
     function isValidWorkerData(data) {
-      return data.keys().hasAll(['ID_Trabajador', 'Nombre_Completo', 'DPI_CUI', 'Puesto']) &&
+      return data.keys().hasAll(['ID_Trabajador', 'Nombre_Completo', 'DPI_CUI', 'Puesto', 'Estado']) &&
              isValidString(data.ID_Trabajador, 1, 50) &&
              isValidString(data.Nombre_Completo, 2, 100) &&
              isValidString(data.DPI_CUI, 10, 20) &&
@@ -36,15 +36,15 @@ service cloud.firestore {
              data.Estado in ['Activo', 'Inactivo', 'Eliminado'];
     }
     
-    // Valida estructura básica de asistencia
+    // Valida estructura básica de asistencia (sobre el documento resultante)
     function isValidAttendanceData(data) {
-      return data.keys().hasAll(['ID_Marcacion', 'ID_Trabajador', 'Nombre_Trabajador', 'Fecha', 'Tipo_Marcacion', 'Hora_Real']) &&
+      return data.keys().hasAll(['ID_Marcacion', 'ID_Trabajador', 'Nombre_Trabajador', 'Fecha', 'Tipo_Marcacion', 'Hora_Real', 'Estado_Marcacion']) &&
              isValidString(data.ID_Marcacion, 1, 50) &&
              isValidString(data.ID_Trabajador, 1, 50) &&
              isValidString(data.Nombre_Trabajador, 2, 100) &&
-             isValidString(data.Fecha, 10, 10) && // YYYY-MM-DD
+             isValidString(data.Fecha, 10, 10) &&
              data.Tipo_Marcacion in ['Entrada', 'Salida_Receso', 'Regreso_Receso', 'Salida_Obra'] &&
-             isValidString(data.Hora_Real, 5, 8) && // HH:MM or HH:MM:SS
+             isValidString(data.Hora_Real, 5, 8) &&
              data.Estado_Marcacion in ['A Tiempo', 'Puntual', 'Tolerancia', 'Atraso', 'Ausencia'];
     }
     
@@ -58,17 +58,19 @@ service cloud.firestore {
       // Solo administradores pueden crear trabajadores
       allow create: if isAdmin() && 
                      isValidWorkerData(request.resource.data) &&
-                     request.resource.data.keys().size() <= 15; // Límite de campos
+                     request.resource.data.keys().size() <= 15;
       
-      // Solo administradores pueden actualizar, y solo campos permitidos
+      // Solo administradores pueden actualizar.
+      // Se valida el documento resultante completo (request.resource.data)
+      // y que los campos modificados sean solo los permitidos.
       allow update: if isAdmin() &&
                     isValidWorkerData(request.resource.data) &&
                     request.resource.data.diff(resource.data).affectedKeys()
-                      .hasOnly(['Nombre_Completo', 'DPI_CUI', 'Puesto', 'Jefe_Inmediato', 
+                      .hasOnly(['Nombre_Completo', 'DPI_CUI', 'Puesto', 'Jefe_Inmediato',
                                'Telefono', 'WhatsApp', 'Direccion', 'Fotografia_URL', 'Estado']) &&
                     request.resource.data.keys().size() <= 15;
       
-      // Solo administradores pueden eliminar (marcar como Eliminado)
+      // Solo administradores pueden eliminar (baja física)
       allow delete: if isAdmin();
     }
     
@@ -82,9 +84,11 @@ service cloud.firestore {
       // La marcación la realiza exclusivamente el operador verificado.
       allow create: if isAuthorizedOperator() &&
                      isValidAttendanceData(request.resource.data) &&
-                     request.resource.data.keys().size() <= 20; // Límite de campos
+                     request.resource.data.keys().size() <= 20;
       
-      // Solo administradores pueden actualizar asistencias (para edición de marcaciones)
+      // Solo administradores pueden actualizar asistencias.
+      // Se valida el documento resultante completo y que los campos
+      // efectivamente modificados sean solo los 3 editables.
       allow update: if isAdmin() &&
                     isValidAttendanceData(request.resource.data) &&
                     request.resource.data.diff(resource.data).affectedKeys()
