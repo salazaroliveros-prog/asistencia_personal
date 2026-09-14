@@ -143,7 +143,7 @@ const ModuloReportes = (() => {
   // OBTENER DATOS
   // ─────────────────────────────────────────────────────────────────────────
   async function _obtenerDatos(fechaInicio, fechaFin) {
-    if (AppState.get('backendMode') !== 'firestore') {
+    if (AppState.get('backendMode') !== 'firestore' || !AppState.get('connected')) {
       Alerts.warning('Modo local activo. Los datos corresponden a este dispositivo.');
       return AppState.get('asistencias') || [];
     }

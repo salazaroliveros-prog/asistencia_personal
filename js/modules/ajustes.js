@@ -433,6 +433,10 @@ const ModuloAjustes = (() => {
           Alerts.error('El archivo no parece ser un backup válido de este sistema.');
           return;
         }
+        if (typeof backup.config !== 'object' || Array.isArray(backup.config)) {
+          Alerts.error('Estructura de backup inválida.');
+          return;
+        }
 
         const confirmed = await Alerts.confirm(
           `¿Restaurar configuración del backup del ${new Date(backup.fecha).toLocaleString('es-GT')}?\n\nEsto sobreescribirá la configuración actual.`,
@@ -576,7 +580,8 @@ const ModuloAjustes = (() => {
       }
       const lines = log.slice().reverse().slice(0, 50).map((entry) => {
         const when = new Date(entry.timestamp).toLocaleString('es-GT');
-        return `[${when}] ${entry.operator} · ${entry.device}\n  ${entry.workerName} · ${entry.tipo} · ${entry.status}`;
+        const esc = (v) => String(v ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+        return `[${esc(when)}] ${esc(entry.operator)} · ${esc(entry.device)}\n  ${esc(entry.workerName)} · ${esc(entry.tipo)} · ${esc(entry.status)}`;
       });
       logEl.textContent = lines.join('\n\n');
       output.hidden = false;

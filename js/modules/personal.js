@@ -154,14 +154,15 @@ const ModuloPersonal = (() => {
     }
 
     // Intentar actualizar desde API
-    if (AppState.get('backendMode') === 'firestore') {
+    if (AppState.get('backendMode') === 'firestore' && AppState.get('connected')) {
       _setLoadingState(true);
       try {
         const result = await API.obtenerPersonal();
         if (result.success) {
           _filteredPersonal = result.data;
           _filtrarTabla();
-          Alerts.success(`${result.data.length} trabajadores cargados`);
+          // Sin toast en carga normal — solo si hay cambio real
+        if (window.Logger) window.Logger.info('ModuloPersonal', `${result.data.length} trabajadores cargados`);
         } else {
           Alerts.warning('No se pudo actualizar la lista: ' + (result.error || 'Error desconocido'));
         }
@@ -521,7 +522,7 @@ const ModuloPersonal = (() => {
     }
 
     // ── Modo offline: sin URL configurado, guardar localmente ──────────────
-    if (AppState.get('backendMode') !== 'firestore') {
+    if (AppState.get('backendMode') !== 'firestore' || !AppState.get('connected')) {
       const result = _guardarPersonalLocal(payload, !!_editingId);
       if (result.success) {
         if (window.Logger) {
@@ -611,7 +612,7 @@ const ModuloPersonal = (() => {
     if (!confirmed) return;
 
     // ── Modo offline ────────────────────────────────────────────────────────
-    if (AppState.get('backendMode') !== 'firestore') {
+    if (AppState.get('backendMode') !== 'firestore' || !AppState.get('connected')) {
       const lista = personal.map(p =>
         p.ID_Trabajador === id ? { ...p, Estado: 'Inactivo' } : p
       );
@@ -1215,7 +1216,7 @@ const ModuloPersonal = (() => {
     try {
       let asistencias = [];
 
-      if (AppState.get('backendMode') === 'firestore') {
+      if (AppState.get('backendMode') === 'firestore' && AppState.get('connected')) {
         if (fechaIni === fechaFin) {
           const r = await API.obtenerAsistencias(fechaIni);
           if (r.success) asistencias = r.data;
