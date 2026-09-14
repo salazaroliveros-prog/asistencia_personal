@@ -129,12 +129,16 @@ self.addEventListener('fetch', (event) => {
   // No interceptar extensiones de Chrome ni protocolos no-http
   if (!url.protocol.startsWith('http')) return;
 
-  // Google Apps Script / Firebase APIs → siempre red (datos en tiempo real)
+  // CDN externos y Firebase APIs → siempre red, nunca interceptar
   if (
-    url.hostname.includes('script.google.com') ||
+    url.hostname.includes('gstatic.com') ||
     url.hostname.includes('googleapis.com') ||
     url.hostname.includes('firebaseio.com') ||
-    url.hostname.includes('firestore.googleapis.com')
+    url.hostname.includes('google.com') ||
+    url.hostname.includes('script.google.com') ||
+    url.hostname.includes('unpkg.com') ||
+    url.hostname.includes('cdnjs.cloudflare.com') ||
+    url.hostname.includes('cdn.jsdelivr.net')
   ) {
     return; // Deja pasar sin interceptar
   }
