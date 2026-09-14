@@ -50,25 +50,24 @@ const UserManagement = (() => {
       
       if (user) {
         const idTokenResult = await user.getIdTokenResult();
-        const isAdmin = true; // Plan gratuito: todos los usuarios autenticados son admin
+        const isAdmin = idTokenResult.claims.admin === true;
         
         currentUserClaims = {
           uid: user.uid,
           email: user.email,
           emailVerified: user.emailVerified,
-          customClaims: { admin: true },
+          customClaims: idTokenResult.claims,
           isAdmin: isAdmin
         };
         
         _updateUserClaimsUI(currentUserClaims);
         
-        // Habilitar botón de gestión de usuarios para plan gratuito
+        // La interfaz no eleva privilegios: solo refleja el claim firmado.
         const btnLoadUsers = document.getElementById('btn-load-users');
         if (btnLoadUsers) {
-          btnLoadUsers.disabled = false;
+          btnLoadUsers.disabled = !isAdmin;
         }
-        
-        Alerts.success('Permisos verificados (Plan gratuito: acceso completo)');
+        Alerts.info(isAdmin ? 'Permisos de administrador verificados.' : 'Sesión autenticada sin permisos de administrador.');
       } else {
         Alerts.warning('Usuario no autenticado');
       }

@@ -17,7 +17,7 @@ const ModuloPersonal = (() => {
   const esc = (str) => CPC.StringHelpers?.escHtml?.(str) ?? _escHtml(str);
   const fmtTel = (tel) => CPC.StringHelpers?.formatTelefono?.(tel) ?? _formatTelefono(tel);
   const compress = (img, maxW = 600, maxH = 600, quality = 0.75) =>
-    CPC.PhotoHelpers?.compressImage?.(img, maxW, maxH, quality) ?? _comprimirFoto(img, maxW, maxH, quality);
+    CPC.PhotoHelpers?.compressImage?.(img, maxW, maxH, quality) ?? _comprimirFotoCanvas(img, maxW, maxH, quality);
   const updatePreview = (src) => {
     if (CPC.PhotoHelpers?.updatePhotoPreview) {
       return CPC.PhotoHelpers.updatePhotoPreview(src);
@@ -992,6 +992,21 @@ const ModuloPersonal = (() => {
 
   function _comprimirFoto(img, maxW = 600, maxH = 600, quality = 0.75) {
     return compress(img, maxW, maxH, quality);
+  }
+
+  function _comprimirFotoCanvas(img, maxW = 600, maxH = 600, quality = 0.75) {
+    let w = img.naturalWidth  || img.width  || maxW;
+    let h = img.naturalHeight || img.height || maxH;
+    if (w > maxW || h > maxH) {
+      const ratio = Math.min(maxW / w, maxH / h);
+      w = Math.round(w * ratio);
+      h = Math.round(h * ratio);
+    }
+    const canvas = document.createElement('canvas');
+    canvas.width  = w;
+    canvas.height = h;
+    canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+    return canvas.toDataURL('image/jpeg', quality);
   }
 
   function _actualizarFotoPreview(src) {

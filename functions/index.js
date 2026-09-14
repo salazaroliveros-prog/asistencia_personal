@@ -9,7 +9,7 @@ admin.initializeApp();
 
 // Email del primer administrador (para setup inicial)
 // Este usuario será el único que pueda establecer claims de admin inicialmente
-const INITIAL_ADMIN_EMAIL = functions.config().initial_admin?.email || 'admin@tudominio.com';
+const INITIAL_ADMIN_EMAIL = functions.config().initial_admin?.email || null;
 
 // ─────────────────────────────────────────────────────────────────────────
 // FUNCIÓN: Establecer claim de administrador
@@ -26,7 +26,9 @@ exports.setAdminClaim = functions.https.onCall(async (data, context) => {
   // Verificar que el solicitante sea admin o el admin inicial
   const requesterClaims = context.auth.token;
   const isRequesterAdmin = requesterClaims.admin === true;
-  const isInitialAdmin = requesterClaims.email === INITIAL_ADMIN_EMAIL;
+  const isInitialAdmin = Boolean(INITIAL_ADMIN_EMAIL) &&
+    requesterClaims.email_verified === true &&
+    requesterClaims.email === INITIAL_ADMIN_EMAIL;
   
   if (!isRequesterAdmin && !isInitialAdmin) {
     throw new functions.https.HttpsError(

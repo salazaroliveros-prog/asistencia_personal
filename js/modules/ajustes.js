@@ -170,25 +170,35 @@ const ModuloAjustes = (() => {
     if (statusEl) statusEl.textContent = '⏳ Conectando con Firestore…';
     
     try {
-      const result = await API.initialize();
-      if (result.success) { 
-        if (statusEl) { 
-          statusEl.className = 'connection-status-detail success'; 
-          statusEl.textContent = `✅ Firestore conectado: ${config.projectId}`; 
-        } 
-        Alerts.success('Firestore conectado y sincronización en tiempo real activa.'); 
-      } else { 
-        if (statusEl) { 
-          statusEl.className = 'connection-status-detail error'; 
-          statusEl.textContent = `❌ ${result.error || 'No se pudo conectar.'}`; 
-        } 
-        Alerts.error(result.error || 'No se pudo conectar con Firestore.'); 
+      const result = await FirebaseClient.configure(config);
+      if (result.success) {
+        // Activar modo Firestore y marcar como conectado
+        AppState.set('backendMode', 'firestore');
+        AppState.set('connected', true);
+        if (statusEl) {
+          statusEl.className = 'connection-status-detail success';
+          statusEl.textContent = `✅ Firestore conectado: ${config.projectId}`;
+        }
+        Alerts.success('Firestore conectado y sincronización en tiempo real activa.');
+        // Cargar datos iniciales desde Firestore
+        API.obtenerPersonal().catch(() => {});
+        API.obtenerConfiguracion().catch(() => {});
+      } else {
+        AppState.set('backendMode', 'local');
+        AppState.set('connected', false);
+        if (statusEl) {
+          statusEl.className = 'connection-status-detail error';
+          statusEl.textContent = `❌ ${result.error || 'No se pudo conectar.'}`;
+        }
+        Alerts.error(result.error || 'No se pudo conectar con Firestore.');
       }
     } catch (error) {
-      if (statusEl) { 
-        statusEl.className = 'connection-status-detail error'; 
-        statusEl.textContent = `❌ Error: ${error.message}`; 
-      } 
+      AppState.set('backendMode', 'local');
+      AppState.set('connected', false);
+      if (statusEl) {
+        statusEl.className = 'connection-status-detail error';
+        statusEl.textContent = `❌ Error: ${error.message}`;
+      }
       Alerts.error('Error al conectar con Firestore: ' + error.message);
     }
   }

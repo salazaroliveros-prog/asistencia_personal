@@ -2,193 +2,147 @@
  * Control Personal Campo — Field Scanner standalone
  * Sub-aplicación independiente para escaneo de QR en campo.
  * Envía marcaciones a Firestore en tiempo real.
- * @version 1.0.0
+ * @version 1.5.0
  */
 
 (() => {
   'use strict';
 
-  // ─── Estado ─────────────────────────────────────────────────────────
-  let _statusTimer = null;
+  // ─── Estado ─────────────────────────────────────────────────────────────
+  let _statusTimer    = null;
+  let _qrController   = null;
+  let _scannerActive  = false;
+  let _facingMode     = 'environment';
+  let _currentWorker  = null;
+  let _marking        = false;
+  let _audio          = null;
+  let _db             = null;
+  let _auth           = null;
+  let _unsubscribe    = null;
 
-  // ─── Estado ─────────────────────────────────────────────────────────
-  let scanner = null;
-  let scannerActive = false;
-  let currentWorker = null;
-  let marking = false;
-  let audio = null;
-  let db = null;
-  let unsubscribe = null;
+  const AUTHORIZED_OPERATOR_EMAIL = 'sistemadecontrol090@gmail.com';
 
   const MARK_TYPES = [
-    { tipo: 'Entrada', cls: 'campo-mark-entry', icono: 'log-in', horaKey: 'Hora_Entrada', fallback: '07:00' },
-    { tipo: 'Salida_Receso', cls: 'campo-mark-break', icono: 'coffee', horaKey: 'Hora_Salida_Receso', fallback: '10:00' },
+    { tipo: 'Entrada',        cls: 'campo-mark-entry',  icono: 'log-in',          horaKey: 'Hora_Entrada',        fallback: '07:00' },
+    { tipo: 'Salida_Receso',  cls: 'campo-mark-break',  icono: 'coffee',           horaKey: 'Hora_Salida_Receso',  fallback: '10:00' },
     { tipo: 'Regreso_Receso', cls: 'campo-mark-resume', icono: 'arrow-left-right', horaKey: 'Hora_Regreso_Receso', fallback: '10:30' },
-    { tipo: 'Salida_Obra', cls: 'campo-mark-exit', icono: 'log-out', horaKey: 'Hora_Salida_Obra', fallback: '17:00' },
+    { tipo: 'Salida_Obra',    cls: 'campo-mark-exit',   icono: 'log-out',          horaKey: 'Hora_Salida_Obra',    fallback: '17:00' },
   ];
 
-  const SESSION_KEY = 'field_scanner_session';
-  const SESSION_TTL_MS = 1000 * 60 * 60; // 1 hora
-  const DEFAULT_PIN = '1234';
-
-  // ─── Inicialización ─────────────────────────────────────────────────
+  // ─── Inicialización ──────────────────────────────────────────────────────
   async function init() {
-    bindEvents();
-    initAudio();
-    renderMarkButtons();
-    updateStatusPill(false);
+    _bindEvents();
+    _initAudio();
+    _renderMarkButtons();
+    _updateStatusPill(false);
     lucide?.createIcons?.();
 
-    if (isSessionValid()) {
-      await onLoginSuccess();
+    await _initFirebase();
+    if (await _isAuthorizedOperator()) {
+      await _onLoginSuccess();
     } else {
-      showLogin();
+      _showLogin();
     }
   }
 
-  function isSessionValid() {
-    try {
-      const raw = localStorage.getItem(SESSION_KEY);
-      if (!raw) return false;
-      const session = JSON.parse(raw);
-      return Boolean(session?.operator) && Date.now() < Number(session.expiresAt);
-    } catch {
-      return false;
-    }
-  }
-
-  function saveSession(operator) {
-    const session = {
-      operator,
-      expiresAt: Date.now() + SESSION_TTL_MS,
-    };
-    localStorage.setItem(SESSION_KEY, JSON.stringify(session));
-  }
-
-  function clearSession() {
-    localStorage.removeItem(SESSION_KEY);
-  }
-
-  function requirePin() {
-    const stored = localStorage.getItem('cpc_field_scanner_pin');
-    const validPin = stored && /^[0-9]{4,10}$/.test(stored) ? stored : DEFAULT_PIN;
-    return validPin;
-  }
-
-  function showLogin() {
-    const loginSection = document.getElementById('login-section');
-    const scannerSection = document.getElementById('campo-scanner');
-    const feedSection = document.getElementById('campo-feed');
-    const workerSection = document.getElementById('campo-worker');
-    const pinInput = document.getElementById('login-pin');
+  function _showLogin() {
+    document.getElementById('login-section').hidden  = false;
+    document.getElementById('campo-scanner').hidden  = true;
+    document.getElementById('campo-feed').hidden     = true;
+    document.getElementById('campo-worker').hidden   = true;
     const loginError = document.getElementById('login-error');
-
-    if (loginSection) loginSection.hidden = false;
-    if (scannerSection) scannerSection.hidden = true;
-    if (feedSection) feedSection.hidden = true;
-    if (workerSection) workerSection.hidden = true;
-    if (pinInput) {
-      pinInput.value = '';
-      setTimeout(() => pinInput.focus(), 50);
-    }
     if (loginError) loginError.hidden = true;
-
-    if (scannerActive) {
-      stopScanner();
-    }
-    if (unsubscribe && typeof unsubscribe === 'function') {
-      unsubscribe();
-      unsubscribe = null;
-    }
+    if (_scannerActive) _stopScanner();
+    if (_unsubscribe) { _unsubscribe(); _unsubscribe = null; }
   }
 
-  async function onLoginSuccess() {
-    const loginSection = document.getElementById('login-section');
-    const scannerSection = document.getElementById('campo-scanner');
-    const feedSection = document.getElementById('campo-feed');
-    const workerSection = document.getElementById('campo-worker');
+  async function _onLoginSuccess() {
+    document.getElementById('login-section').hidden = true;
+    document.getElementById('campo-scanner').hidden = false;
+    document.getElementById('campo-feed').hidden    = false;
+    document.getElementById('campo-worker').hidden  = true;
     const logoutBtn = document.getElementById('logout-btn');
-
-    if (loginSection) loginSection.hidden = true;
-    if (scannerSection) scannerSection.hidden = false;
-    if (feedSection) feedSection.hidden = false;
-    if (workerSection) workerSection.hidden = true;
     if (logoutBtn) logoutBtn.hidden = false;
 
-    await initFirebase();
-    renderFeed([]);
-    setTimeout(() => { if (!scannerActive) startScanner(); }, 350);
+    _renderFeed([]);
+    setTimeout(() => { if (!_scannerActive) _startScanner(); }, 350);
   }
 
-  function handleLogin(pin) {
-    const expected = requirePin();
-    const loginError = document.getElementById('login-error');
+  async function _isAuthorizedOperator() {
+    const user = _auth?.currentUser;
+    if (!user) return false;
+    const token = await user.getIdTokenResult();
+    return token.claims.email_verified === true &&
+      String(user.email || '').toLowerCase() === AUTHORIZED_OPERATOR_EMAIL;
+  }
 
-    if (pin === expected) {
-      saveSession('operador');
+  async function _handleLogin() {
+    const loginError = document.getElementById('login-error');
+    try {
+      const provider = new firebase.auth.GoogleAuthProvider();
+      await _auth.signInWithPopup(provider);
+      if (!await _isAuthorizedOperator()) {
+        await _auth.signOut();
+        throw new Error('La cuenta no tiene rol de operador.');
+      }
       if (loginError) loginError.hidden = true;
-      onLoginSuccess();
-    } else {
+      await _onLoginSuccess();
+    } catch (error) {
+      console.error('[FieldScanner] Inicio de sesión rechazado:', error);
       if (loginError) loginError.hidden = false;
     }
   }
 
-  function handleLogout() {
-    clearSession();
-    if (scannerActive) {
-      stopScanner();
-    }
-    if (unsubscribe && typeof unsubscribe === 'function') {
-      unsubscribe();
-      unsubscribe = null;
-    }
-    showLogin();
+  function _handleLogout() {
+    _auth?.signOut?.();
+    if (_scannerActive) _stopScanner();
+    if (_unsubscribe) { _unsubscribe(); _unsubscribe = null; }
+    _showLogin();
   }
 
-  async function initFirebase() {
+  async function _initFirebase() {
     try {
-      const stored = JSON.parse(localStorage.getItem('cpc_firebase_config') || '{}');
+      const stored     = JSON.parse(localStorage.getItem('cpc_firebase_config') || '{}');
+      const configured = window.FIREBASE_CONFIG || {};
       const config = {
-        apiKey: stored.apiKey || '',
-        authDomain: stored.authDomain || '',
-        projectId: stored.projectId || '',
-        storageBucket: stored.storageBucket || '',
+        apiKey:            stored.apiKey            || configured.apiKey            || '',
+        authDomain:        stored.authDomain        || configured.authDomain        || '',
+        projectId:         stored.projectId         || configured.projectId         || '',
+        storageBucket:     stored.storageBucket     || '',
         messagingSenderId: stored.messagingSenderId || '',
-        appId: stored.appId || '',
+        appId:             stored.appId             || '',
       };
 
       if (!config.apiKey || !config.projectId) {
         console.warn('[FieldScanner] Firebase no configurado');
-        updateStatusPill(false);
+        _updateStatusPill(false);
         return;
       }
 
-      if (!firebase.apps.length) {
-        firebase.initializeApp(config);
-      }
-      db = firebase.firestore();
-      db.enablePersistence?.({ synchronizeTabs: true }).catch((err) => {
+      if (!firebase.apps.length) firebase.initializeApp(config);
+      _db   = firebase.firestore();
+      _auth = firebase.auth();
+      _db.enablePersistence?.({ synchronizeTabs: true }).catch(err => {
         console.warn('[FieldScanner] Persistence no disponible:', err?.message || err);
       });
-      updateStatusPill(true);
-      subscribeRealtime();
+      _updateStatusPill(true);
+      _subscribeRealtime();
     } catch (error) {
       console.error('[FieldScanner] Error Firebase:', error);
-      updateStatusPill(false);
+      _updateStatusPill(false);
     }
   }
 
-  function subscribeRealtime() {
-    if (!db) return;
+  function _subscribeRealtime() {
+    if (!_db) return;
     try {
-      // COLECCIÓN CORRECTA: 'asistencias' (plural, igual que api.js y firestore.rules)
-      unsubscribe = db.collection('asistencias')
+      _unsubscribe = _db.collection('asistencias')
         .orderBy('Fecha', 'desc')
         .limit(50)
-        .onSnapshot((snapshot) => {
+        .onSnapshot(snapshot => {
           const records = snapshot.docs.map(doc => ({ ID_Marcacion: doc.id, ...doc.data() }));
-          renderFeed(records);
-        }, (error) => {
+          _renderFeed(records);
+        }, error => {
           console.error('[FieldScanner] Error suscripción:', error);
         });
     } catch (error) {
@@ -196,281 +150,229 @@
     }
   }
 
-  // ─── Eventos ────────────────────────────────────────────────────────
-  function bindEvents() {
+  // ─── Eventos ─────────────────────────────────────────────────────────────
+  function _bindEvents() {
     const loginForm = document.getElementById('login-form');
-    if (loginForm) {
-      loginForm.addEventListener('submit', (e) => {
-        e.preventDefault();
-        const pinInput = document.getElementById('login-pin');
-        const pin = (pinInput?.value || '').trim();
-        handleLogin(pin);
-      });
-    }
+    if (loginForm) loginForm.addEventListener('submit', e => { e.preventDefault(); _handleLogin(); });
 
-    const btnStart = document.getElementById('campo-btn-scan');
-    const btnStop = document.getElementById('campo-btn-stop');
-    if (btnStart) btnStart.addEventListener('click', startScanner);
-    if (btnStop) btnStop.addEventListener('click', stopScanner);
-
+    const btnStart  = document.getElementById('campo-btn-scan');
+    const btnStop   = document.getElementById('campo-btn-stop');
+    const btnSwitch = document.getElementById('campo-btn-switch-camera');
+    const camSelect = document.getElementById('campo-camera-select');
     const logoutBtn = document.getElementById('logout-btn');
-    if (logoutBtn) {
-      logoutBtn.addEventListener('click', () => {
-        handleLogout();
-      });
-    }
 
-    document.addEventListener('click', (e) => {
+    if (btnStart)  btnStart.addEventListener('click', () => _startScanner());
+    if (btnStop)   btnStop.addEventListener('click', _stopScanner);
+    if (btnSwitch) btnSwitch.addEventListener('click', _switchCamera);
+    if (camSelect) camSelect.addEventListener('change', () => _startScanner({ deviceId: camSelect.value }));
+    if (logoutBtn) logoutBtn.addEventListener('click', _handleLogout);
+
+    document.addEventListener('click', e => {
       const btn = e.target.closest('.campo-mark-btn');
-      if (btn && btn.dataset?.tipo) {
-        procesarMarcacion(btn.dataset.tipo);
-      }
+      if (btn && btn.dataset?.tipo) _procesarMarcacion(btn.dataset.tipo);
     });
   }
 
-  // ─── Audio ─────────────────────────────────────────────────────────
-  function initAudio() {
+  // ─── Audio ───────────────────────────────────────────────────────────────
+  function _initAudio() {
     try {
       const AudioContext = window.AudioContext || window.webkitAudioContext;
       if (!AudioContext) return;
       const ctx = new AudioContext();
-      audio = {
+      _audio = {
         beepSuccess() {
-          const osc = ctx.createOscillator();
-          const gain = ctx.createGain();
-          osc.connect(gain);
-          gain.connect(ctx.destination);
-          osc.type = 'sine';
-          osc.frequency.value = 880;
+          const osc = ctx.createOscillator(); const gain = ctx.createGain();
+          osc.connect(gain); gain.connect(ctx.destination);
+          osc.type = 'sine'; osc.frequency.value = 880;
           gain.gain.setValueAtTime(0.27, ctx.currentTime);
           gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.28);
-          osc.start(ctx.currentTime);
-          osc.stop(ctx.currentTime + 0.28);
+          osc.start(ctx.currentTime); osc.stop(ctx.currentTime + 0.28);
         },
         beepError() {
-          const osc = ctx.createOscillator();
-          const gain = ctx.createGain();
-          osc.connect(gain);
-          gain.connect(ctx.destination);
-          osc.type = 'square';
-          osc.frequency.value = 220;
+          const osc = ctx.createOscillator(); const gain = ctx.createGain();
+          osc.connect(gain); gain.connect(ctx.destination);
+          osc.type = 'square'; osc.frequency.value = 220;
           gain.gain.setValueAtTime(0.2, ctx.currentTime);
           gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.4);
-          osc.start(ctx.currentTime);
-          osc.stop(ctx.currentTime + 0.4);
+          osc.start(ctx.currentTime); osc.stop(ctx.currentTime + 0.4);
         },
       };
-    } catch (e) { /* Audio no disponible */ }
+    } catch (_) { /* Audio no disponible */ }
   }
 
-  // ─── Escáner QR ────────────────────────────────────────────────────
-  async function startScanner() {
-    if (typeof Html5Qrcode === 'undefined') {
-      saveErrorLog(new Error('Html5Qrcode no disponible'), 'startScanner');
-      showStatusMessage('Escáner QR no disponible', 'error');
-      return;
-    }
-    try { await navigator.mediaDevices.getUserMedia({ video: true }); }
-    catch (err) {
-      saveErrorLog(err, 'cameraPermission');
-      showStatusMessage('Sin acceso a cámara', 'error');
+  // ─── Escáner QR ──────────────────────────────────────────────────────────
+  function _session() {
+    return window.CPC?.CameraSession;
+  }
+
+  function _setCameraStatus(msg) {
+    const el = document.getElementById('campo-camera-status');
+    if (el) el.textContent = msg;
+  }
+
+  async function _loadCameraChoices() {
+    const session   = _session();
+    const select    = document.getElementById('campo-camera-select');
+    const switchBtn = document.getElementById('campo-btn-switch-camera');
+    if (!session || !select) return;
+    try {
+      const devices = await session.listDevices();
+      select.innerHTML = devices.map(d =>
+        `<option value="${_esc(d.id)}">${_esc(d.label)}</option>`
+      ).join('');
+      const multi = devices.length >= 2;
+      select.hidden = !multi;
+      if (switchBtn) switchBtn.hidden = !multi;
+    } catch (_) { /* sin enumeración */ }
+  }
+
+  async function _startScanner(options = {}) {
+    const session = _session();
+    if (typeof Html5Qrcode === 'undefined' || !session) {
+      _showStatusMessage('Escáner QR no disponible', 'error');
       return;
     }
 
     const btnStart = document.getElementById('campo-btn-scan');
-    const btnStop = document.getElementById('campo-btn-stop');
-    
-    const tryStart = async (facingMode) => {
-      scanner = new Html5Qrcode('campo-qr-reader');
-      await scanner.start(
-        { facingMode },
-        { fps: 10, qrbox: { width: 220, height: 220 }, aspectRatio: 1.0, disableFlip: false },
-        onQRSuccess,
-        () => {}
-      );
-    };
+    const btnStop  = document.getElementById('campo-btn-stop');
 
     try {
-      await tryStart('environment');
-    } catch (err) {
-      if (err.name === 'OverconstrainedError' || err.name === 'NotFoundError') {
-        try {
-          await tryStart('user');
-        } catch (err2) {
-          saveErrorLog(err2, 'scannerStartFallback');
-          showStatusMessage('No se pudo iniciar la cámara', 'error');
-          return;
-        }
-      } else {
-        saveErrorLog(err, 'scannerStart');
-        showStatusMessage('No se pudo iniciar la cámara', 'error');
-        return;
+      if (!_qrController) {
+        _qrController = session.createQrController({
+          Scanner: Html5Qrcode,
+          elementId: 'campo-qr-reader',
+          onSuccess: _onQRSuccess,
+        });
       }
+      _setCameraStatus('Iniciando cámara…');
+      const result = await _qrController.start({ facingMode: _facingMode, ...options });
+      if (!result) return;
+
+      _scannerActive = true;
+      if (btnStart) btnStart.hidden = true;
+      if (btnStop)  btnStop.hidden  = false;
+      _setCameraStatus('Cámara activa');
+      await _loadCameraChoices();
+      _injectTorchButton();
+    } catch (err) {
+      _saveErrorLog(err, 'scannerStart');
+      _setCameraStatus('Cámara no disponible');
+      _showStatusMessage(session.describeError(err), 'error');
     }
-    scannerActive = true;
-    if (btnStart) btnStart.hidden = true;
-    if (btnStop) btnStop.hidden = false;
-    
-    injectTorchButton();
   }
 
-  async function stopScanner() {
-    if (scanner && scannerActive) {
-      try { await scanner.stop(); } catch (e) { /* ignorar */ }
-      scannerActive = false;
-    }
+  async function _stopScanner() {
+    if (_qrController) await _qrController.stop();
+    _scannerActive = false;
     const btnStart = document.getElementById('campo-btn-scan');
-    const btnStop = document.getElementById('campo-btn-stop');
+    const btnStop  = document.getElementById('campo-btn-stop');
     if (btnStart) btnStart.hidden = false;
-    if (btnStop) btnStop.hidden = true;
-    removeTorchButton();
+    if (btnStop)  btnStop.hidden  = true;
+    _removeTorchButton();
+    _setCameraStatus('');
   }
 
-  // ─── Torch/Flash Support ─────────────────────────────────────────────
-  let _torchEnabled = false;
-  let _videoTrack = null;
-
-  function injectTorchButton() {
-    const actionsDiv = document.querySelector('.campo-scanner-actions');
-    if (!actionsDiv || document.getElementById('campo-btn-torch')) return;
-    
-    const torchBtn = document.createElement('button');
-    torchBtn.type = 'button';
-    torchBtn.id = 'campo-btn-torch';
-    torchBtn.className = 'campo-btn ghost';
-    torchBtn.innerHTML = '<i data-lucide="flashlight" aria-hidden="true"></i> Flash';
-    torchBtn.hidden = true; // Se muestra solo si hay soporte
-    torchBtn.addEventListener('click', toggleTorch);
-    actionsDiv.appendChild(torchBtn);
-    
-    // Verificar soporte de torch después de que el scanner inicie
-    setTimeout(checkTorchSupport, 500);
+  async function _switchCamera() {
+    _facingMode = _facingMode === 'environment' ? 'user' : 'environment';
+    await _startScanner();
   }
 
-  function removeTorchButton() {
-    const torchBtn = document.getElementById('campo-btn-torch');
-    if (torchBtn) torchBtn.remove();
-  }
+  // ─── Torch/Flash ─────────────────────────────────────────────────────────
+  function _injectTorchButton() {
+    const container = document.querySelector('.campo-scanner-actions') ||
+                      document.querySelector('.campo-scan-btns');
+    if (!container || document.getElementById('campo-btn-torch')) return;
 
-  async function checkTorchSupport() {
-    try {
-      // Html5Qrcode no expone el video track directamente, intentamos obtenerlo
-      const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
-      const track = stream.getVideoTracks()[0];
-      const capabilities = track.getCapabilities?.();
-      stream.getTracks().forEach(t => t.stop());
-      
-      if (capabilities?.torch) {
-        _videoTrack = track;
-        const torchBtn = document.getElementById('campo-btn-torch');
-        if (torchBtn) torchBtn.hidden = false;
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.id   = 'campo-btn-torch';
+    btn.className = 'campo-btn ghost';
+    btn.setAttribute('aria-label', 'Activar/desactivar flash');
+    btn.innerHTML = '<i data-lucide="flashlight" aria-hidden="true"></i> Flash';
+    btn.hidden = !(_qrController && _qrController.supportsTorch());
+    btn.addEventListener('click', async () => {
+      if (!_qrController || !_qrController.supportsTorch()) {
+        _showStatusMessage('Flash no disponible', 'error');
+        return;
       }
-    } catch {
-      // Torch no soportado o no disponible
-    }
-  }
-
-  async function toggleTorch() {
-    if (!_videoTrack) {
       try {
-        const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
-        _videoTrack = stream.getVideoTracks()[0];
-      } catch {
-        showStatusMessage('No se pudo acceder a la cámara para flash', 'error');
-        return;
+        const on = await _qrController.toggleTorch();
+        btn.innerHTML = `<i data-lucide="${on ? 'flashlight-off' : 'flashlight'}" aria-hidden="true"></i> ${on ? 'Apagar flash' : 'Flash'}`;
+        if (window.lucide) lucide.createIcons({ nodes: [btn] });
+      } catch (err) {
+        _showStatusMessage('Error al cambiar flash', 'error');
       }
-    }
-    
-    try {
-      const capabilities = _videoTrack.getCapabilities?.();
-      if (!capabilities?.torch) {
-        showStatusMessage('Flash no disponible', 'error');
-        return;
-      }
-      _torchEnabled = !_torchEnabled;
-      await _videoTrack.applyConstraints({ advanced: [{ torch: _torchEnabled }] });
-      const torchBtn = document.getElementById('campo-btn-torch');
-      if (torchBtn) {
-        torchBtn.innerHTML = `<i data-lucide="${_torchEnabled ? 'flashlight-off' : 'flashlight'}" aria-hidden="true"></i> ${_torchEnabled ? 'Apagar flash' : 'Flash'}`;
-      }
-      if (window.lucide) lucide.createIcons({ nodes: [torchBtn] });
-    } catch (err) {
-      console.error('[FieldScanner] Error toggle torch:', err);
-      showStatusMessage('Error al cambiar flash', 'error');
-    }
+    });
+    container.appendChild(btn);
+    if (window.lucide) lucide.createIcons({ nodes: [btn] });
   }
 
-  function onQRSuccess(decodedText) {
+  function _removeTorchButton() {
+    document.getElementById('campo-btn-torch')?.remove();
+  }
+
+  // ─── QR Success ──────────────────────────────────────────────────────────
+  function _onQRSuccess(decodedText) {
     if (navigator.vibrate) navigator.vibrate(80);
-    if (audio) audio.beepSuccess();
+    if (_audio) _audio.beepSuccess();
 
-    const qrData = parseQRData(decodedText);
+    const qrData = _parseQRData(decodedText);
     if (!qrData) {
-      if (audio) audio.beepError();
-      saveErrorLog(new Error('QR no reconocido: ' + decodedText), 'qrParse');
-      showStatusMessage('QR no reconocido', 'error');
+      if (_audio) _audio.beepError();
+      _saveErrorLog(new Error('QR no reconocido: ' + decodedText), 'qrParse');
+      _showStatusMessage('QR no reconocido', 'error');
       return;
     }
 
-    const trabajador = buscarTrabajadorPorQR(qrData);
+    const trabajador = _buscarTrabajadorPorQR(qrData);
     if (!trabajador) {
-      if (audio) audio.beepError();
-      saveErrorLog(new Error('Trabajador no encontrado: ' + (qrData.id || '—')), 'qrWorkerLookup');
-      showStatusMessage('Trabajador no encontrado', 'error');
+      if (_audio) _audio.beepError();
+      _saveErrorLog(new Error('Trabajador no encontrado: ' + (qrData.id || '—')), 'qrWorkerLookup');
+      _showStatusMessage('Trabajador no encontrado', 'error');
       return;
     }
 
-    stopScanner();
-    currentWorker = trabajador;
-    renderWorker(trabajador);
-    habilitaBotones(true);
-    captureGPS();
+    _stopScanner();
+    _currentWorker = trabajador;
+    _renderWorker(trabajador);
+    _habilitaBotones(true);
+    _captureGPS();
   }
 
-  function parseQRData(text) {
+  function _parseQRData(text) {
     try {
       const data = JSON.parse(text);
       if (data && data.id) return data;
-      if (text && /^[A-Z0-9\-]+$/.test(text) && text.length >= 5) {
-        return { id: text };
-      }
-      return null;
-    } catch {
-      if (text && /^[A-Z0-9\-]+$/.test(text) && text.length >= 5) {
-        return { id: text };
-      }
-      return null;
-    }
+    } catch (_) { /* no es JSON */ }
+    if (text && /^[A-Z0-9\-]+$/.test(text) && text.length >= 5) return { id: text };
+    return null;
   }
 
-  function buscarTrabajadorPorQR(qrData) {
+  function _buscarTrabajadorPorQR(qrData) {
     const personal = JSON.parse(localStorage.getItem('cpc_personal_cache') || '[]');
     if (!Array.isArray(personal)) return null;
     if (qrData.dpi) {
       const found = personal.find(p => (p.DPI_CUI || '').replace(/\D/g, '') === String(qrData.dpi).replace(/\D/g, ''));
       if (found) return found;
     }
-    if (qrData.id) {
-      const found = personal.find(p => p.ID_Trabajador === qrData.id);
-      if (found) return found;
-    }
+    if (qrData.id) return personal.find(p => p.ID_Trabajador === qrData.id) || null;
     return null;
   }
 
-  // ─── Worker UI ─────────────────────────────────────────────────────
-  function renderWorker(trabajador) {
+  // ─── Worker UI ───────────────────────────────────────────────────────────
+  function _renderWorker(trabajador) {
     const panel = document.getElementById('campo-worker');
     if (!panel) return;
 
-    const nameEl = document.getElementById('campo-worker-name');
+    const nameEl   = document.getElementById('campo-worker-name');
     const puestoEl = document.getElementById('campo-worker-puesto');
-    const idEl = document.getElementById('campo-worker-id');
-    const photo = document.getElementById('campo-worker-photo');
-    const avatar = document.getElementById('campo-worker-avatar');
+    const idEl     = document.getElementById('campo-worker-id');
+    const photo    = document.getElementById('campo-worker-photo');
+    const avatar   = document.getElementById('campo-worker-avatar');
 
-    if (nameEl) nameEl.textContent = trabajador.Nombre_Completo || '--';
+    if (nameEl)   nameEl.textContent   = trabajador.Nombre_Completo || '--';
     if (puestoEl) puestoEl.textContent = trabajador.Puesto || '--';
-    if (idEl) idEl.textContent = trabajador.ID_Trabajador || '--';
+    if (idEl)     idEl.textContent     = trabajador.ID_Trabajador || '--';
 
     if (photo) {
       if (trabajador.Fotografia_URL) {
@@ -492,11 +394,11 @@
     panel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
   }
 
-  function habilitaBotones(enable) {
+  function _habilitaBotones(enable) {
     document.querySelectorAll('.campo-mark-btn').forEach(btn => { btn.disabled = !enable; });
   }
 
-  function renderMarkButtons() {
+  function _renderMarkButtons() {
     const grid = document.getElementById('campo-mark-grid');
     if (!grid) return;
     const config = JSON.parse(localStorage.getItem('cpc_config_cache') || '{}');
@@ -512,10 +414,10 @@
     lucide?.createIcons?.({ nodes: [grid] });
   }
 
-  // ─── GPS ───────────────────────────────────────────────────────────
-  async function captureGPS() {
+  // ─── GPS ─────────────────────────────────────────────────────────────────
+  async function _captureGPS() {
     const gpsEl = document.getElementById('campo-gps');
-    const lbl = document.getElementById('campo-gps-label');
+    const lbl   = document.getElementById('campo-gps-label');
     if (gpsEl) gpsEl.hidden = true;
     if (!gpsEl) return;
 
@@ -528,36 +430,32 @@
       if (lbl) lbl.textContent = `${latitude.toFixed(5)}, ${longitude.toFixed(5)}`;
       gpsEl.hidden = false;
       return { latitude, longitude };
-    } catch (err) {
+    } catch (_) {
       if (lbl) lbl.textContent = 'Sin GPS';
       return null;
     }
   }
 
-  // ─── Auditoría ──────────────────────────────────────────────────────
-  function getDeviceInfo() {
+  // ─── Auditoría ───────────────────────────────────────────────────────────
+  function _getDeviceInfo() {
     const ua = navigator.userAgent || '';
     const isMobile = /Mobi|Android|iPhone|iPad/i.test(ua);
-    const browser = isMobile ? 'Mobile' : 'Desktop';
     const os = ua.match(/Android|iPhone|iPad|Windows|Mac|Linux/)?.[0] || 'Unknown';
-    return `${browser} · ${os}`;
+    return `${isMobile ? 'Mobile' : 'Desktop'} · ${os}`;
   }
 
-  function getOperatorInfo() {
-    const session = (() => {
-      try { return JSON.parse(localStorage.getItem(SESSION_KEY) || '{}'); } catch { return {}; }
-    })();
-    return session.operator || 'unknown';
+  function _getOperatorInfo() {
+    return _auth?.currentUser?.email || _auth?.currentUser?.uid || 'unknown';
   }
 
-  function saveAuditLog(record) {
+  function _saveAuditLog(record) {
     try {
       const key = 'field_scanner_audit_log';
       const log = JSON.parse(localStorage.getItem(key) || '[]');
       log.push({
         timestamp: new Date().toISOString(),
-        operator: getOperatorInfo(),
-        device: getDeviceInfo(),
+        operator: _getOperatorInfo(),
+        device: _getDeviceInfo(),
         action: 'marcacion',
         workerId: record.ID_Trabajador,
         workerName: record.Nombre_Trabajador,
@@ -565,141 +463,96 @@
         status: 'success',
       });
       localStorage.setItem(key, JSON.stringify(log.slice(-100)));
-    } catch {
-      // Silenciar errores de storage
-    }
+    } catch (_) { /* silenciar */ }
   }
 
-  function saveErrorLog(error, context = '') {
+  function _saveErrorLog(error, context = '') {
     try {
       const key = 'field_scanner_audit_log';
       const log = JSON.parse(localStorage.getItem(key) || '[]');
       log.push({
         timestamp: new Date().toISOString(),
-        operator: getOperatorInfo(),
-        device: getDeviceInfo(),
+        operator: _getOperatorInfo(),
+        device: _getDeviceInfo(),
         action: 'error',
         context,
         error: String(error?.message || error || 'Unknown error'),
         status: 'error',
       });
       localStorage.setItem(key, JSON.stringify(log.slice(-100)));
-    } catch {
-      // Silenciar errores de storage
-    }
+    } catch (_) { /* silenciar */ }
   }
 
-  // ─── Marcación ─────────────────────────────────────────────────────
-  async function procesarMarcacion(tipo) {
-    if (!currentWorker) { showStatusMessage('Escanea primero el QR', 'error'); return; }
-    if (marking) return;
-    marking = true;
-    habilitaBotones(false);
+  // ─── Marcación ───────────────────────────────────────────────────────────
+  async function _procesarMarcacion(tipo) {
+    if (!_currentWorker) { _showStatusMessage('Escanea primero el QR', 'error'); return; }
+    if (_marking) return;
+    _marking = true;
+    _habilitaBotones(false);
 
     const hoy = new Date().toISOString().slice(0, 10);
-    const gps = await captureGPS();
+    const gps = await _captureGPS();
     const payload = {
-      ID_Trabajador: currentWorker.ID_Trabajador,
-      Nombre_Trabajador: currentWorker.Nombre_Completo,
-      Tipo_Marcacion: tipo,
-      Fecha: hoy,
-      Metodo_Registro: 'Escaneo_QR',
-      Ubicacion_Obra: '',
+      ID_Trabajador:    _currentWorker.ID_Trabajador,
+      Nombre_Trabajador: _currentWorker.Nombre_Completo,
+      Tipo_Marcacion:   tipo,
+      Fecha:            hoy,
+      Metodo_Registro:  'Escaneo_QR',
+      Ubicacion_Obra:   '',
     };
-    if (gps) {
-      payload.GPS_Latitud = gps.latitude;
-      payload.GPS_Longitud = gps.longitude;
-    }
+    if (gps) { payload.GPS_Latitud = gps.latitude; payload.GPS_Longitud = gps.longitude; }
 
     try {
-      const id = await enviarMarcacionFirestore(payload, currentWorker);
+      const id = await _enviarMarcacionFirestore(payload);
       const horaReal = new Date().toLocaleTimeString('es-GT', { hour12: false }).substring(0, 5);
-      if (audio) audio.beepSuccess();
-      showStatusMessage('Marcación registrada', 'success');
-      renderFeed([{ ID_Marcacion: id, ...payload, Hora_Real: horaReal, Estado_Marcacion: 'A Tiempo' }]);
+      if (_audio) _audio.beepSuccess();
+      _showStatusMessage('Marcación registrada', 'success');
+      _renderFeed([{ ID_Marcacion: id, ...payload, Hora_Real: horaReal, Estado_Marcacion: 'A Tiempo' }]);
     } catch (err) {
-      saveErrorLog(err, 'enviarMarcacion');
-      if (audio) audio.beepError();
-      showStatusMessage('No se pudo registrar la marca', 'error');
+      _saveErrorLog(err, 'enviarMarcacion');
+      if (_audio) _audio.beepError();
+      _showStatusMessage('No se pudo registrar la marca', 'error');
     } finally {
-      marking = false;
-      currentWorker = null;
-      habilitaBotones(false);
-      setTimeout(() => { if (!scannerActive) startScanner(); }, 450);
+      _marking = false;
+      _currentWorker = null;
+      _habilitaBotones(false);
+      setTimeout(() => { if (!_scannerActive) _startScanner(); }, 450);
     }
   }
 
-  async function enviarMarcacionFirestore(payload, worker) {
-    if (!db) throw new Error('Firebase no disponible');
+  async function _enviarMarcacionFirestore(payload) {
+    if (!_db) throw new Error('Firebase no disponible');
 
-    const fechaHoy = payload.Fecha;
-    const dpiLimpio = String(payload.ID_Trabajador).replace(/[^0-9]/g, '');
-    const ahora = new Date();
-    const hora = ahora.toLocaleTimeString('es-GT', { hour12: false }).substring(0, 5);
-    const timestamp = ahora.getTime();
-
-    // COLECCIÓN CORRECTA: 'asistencias' (plural, igual que api.js y firestore.rules)
-    // Usar ID determinístico fecha_dpi para hacer merge y evitar documentos duplicados
-    const asistenciaId = `${fechaHoy}_${dpiLimpio}`;
-    const docRef = db.collection('asistencias').doc(asistenciaId);
-
-    // Hacer merge con la marcación del día para acumular historial
-    await db.runTransaction(async (transaction) => {
-      const snap = await transaction.get(docRef);
-      let historial = [];
-      let metodosRegistro = [];
-      if (snap.exists) {
-        const existing = snap.data();
-        historial = existing.Historial_Marcaciones || [];
-        metodosRegistro = existing.Metodos_Registro || [];
-      }
-
-      historial.push({
-        Fecha: fechaHoy,
-        Hora: hora,
-        Timestamp: timestamp,
-        Metodo_Registro: payload.Metodo_Registro || 'Escaneo_QR',
-        Tipo_Marcacion: payload.Tipo_Marcacion || 'Entrada',
-        Origen: 'ESCANER_CAMPO',
-        GPS_Latitud: payload.GPS_Latitud || null,
-        GPS_Longitud: payload.GPS_Longitud || null,
-      });
-      metodosRegistro.push(payload.Metodo_Registro || 'Escaneo_QR');
-
-      const doc = {
-        ID_Trabajador: payload.ID_Trabajador,
-        Documento: worker?.DPI_CUI || worker?.DPI || worker?.Documento || dpiLimpio,
-        Nombre_Completo: payload.Nombre_Trabajador || worker?.Nombre_Completo || 'Desconocido',
-        Puesto: worker?.Puesto || 'N/A',
-        Fecha: fechaHoy,
-        Jefe: worker?.Jefe_Inmediato || worker?.Jefe || '',
-        Telefono: worker?.Telefono || '',
-        Estado_General: 'Presente',
-        Metodo_Registro: payload.Metodo_Registro || 'Escaneo_QR',
-        Ubicacion_Obra: payload.Ubicacion_Obra || 'GPS: desconocida',
-        Historial_Marcaciones: historial,
-        Metodos_Registro: [...new Set(metodosRegistro)],
-        Ultima_Actualizacion: timestamp,
-        updated_at: new Date().toISOString(),
-      };
-
-      transaction.set(docRef, doc, { merge: true });
-    });
-
-    saveAuditLog({
-      ID_Trabajador: payload.ID_Trabajador,
+    const horaReal = new Date().toLocaleTimeString('es-GT', { hour12: false }).substring(0, 5);
+    const id = `${payload.ID_Trabajador}_${payload.Fecha}_${payload.Tipo_Marcacion}`.replace(/[^A-Za-z0-9_-]/g, '_');
+    const record = {
+      ID_Marcacion:     id,
+      ID_Registro:      id,
+      ID_Trabajador:    payload.ID_Trabajador,
       Nombre_Trabajador: payload.Nombre_Trabajador,
-      Tipo_Marcacion: payload.Tipo_Marcacion,
-      ID_Marcacion: asistenciaId,
-    });
-    return asistenciaId;
+      Fecha:            payload.Fecha,
+      Tipo_Marcacion:   payload.Tipo_Marcacion,
+      Hora_Programada:  '',
+      Hora_Real:        horaReal,
+      Estado_Marcacion: 'A Tiempo',
+      Metodo_Registro:  payload.Metodo_Registro || 'Escaneo_QR',
+      Horas_Extra:      0,
+      Ubicacion_Obra:   payload.Ubicacion_Obra || '',
+      Timestamp:        Date.now(),
+    };
+    if (payload.GPS_Latitud  !== undefined) record.GPS_Latitud  = payload.GPS_Latitud;
+    if (payload.GPS_Longitud !== undefined) record.GPS_Longitud = payload.GPS_Longitud;
+
+    await _db.collection('asistencias').doc(id).set(record, { merge: false });
+    _saveAuditLog({ ...record, Nombre_Trabajador: payload.Nombre_Trabajador });
+    return id;
   }
 
-  // ─── Feed ──────────────────────────────────────────────────────────
-  function renderFeed(records) {
+  // ─── Feed ─────────────────────────────────────────────────────────────────
+  function _renderFeed(records) {
     const list = document.getElementById('campo-feed-list');
     if (!list) return;
-    const hoy = new Date().toISOString().slice(0, 10);
+    const hoy   = new Date().toISOString().slice(0, 10);
     const today = (records || []).filter(a => a.Fecha === hoy).slice(-6).reverse();
 
     if (!today.length) {
@@ -707,17 +560,17 @@
       return;
     }
     list.innerHTML = today.map(a => {
-      const hora = (a.Historial_Marcaciones?.[0]?.Hora || a.Hora_Real || '').substring(0, 5);
+      const hora = (a.Hora_Real || '').substring(0, 5);
       return `<li class="campo-feed-item">
         <span class="feed-dot" aria-hidden="true"></span>
-        <span><b>${a.Nombre_Completo || a.Nombre_Trabajador || '—'}</b> · ${a.Tipo_Marcacion || ''}</span>
+        <span><b>${_esc(a.Nombre_Completo || a.Nombre_Trabajador || '—')}</b> · ${_esc(a.Tipo_Marcacion || '')}</span>
         <span class="feed-meta">${hora || 'registrada'}</span>
       </li>`;
     }).join('');
   }
 
-  // ─── Estado ────────────────────────────────────────────────────────
-  function updateStatusPill(connected) {
+  // ─── Estado ──────────────────────────────────────────────────────────────
+  function _updateStatusPill(connected) {
     const pill = document.getElementById('campo-status');
     const text = document.getElementById('campo-status-text');
     if (pill && text) {
@@ -727,34 +580,37 @@
     }
   }
 
-  function showStatusMessage(message, type = 'error') {
+  function _showStatusMessage(message, type = 'error') {
     const pill = document.getElementById('campo-status');
     const text = document.getElementById('campo-status-text');
     if (!pill || !text) return;
     clearTimeout(_statusTimer);
-    pill.classList.add(type === 'error' ? 'disconnected' : 'connected');
-    pill.classList.remove(type === 'error' ? 'connected' : 'disconnected');
+    pill.classList.toggle('disconnected', type === 'error');
+    pill.classList.toggle('connected', type !== 'error');
     text.textContent = message;
-    _statusTimer = setTimeout(() => updateStatusPill(!!db), 4000);
+    _statusTimer = setTimeout(() => _updateStatusPill(!!_db), 4000);
   }
 
-  // ─── Ciclo de vida ─────────────────────────────────────────────────
+  // ─── Utilidades ──────────────────────────────────────────────────────────
+  function _esc(str) {
+    return String(str == null ? '' : str)
+      .replace(/&/g, '&amp;').replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+  }
+
+  // ─── Ciclo de vida ────────────────────────────────────────────────────────
   async function cargar() {
-    if (!isSessionValid()) {
-      showLogin();
-      return;
-    }
-    await onLoginSuccess();
+    if (!await _isAuthorizedOperator()) { _showLogin(); return; }
+    await _onLoginSuccess();
   }
 
   function cleanup() {
-    if (scannerActive) stopScanner();
-    if (unsubscribe && typeof unsubscribe === 'function') unsubscribe();
+    if (_scannerActive) _stopScanner();
+    if (_unsubscribe && typeof _unsubscribe === 'function') _unsubscribe();
   }
 
-  window.FieldScanner = { init, cargar, cleanup, showLogin, handleLogout };
+  window.FieldScanner = { init, cargar, cleanup, showLogin: _showLogin, handleLogout: _handleLogout };
 
-  // Arranque automatico al cargar la pagina
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', () => init());
   } else {

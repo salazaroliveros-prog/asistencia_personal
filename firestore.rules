@@ -12,6 +12,14 @@ service cloud.firestore {
     function isAdmin() {
       return request.auth != null && request.auth.token.admin == true;
     }
+
+    // Plan gratuito: la cuenta operadora se fija en reglas, no en datos que
+    // pueda modificar el cliente. Solo funciona con correo de Google verificado.
+    function isAuthorizedOperator() {
+      return request.auth != null &&
+             request.auth.token.email_verified == true &&
+             request.auth.token.email == 'sistemadecontrol090@gmail.com';
+    }
     
     // Valida que un string no esté vacío y tenga longitud razonable
     function isValidString(value, min, max) {
@@ -71,8 +79,8 @@ service cloud.firestore {
       // Cualquier usuario autenticado puede leer asistencias
       allow read: if request.auth != null;
       
-      // Cualquier usuario autenticado puede crear asistencias (para marcación en campo)
-      allow create: if request.auth != null &&
+      // La marcación la realiza exclusivamente el operador verificado.
+      allow create: if isAuthorizedOperator() &&
                      isValidAttendanceData(request.resource.data) &&
                      request.resource.data.keys().size() <= 20; // Límite de campos
       
@@ -91,9 +99,12 @@ service cloud.firestore {
     // COLECCIÓN: CONFIGURACIÓN
     // ─────────────────────────────────────────────────────────────────────────
     match /configuracion/{configId} {
-      // Solo administradores pueden leer/escribir configuración
-      allow read, write: if isAdmin() &&
-                         request.resource.data.keys().size() <= 30;
+      // Cualquier usuario autenticado puede leer la configuración
+      // (necesario para que operadores y supervisores carguen horarios y GPS)
+      allow read: if request.auth != null;
+      allow create, update: if isAdmin() &&
+                               request.resource.data.keys().size() <= 30;
+      allow delete: if isAdmin();
     }
     
     // ─────────────────────────────────────────────────────────────────────────

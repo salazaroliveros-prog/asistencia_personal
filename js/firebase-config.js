@@ -15,13 +15,27 @@
  * SEGURIDAD: Las credenciales de Firebase web son públicas por diseño. La seguridad
  * real se maneja con Firebase Authentication y Firestore Rules.
  */
-window.FIREBASE_CONFIG = window.FIREBASE_CONFIG || {
+const bundledFirebaseConfig = {
   apiKey: "AIzaSyDriDh1SC5_8T1rx5EmgFi0pUEKUGQU5xg",
   authDomain: "sistema-de-control-aee89.firebaseapp.com",
   projectId: "sistema-de-control-aee89",
   storageBucket: "sistema-de-control-aee89.firebasestorage.app",
   messagingSenderId: "265655332442",
   appId: "1:265655332442:web:c4e8617741e3b916987263",
+};
+
+// La configuración web no es un secreto, pero sí debe sobrevivir a un cambio
+// hecho desde Ajustes. De este modo el cliente y el escáner comparten la misma
+// fuente de verdad al volver a abrir la aplicación.
+let storedFirebaseConfig = {};
+try {
+  storedFirebaseConfig = JSON.parse(localStorage.getItem('cpc_firebase_config') || '{}');
+} catch (_) {
+  storedFirebaseConfig = {};
+}
+window.FIREBASE_CONFIG = window.FIREBASE_CONFIG || {
+  ...bundledFirebaseConfig,
+  ...storedFirebaseConfig,
 };
 
 /**

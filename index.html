@@ -152,6 +152,7 @@
   <script src="js/utils/validators.js" type="text/javascript"></script>
   <script src="js/utils/alerts.js" type="text/javascript"></script>
   <script src="js/utils/qr-generator.js" type="text/javascript"></script>
+  <script src="js/utils/camera-session.js" type="text/javascript"></script>
   <script src="js/utils/gps.js" type="text/javascript"></script>
   <script src="js/utils/map-viewer.js" type="text/javascript"></script>
   <script src="js/utils/pdf-builder.js" type="text/javascript"></script>
@@ -668,7 +669,13 @@
                   <button type="button" id="btn-stop-scan" class="btn btn-danger btn-lg" hidden>
                     <i data-lucide="camera-off" aria-hidden="true"></i> Detener Cámara
                   </button>
+                  <button type="button" id="btn-switch-scan-camera" class="btn btn-ghost btn-lg" hidden aria-label="Cambiar cámara de escaneo">
+                    <i data-lucide="switch-camera" aria-hidden="true"></i> Cambiar cámara
+                  </button>
+                  <label class="visually-hidden" for="scan-camera-select">Cámara para escaneo QR</label>
+                  <select id="scan-camera-select" class="input-glass scanner-camera-select" hidden aria-label="Cámara para escaneo QR"></select>
                 </div>
+                <p id="scan-camera-status" class="text-muted text-xs scanner-camera-status" role="status" aria-live="polite"></p>
 
                 <!-- Resultado del escaneo -->
                 <div id="scan-result" class="scan-result glass-card" hidden aria-live="polite">
@@ -800,7 +807,13 @@
                 <button type="button" id="campo-btn-stop" class="btn btn-danger" hidden>
                   <i data-lucide="camera-off" aria-hidden="true"></i> Detener
                 </button>
+                <button type="button" id="campo-btn-switch-camera" class="btn btn-ghost" hidden aria-label="Cambiar cámara de escaneo">
+                  <i data-lucide="switch-camera" aria-hidden="true"></i> Cambiar cámara
+                </button>
+                <label class="visually-hidden" for="campo-camera-select">Cámara para escaneo QR</label>
+                <select id="campo-camera-select" class="input-glass scanner-camera-select" hidden aria-label="Cámara para escaneo QR"></select>
               </div>
+              <p id="campo-camera-status" class="campo-scan-hint" role="status" aria-live="polite"></p>
             </div>
 
             <!-- Tarjeta del trabajador escaneado -->
@@ -1775,7 +1788,9 @@
           <button id="btn-flip-camera" class="btn btn-ghost btn-sm" type="button" aria-label="Cambiar cámara">
             <i data-lucide="flip-horizontal-2" aria-hidden="true"></i> Voltear
           </button>
-          <span id="camera-status-label" class="text-muted text-xs">Iniciando cámara...</span>
+          <label class="visually-hidden" for="camera-device-select">Cámara para la fotografía</label>
+          <select id="camera-device-select" class="input-glass camera-device-select" hidden aria-label="Cámara para la fotografía"></select>
+          <span id="camera-status-label" class="text-muted text-xs" role="status" aria-live="polite">Iniciando cámara…</span>
         </div>
 
         <!-- Visor de video -->
@@ -1831,7 +1846,7 @@
     <div class="modal glass-modal modal-lg modal-map-dialog">
       <div class="modal-header">
         <h2 id="modal-map-title">Mapa de Ubicaciones</h2>
-        <button type="button" class="modal-close" aria-label="Cerrar modal" data-modal="modal-map">
+        <button type="button" class="modal-close" aria-label="Cerrar modal" data-modal="modal-map" onclick="if(window.MapViewer) MapViewer.closeMap()">
           <i data-lucide="x" aria-hidden="true"></i>
         </button>
       </div>
@@ -1853,7 +1868,7 @@
         </div>
       </div>
       <div class="modal-footer">
-        <button type="button" class="btn btn-ghost" data-modal="modal-map">Cerrar</button>
+        <button type="button" class="btn btn-ghost" data-modal="modal-map" onclick="if(window.MapViewer) MapViewer.closeMap()">Cerrar</button>
       </div>
     </div>
   </div>

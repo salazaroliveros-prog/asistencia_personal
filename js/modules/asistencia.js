@@ -36,10 +36,18 @@ const ModuloAsistencia = (() => {
     });
 
     // Botón iniciar/detener cámara
-    const btnStart = document.getElementById('btn-start-scan');
-    const btnStop  = document.getElementById('btn-stop-scan');
-    if (btnStart) btnStart.addEventListener('click', _iniciarScanner);
-    if (btnStop)  btnStop.addEventListener('click',  _detenerScanner);
+    const btnStart  = document.getElementById('btn-start-scan');
+    const btnStop   = document.getElementById('btn-stop-scan');
+    const btnSwitch = document.getElementById('btn-switch-scan-camera');
+    const camSelect = document.getElementById('scan-camera-select');
+    if (btnStart)  btnStart.addEventListener('click', () => _iniciarScanner());
+    if (btnStop)   btnStop.addEventListener('click',  _detenerScanner);
+    if (btnSwitch) btnSwitch.addEventListener('click', async () => {
+      _scanFacingMode = _scanFacingMode === 'environment' ? 'user' : 'environment';
+      await _iniciarScanner();
+    });
+    if (camSelect) camSelect.addEventListener('change', () => _iniciarScanner({ deviceId: camSelect.value }));
+    window.addEventListener('pagehide', _detenerScanner);
 
     // Búsqueda manual con autocomplete (optimized with RequestOptimizer)
     const searchInput = document.getElementById('manual-worker-search');
@@ -154,67 +162,113 @@ const ModuloAsistencia = (() => {
   }
 
   // ─────────────────────────────────────────────────────────────────────────
-  // ESCÁNER QR
+  // ESCÁNER QR — usa CameraSession para soporte multi-cámara y torch
   // ─────────────────────────────────────────────────────────────────────────
-  async function _iniciarScanner() {
-    if (typeof Html5Qrcode === 'undefined') {
-      Alerts.error('El escáner QR no está disponible. Verifica los CDN.', 'Error');
+  let _qrController  = null;
+  let _scanFacingMode = 'environment';
+
+  function _cameraSession() {
+    return window.CPC && window.CPC.CameraSession;
+  }
+
+  function _setScanStatus(msg) {
+    const el = document.getElementById('scan-camera-status');
+    if (el) el.textContent = msg;
+  }
+
+  async function _loadScanCameraChoices() {
+    const session = _cameraSession();
+    const select  = document.getElementById('scan-camera-select');
+    const switchBtn = document.getElementById('btn-switch-scan-camera');
+    if (!session || !select) return;
+    try {
+      const devices = await session.listDevices();
+      select.innerHTML = devices.map(d =>
+        `<option value="${_escHtml(d.id)}">${_escHtml(d.label)}</option>`
+      ).join('');
+      const multi = devices.length >= 2;
+      select.hidden    = !multi;
+      if (switchBtn) switchBtn.hidden = !multi;
+    } catch (_) { /* sin enumeración */ }
+  }
+
+  async function _iniciarScanner(options = {}) {
+    const session = _cameraSession();
+    if (typeof Html5Qrcode === 'undefined' || !session) {
+      Alerts.error('El escáner QR no está disponible. Verifica los recursos.', 'Error');
       return;
     }
 
-    // Verificar permiso de cámara
-    try {
-      await navigator.mediaDevices.getUserMedia({ video: true });
-    } catch (err) {
-      Alerts.error('No se pudo acceder a la cámara. Verifica los permisos del navegador.', 'Sin acceso a cámara');
-      return;
-    }
-
-    const btnStart = document.getElementById('btn-start-scan');
-    const btnStop  = document.getElementById('btn-stop-scan');
+    const btnStart  = document.getElementById('btn-start-scan');
+    const btnStop   = document.getElementById('btn-stop-scan');
+    const switchBtn = document.getElementById('btn-switch-scan-camera');
 
     try {
-      _scanner = new Html5Qrcode('qr-reader');
+      if (!_qrController) {
+        _qrController = session.createQrController({
+          Scanner: Html5Qrcode,
+          elementId: 'qr-reader',
+          onSuccess: _onQRSuccess,
+        });
+      }
+      _setScanStatus('Iniciando cámara…');
+      const result = await _qrController.start({ facingMode: _scanFacingMode, ...options });
+      if (!result) return;
 
-      const config = {
-        fps: 10,
-        qrbox: { width: 220, height: 220 },
-        aspectRatio: 1.0,
-        disableFlip: false,
-      };
-
-      await _scanner.start(
-        { facingMode: 'environment' },
-        config,
-        _onQRSuccess,
-        _onQRError
-      );
-
+      _scanner = result.scanner;
       _scannerActive = true;
       if (btnStart) btnStart.hidden = true;
       if (btnStop)  btnStop.hidden  = false;
 
-      // Ocultar resultado previo
       const resultPanel = document.getElementById('scan-result');
       if (resultPanel) resultPanel.hidden = true;
 
+      _setScanStatus('Cámara activa');
+      await _loadScanCameraChoices();
+      _injectScanTorchButton();
     } catch (err) {
-      Alerts.error('Error al iniciar el escáner: ' + err.message, 'Error de cámara');
+      _setScanStatus('Cámara no disponible');
+      Alerts.error(session.describeError(err), 'Error de cámara');
     }
   }
 
   async function _detenerScanner() {
-    if (_scanner && _scannerActive) {
-      try {
-        await _scanner.stop();
-      } catch (e) { /* Ignorar */ }
-      _scannerActive = false;
-    }
-
+    if (_qrController) await _qrController.stop();
+    _scanner = null;
+    _scannerActive = false;
     const btnStart = document.getElementById('btn-start-scan');
     const btnStop  = document.getElementById('btn-stop-scan');
     if (btnStart) btnStart.hidden = false;
     if (btnStop)  btnStop.hidden  = true;
+    _removeScanTorchButton();
+    _setScanStatus('');
+  }
+
+  function _injectScanTorchButton() {
+    const container = document.querySelector('.scanner-controls');
+    if (!container || document.getElementById('btn-scan-torch')) return;
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.id   = 'btn-scan-torch';
+    btn.className = 'btn btn-ghost btn-lg';
+    btn.setAttribute('aria-label', 'Activar/desactivar flash');
+    btn.innerHTML = '<i data-lucide="flashlight" aria-hidden="true"></i> Flash';
+    btn.hidden = !(_qrController && _qrController.supportsTorch());
+    btn.addEventListener('click', async () => {
+      if (!_qrController || !_qrController.supportsTorch()) {
+        Alerts.warning('Flash no disponible en este dispositivo');
+        return;
+      }
+      const on = await _qrController.toggleTorch();
+      btn.innerHTML = `<i data-lucide="${on ? 'flashlight-off' : 'flashlight'}" aria-hidden="true"></i> ${on ? 'Apagar flash' : 'Flash'}`;
+      if (window.lucide) lucide.createIcons({ nodes: [btn] });
+    });
+    container.appendChild(btn);
+    if (window.lucide) lucide.createIcons({ nodes: [btn] });
+  }
+
+  function _removeScanTorchButton() {
+    document.getElementById('btn-scan-torch')?.remove();
   }
 
   // Callback éxito de escaneo
@@ -245,9 +299,8 @@ const ModuloAsistencia = (() => {
     _mostrarResultadoScan(trabajador);
   }
 
-  function _onQRError(error) {
+  function _onQRError(_error) {
     // Errores silenciosos durante el escaneo continuo (normal)
-    // Solo loggear errores significativos
   }
 
   function _mostrarResultadoScan(trabajador) {
@@ -863,44 +916,104 @@ const ModuloAsistencia = (() => {
   async function _editarMarcacion(id) {
     const asistencias = AppState.get('asistencias') || [];
     const marcacion = asistencias.find(a => (a.ID_Marcacion === id || a.ID_Asistencia === id));
-    
+
     if (!marcacion) {
       Alerts.error('Marcación no encontrada');
       return;
     }
 
-    // Aquí podrías abrir un modal para editar la marcación
-    // Por ahora, vamos a implementar una edición simple de hora real
-    const nuevaHora = prompt(`Editar hora real para ${marcacion.Nombre_Trabajador} - ${marcacion.Tipo_Marcacion}:\nHora actual: ${marcacion.Hora_Real?.substring(0, 5) || '--'}\n\nIngresa la nueva hora (formato HH:MM):`, marcacion.Hora_Real?.substring(0, 5) || '');
-    
-    if (!nuevaHora) return; // Usuario canceló
-    
-    // Validar formato de hora
+    // Reutilizar modal de horas extra como editor de hora real
+    // Si existe un modal dedicado, usarlo; si no, construir uno dinámico
+    const horaActual = marcacion.Hora_Real?.substring(0, 5) || '';
+    const nuevaHora = await _pedirHoraModal(marcacion.Nombre_Trabajador, marcacion.Tipo_Marcacion, horaActual);
+
+    if (!nuevaHora) return;
+
     const horaRegex = /^([01]?[0-9]|2[0-3]):[0-5][0-9]$/;
     if (!horaRegex.test(nuevaHora)) {
       Alerts.error('Formato de hora inválido. Usa el formato HH:MM (ej: 08:30)');
       return;
     }
 
-    // Recalcular estado
     const config = AppState.get('config');
     const tolerancia = parseInt(config.Tolerancia_Minutos || 15);
     const estadoNuevo = _calcularEstado(marcacion.Hora_Programada, nuevaHora, tolerancia);
 
-    // Usar API para actualizar
     const result = await API.actualizarAsistencia(id, {
       horaReal: nuevaHora + ':00',
-      estadoMarcacion: estadoNuevo
+      estadoMarcacion: estadoNuevo,
     });
 
     if (result.success) {
-      // Recargar tabla
       const fecha = document.getElementById('asistencia-filter-date')?.value || AppState.today();
       _cargarMarcaciones(fecha);
       Alerts.success('Marcación actualizada correctamente');
     } else {
       Alerts.error('Error al actualizar marcación: ' + (result.error || 'Error desconocido'));
     }
+  }
+
+  /**
+   * Muestra un mini-modal para ingresar una hora (reemplaza prompt nativo).
+   * @param {string} nombre - Nombre del trabajador
+   * @param {string} tipo - Tipo de marcación
+   * @param {string} horaActual - Valor inicial HH:MM
+   * @returns {Promise<string|null>} Hora ingresada o null si canceló
+   */
+  function _pedirHoraModal(nombre, tipo, horaActual) {
+    return new Promise((resolve) => {
+      // Crear modal dinámico
+      const overlay = document.createElement('div');
+      overlay.className = 'modal-overlay';
+      overlay.setAttribute('role', 'dialog');
+      overlay.setAttribute('aria-modal', 'true');
+      overlay.setAttribute('aria-labelledby', 'edit-hora-title');
+      overlay.innerHTML = `
+        <div class="modal-container" style="max-width:380px">
+          <div class="modal-header">
+            <h3 id="edit-hora-title" class="modal-title">Editar Hora Real</h3>
+            <button class="modal-close" data-action="cancel" aria-label="Cerrar">
+              <i data-lucide="x"></i>
+            </button>
+          </div>
+          <div class="modal-body">
+            <p style="margin-bottom:var(--space-3);color:var(--color-text-muted);font-size:var(--text-sm)">
+              <strong>${_escHtml(nombre)}</strong> — ${_escHtml(tipo)}
+            </p>
+            <label for="edit-hora-input" class="form-label">Nueva hora (HH:MM)</label>
+            <input id="edit-hora-input" type="time" class="form-input"
+                   value="${_escHtml(horaActual)}" required />
+          </div>
+          <div class="modal-footer">
+            <button class="btn btn-secondary" data-action="cancel">Cancelar</button>
+            <button class="btn btn-primary" data-action="confirm">Guardar</button>
+          </div>
+        </div>
+      `;
+
+      document.body.appendChild(overlay);
+      if (window.lucide) lucide.createIcons({ nodes: [overlay] });
+
+      const input = overlay.querySelector('#edit-hora-input');
+      setTimeout(() => input?.focus(), 80);
+
+      function _close(value) {
+        overlay.remove();
+        resolve(value);
+      }
+
+      overlay.addEventListener('click', (e) => {
+        const action = e.target.closest('[data-action]')?.dataset.action;
+        if (action === 'cancel') _close(null);
+        if (action === 'confirm') _close(input?.value || null);
+        if (e.target === overlay) _close(null);
+      });
+
+      overlay.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') _close(null);
+        if (e.key === 'Enter' && document.activeElement === input) _close(input?.value || null);
+      });
+    });
   }
 
   // ─────────────────────────────────────────────────────────────────────────

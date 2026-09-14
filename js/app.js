@@ -823,6 +823,7 @@ function _hideSplash() {
 
       setTimeout(() => {
         splash.style.display = 'none';
+        splash.hidden = true;
         if (app) app.hidden = false;
 
         // Re-renderizar íconos después de mostrar la app

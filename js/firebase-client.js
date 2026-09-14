@@ -81,6 +81,33 @@
     }
   }
 
+  function isConfigured(config = window.FIREBASE_CONFIG) {
+    return Boolean(config && config.apiKey && config.projectId && config.authDomain && config.appId);
+  }
+
+  async function configure(config) {
+    if (!isConfigured(config)) {
+      return { success: false, error: 'Configuración de Firebase incompleta.' };
+    }
+
+    // Firebase no permite modificar la configuración de una app ya creada. Se
+    // elimina la instancia compat anterior antes de recrearla con la elegida.
+    stop();
+    if (app && typeof app.delete === 'function') {
+      await app.delete();
+    }
+    db = null;
+    auth = null;
+    app = null;
+    window.FIREBASE_CONFIG = { ...config };
+    try {
+      localStorage.setItem('cpc_firebase_config', JSON.stringify(window.FIREBASE_CONFIG));
+    } catch (error) {
+      console.warn('[FirebaseClient] No se pudo guardar la configuración:', error);
+    }
+    return initialize();
+  }
+
   // ─── Health Check ───────────────────────────────────────────────────────
   function startHealthCheck() {
     if (healthCheckInterval) clearInterval(healthCheckInterval);
@@ -141,10 +168,15 @@
   }
 
   // ─── Operaciones CRUD ───────────────────────────────────────────────────
-  async function list(collection, orderField = null, limit = null) {
+  async function list(collection, orderField = null, limit = null, filters = []) {
     if (!db) throw new Error('Firebase no inicializado');
     
     let query = db.collection(collection);
+    
+    // Aplicar filtros where antes de orderBy
+    for (const [field, op, value] of filters) {
+      query = query.where(field, op, value);
+    }
     
     if (orderField) {
       query = query.orderBy(orderField);
@@ -257,6 +289,8 @@
       connectionPollInterval = null;
     }
     connectionChangeListeners = [];
+    db = null;
+    auth = null;
     _initialized = false;
     connectionState = 'idle';
   }
@@ -273,6 +307,8 @@
     onConnectionChange,
     getHealth,
     checkHealth,
+    isConfigured,
+    configure,
     signInAnonymously,
     getCurrentUser,
     onAuthStateChanged,
