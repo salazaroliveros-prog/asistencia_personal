@@ -58,6 +58,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     // 9. Indicador de sincronización offline
     _initSyncIndicator();
 
+    // 9.1 Badge de conexión en el sidebar
+    _initConnectionBadge();
+
     // 10. Banner de modo demo
     _initDemoBanner();
 
@@ -981,6 +984,32 @@ function _initSyncIndicator() {
       }
     }
   }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// BADGE DE CONEXIÓN EN SIDEBAR
+// ─────────────────────────────────────────────────────────────────────────────
+function _initConnectionBadge() {
+  const dot  = document.querySelector('.connection-dot');
+  const text = document.getElementById('connection-text');
+
+  function _update() {
+    const mode      = AppState.get('backendMode');
+    const connected = AppState.get('connected');
+    const isOnline  = mode === 'firestore' && connected;
+
+    if (dot) {
+      dot.classList.toggle('connected',    isOnline);
+      dot.classList.toggle('disconnected', !isOnline);
+    }
+    if (text) {
+      text.textContent = isOnline ? 'Firestore' : 'Modo local';
+    }
+  }
+
+  AppState.on('backendMode', _update);
+  AppState.on('connected',   _update);
+  _update();
 }
 
 async function _autoSync() {
