@@ -43,13 +43,7 @@
 
   function updateConnection(value) {
     AppState.set('connected', value);
-    const dot = document.querySelector('.connection-dot');
-    if (dot) {
-      dot.classList.toggle('connected', value);
-      dot.classList.toggle('disconnected', !value);
-    }
-    const label = document.getElementById('connection-text');
-    if (label) label.textContent = value ? 'Firestore en línea' : 'Modo local';
+    if (value) AppState.set('backendMode', 'firestore');
   }
 
   function normalizeWorker(payload, previous) {

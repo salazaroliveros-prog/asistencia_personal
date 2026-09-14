@@ -645,7 +645,7 @@ const ModuloAsistencia = (() => {
     fecha = fecha || AppState.today();
 
     // Modo offline: mostrar asistencias locales del AppState para la fecha
-    if (AppState.get('backendMode') !== 'firestore') {
+    if (!AppState.get('connected') || AppState.get('backendMode') !== 'firestore') {
       const locales = (AppState.get('asistencias') || []).filter(a => a.Fecha === fecha);
       _renderTablaMarcaciones(locales);
       return;

@@ -127,6 +127,10 @@
         };
         
         connectionState = latency < 1000 ? 'connected' : 'degraded';
+        // Propagar al store reactivo
+        if (typeof AppState !== 'undefined') {
+          AppState.set('connected', true);
+        }
       } catch (error) {
         healthCheckData.consecutiveFailures++;
         healthCheckData.lastCheck = Date.now();
@@ -134,6 +138,10 @@
         if (healthCheckData.consecutiveFailures >= 3) {
           connectionState = 'disconnected';
           healthCheckData.healthy = false;
+          // Propagar al store reactivo
+          if (typeof AppState !== 'undefined') {
+            AppState.set('connected', false);
+          }
         }
       }
     }, 30000); // Check cada 30 segundos
