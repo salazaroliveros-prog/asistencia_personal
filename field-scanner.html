@@ -29,6 +29,22 @@
   <link rel="icon" type="image/svg+xml" href="/field-scanner-favicon.svg" />
   <link rel="stylesheet" href="/css/main.css" />
   <link rel="stylesheet" href="/css/campo.css" />
+  <!-- CSP: permite Firebase (gstatic), html5-qrcode (unpkg) y lucide (unpkg) -->
+  <meta http-equiv="Content-Security-Policy" content="
+    default-src 'self';
+    script-src 'self' 'unsafe-inline' https://www.gstatic.com https://unpkg.com;
+    style-src 'self' 'unsafe-inline';
+    font-src 'self' https://fonts.gstatic.com;
+    img-src 'self' data: blob: https:;
+    connect-src 'self'
+      https://www.gstatic.com
+      https://*.googleapis.com
+      https://*.firebaseio.com
+      wss://*.googleapis.com
+      wss://*.firebaseio.com;
+    worker-src 'self' blob:;
+    frame-ancestors 'none';
+  " />
   <style>
     :root { --safe-bottom: env(safe-area-inset-bottom, 0px); --safe-top: env(safe-area-inset-top, 0px); }
     html, body { overscroll-behavior: none; }
