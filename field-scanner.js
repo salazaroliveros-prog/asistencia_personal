@@ -136,8 +136,9 @@
   function _subscribeRealtime() {
     if (!_db) return;
     try {
+      const hoy = new Date().toISOString().slice(0, 10);
       _unsubscribe = _db.collection('asistencias')
-        .orderBy('Fecha', 'desc')
+        .where('Fecha', '==', hoy)
         .limit(50)
         .onSnapshot(snapshot => {
           const records = snapshot.docs.map(doc => ({ ID_Marcacion: doc.id, ...doc.data() }));
@@ -312,7 +313,7 @@
   }
 
   // ─── QR Success ──────────────────────────────────────────────────────────
-  function _onQRSuccess(decodedText) {
+  async function _onQRSuccess(decodedText) {
     if (navigator.vibrate) navigator.vibrate(80);
     if (_audio) _audio.beepSuccess();
 
@@ -324,7 +325,8 @@
       return;
     }
 
-    const trabajador = _buscarTrabajadorPorQR(qrData);
+    _showStatusMessage('Buscando trabajador…', 'success');
+    const trabajador = await _buscarTrabajadorPorQR(qrData);
     if (!trabajador) {
       if (_audio) _audio.beepError();
       _saveErrorLog(new Error('Trabajador no encontrado: ' + (qrData.id || '—')), 'qrWorkerLookup');
@@ -350,13 +352,45 @@
 
   function _buscarTrabajadorPorQR(qrData) {
     const personal = JSON.parse(localStorage.getItem('cpc_personal_cache') || '[]');
-    if (!Array.isArray(personal)) return null;
-    if (qrData.dpi) {
-      const found = personal.find(p => (p.DPI_CUI || '').replace(/\D/g, '') === String(qrData.dpi).replace(/\D/g, ''));
-      if (found) return found;
+    if (Array.isArray(personal) && personal.length) {
+      if (qrData.dpi) {
+        const found = personal.find(p => (p.DPI_CUI || '').replace(/\D/g, '') === String(qrData.dpi).replace(/\D/g, ''));
+        if (found) return found;
+      }
+      if (qrData.id) {
+        const found = personal.find(p => p.ID_Trabajador === qrData.id);
+        if (found) return found;
+      }
     }
-    if (qrData.id) return personal.find(p => p.ID_Trabajador === qrData.id) || null;
-    return null;
+    // Cache vacío (dispositivo remoto): buscar directamente en Firestore
+    return _buscarTrabajadorFirestore(qrData);
+  }
+
+  async function _buscarTrabajadorFirestore(qrData) {
+    if (!_db) return null;
+    try {
+      let snap;
+      if (qrData.id) {
+        snap = await _db.collection('personal').where('ID_Trabajador', '==', qrData.id).limit(1).get();
+      } else if (qrData.dpi) {
+        const dpi = String(qrData.dpi).replace(/\D/g, '');
+        snap = await _db.collection('personal').where('DPI_CUI', '==', dpi).limit(1).get();
+      }
+      if (!snap || snap.empty) return null;
+      const trabajador = snap.docs[0].data();
+      // Actualizar cache local para próximas búsquedas
+      try {
+        const cache = JSON.parse(localStorage.getItem('cpc_personal_cache') || '[]');
+        if (!cache.find(p => p.ID_Trabajador === trabajador.ID_Trabajador)) {
+          cache.push(trabajador);
+          localStorage.setItem('cpc_personal_cache', JSON.stringify(cache));
+        }
+      } catch (_) { /* silenciar */ }
+      return trabajador;
+    } catch (err) {
+      console.error('[FieldScanner] Error buscando trabajador:', err);
+      return null;
+    }
   }
 
   // ─── Worker UI ───────────────────────────────────────────────────────────
