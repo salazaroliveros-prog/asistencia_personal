@@ -17,7 +17,7 @@
  * SEGURIDAD: Las credenciales de Firebase web son públicas por diseño. La seguridad
  * real se maneja con Firebase Authentication y Firestore Rules.
  */
-const bundledFirebaseConfig = {
+const bundledFirebaseConfig = window.bundledFirebaseConfig || {
   apiKey: "AIzaSyDriDh1SC5_8T1rx5EmgFi0pUEKUGQU5xg",
   authDomain: "sistema-de-control-aee89.firebaseapp.com",
   projectId: "sistema-de-control-aee89",

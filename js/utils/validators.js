@@ -390,6 +390,48 @@ const Validators = (() => {
       };
     }
   };
+
+  function calcularEstado(horaOficial, horaReal, tolerancia) {
+    if (!horaOficial || !horaReal) return 'A Tiempo';
+
+    const [hO, mO] = horaOficial.split(':').map(Number);
+    const [hR, mR] = horaReal.split(':').map(Number);
+
+    const minOficial = hO * 60 + mO;
+    const minReal    = hR * 60 + mR;
+    const diferencia = minReal - minOficial;
+
+    if (diferencia <= 0)          return 'A Tiempo';
+    if (diferencia <= tolerancia) return 'Tolerancia';
+    return 'Atraso';
+  }
+
+  function calcularHorasExtra(horaReal, horaSalida) {
+    if (!horaReal || !horaSalida) return 0;
+
+    const [hS, mS] = horaSalida.split(':').map(Number);
+    const [hR, mR] = horaReal.split(':').map(Number);
+
+    const minSalida = hS * 60 + mS + 15;
+    const minReal   = hR * 60 + mR;
+    const exceso    = minReal - minSalida;
+
+    if (exceso <= 0) return 0;
+    return Math.round(exceso / 30) * 0.5;
+  }
+
+  return {
+    validateDPI,
+    validateTelefono,
+    validateNombre,
+    validatePuesto,
+    validateDPIRequerido,
+    validateOrdenHorarios,
+    validateConfiguracionGeneral,
+    validateGPSRadius,
+    calcularEstado,
+    calcularHorasExtra,
+  };
 })();
 
 if (typeof module !== 'undefined' && module.exports) {

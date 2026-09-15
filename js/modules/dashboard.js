@@ -8,7 +8,8 @@
 const ModuloDashboard = (() => {
 
   // ─── Helpers globales ─────────────────────────────────────────────────────
-  const isoDate = (date) => (window.CPC?.DateHelpers?.toISODate?.(date) ?? _dateToStr(date));
+  const isoDate = (date) => (window.CPC?.DateHelpers?.toISODate?.(date) ?? window.CPC?.StringHelpers?.dateToStr?.(date) ??
+    `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`);
 
   // ─── Estado del módulo ────────────────────────────────────────────────────
   let _asistenciaDelMes = {};  // { 'YYYY-MM-DD': { presentes, total } }
@@ -243,9 +244,9 @@ const ModuloDashboard = (() => {
       return `
         <div class="attendance-item">
           ${p.Fotografia_URL
-            ? `<img src="${_escHtml(p.Fotografia_URL)}"
+            ? `<img src="${window.CPC.StringHelpers.escHtml(p.Fotografia_URL)}"
                   class="item-photo"
-                  alt="${_escHtml(p.Nombre_Completo)}"
+                  alt="${window.CPC.StringHelpers.escHtml(p.Nombre_Completo)}"
                   loading="lazy"
                   style="border-color:${estadoColor};"
                   onerror="this.onerror=null;this.style.display='none';this.nextElementSibling.style.display='flex';" />
@@ -253,14 +254,14 @@ const ModuloDashboard = (() => {
             : `<div class="item-photo" style="display:flex;align-items:center;justify-content:center;background:var(--glass-bg);border:2px solid ${estadoColor};font-size:var(--text-xs);font-weight:700;color:${estadoColor};flex-shrink:0;">${iniciales}</div>`
           }
           <div class="item-info">
-            <div class="item-name">${_escHtml(p.Nombre_Completo)}</div>
+            <div class="item-name">${window.CPC.StringHelpers.escHtml(p.Nombre_Completo)}</div>
             <div class="item-detail">
-              ${_escHtml(p.Puesto)} — ${ultima ? tipoLabel[ultima.Tipo_Marcacion] || ultima.Tipo_Marcacion : ''}
+              ${window.CPC.StringHelpers.escHtml(p.Puesto)} — ${ultima ? tipoLabel[ultima.Tipo_Marcacion] || ultima.Tipo_Marcacion : ''}
               ${ultima ? `<span style="opacity:0.6"> ${ultima.Hora_Real ? ultima.Hora_Real.substring(0,5) : ''}</span>` : ''}
             </div>
           </div>
           ${whatsappNum
-            ? `<a href="https://wa.me/${_escHtml(whatsappNum)}" target="_blank" rel="noopener noreferrer" class="table-action-btn" style="color:var(--color-accent-green)" title="Contactar por WhatsApp" aria-label="Contactar a ${_escHtml(p.Nombre_Completo)} por WhatsApp">
+            ? `<a href="https://wa.me/${window.CPC.StringHelpers.escHtml(whatsappNum)}" target="_blank" rel="noopener noreferrer" class="table-action-btn" style="color:var(--color-accent-green)" title="Contactar por WhatsApp" aria-label="Contactar a ${window.CPC.StringHelpers.escHtml(p.Nombre_Completo)} por WhatsApp">
                 <i data-lucide="message-circle"></i>
               </a>`
             : ''
@@ -377,9 +378,9 @@ const ModuloDashboard = (() => {
         <div class="turno-item" role="listitem">
           <div class="turno-item-indicator" style="background:${grupo.color}" aria-hidden="true"></div>
           ${p.Fotografia_URL
-            ? `<img src="${_escHtml(p.Fotografia_URL)}"
+            ? `<img src="${window.CPC.StringHelpers.escHtml(p.Fotografia_URL)}"
                   class="item-photo"
-                  alt="${_escHtml(p.Nombre_Completo)}"
+                  alt="${window.CPC.StringHelpers.escHtml(p.Nombre_Completo)}"
                   loading="lazy"
                   style="border-color:${grupo.color};"
                   onerror="this.onerror=null;this.style.display='none';this.nextElementSibling.style.display='flex';" />
@@ -388,18 +389,18 @@ const ModuloDashboard = (() => {
                     aria-hidden="true">${iniciales}</div>`
           }
           <div class="item-info">
-            <div class="item-name">${_escHtml(p.Nombre_Completo)}</div>
+            <div class="item-name">${window.CPC.StringHelpers.escHtml(p.Nombre_Completo)}</div>
             <div class="item-detail">
               <span class="badge" style="background:${grupo.color}20;color:${grupo.color};border:1px solid ${grupo.color}40">
-                ${_escHtml(p.Puesto)}
+                ${window.CPC.StringHelpers.escHtml(p.Puesto)}
               </span>
               ${marcacion ? `<span style="opacity:0.65;font-size:var(--text-xs)"> · ${grupo.etiqueta} desde ${horaStr}</span>` : ''}
             </div>
           </div>
           ${whatsappNum
-            ? `<a href="https://wa.me/${_escHtml(whatsappNum)}" target="_blank" rel="noopener noreferrer"
+            ? `<a href="https://wa.me/${window.CPC.StringHelpers.escHtml(whatsappNum)}" target="_blank" rel="noopener noreferrer"
                   class="table-action-btn" style="color:var(--color-accent-green)"
-                  title="WhatsApp" aria-label="WhatsApp de ${_escHtml(p.Nombre_Completo)}">
+                  title="WhatsApp" aria-label="WhatsApp de ${window.CPC.StringHelpers.escHtml(p.Nombre_Completo)}">
                 <i data-lucide="message-circle"></i>
               </a>`
             : ''
@@ -797,17 +798,17 @@ const ModuloDashboard = (() => {
                 return `
                   <div class="attendance-item">
                     ${p.Fotografia_URL
-                      ? `<img src="${_escHtml(p.Fotografia_URL)}" class="item-photo" alt="${_escHtml(p.Nombre_Completo)}" loading="lazy"
+                      ? `<img src="${window.CPC.StringHelpers.escHtml(p.Fotografia_URL)}" class="item-photo" alt="${window.CPC.StringHelpers.escHtml(p.Nombre_Completo)}" loading="lazy"
                               style="border-color:${col};"
                               onerror="this.onerror=null;this.style.display='none';this.nextElementSibling.style.display='flex';" />
                          <div class="item-photo" style="display:none;align-items:center;justify-content:center;background:var(--glass-bg);border:2px solid ${col};font-size:var(--text-xs);font-weight:700;color:${col};flex-shrink:0;">${ini}</div>`
                       : `<div class="item-photo" style="display:flex;align-items:center;justify-content:center;background:var(--glass-bg);border:2px solid ${col};font-size:var(--text-xs);font-weight:700;color:${col};flex-shrink:0;">${ini}</div>`
                     }
                     <div class="item-info">
-                      <div class="item-name">${_escHtml(p.Nombre_Completo)}</div>
-                      <div class="item-detail">${_escHtml(p.Puesto)}</div>
+                      <div class="item-name">${window.CPC.StringHelpers.escHtml(p.Nombre_Completo)}</div>
+                      <div class="item-detail">${window.CPC.StringHelpers.escHtml(p.Puesto)}</div>
                     </div>
-                    ${wa ? `<a href="https://wa.me/${_escHtml(wa)}?text=${encodeURIComponent(`Hola ${p.Nombre_Completo}, tienes ausencia el ${fechaFormateada}`)}" target="_blank" rel="noopener noreferrer" class="btn btn-sm btn-success"><i data-lucide="message-circle"></i> WA</a>` : ''}
+                    ${wa ? `<a href="https://wa.me/${window.CPC.StringHelpers.escHtml(wa)}?text=${encodeURIComponent(`Hola ${p.Nombre_Completo}, tienes ausencia el ${fechaFormateada}`)}" target="_blank" rel="noopener noreferrer" class="btn btn-sm btn-success"><i data-lucide="message-circle"></i> WA</a>` : ''}
                   </div>`;
               }).join('')}
             </div>` : ''}
@@ -829,16 +830,16 @@ const ModuloDashboard = (() => {
                 return `
                   <div class="attendance-item">
                     ${p.Fotografia_URL
-                      ? `<img src="${_escHtml(p.Fotografia_URL)}" class="item-photo" alt="${_escHtml(p.Nombre_Completo)}" loading="lazy"
+                      ? `<img src="${window.CPC.StringHelpers.escHtml(p.Fotografia_URL)}" class="item-photo" alt="${window.CPC.StringHelpers.escHtml(p.Nombre_Completo)}" loading="lazy"
                               style="border-color:${colPresente};"
                               onerror="this.onerror=null;this.style.display='none';this.nextElementSibling.style.display='flex';" />
                          <div class="item-photo" style="display:none;align-items:center;justify-content:center;background:var(--glass-bg);border:2px solid ${colPresente};font-size:var(--text-xs);font-weight:700;color:${colPresente};flex-shrink:0;">${ini}</div>`
                       : `<div class="item-photo" style="display:flex;align-items:center;justify-content:center;background:var(--glass-bg);border:2px solid ${colPresente};font-size:var(--text-xs);font-weight:700;color:${colPresente};flex-shrink:0;">${ini}</div>`
                     }
                     <div class="item-info">
-                      <div class="item-name">${_escHtml(p.Nombre_Completo)}</div>
+                      <div class="item-name">${window.CPC.StringHelpers.escHtml(p.Nombre_Completo)}</div>
                       <div class="item-detail">
-                        ${_escHtml(p.Puesto)}
+                        ${window.CPC.StringHelpers.escHtml(p.Puesto)}
                         ${ultimaP ? `<span style="opacity:0.65"> — ${tipoLabel[ultimaP.Tipo_Marcacion] || ultimaP.Tipo_Marcacion} ${ultimaP.Hora_Real ? ultimaP.Hora_Real.substring(0,5) : ''}</span>` : ''}
                       </div>
                     </div>
@@ -849,7 +850,7 @@ const ModuloDashboard = (() => {
         if (window.lucide) lucide.createIcons({ nodes: [content] });
       }
     } catch (err) {
-      if (content) content.innerHTML = `<p class="text-muted text-center" style="padding:var(--space-6)">Error al cargar datos: ${_escHtml(err.message)}</p>`;
+      if (content) content.innerHTML = `<p class="text-muted text-center" style="padding:var(--space-6)">Error al cargar datos: ${window.CPC.StringHelpers.escHtml(err.message)}</p>`;
     }
   }
 
@@ -900,13 +901,13 @@ const ModuloDashboard = (() => {
     container.innerHTML = alertas.slice(0, 10).map(a => {
       const nombreTrab = a.ID_Trabajador ? (personalMap[a.ID_Trabajador] || a.ID_Trabajador) : '';
       return `
-      <div class="alert-item" data-id="${_escHtml(a.ID_Alerta)}">
+      <div class="alert-item" data-id="${window.CPC.StringHelpers.escHtml(a.ID_Alerta)}">
         <i data-lucide="alert-circle"></i>
         <div class="alert-text">
-          <div class="alert-title">${_escHtml(a.Tipo_Incidencia || '--')}</div>
-          <div class="alert-detail">${_escHtml(nombreTrab)}${a.Fecha_Hora ? ` — ${_escHtml(a.Fecha_Hora)}` : ''}</div>
+          <div class="alert-title">${window.CPC.StringHelpers.escHtml(a.Tipo_Incidencia || '--')}</div>
+          <div class="alert-detail">${window.CPC.StringHelpers.escHtml(nombreTrab)}${a.Fecha_Hora ? ` — ${window.CPC.StringHelpers.escHtml(a.Fecha_Hora)}` : ''}</div>
         </div>
-        <button class="alert-dismiss" data-id="${_escHtml(a.ID_Alerta)}" aria-label="Marcar alerta como revisada">
+        <button class="alert-dismiss" data-id="${window.CPC.StringHelpers.escHtml(a.ID_Alerta)}" aria-label="Marcar alerta como revisada">
           <i data-lucide="check"></i>
         </button>
       </div>`;
@@ -949,20 +950,6 @@ const ModuloDashboard = (() => {
   // ─────────────────────────────────────────────────────────────────────────
   // HELPERS
   // ─────────────────────────────────────────────────────────────────────────
-  function _escHtml(str) {
-    if (window.CPC?.StringHelpers?.escHtml) {
-      return window.CPC.StringHelpers.escHtml(str);
-    }
-    const div = document.createElement('div');
-    div.textContent = str === null || str === undefined ? '' : String(str);
-    return div.innerHTML;
-  }
-
-  function _dateToStr(date) {
-    return window.CPC?.StringHelpers?.dateToStr ? window.CPC.StringHelpers.dateToStr(date) :
-      `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
-  }
-
   function _formatDiaLabel(fechaStr) {
     const d = new Date(fechaStr + 'T12:00:00');
     return d.toLocaleDateString('es-GT', { weekday: 'short', day: 'numeric' });

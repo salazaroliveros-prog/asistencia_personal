@@ -7,7 +7,8 @@
 const ModuloReportes = (() => {
 
   // ─── Helpers globales ─────────────────────────────────────────────────────
-  const isoDate = (date) => (window.CPC?.DateHelpers?.toISODate?.(date) ?? _dateToStr(date));
+  const isoDate = (date) => (window.CPC?.DateHelpers?.toISODate?.(date) ?? window.CPC?.StringHelpers?.dateToStr?.(date) ??
+    `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`);
 
   // ─── Inicialización ───────────────────────────────────────────────────────
   function init() {
@@ -284,9 +285,9 @@ const ModuloReportes = (() => {
     return d;
   }
 
-  function _dateToStr(date) {
-    return window.CPC?.StringHelpers?.dateToStr ? window.CPC.StringHelpers.dateToStr(date) :
-      `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+  function _formatDiaLabel(fechaStr) {
+    const d = new Date(fechaStr + 'T12:00:00');
+    return d.toLocaleDateString('es-GT', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
   }
 
   // Cargar al entrar al módulo
@@ -295,9 +296,7 @@ const ModuloReportes = (() => {
   }
 
   function cleanup() {
-    // Los event listeners de botones están ligados al DOM del módulo;
-    // al cambiar de página el SPA reemplaza el contenido, por lo que
-    // no requieren limpieza explícita.
+    // Sin listeners persistentes ni timers en este módulo.
   }
 
   return { init, cargar, cleanup };

@@ -184,7 +184,7 @@ const ModuloAsistencia = (() => {
     try {
       const devices = await session.listDevices();
       select.innerHTML = devices.map(d =>
-        `<option value="${_escHtml(d.id)}">${_escHtml(d.label)}</option>`
+        `<option value="${window.CPC.StringHelpers.escHtml(d.id)}">${window.CPC.StringHelpers.escHtml(d.label)}</option>`
       ).join('');
       const multi = devices.length >= 2;
       select.hidden    = !multi;
@@ -366,16 +366,16 @@ const ModuloAsistencia = (() => {
       const ini = inicialesDeNombre(p.Nombre_Completo);
       const col = colorPorPuesto(p.Puesto);
       return `
-      <li class="autocomplete-item" data-id="${_escHtml(p.ID_Trabajador)}" role="option" tabindex="0">
+      <li class="autocomplete-item" data-id="${window.CPC.StringHelpers.escHtml(p.ID_Trabajador)}" role="option" tabindex="0">
         ${p.Fotografia_URL
-          ? `<img src="${_escHtml(p.Fotografia_URL)}" alt="" style="width:32px;height:32px;border-radius:50%;object-fit:cover;border:2px solid ${col};"
+          ? `<img src="${window.CPC.StringHelpers.escHtml(p.Fotografia_URL)}" alt="" style="width:32px;height:32px;border-radius:50%;object-fit:cover;border:2px solid ${col};"
                  onerror="this.onerror=null;this.style.display='none';this.nextElementSibling.style.display='flex';" />
              <span style="display:none;width:32px;height:32px;border-radius:50%;border:2px solid ${col};background:var(--glass-bg);align-items:center;justify-content:center;font-size:11px;font-weight:700;color:${col};flex-shrink:0;">${ini}</span>`
           : `<span style="display:flex;width:32px;height:32px;border-radius:50%;border:2px solid ${col};background:var(--glass-bg);align-items:center;justify-content:center;font-size:11px;font-weight:700;color:${col};flex-shrink:0;">${ini}</span>`
         }
         <div>
-          <div class="item-name">${_escHtml(p.Nombre_Completo)}</div>
-          <div class="item-detail">${_escHtml(p.Puesto)} · ${_escHtml(p.DPI_CUI)}</div>
+          <div class="item-name">${window.CPC.StringHelpers.escHtml(p.Nombre_Completo)}</div>
+          <div class="item-detail">${window.CPC.StringHelpers.escHtml(p.Puesto)} · ${window.CPC.StringHelpers.escHtml(p.DPI_CUI)}</div>
         </div>
       </li>`;
     }).join('');
@@ -442,15 +442,14 @@ const ModuloAsistencia = (() => {
   // ─────────────────────────────────────────────────────────────────────────
   async function _procesarMarcacion(trabajador, tipo, horaOficial) {
     const config  = AppState.get('config');
-    const horaActual = _getHoraActual();
-    const tolerancia = parseInt(config.Tolerancia_Minutos || 15);
+    const now = new Date();
+    const horaActual = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+    const tolerancia = parseInt(config.Tolerancia_Minutos || 15, 10);
 
-    // Calcular estado de la marcación
-    const estadoMarcacion = _calcularEstado(horaOficial, horaActual, tolerancia);
+    const estadoMarcacion = Validators.calcularEstado(horaOficial, horaActual, tolerancia);
 
-    // Si es salida de obra y hay horas extra, preguntar
     if (tipo === 'Salida_Obra') {
-      const horasExtra = _calcularHorasExtra(horaActual, config.Hora_Salida_Obra || '17:00');
+      const horasExtra = Validators.calcularHorasExtra(horaActual, config.Hora_Salida_Obra || '17:00');
       if (horasExtra > 0) {
         _pedirConfirmacionHorasExtra(trabajador, tipo, horaOficial, estadoMarcacion, horasExtra);
         return;
@@ -570,7 +569,7 @@ const ModuloAsistencia = (() => {
         Alerts.marcacion({
           nombre:   trabajador.Nombre_Completo,
           tipo,
-          horaReal: result.horaReal || _getHoraActual(),
+          horaReal: result.horaReal || `${String(new Date().getHours()).padStart(2, '0')}:${String(new Date().getMinutes()).padStart(2, '0')}`,
           estado:   result.estadoMarcacion || estadoMarcacion,
         });
 
@@ -690,12 +689,12 @@ const ModuloAsistencia = (() => {
       }
 
       return `
-        <tr data-id="${_escHtml(m.ID_Marcacion || m.ID_Asistencia || '')}">
-          <td data-label="Trabajador"><strong>${_escHtml(m.Nombre_Trabajador || '--')}</strong></td>
-          <td data-label="Tipo"><span class="badge badge-blue">${_escHtml(tipoLabel[m.Tipo_Marcacion] || m.Tipo_Marcacion || '--')}</span></td>
-          <td data-label="Programada">${_escHtml(m.Hora_Programada || '--')}</td>
-          <td data-label="Real" style="font-family:var(--font-mono)">${_escHtml(m.Hora_Real ? m.Hora_Real.substring(0, 5) : '--')}</td>
-          <td data-label="Estado"><span class="${estadoClase}">${_escHtml(m.Estado_Marcacion || '--')}</span></td>
+        <tr data-id="${window.CPC.StringHelpers.escHtml(m.ID_Marcacion || m.ID_Asistencia || '')}">
+          <td data-label="Trabajador"><strong>${window.CPC.StringHelpers.escHtml(m.Nombre_Trabajador || '--')}</strong></td>
+          <td data-label="Tipo"><span class="badge badge-blue">${window.CPC.StringHelpers.escHtml(tipoLabel[m.Tipo_Marcacion] || m.Tipo_Marcacion || '--')}</span></td>
+          <td data-label="Programada">${window.CPC.StringHelpers.escHtml(m.Hora_Programada || '--')}</td>
+          <td data-label="Real" style="font-family:var(--font-mono)">${window.CPC.StringHelpers.escHtml(m.Hora_Real ? m.Hora_Real.substring(0, 5) : '--')}</td>
+          <td data-label="Estado"><span class="${estadoClase}">${window.CPC.StringHelpers.escHtml(m.Estado_Marcacion || '--')}</span></td>
           <td data-label="Método">
             ${m.Metodo_Registro === 'Escaneo_QR'
               ? '<span class="badge badge-green"><i data-lucide="qr-code" style="width:10px;height:10px"></i> QR</span>'
@@ -706,10 +705,10 @@ const ModuloAsistencia = (() => {
           <td data-label="Ubicación">${locationDisplay}</td>
           <td class="actions-col" data-label="Acciones">
             <div class="table-actions">
-              <button class="table-action-btn edit" data-action="edit" data-id="${_escHtml(m.ID_Marcacion || m.ID_Asistencia || '')}" title="Editar marcación" aria-label="Editar marcación">
+              <button class="table-action-btn edit" data-action="edit" data-id="${window.CPC.StringHelpers.escHtml(m.ID_Marcacion || m.ID_Asistencia || '')}" title="Editar marcación" aria-label="Editar marcación">
                 <i data-lucide="pencil"></i>
               </button>
-              <button class="table-action-btn delete" data-action="delete" data-id="${_escHtml(m.ID_Marcacion || m.ID_Asistencia || '')}" title="Eliminar marcación" aria-label="Eliminar marcación">
+              <button class="table-action-btn delete" data-action="delete" data-id="${window.CPC.StringHelpers.escHtml(m.ID_Marcacion || m.ID_Asistencia || '')}" title="Eliminar marcación" aria-label="Eliminar marcación">
                 <i data-lucide="trash-2"></i>
               </button>
             </div>
@@ -755,39 +754,6 @@ const ModuloAsistencia = (() => {
   // ─────────────────────────────────────────────────────────────────────────
   // LÓGICA DE HORARIOS Y TOLERANCIA
   // ─────────────────────────────────────────────────────────────────────────
-  function _calcularEstado(horaOficial, horaReal, tolerancia) {
-    if (!horaOficial || !horaReal) return 'A Tiempo';
-
-    const [hO, mO] = horaOficial.split(':').map(Number);
-    const [hR, mR] = horaReal.split(':').map(Number);
-
-    const minOficial = hO * 60 + mO;
-    const minReal    = hR * 60 + mR;
-    const diferencia = minReal - minOficial;
-
-    if (diferencia <= 0)          return 'A Tiempo';
-    if (diferencia <= tolerancia) return 'Tolerancia';
-    return 'Atraso';
-  }
-
-  function _calcularHorasExtra(horaReal, horaSalida) {
-    if (!horaReal || !horaSalida) return 0;
-
-    const [hS, mS] = horaSalida.split(':').map(Number);
-    const [hR, mR] = horaReal.split(':').map(Number);
-
-    const minSalida = hS * 60 + mS + 15; // 15 min de tolerancia antes de contar extra
-    const minReal   = hR * 60 + mR;
-    const exceso    = minReal - minSalida;
-
-    if (exceso <= 0) return 0;
-    return Math.round(exceso / 30) * 0.5; // Bloques de 0.5h
-  }
-
-  function _getHoraActual() {
-    const now = new Date();
-    return `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
-  }
 
   // ─────────────────────────────────────────────────────────────────────────
   // CARGAR MÓDULO (llamado desde router)
@@ -796,15 +762,6 @@ const ModuloAsistencia = (() => {
     _setFechaHoy();
     _actualizarHorariosBotones();
     await _cargarMarcaciones(AppState.today());
-  }
-
-  function _escHtml(str) {
-    if (window.CPC?.StringHelpers?.escHtml) {
-      return window.CPC.StringHelpers.escHtml(str);
-    }
-    const div = document.createElement('div');
-    div.textContent = str;
-    return div.innerHTML;
   }
 
   // ─────────────────────────────────────────────────────────────────────────
@@ -905,8 +862,8 @@ const ModuloAsistencia = (() => {
     }
 
     const config = AppState.get('config');
-    const tolerancia = parseInt(config.Tolerancia_Minutos || 15);
-    const estadoNuevo = _calcularEstado(marcacion.Hora_Programada, nuevaHora, tolerancia);
+    const tolerancia = parseInt(config.Tolerancia_Minutos || 15, 10);
+    const estadoNuevo = Validators.calcularEstado(marcacion.Hora_Programada, nuevaHora, tolerancia);
 
     const result = await API.actualizarAsistencia(id, {
       horaReal: nuevaHora + ':00',
@@ -947,11 +904,11 @@ const ModuloAsistencia = (() => {
           </div>
           <div class="modal-body">
             <p style="margin-bottom:var(--space-3);color:var(--color-text-muted);font-size:var(--text-sm)">
-              <strong>${_escHtml(nombre)}</strong> — ${_escHtml(tipo)}
+              <strong>${window.CPC.StringHelpers.escHtml(nombre)}</strong> — ${window.CPC.StringHelpers.escHtml(tipo)}
             </p>
             <label for="edit-hora-input" class="form-label">Nueva hora (HH:MM)</label>
             <input id="edit-hora-input" type="time" class="form-input"
-                   value="${_escHtml(horaActual)}" required />
+                   value="${window.CPC.StringHelpers.escHtml(horaActual)}" required />
           </div>
           <div class="modal-footer">
             <button class="btn btn-secondary" data-action="cancel">Cancelar</button>
