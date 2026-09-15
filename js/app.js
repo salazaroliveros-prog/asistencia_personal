@@ -754,6 +754,7 @@ function _initAlertsButton() {
 // ─────────────────────────────────────────────────────────────────────────────
 // RELOJ EN TIEMPO REAL
 // ─────────────────────────────────────────────────────────────────────────────
+let _clockIntervalId = null;
 function _startClock() {
   const clockEl = document.getElementById('live-clock');
   const dateEl  = document.getElementById('current-date-display');
@@ -768,7 +769,14 @@ function _startClock() {
   }
 
   update();
-  setInterval(update, 1000);
+  _clockIntervalId = setInterval(update, 1000);
+}
+
+function _stopClock() {
+  if (_clockIntervalId) {
+    clearInterval(_clockIntervalId);
+    _clockIntervalId = null;
+  }
 }
 
 function _getFormattedDate(date) {
@@ -786,8 +794,8 @@ function _getFormattedDate(date) {
 // ─────────────────────────────────────────────────────────────────────────────
 async function _initialConnection() {
   try {
-    // FirebaseClient.initialize() is already called automatically in firebase.ts
-    // if config exists. Here we just check the state and load initial data.
+    // firebase-client.js se autoinicializa al cargarse;
+    // aquí solo verificamos el estado y cargamos datos iniciales.
     
     // Give auto-initialization a moment to complete
     await delay(500);

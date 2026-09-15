@@ -25,7 +25,7 @@ const ModuloCampo = (() => {
   ];
 
   function esc(str) {
-    return String(str == null ? '' : str)
+    return String(str === null || str === undefined ? '' : str)
       .replace(/&/g, '&amp;').replace(/</g, '&lt;')
       .replace(/>/g, '&gt;').replace(/"/g, '&quot;');
   }
@@ -289,7 +289,7 @@ const ModuloCampo = (() => {
     const center = (config.GPS_Centro_Lat && config.GPS_Centro_Lon)
       ? { lat: parseFloat(config.GPS_Centro_Lat), lon: parseFloat(config.GPS_Centro_Lon) }
       : null;
-    return { enabled: config.GPS_Habilitado !== false, center, radius: parseInt(config.GPS_Radio_Metros || 200) };
+    return { enabled: config.GPS_Habilitado !== false, center, radius: parseInt(config.GPS_Radio_Metros || 200, 10) };
   }
 
   function _scopeGPS() {

@@ -137,7 +137,7 @@ const Validators = (() => {
         return { valid: false, error: 'El teléfono con código de país debe comenzar con 502' };
       }
     } else {
-      const firstDigit = parseInt(clean[0]);
+      const firstDigit = parseInt(clean[0], 10);
       if (firstDigit < 2 || firstDigit > 7) {
         return { valid: false, error: 'El teléfono debe comenzar con 2-7 (código Guatemala)' };
       }
@@ -152,7 +152,7 @@ const Validators = (() => {
    * @returns {object} { valid: boolean, error: string | null }
    */
   function validateTolerancia(tolerancia) {
-    const value = parseInt(tolerancia);
+    const value = parseInt(tolerancia, 10);
 
     if (isNaN(value)) {
       return { valid: false, error: 'La tolerancia debe ser un número' };
@@ -213,7 +213,7 @@ const Validators = (() => {
    * @returns {object} { valid: boolean, error: string | null }
    */
   function validateGPSRadius(radio) {
-    const value = parseInt(radio);
+    const value = parseInt(radio, 10);
 
     if (isNaN(value)) {
       return { valid: false, error: 'El radio debe ser un número' };

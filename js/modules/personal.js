@@ -754,7 +754,7 @@ const ModuloPersonal = (() => {
   // ─────────────────────────────────────────────────────────────────────────
   // CÁMARA — Captura de foto del trabajador
   // ─────────────────────────────────────────────────────────────────────────
-  let _cameraStream      = null;   // MediaStream activo
+  let _cameraStream      = null;   // Stream activo para captura de foto del trabajador
   let _cameraFacingMode  = 'user'; // 'user' (frontal) | 'environment' (trasera)
   let _capturedPhotoData = '';     // Base64 de la foto capturada (pre-confirmación)
 
@@ -1119,14 +1119,6 @@ const ModuloPersonal = (() => {
 
   function _escHtml(str) {
     return esc(str);
-  }
-
-  function _debounce(fn, wait) {
-    let timer;
-    return (...args) => {
-      clearTimeout(timer);
-      timer = setTimeout(() => fn(...args), wait);
-    };
   }
 
   function _abrirModal(id) {

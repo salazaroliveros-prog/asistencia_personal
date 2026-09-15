@@ -83,7 +83,7 @@ const DataValidator = (() => {
       
       // Validate tolerance
       if (data.Tolerancia_Minutos !== undefined) {
-        const tolerance = parseInt(data.Tolerancia_Minutos);
+        const tolerance = parseInt(data.Tolerancia_Minutos, 10);
         if (isNaN(tolerance) || tolerance < 0 || tolerance > 60) {
           errors.push('Tolerancia debe estar entre 0 y 60 minutos');
         }
@@ -106,7 +106,7 @@ const DataValidator = (() => {
       
       // Validate geofence radius
       if (data.GPS_Radio_Metros !== undefined) {
-        const radius = parseInt(data.GPS_Radio_Metros);
+        const radius = parseInt(data.GPS_Radio_Metros, 10);
         if (isNaN(radius) || radius < 10 || radius > 10000) {
           errors.push('Radio de geocerca debe estar entre 10 y 10000 metros');
         }

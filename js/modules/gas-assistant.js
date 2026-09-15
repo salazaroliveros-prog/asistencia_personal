@@ -305,7 +305,8 @@ function doPost(e) {
       }
     } catch (error) {
       if (statusDiv) {
-        statusDiv.innerHTML = `<div class="error-message"><i data-lucide="alert-circle"></i><p>Error: ${error.message}</p></div>`;
+        statusDiv.innerHTML = '<div class="error-message"><i data-lucide="alert-circle"></i><p></p></div>';
+        statusDiv.querySelector('p').textContent = 'Error: ' + error.message;
         if (window.lucide) lucide.createIcons();
       }
       Alerts.error(error.message, 'Error de configuración');
@@ -335,7 +336,8 @@ function doPost(e) {
       }
     } catch (error) {
       if (statusDiv) {
-        statusDiv.innerHTML = `<div class="error-message"><i data-lucide="alert-circle"></i><p>Error: ${error.message}</p></div>`;
+        statusDiv.innerHTML = '<div class="error-message"><i data-lucide="alert-circle"></i><p></p></div>';
+        statusDiv.querySelector('p').textContent = 'Error: ' + error.message;
         if (window.lucide) lucide.createIcons();
       }
       Alerts.error(error.message, 'Error de conexión');

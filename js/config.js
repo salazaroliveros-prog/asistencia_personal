@@ -273,15 +273,11 @@ window.AppState = AppState;
 (function initStateFromStorage() {
   try {
     // ── Limpieza de datos demo ─────────────────────────────────────────────
-    // Si el script demo-data.js ya no está cargado pero dejó claves en
-    // localStorage, las eliminamos antes de restaurar el estado para que
-    // la app arranque completamente vacía.
+    // Limpiar datos de prueba/demo si quedaron residuales en localStorage
     const URL_DEMO = 'demo.control-personal-campo.local';
     const tieneDatosDemo = localStorage.getItem('cpc_demo_loaded') === '1';
-    const configFirebase = localStorage.getItem(LS_KEYS.FIREBASE_CONFIG) || '';
-    const tieneUrlDemo   = false;
 
-    if (tieneDatosDemo || tieneUrlDemo) {
+    if (tieneDatosDemo) {
       ['cpc_demo_loaded', 'cpc_personal_cache', 'cpc_attendance_cache', 'cpc_last_sync', 'cpc_config'].forEach(k => {
         localStorage.removeItem(k);
       });

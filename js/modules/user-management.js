@@ -8,7 +8,6 @@ const UserManagement = (() => {
   
   // ─── Estado del módulo ────────────────────────────────────────────────────
   let currentUserClaims = null;
-  let usersList = [];
   
   // ─── Inicialización ───────────────────────────────────────────────────────
   function init() {

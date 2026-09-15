@@ -483,12 +483,12 @@ const PDFBuilder = (() => {
       didParseCell(data) {
         // Colorear ausencias
         if (data.section === 'body' && data.column.index === 4) {
-          const val = parseInt(data.cell.raw);
+          const val = parseInt(data.cell.raw, 10);
           if (val > 0) data.cell.styles.textColor = COLORS.red;
         }
         // Colorear % asistencia
         if (data.section === 'body' && data.column.index === 7) {
-          const pct = parseInt(data.cell.raw);
+          const pct = parseInt(data.cell.raw, 10);
           if (pct >= 90)       data.cell.styles.textColor = COLORS.green;
           else if (pct >= 75)  data.cell.styles.textColor = COLORS.amber;
           else                 data.cell.styles.textColor = COLORS.red;

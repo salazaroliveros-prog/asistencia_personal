@@ -10,6 +10,7 @@ const UpdateManager = (() => {
   let _deferredPrompt = null;
   let _updateAvailable = false;
   let _dismissedUntil = null;
+  let _checkIntervalId = null;
 
   /**
    * Inicializar el gestor de actualizaciones
@@ -34,7 +35,7 @@ const UpdateManager = (() => {
         _registration = registration;
 
         // Verificar actualizaciones periódicamente
-        setInterval(() => {
+        _checkIntervalId = setInterval(() => {
           checkForUpdates();
         }, 5 * 60 * 1000); // Cada 5 minutos
 
@@ -50,6 +51,16 @@ const UpdateManager = (() => {
 
     // Bind eventos de UI
     _bindEvents();
+  }
+
+  /**
+   * Detener el gestor de actualizaciones y limpiar recursos
+   */
+  function stop() {
+    if (_checkIntervalId) {
+      clearInterval(_checkIntervalId);
+      _checkIntervalId = null;
+    }
   }
 
   /**
@@ -173,6 +184,7 @@ const UpdateManager = (() => {
    */
   return {
     init,
+    stop,
     checkForUpdates,
     showUpdateBanner,
     hideUpdateBanner,

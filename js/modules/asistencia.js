@@ -162,7 +162,7 @@ const ModuloAsistencia = (() => {
   }
 
   // ─────────────────────────────────────────────────────────────────────────
-  // ESCÁNER QR — usa CameraSession para soporte multi-cámara y torch
+  // ESCÁNER QR — controlador basado en CameraSession
   // ─────────────────────────────────────────────────────────────────────────
   let _qrController  = null;
   let _scanFacingMode = 'environment';
@@ -510,7 +510,7 @@ const ModuloAsistencia = (() => {
             latitude: parseFloat(config.GPS_Centro_Lat),
             longitude: parseFloat(config.GPS_Centro_Lon),
           };
-          const radius = parseInt(config.GPS_Radio_Metros || DEFAULT_GEOFENCE_RADIUS);
+          const radius = parseInt(config.GPS_Radio_Metros || DEFAULT_GEOFENCE_RADIUS, 10);
           geofenceStatus = GPS.checkGeofence(position, geofenceCenter, radius);
 
           // Warn if outside geofence (but still allow marking)
@@ -544,7 +544,7 @@ const ModuloAsistencia = (() => {
       tipoMarcacion:    tipo,
       horaProgramada:   horaOficial,
       estadoMarcacion:  estadoMarcacion,
-      minutosTolerancia: parseInt(config.Tolerancia_Minutos || 15),
+      minutosTolerancia: parseInt(config.Tolerancia_Minutos || 15, 10),
       horasExtra:       horasExtra,
       metodo:           _scannerActive || _pendingWorker ? 'Escaneo_QR' : 'Manual_Fisica',
       obra:             config.Nombre_Obra || 'Obra Principal',
@@ -807,14 +807,6 @@ const ModuloAsistencia = (() => {
     return div.innerHTML;
   }
 
-  function _debounce(fn, wait) {
-    let timer;
-    return (...args) => {
-      clearTimeout(timer);
-      timer = setTimeout(() => fn(...args), wait);
-    };
-  }
-
   // ─────────────────────────────────────────────────────────────────────────
   // HORARIOS DINÁMICOS — actualizar data-hora en botones desde AppState.config
   // ─────────────────────────────────────────────────────────────────────────
@@ -875,7 +867,7 @@ const ModuloAsistencia = (() => {
     const geofenceCenter = (config.GPS_Centro_Lat && config.GPS_Centro_Lon)
       ? { lat: parseFloat(config.GPS_Centro_Lat), lon: parseFloat(config.GPS_Centro_Lon) }
       : null;
-    const geofenceRadius = parseInt(config.GPS_Radio_Metros || 200);
+    const geofenceRadius = parseInt(config.GPS_Radio_Metros || 200, 10);
 
     // Show map
     MapViewer.showAttendanceMap(conGPS, geofenceCenter, geofenceRadius);

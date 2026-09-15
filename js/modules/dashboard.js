@@ -951,7 +951,7 @@ const ModuloDashboard = (() => {
       return window.CPC.StringHelpers.escHtml(str);
     }
     const div = document.createElement('div');
-    div.textContent = str == null ? '' : String(str);
+    div.textContent = str === null || str === undefined ? '' : String(str);
     return div.innerHTML;
   }
 

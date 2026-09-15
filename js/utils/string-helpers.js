@@ -7,7 +7,7 @@ window.CPC = window.CPC || {};
 
 window.CPC.StringHelpers = {
   escHtml(str) {
-    if (str == null) return '';
+    if (str === null || str === undefined) return '';
     return String(str)
       .replace(/&/g, '&amp;')
       .replace(/</g, '&lt;')

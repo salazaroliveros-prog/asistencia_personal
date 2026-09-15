@@ -181,8 +181,8 @@ const ModuloAjustes = (() => {
         }
         Alerts.success('Firestore conectado y sincronización en tiempo real activa.');
         // Cargar datos iniciales desde Firestore
-        API.obtenerPersonal().catch(() => {});
-        API.obtenerConfiguracion().catch(() => {});
+        API.obtenerPersonal().catch(err => console.warn('[Ajustes] Error cargando personal tras conexión:', err.message));
+        API.obtenerConfiguracion().catch(err => console.warn('[Ajustes] Error cargando config tras conexión:', err.message));
       } else {
         AppState.set('backendMode', 'local');
         AppState.set('connected', false);
@@ -222,7 +222,7 @@ const ModuloAjustes = (() => {
     };
 
     // Validar tolerancia
-    const tol = parseInt(payload.Tolerancia_Minutos);
+    const tol = parseInt(payload.Tolerancia_Minutos, 10);
     if (isNaN(tol) || tol < 0 || tol > 60) {
       Alerts.error('La tolerancia debe ser entre 0 y 60 minutos.');
       return;
