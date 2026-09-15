@@ -15,7 +15,7 @@ const ModuloPersonal = (() => {
   // ─── Helpers globales ─────────────────────────────────────────────────────
   const $ = (id) => document.getElementById(id);
   const CPC = window.CPC || {};
-  const esc = (str) => CPC.StringHelpers?.escHtml?.(str) ?? _escHtml(str);
+  const esc = (str) => CPC.StringHelpers?.escHtml?.(str) ?? window.CPC.StringHelpers.escHtml(str);
   const fmtTel = (tel) => CPC.StringHelpers?.formatTelefono?.(tel) ?? _formatTelefono(tel);
   const compress = (img, maxW = 600, maxH = 600, quality = 0.75) =>
     CPC.PhotoHelpers?.compressImage?.(img, maxW, maxH, quality) ?? _comprimirFotoCanvas(img, maxW, maxH, quality);
@@ -255,11 +255,11 @@ const ModuloPersonal = (() => {
       const ini = inicialesDeNombre(p.Nombre_Completo);
       const col = colorPorPuesto(p.Puesto);
       return `
-      <tr data-id="${_escHtml(p.ID_Trabajador)}" tabindex="0" aria-label="Abrir detalle de ${_escHtml(p.Nombre_Completo)}">
+      <tr data-id="${window.CPC.StringHelpers.escHtml(p.ID_Trabajador)}" tabindex="0" aria-label="Abrir detalle de ${window.CPC.StringHelpers.escHtml(p.Nombre_Completo)}">
         <td data-label="Foto">
           ${p.Fotografia_URL
-            ? `<img src="${_escHtml(p.Fotografia_URL)}"
-                   alt="Foto de ${_escHtml(p.Nombre_Completo)}"
+            ? `<img src="${window.CPC.StringHelpers.escHtml(p.Fotografia_URL)}"
+                   alt="Foto de ${window.CPC.StringHelpers.escHtml(p.Nombre_Completo)}"
                    class="worker-photo-small"
                    loading="lazy"
                    style="border-color:${col};"
@@ -270,35 +270,35 @@ const ModuloPersonal = (() => {
         </td>
         <td data-label="ID">
           <code style="font-family:var(--font-mono);font-size:var(--text-xs);color:var(--color-secondary)">
-            ${_escHtml(p.ID_Trabajador)}
+            ${window.CPC.StringHelpers.escHtml(p.ID_Trabajador)}
           </code>
         </td>
-        <td data-label="Nombre"><strong>${_escHtml(p.Nombre_Completo)}</strong></td>
-        <td data-label="DPI/CUI" style="font-family:var(--font-mono)">${_escHtml(p.DPI_CUI)}</td>
-        <td data-label="Puesto"><span class="badge badge-blue">${_escHtml(p.Puesto)}</span></td>
+        <td data-label="Nombre"><strong>${window.CPC.StringHelpers.escHtml(p.Nombre_Completo)}</strong></td>
+        <td data-label="DPI/CUI" style="font-family:var(--font-mono)">${window.CPC.StringHelpers.escHtml(p.DPI_CUI)}</td>
+        <td data-label="Puesto"><span class="badge badge-blue">${window.CPC.StringHelpers.escHtml(p.Puesto)}</span></td>
         <td data-label="Teléfono">
           ${p.Telefono
-            ? `<a href="tel:${_escHtml(p.Telefono)}" style="color:var(--color-secondary)">${_escHtml(p.Telefono)}</a>`
+            ? `<a href="tel:${window.CPC.StringHelpers.escHtml(p.Telefono)}" style="color:var(--color-secondary)">${window.CPC.StringHelpers.escHtml(p.Telefono)}</a>`
             : '<span class="text-muted">—</span>'
           }
         </td>
         <td data-label="Estado">
           <span class="${p.Estado === 'Activo' ? 'estado-activo' : 'estado-inactivo'}">
-            ${_escHtml(p.Estado)}
+            ${window.CPC.StringHelpers.escHtml(p.Estado)}
           </span>
         </td>
         <td class="actions-col" data-label="Acciones">
           <div class="table-actions">
-            <button class="table-action-btn qr"       data-action="qr"       data-id="${_escHtml(p.ID_Trabajador)}" title="Ver/Imprimir QR" aria-label="Ver QR de ${_escHtml(p.Nombre_Completo)}">
+            <button class="table-action-btn qr"       data-action="qr"       data-id="${window.CPC.StringHelpers.escHtml(p.ID_Trabajador)}" title="Ver/Imprimir QR" aria-label="Ver QR de ${window.CPC.StringHelpers.escHtml(p.Nombre_Completo)}">
               <i data-lucide="qr-code"></i>
             </button>
-            <button class="table-action-btn historial" data-action="historial" data-id="${_escHtml(p.ID_Trabajador)}" title="Historial de marcaciones" aria-label="Ver historial de ${_escHtml(p.Nombre_Completo)}">
+            <button class="table-action-btn historial" data-action="historial" data-id="${window.CPC.StringHelpers.escHtml(p.ID_Trabajador)}" title="Historial de marcaciones" aria-label="Ver historial de ${window.CPC.StringHelpers.escHtml(p.Nombre_Completo)}">
               <i data-lucide="clock-3"></i>
             </button>
-            <button class="table-action-btn edit"      data-action="edit"     data-id="${_escHtml(p.ID_Trabajador)}" title="Editar" aria-label="Editar ${_escHtml(p.Nombre_Completo)}">
+            <button class="table-action-btn edit"      data-action="edit"     data-id="${window.CPC.StringHelpers.escHtml(p.ID_Trabajador)}" title="Editar" aria-label="Editar ${window.CPC.StringHelpers.escHtml(p.Nombre_Completo)}">
               <i data-lucide="pencil"></i>
             </button>
-            <button class="table-action-btn delete"    data-action="delete"   data-id="${_escHtml(p.ID_Trabajador)}" title="Dar de baja" aria-label="Dar de baja ${_escHtml(p.Nombre_Completo)}">
+            <button class="table-action-btn delete"    data-action="delete"   data-id="${window.CPC.StringHelpers.escHtml(p.ID_Trabajador)}" title="Dar de baja" aria-label="Dar de baja ${window.CPC.StringHelpers.escHtml(p.Nombre_Completo)}">
               <i data-lucide="user-x"></i>
             </button>
           </div>
@@ -1118,10 +1118,6 @@ const ModuloPersonal = (() => {
     return fmtTel(tel);
   }
 
-  function _escHtml(str) {
-    return esc(str);
-  }
-
   function _abrirModal(id) {
     const modal = document.getElementById(id);
     if (modal) {
@@ -1321,10 +1317,10 @@ const ModuloPersonal = (() => {
                   <span class="historial-icono" style="color:${estadoColor[m.Estado_Marcacion] || 'var(--color-text-muted)'}">
                     <i data-lucide="${tipoIcono[m.Tipo_Marcacion] || 'clock'}" style="width:14px;height:14px"></i>
                   </span>
-                  <span class="historial-tipo">${_escHtml(tipoLabel[m.Tipo_Marcacion] || m.Tipo_Marcacion)}</span>
-                  ${m.Estado_Marcacion ? `<span class="badge" style="font-size:0.65rem;padding:2px 6px;background:${estadoColor[m.Estado_Marcacion]}20;color:${estadoColor[m.Estado_Marcacion]};border:1px solid ${estadoColor[m.Estado_Marcacion]}40">${_escHtml(m.Estado_Marcacion)}</span>` : ''}
+                  <span class="historial-tipo">${window.CPC.StringHelpers.escHtml(tipoLabel[m.Tipo_Marcacion] || m.Tipo_Marcacion)}</span>
+                  ${m.Estado_Marcacion ? `<span class="badge" style="font-size:0.65rem;padding:2px 6px;background:${estadoColor[m.Estado_Marcacion]}20;color:${estadoColor[m.Estado_Marcacion]};border:1px solid ${estadoColor[m.Estado_Marcacion]}40">${window.CPC.StringHelpers.escHtml(m.Estado_Marcacion)}</span>` : ''}
                   ${m.Horas_Extra && parseFloat(m.Horas_Extra) > 0 ? `<span class="badge badge-blue" style="font-size:0.65rem;padding:2px 6px">+${m.Horas_Extra}h extra</span>` : ''}
-                  <span class="historial-metodo text-muted">${_escHtml(m.Metodo_Registro || '')}</span>
+                  <span class="historial-metodo text-muted">${window.CPC.StringHelpers.escHtml(m.Metodo_Registro || '')}</span>
                 </div>`).join('')}
             </div>
           </div>`;
@@ -1336,7 +1332,7 @@ const ModuloPersonal = (() => {
       }
 
     } catch (err) {
-      if (content) content.innerHTML = `<p class="text-muted text-center" style="padding:var(--space-6)">Error al cargar historial: ${_escHtml(err.message)}</p>`;
+      if (content) content.innerHTML = `<p class="text-muted text-center" style="padding:var(--space-6)">Error al cargar historial: ${window.CPC.StringHelpers.escHtml(err.message)}</p>`;
       console.error('[Personal] Error cargando historial:', err);
     }
   }
