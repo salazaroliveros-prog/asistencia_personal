@@ -635,7 +635,7 @@ const ModuloDashboard = (() => {
     const ultimoDia   = new Date(anio, mes + 1, 0);
     const ultimoDiaStr = `${anio}-${String(mes + 1).padStart(2, '0')}-${String(ultimoDia.getDate()).padStart(2, '0')}`;
 
-    if (connected()) { // Solo si hay conexión activa verificada
+    if (AppState.get('backendMode') === 'firestore' && AppState.get('connected')) {
       try {
         const result = await API.obtenerAsistenciaRango(primerDia, ultimoDiaStr);
         if (result.success && Array.isArray(result.data)) {

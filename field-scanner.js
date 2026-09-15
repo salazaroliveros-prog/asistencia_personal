@@ -351,7 +351,8 @@
   }
 
   function _buscarTrabajadorPorQR(qrData) {
-    const personal = JSON.parse(localStorage.getItem('cpc_personal_cache') || '[]');
+    // Primero buscar en AppState (datos sincronizados de la app principal)
+    const personal = (window.AppState && window.AppState.get('personal')) || [];
     if (Array.isArray(personal) && personal.length) {
       if (qrData.dpi) {
         const found = personal.find(p => (p.DPI_CUI || '').replace(/\D/g, '') === String(qrData.dpi).replace(/\D/g, ''));
@@ -359,6 +360,18 @@
       }
       if (qrData.id) {
         const found = personal.find(p => p.ID_Trabajador === qrData.id);
+        if (found) return found;
+      }
+    }
+    // Fallback: cache local
+    const cached = JSON.parse(localStorage.getItem('cpc_personal_cache') || '[]');
+    if (Array.isArray(cached) && cached.length) {
+      if (qrData.dpi) {
+        const found = cached.find(p => (p.DPI_CUI || '').replace(/\D/g, '') === String(qrData.dpi).replace(/\D/g, ''));
+        if (found) return found;
+      }
+      if (qrData.id) {
+        const found = cached.find(p => p.ID_Trabajador === qrData.id);
         if (found) return found;
       }
     }
@@ -435,13 +448,14 @@
   function _renderMarkButtons() {
     const grid = document.getElementById('campo-mark-grid');
     if (!grid) return;
-    // Lee 'cpc_config' (clave canónica de la app principal) con fallback a
-    // 'cpc_config_cache' por compatibilidad con versiones anteriores del scanner.
-    const config = JSON.parse(
+    // Usar AppState si está disponible (datos sincronizados), con fallback a localStorage
+    const appStateConfig = (window.AppState && window.AppState.get('config')) || {};
+    const lsConfig = JSON.parse(
       localStorage.getItem('cpc_config') ||
       localStorage.getItem('cpc_config_cache') ||
       '{}'
     );
+    const config = { ...lsConfig, ...appStateConfig };
     grid.innerHTML = MARK_TYPES.map(m => {
       const hora = config[m.horaKey] || m.fallback;
       return `
@@ -564,7 +578,7 @@
     if (!_db) throw new Error('Firebase no disponible');
 
     const horaReal = new Date().toLocaleTimeString('es-GT', { hour12: false }).substring(0, 5);
-    const id = `${payload.ID_Trabajador}_${payload.Fecha}_${payload.Tipo_Marcacion}`.replace(/[^A-Za-z0-9_-]/g, '_');
+    const id = `${payload.ID_Trabajador}_${payload.Fecha}_${payload.Tipo_Marcacion}_${Date.now()}_${Math.random().toString(36).slice(2, 8).toUpperCase()}`.replace(/[^A-Za-z0-9_-]/g, '_');
     const record = {
       ID_Marcacion:     id,
       ID_Registro:      id,
