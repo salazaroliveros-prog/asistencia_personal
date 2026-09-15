@@ -475,6 +475,18 @@ async function _navigate(page, updateHash = true) {
   if (_currentPage === 'campo' && page !== 'campo') {
     ModuloCampo.cleanup?.();
   }
+  if (_currentPage === 'dashboard' && page !== 'dashboard') {
+    ModuloDashboard.cleanup?.();
+  }
+  if (_currentPage === 'reportes' && page !== 'reportes') {
+    ModuloReportes.cleanup?.();
+  }
+  if (_currentPage === 'ajustes' && page !== 'ajustes') {
+    ModuloAjustes.cleanup?.();
+  }
+  if (_currentPage === 'personal' && page !== 'personal') {
+    ModuloPersonal.cleanup?.();
+  }
 
   // Determinar dirección de la animación
   const pageOrder = Object.keys(PAGES);
