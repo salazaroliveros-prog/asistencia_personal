@@ -1,5 +1,5 @@
-import { defineConfig, createLogger } from 'vite';
-import { cpSync, existsSync, mkdirSync } from 'node:fs';
+import { defineConfig, createLogger, loadEnv } from 'vite';
+import { cpSync, existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -21,7 +21,7 @@ logger.warn = (msg, options) => {
  * Plugin: copia el runtime legado (JS vanilla, CSS, service workers,
  * manifests, vendor) al directorio dist después del build.
  */
-function copyLegacyRuntime() {
+function copyLegacyRuntime(mode) {
   return {
     name: 'copy-legacy-runtime',
     closeBundle() {
@@ -64,6 +64,26 @@ function copyLegacyRuntime() {
         }
       }
 
+      // Inyectar variables de entorno de Firebase en index.html para que
+      // firebase-config.js las pueda leer como window.__FIREBASE_ENV__.
+      const indexPath = resolve(distDir, 'index.html');
+      if (existsSync(indexPath)) {
+        const env = loadEnv(mode, process.cwd(), '');
+        const firebaseEnv = {
+          apiKey: env.VITE_FIREBASE_API_KEY || '',
+          authDomain: env.VITE_FIREBASE_AUTH_DOMAIN || '',
+          projectId: env.VITE_FIREBASE_PROJECT_ID || '',
+          storageBucket: env.VITE_FIREBASE_STORAGE_BUCKET || '',
+          messagingSenderId: env.VITE_FIREBASE_MESSAGING_SENDER_ID || '',
+          appId: env.VITE_FIREBASE_APP_ID || '',
+          measurementId: env.VITE_FIREBASE_MEASUREMENT_ID || '',
+        };
+        const script = `<script>window.__FIREBASE_ENV__ = ${JSON.stringify(firebaseEnv)};</script>`;
+        let html = readFileSync(indexPath, 'utf8');
+        html = html.replace('</head>', script + '</head>');
+        writeFileSync(indexPath, html);
+      }
+
       console.log('[vite] Runtime legado copiado a dist/');
     },
   };
@@ -73,10 +93,9 @@ export default defineConfig(({ mode }) => ({
   appType: 'spa',
   customLogger: logger,
 
-  // El directorio public/ se sirve directamente en dev y se copia al dist
   publicDir: 'public',
 
-  plugins: [copyLegacyRuntime()],
+  plugins: [copyLegacyRuntime(mode)],
 
   server: {
     host: '127.0.0.1',

@@ -1,16 +1,18 @@
 /**
  * Configuración pública de Firebase.
- * Se puede completar aquí o desde Ajustes; se guarda únicamente en el navegador.
+ * Se puede completar aquí, desde Ajustes o desde variables de entorno.
+ * Se guarda únicamente en el navegador.
  * Estos valores no son contraseñas. La seguridad real la proporcionan Auth y
  * las reglas de Firestore.
  * 
- * IMPORTANTE: Para conexión automática, configura estos valores aquí o en
- * Ajustes antes de la primera carga. La app intentará conectar automáticamente.
+ * IMPORTANTE: Para conexión automática, configura estos valores aquí, en
+ * Ajustes o en el archivo .env antes de la primera carga. La app intentará
+ * conectar automáticamente.
  *
  * NOTA: Este archivo se carga como SCRIPT CLÁSICO (no type="module"), por lo que
- * NO se puede usar `import.meta.env` (ni siquiera `typeof import`): el navegador
- * lanza "Cannot use import/import.meta outside a module". Por eso estos valores
- * se definen literalmente aquí (equivalentes a los de .env / VITE_*).
+ * NO se puede usar `import.meta.env` directamente. En su lugar, Vite inyecta
+ * `window.__FIREBASE_ENV__` desde las variables VITE_FIREBASE_* definidas en
+ * .env durante el build/dev.
  * 
  * SEGURIDAD: Las credenciales de Firebase web son públicas por diseño. La seguridad
  * real se maneja con Firebase Authentication y Firestore Rules.
@@ -24,18 +26,29 @@ const bundledFirebaseConfig = {
   appId: "1:265655332442:web:c4e8617741e3b916987263",
 };
 
-// La configuración web no es un secreto, pero sí debe sobrevivir a un cambio
-// hecho desde Ajustes. De este modo el cliente y el escáner comparten la misma
-// fuente de verdad al volver a abrir la aplicación.
+// Las variables de entorno inyectadas por Vite tienen prioridad sobre los
+// valores hardcodeados. Si no hay variables de entorno, se usan los valores
+// bundled. Si el usuario cambia credenciales desde Ajustes, estas se guardan
+// en localStorage y tienen prioridad final.
 let storedFirebaseConfig = {};
 try {
   storedFirebaseConfig = JSON.parse(localStorage.getItem('cpc_firebase_config') || '{}');
 } catch (_) {
   storedFirebaseConfig = {};
 }
-window.FIREBASE_CONFIG = window.FIREBASE_CONFIG || {
-  ...bundledFirebaseConfig,
-  ...storedFirebaseConfig,
+
+const hasEnvConfig = window.__FIREBASE_ENV__ && Object.values(window.__FIREBASE_ENV__).some(v => v);
+const hasStoredConfig = storedFirebaseConfig && Object.keys(storedFirebaseConfig).length > 0;
+const hasBundledConfig = bundledFirebaseConfig && Object.keys(bundledFirebaseConfig).length > 0;
+const existingConfig = (window.FIREBASE_CONFIG && Object.keys(window.FIREBASE_CONFIG).length > 0)
+  ? window.FIREBASE_CONFIG
+  : {};
+
+window.FIREBASE_CONFIG = {
+  ...(hasBundledConfig ? bundledFirebaseConfig : {}),
+  ...(hasEnvConfig ? window.__FIREBASE_ENV__ : {}),
+  ...(hasStoredConfig ? storedFirebaseConfig : {}),
+  ...existingConfig,
 };
 
 /**
