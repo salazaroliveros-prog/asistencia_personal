@@ -22,9 +22,14 @@ const wrappedConfigCode = firebaseConfigCode + '\nwindow.__FirebaseConfigLoaded 
 function createMockContext(overrides = {}) {
   const mockFirebase = {
     apps: [],
-    initializeApp: () => ({
-      delete: () => Promise.resolve(),
-    }),
+    initializeApp: (config) => {
+      if (!config || !config.apiKey || !config.projectId) {
+        throw new Error('Firebase initialization failed: missing apiKey or projectId');
+      }
+      return {
+        delete: () => Promise.resolve(),
+      };
+    },
     firestore: () => ({
       collection: () => ({
         doc: () => ({
@@ -62,8 +67,7 @@ function createMockContext(overrides = {}) {
   };
 
   const sandbox = {
-    firebase: mockFirebase,
-    FIREBASE_CONFIG: overrides.firebaseConfig || {
+    bundledFirebaseConfig: overrides.bundledFirebaseConfig || {
       apiKey: 'test-api-key',
       authDomain: 'test.firebaseapp.com',
       projectId: 'test-project',
@@ -94,7 +98,11 @@ function createMockContext(overrides = {}) {
   sandbox.window = sandbox;
   sandbox.globalThis = sandbox;
 
-  return { context: vm.createContext(sandbox), mockLocalStorage };
+  const context = vm.createContext(sandbox);
+  context.globalThis.firebase = mockFirebase;
+  context.window.firebase = mockFirebase;
+
+  return { context, mockLocalStorage };
 }
 
 function runFirebaseClient(overrides = {}) {
@@ -123,7 +131,7 @@ describe('FirebaseClient', () => {
   });
 
   test('initialize falla sin config', async () => {
-    const { window } = runFirebaseClient({ firebaseConfig: { apiKey: '', projectId: '', authDomain: '', appId: '' } });
+    const { window } = runFirebaseClient({ bundledFirebaseConfig: {} });
     const result = window.FirebaseClient.initialize();
     expect(result.success).toBe(false);
     expect(window.FirebaseClient.getConnectionState()).toBe('disconnected');
@@ -190,7 +198,7 @@ describe('FirebaseClient', () => {
 
   test('initialize usa window.__FIREBASE_ENV__ cuando esta disponible', async () => {
     const { window } = runFirebaseClient({
-      firebaseConfig: {},
+      bundledFirebaseConfig: {},
       firebaseEnv: {
         apiKey: 'env-api-key',
         authDomain: 'env.firebaseapp.com',

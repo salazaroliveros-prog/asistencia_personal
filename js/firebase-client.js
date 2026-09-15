@@ -311,9 +311,12 @@
     stop
   };
 
-  // Auto-inicializar en cuanto el módulo se carga.
-  // Los SDKs de Firebase y firebase-config.js ya fueron ejecutados antes
-  // (están declarados antes en el HTML), por lo que la config y el SDK
-  // compat están disponibles en este punto.
-  initialize();
+  // Auto-inicializar en cuanto el módulo se carga, pero solo marcar
+  // _initialized cuando realmente se pudo crear db/auth; si falla por
+  // configuración/SDK, dejamos _initialized=false para que initialize()
+  // pueda reintentar más adelante.
+  const autoInitResult = initialize();
+  if (autoInitResult.success) {
+    _initialized = true;
+  }
 })();
