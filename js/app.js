@@ -997,8 +997,12 @@ function _initSyncIndicator() {
     if (syncLastEl) {
       if (lastSync && !hasPend) {
         const d = new Date(lastSync);
-        syncLastEl.textContent = `Sync: ${d.toLocaleTimeString('es-GT', { hour: '2-digit', minute: '2-digit' })}`;
-        syncLastEl.hidden = false;
+        if (d instanceof Date && !isNaN(d)) {
+          syncLastEl.textContent = `Sync: ${d.toLocaleTimeString('es-GT', { hour: '2-digit', minute: '2-digit' })}`;
+          syncLastEl.hidden = false;
+        } else {
+          syncLastEl.hidden = true;
+        }
       } else {
         syncLastEl.hidden = true;
       }

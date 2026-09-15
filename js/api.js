@@ -178,6 +178,16 @@
       }
     } catch (error) {
       console.error('[API] Error guardarTrabajador:', error);
+      if (error.code === 'permission-denied' || (error.message && error.message.includes('permission'))) {
+        const personal = AppState.get('personal') || [];
+        const idx = personal.findIndex(w => w.ID_Trabajador === worker.ID_Trabajador);
+        const updated = [...personal];
+        if (idx >= 0) updated[idx] = { ...updated[idx], ...worker }; else updated.push(worker);
+        AppState.set('personal', updated);
+        write(LS_KEYS.PERSONAL_CACHE, updated);
+        enqueue(isEdit ? 'personal-update' : 'personal-create', { ...payload, id: worker.ID_Trabajador });
+        return { success: true, data: worker, offline: true, message: isEdit ? 'Trabajador actualizado localmente' : 'Trabajador registrado localmente' };
+      }
       return { success: false, error: error.message };
     }
   }
@@ -216,6 +226,16 @@
       }
     } catch (error) {
       console.error('[API] Error eliminarPersonal:', error);
+      if (error.code === 'permission-denied' || (error.message && error.message.includes('permission'))) {
+        const personal = AppState.get('personal') || [];
+        const updated = personal.map(w =>
+          w.ID_Trabajador === workerId ? { ...w, Estado: 'Inactivo' } : w
+        );
+        AppState.set('personal', updated);
+        write(LS_KEYS.PERSONAL_CACHE, updated);
+        enqueue('personal-delete', { id: workerId });
+        return { success: true, offline: true };
+      }
       return { success: false, error: error.message };
     }
   }
@@ -307,6 +327,20 @@
       }
     } catch (error) {
       console.error('[API] Error registrarMarcacion:', error);
+      if (error.code === 'permission-denied' || (error.message && error.message.includes('permission'))) {
+        const asistencias = AppState.get('asistencias') || [];
+        const updated = [...asistencias, marcacion];
+        AppState.set('asistencias', updated);
+        write(LS_KEYS.ATTENDANCE_CACHE, updated);
+        enqueue('attendance-create', payload);
+        return {
+          success: true,
+          data: marcacion,
+          offline: true,
+          horaReal: marcacion.Hora_Real,
+          estadoMarcacion: marcacion.Estado_Marcacion,
+        };
+      }
       return { success: false, error: error.message };
     }
   }
@@ -346,6 +380,16 @@
       }
     } catch (error) {
       console.error('[API] Error actualizarAsistencia:', error);
+      if (error.code === 'permission-denied' || (error.message && error.message.includes('permission'))) {
+        const asistencias = AppState.get('asistencias') || [];
+        const updated = asistencias.map(a =>
+          a.ID_Marcacion === marcacionId ? { ...a, Hora_Real: payload.horaReal || a.Hora_Real, Estado_Marcacion: payload.estadoMarcacion || a.Estado_Marcacion, Horas_Extra: payload.horasExtra !== undefined ? payload.horasExtra : a.Horas_Extra } : a
+        );
+        AppState.set('asistencias', updated);
+        write(LS_KEYS.ATTENDANCE_CACHE, updated);
+        enqueue('attendance-update', { id: marcacionId, payload });
+        return { success: true, offline: true };
+      }
       return { success: false, error: error.message };
     }
   }
@@ -369,6 +413,14 @@
       }
     } catch (error) {
       console.error('[API] Error eliminarAsistencia:', error);
+      if (error.code === 'permission-denied' || (error.message && error.message.includes('permission'))) {
+        const asistencias = AppState.get('asistencias') || [];
+        const newCache = asistencias.filter(a => a.ID_Marcacion !== marcacionId);
+        AppState.set('asistencias', newCache);
+        write(LS_KEYS.ATTENDANCE_CACHE, newCache);
+        enqueue('attendance-delete', { id: marcacionId });
+        return { success: true, offline: true };
+      }
       return { success: false, error: error.message };
     }
   }
@@ -407,6 +459,15 @@
       return { success: true };
     } catch (error) {
       console.error('[API] Error marcarAlertaRevisada:', error);
+      if (error.code === 'permission-denied' || (error.message && error.message.includes('permission'))) {
+        const alertas = AppState.get('alertas') || [];
+        const updated = alertas.map(a =>
+          (a.ID_Alerta === alertId || a.id === alertId) ? { ...a, Revisada: true } : a
+        );
+        AppState.set('alertas', updated);
+        write(LS_KEYS.ALERTS_CACHE, updated);
+        return { success: true, offline: true };
+      }
       return { success: false, error: error.message };
     }
   }
