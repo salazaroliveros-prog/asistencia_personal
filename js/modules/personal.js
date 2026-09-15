@@ -10,6 +10,7 @@ const ModuloPersonal = (() => {
   let _filteredPersonal = [];
   let _editingId        = null;
   let _fotoBase64       = '';
+  let _personalUnsubscribe = null; // Unsubscribe de AppState.on('personal')
 
   // ─── Helpers globales ─────────────────────────────────────────────────────
   const $ = (id) => document.getElementById(id);
@@ -129,7 +130,7 @@ const ModuloPersonal = (() => {
     }
 
     // Escuchar cambios en el estado global
-    AppState.on('personal', (personal) => {
+    _personalUnsubscribe = AppState.on('personal', (personal) => {
       _filteredPersonal = personal;
       _filtrarTabla();
     });
@@ -1358,10 +1359,18 @@ const ModuloPersonal = (() => {
     if (el) el.textContent = val;
   }
 
+  function cleanup() {
+    if (_personalUnsubscribe && typeof _personalUnsubscribe === 'function') {
+      _personalUnsubscribe();
+      _personalUnsubscribe = null;
+    }
+  }
+
   // ─── API Pública del Módulo ───────────────────────────────────────────────
   return {
     init,
     cargar,
+    cleanup,
     abrirModalCarne: _abrirModalCarne,
   };
 })();

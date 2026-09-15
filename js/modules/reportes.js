@@ -285,7 +285,8 @@ const ModuloReportes = (() => {
   }
 
   function _dateToStr(date) {
-    return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+    return window.CPC?.StringHelpers?.dateToStr ? window.CPC.StringHelpers.dateToStr(date) :
+      `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
   }
 
   // Cargar al entrar al módulo
@@ -293,5 +294,11 @@ const ModuloReportes = (() => {
     _setFechasDefault();
   }
 
-  return { init, cargar };
+  function cleanup() {
+    // Los event listeners de botones están ligados al DOM del módulo;
+    // al cambiar de página el SPA reemplaza el contenido, por lo que
+    // no requieren limpieza explícita.
+  }
+
+  return { init, cargar, cleanup };
 })();

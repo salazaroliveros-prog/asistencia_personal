@@ -779,5 +779,10 @@ const ModuloAjustes = (() => {
     Alerts.success(`CSV "${filename}" descargado correctamente`);
   }
 
-  return { init, cargar };
+  function cleanup() {
+    // Los event listeners están ligados al DOM del módulo;
+    // al cambiar de página el SPA reemplaza el contenido.
+  }
+
+  return { init, cargar, cleanup };
 })();

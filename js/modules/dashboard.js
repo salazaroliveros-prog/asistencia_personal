@@ -15,6 +15,8 @@ const ModuloDashboard = (() => {
   let _chartSemana      = null; // Instancia Chart.js semanal
   let _chartMes         = null; // Instancia Chart.js mensual
   let _turnoFiltroActivo = 'en-obra'; // tab activo del panel turno
+  let _stateUnsubscribe = null; // Unsubscribe de AppState.on()
+  let _kpiTimeout = null; // Timeout de animación KPI
 
   // ─── Inicialización ───────────────────────────────────────────────────────
   function init() {
@@ -26,7 +28,7 @@ const ModuloDashboard = (() => {
     // Mantener las listas derivadas sincronizadas con marcaciones hechas desde
     // Asistencia (incluido el adapter local/demo), sin depender de un refresh
     // manual del Dashboard.
-    AppState.on('asistencias', _onAttendanceStateChanged);
+    _stateUnsubscribe = AppState.on('asistencias', _onAttendanceStateChanged);
     AppState.on('personal', _onAttendanceStateChanged);
     
     // Inicializar mejoras de dashboard
@@ -178,7 +180,8 @@ const ModuloDashboard = (() => {
     if (el) {
       el.textContent = value;
       el.style.transform  = 'scale(1.1)';
-      setTimeout(() => { el.style.transform = 'scale(1)'; el.style.transition = 'transform 0.2s ease'; }, 100);
+      if (_kpiTimeout) clearTimeout(_kpiTimeout);
+      _kpiTimeout = setTimeout(() => { el.style.transform = 'scale(1)'; el.style.transition = 'transform 0.2s ease'; }, 100);
     }
   }
 
@@ -956,7 +959,8 @@ const ModuloDashboard = (() => {
   }
 
   function _dateToStr(date) {
-    return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+    return window.CPC?.StringHelpers?.dateToStr ? window.CPC.StringHelpers.dateToStr(date) :
+      `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
   }
 
   function _formatDiaLabel(fechaStr) {
@@ -964,5 +968,24 @@ const ModuloDashboard = (() => {
     return d.toLocaleDateString('es-GT', { weekday: 'short', day: 'numeric' });
   }
 
-  return { init, cargar };
+  function cleanup() {
+    if (_stateUnsubscribe && typeof _stateUnsubscribe === 'function') {
+      _stateUnsubscribe();
+      _stateUnsubscribe = null;
+    }
+    if (_kpiTimeout) {
+      clearTimeout(_kpiTimeout);
+      _kpiTimeout = null;
+    }
+    if (_chartSemana) {
+      _chartSemana.destroy();
+      _chartSemana = null;
+    }
+    if (_chartMes) {
+      _chartMes.destroy();
+      _chartMes = null;
+    }
+  }
+
+  return { init, cargar, cleanup };
 })();

@@ -293,9 +293,14 @@ const UserManagement = (() => {
     Alerts.info('Función de crear usuario disponible en próxima versión. Por ahora, usa Firebase Console para crear usuarios.');
   }
   
+  function cleanup() {
+    // Sin listeners persistentes ni timers en este módulo.
+  }
+
   // ─── Exportar funciones públicas ───────────────────────────────────────────
   return {
     init,
+    cleanup,
     toggleAdmin,
     deleteUser,
     checkClaims: _checkCurrentUserClaims

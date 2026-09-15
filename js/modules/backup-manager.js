@@ -173,8 +173,13 @@ const BackupManager = (() => {
     }
   }
   
+  function cleanup() {
+    // Sin listeners persistentes ni timers en este módulo.
+  }
+
   return {
     init,
+    cleanup,
     _handleExportBackup,
     _handleImportBackup,
     _handleExportTrabajadores,
