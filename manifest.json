@@ -2,7 +2,7 @@
   "name": "Control Personal Campo",
   "short_name": "CtrlCampo",
   "description": "Sistema de gestión y asistencia de personal en obra",
-  "id": "https://controlasistencia-evexmkwgu-proyectoswm.vercel.app/",
+  "id": "/",
   "scope": "/",
   "start_url": "/",
   "handle_links": "preferred",

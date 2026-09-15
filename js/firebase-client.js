@@ -57,19 +57,6 @@
       auth = firebase.auth();
       _initialized = true;
 
-      // Habilitar persistencia para modo offline
-      if (db.enablePersistence) {
-        db.enablePersistence({ synchronizeTabs: true }).catch((err) => {
-          if (err.code === 'failed-precondition') {
-            console.warn('[FirebaseClient] Persistencia ya habilitada en otra pestaña');
-          } else if (err.code === 'unimplemented') {
-            console.warn('[FirebaseClient] Persistencia no soportada por navegador');
-          } else {
-            console.warn('[FirebaseClient] Error persistencia:', err.message);
-          }
-        });
-      }
-
       connectionState = 'connected';
       startHealthCheck();
       
