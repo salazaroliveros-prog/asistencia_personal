@@ -421,6 +421,7 @@ const ModuloPersonal = (() => {
         WhatsApp:        payload.whatsapp || '',
         Direccion:       payload.direccion || '',
         Fotografia_URL:  payload.fotografia || anterior.Fotografia_URL || '',
+        Codigo_QR_Data:  anterior.Codigo_QR_Data || JSON.stringify({ id: anterior.ID_Trabajador, dpi: payload.dpi, nombre: payload.nombre }),
       };
     } else {
       // Nuevo trabajador

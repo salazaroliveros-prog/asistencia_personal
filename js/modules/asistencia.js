@@ -577,33 +577,10 @@ const ModuloAsistencia = (() => {
         // Vibrar
         if (navigator.vibrate) navigator.vibrate([100, 50, 100]);
 
-        // Si fue guardado offline, reflejar inmediatamente en AppState.asistencias
+        // Si fue guardado offline, API.registrarMarcacion ya actualizó AppState y cache.
+        // Renderizar directamente desde AppState para evitar duplicados.
         if (result.offline) {
-          const horaReal = result.horaReal || _getHoraActual();
-          const nuevaAsistencia = {
-            ID_Asistencia:     `ASIS-LOCAL-${Date.now()}`,
-            ID_Trabajador:     trabajador.ID_Trabajador,
-            Nombre_Trabajador: trabajador.Nombre_Completo,
-            Fecha:             hoy,
-            Tipo_Marcacion:    tipo,
-            Hora_Programada:   horaOficial,
-            Hora_Real:         horaReal,
-            Estado_Marcacion:  estadoMarcacion,
-            Metodo_Registro:  payload.metodo,
-            Horas_Extra:       horasExtra || 0,
-            Ubicacion_Obra:    payload.obra,
-            GPS_Latitud:       payload.gpsData?.latitude || null,
-            GPS_Longitud:      payload.gpsData?.longitude || null,
-            GPS_Accuracy:      payload.gpsData?.accuracy || null,
-            Geofence_Inside:   payload.geofenceStatus?.inside || null,
-            Geofence_Distance: payload.geofenceStatus?.distance || null,
-            _offline:          true,
-          };
-          const asistenciaActual = AppState.get('asistencias') || [];
-          AppState.set('asistencias', [...asistenciaActual, nuevaAsistencia]);
-
-          // Renderizar tabla con datos locales directamente
-          _renderTablaMarcaciones([...asistenciaActual, nuevaAsistencia].filter(a => a.Fecha === hoy));
+          _renderTablaMarcaciones((AppState.get('asistencias') || []).filter(a => a.Fecha === hoy));
         } else {
           // Recargar tabla desde servidor
           await _cargarMarcaciones(hoy);

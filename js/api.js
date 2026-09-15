@@ -43,7 +43,11 @@
 
   function updateConnection(value) {
     AppState.set('connected', value);
-    if (value) AppState.set('backendMode', 'firestore');
+    if (value) {
+      AppState.set('backendMode', 'firestore');
+    } else {
+      AppState.set('backendMode', 'local');
+    }
   }
 
   function normalizeWorker(payload, previous) {
@@ -93,7 +97,9 @@
 
   function findRecentDuplicate(record) {
     const cached = read(LS_KEYS.ATTENDANCE_CACHE, []);
-    const same = cached.find(c =>
+    const appState = AppState.get('asistencias') || [];
+    const combined = [...cached, ...appState.filter(a => !cached.find(c => c.ID_Marcacion === a.ID_Marcacion))];
+    const same = combined.find(c =>
       c.ID_Trabajador === record.ID_Trabajador &&
       c.Tipo_Marcacion === record.Tipo_Marcacion &&
       c.Fecha === record.Fecha
