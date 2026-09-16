@@ -8,23 +8,38 @@ const ThemeManager = (() => {
   
   const THEME_KEY = 'cpc_theme';
   const THEMES = ['light', 'dark'];
+  /* La interfaz está diseñada sobre el tema oscuro (glassmorphism). El valor
+     por defecto debe ser 'dark' para no alterar la apariencia de los usuarios
+     que nunca han cambiado el tema; antes era 'light' y activaba un tema claro
+     que no estaba implementado en CSS. */
+  const DEFAULT_THEME = 'dark';
   
   function init() {
-    const savedTheme = localStorage.getItem(THEME_KEY) || 'light';
+    let savedTheme = DEFAULT_THEME;
+    try {
+      const stored = localStorage.getItem(THEME_KEY);
+      if (THEMES.includes(stored)) savedTheme = stored;
+    } catch (_) {
+      /* localStorage puede no estar disponible (modo privado) */
+    }
     setTheme(savedTheme);
     _bindEvents();
   }
-  
+
   function _bindEvents() {
-    const toggle = document.getElementById('theme-toggle');
-    if (toggle) {
+    const toggles = _getToggles();
+    toggles.forEach((toggle) => {
+      if (!toggle) return;
       toggle.addEventListener('click', toggleTheme);
-    }
-    
-    const toggleSidebar = document.getElementById('theme-toggle-sidebar');
-    if (toggleSidebar) {
-      toggleSidebar.addEventListener('click', toggleTheme);
-    }
+    });
+    _updateToggleUI(getTheme());
+  }
+
+  /** Devuelve los botones de tema presentes en el DOM (topbar/sidebar) */
+  function _getToggles() {
+    return ['theme-toggle', 'theme-toggle-sidebar']
+      .map((id) => document.getElementById(id))
+      .filter(Boolean);
   }
   
   function toggleTheme() {
@@ -35,28 +50,49 @@ const ThemeManager = (() => {
   
   function setTheme(theme) {
     if (!THEMES.includes(theme)) return;
-    
+
     document.documentElement.setAttribute('data-theme', theme);
-    localStorage.setItem(THEME_KEY, theme);
-    
-    const toggle = document.getElementById('theme-toggle');
-    if (toggle) {
-      const icon = toggle.querySelector('i');
-      if (icon) {
-        icon.setAttribute('data-lucide', theme === 'light' ? 'moon' : 'sun');
-        if (window.lucide) lucide.createIcons({ nodes: [toggle] });
-      }
+    try {
+      localStorage.setItem(THEME_KEY, theme);
+    } catch (_) {
+      /* ignorar si localStorage no está disponible */
     }
-    
+    _updateToggleUI(theme);
+
     if (window.Logger) {
       window.Logger.info('ThemeManager', 'Tema cambiado', { theme });
     }
   }
   
-  function getTheme() {
-    return document.documentElement.getAttribute('data-theme') || 'light';
+  /** Sincroniza icono, etiqueta y estado ARIA de todos los botones de tema */
+  function _updateToggleUI(theme) {
+    const isLight = theme === 'light';
+    _getToggles().forEach((toggle) => {
+      const icon = toggle.querySelector('i');
+      if (icon) {
+        // Icono del tema AL QUE SE CAMBIA: luna si estamos en claro, sol si en oscuro
+        icon.setAttribute('data-lucide', isLight ? 'moon' : 'sun');
+      }
+      toggle.setAttribute('aria-pressed', isLight ? 'true' : 'false');
+      toggle.setAttribute(
+        'aria-label',
+        isLight ? 'Cambiar a tema oscuro' : 'Cambiar a tema claro'
+      );
+      toggle.setAttribute(
+        'title',
+        isLight ? 'Cambiar a tema oscuro' : 'Cambiar a tema claro'
+      );
+    });
+    if (window.lucide) {
+      const nodes = _getToggles().map((t) => t.querySelector('i')).filter(Boolean);
+      if (nodes.length) lucide.createIcons({ nodes });
+    }
   }
-  
+
+  function getTheme() {
+    return document.documentElement.getAttribute('data-theme') || DEFAULT_THEME;
+  }
+
   return {
     init,
     toggleTheme,

@@ -482,7 +482,23 @@ const API: Api = {
         const payload = (item.payload || {}) as Record<string, unknown>;
         if (item.type === 'personal-delete') await firebase().save('personal', String(payload.id), { Estado: 'Inactivo' });
         else if (item.type === 'personal') { const worker = normalizeWorker(payload); await firebase().save('personal', worker.ID_Trabajador, worker as unknown as Record<string, unknown>); }
-        else { const record = normalizeAttendance(payload); await firebase().save('asistencias', record.ID_Marcacion, record as unknown as Record<string, unknown>); }
+        else if (item.type === 'attendance-update') {
+          const existing = attendanceCache().find(record => record.ID_Marcacion === String(payload.id));
+          if (!existing) throw new Error(`Marcación pendiente no encontrada: ${String(payload.id)}`);
+          const patch = (payload.payload || {}) as Record<string, unknown>;
+          const record = {
+            ...existing,
+            Hora_Real: String(patch.horaReal || existing.Hora_Real),
+            Estado_Marcacion: (patch.estadoMarcacion as AttendanceStatus | undefined) || existing.Estado_Marcacion,
+            Horas_Extra: patch.horasExtra !== undefined ? Number(patch.horasExtra) || 0 : existing.Horas_Extra,
+          };
+          await firebase().save('asistencias', existing.ID_Marcacion, record as unknown as Record<string, unknown>);
+        } else if (item.type === 'attendance-delete') {
+          await firebase().remove('asistencias', String(payload.id));
+        } else {
+          const record = normalizeAttendance(payload as AttendancePayload);
+          await firebase().save('asistencias', record.ID_Marcacion, record as unknown as Record<string, unknown>);
+        }
         sent += 1;
       } catch { failed.push(item); }
     }

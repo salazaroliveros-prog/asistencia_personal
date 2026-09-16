@@ -72,13 +72,11 @@ document.addEventListener('DOMContentLoaded', async () => {
       UpdateManager.init();
     }
 
-    // 9. Navegar a la página según el hash actual o dashboard
+            // 9. Navegar a la página según el hash actual o dashboard
     _navigateToHash();
-
-    // 10. Si hay URL configurada, intentar conexión inicial
-    await _initialConnection();
-
-    // 11. Ocultar splash screen con animación
+    // 10. Conectar a Firebase — no bloquea el splash (timeout 3s)
+    _initialConnection().catch(() => {});
+    // 11. Ocultar splash screen — SIEMPRE se oculta, con o sin conexión Firebase
     _hideSplash();
 
   } catch (err) {
@@ -707,6 +705,12 @@ function _initSidebar() {
   const sidebarToggle = document.getElementById('sidebar-toggle');
   const overlay       = document.getElementById('sidebar-overlay');
 
+  const closeSidebar = () => {
+    document.body.classList.remove('sidebar-open');
+    if (menuToggle) menuToggle.setAttribute('aria-expanded', 'false');
+    if (sidebarToggle) sidebarToggle.setAttribute('aria-expanded', 'false');
+  };
+
   const toggleSidebar = () => {
     const isOpen = document.body.classList.toggle('sidebar-open');
     if (menuToggle) menuToggle.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
@@ -715,11 +719,21 @@ function _initSidebar() {
 
   if (menuToggle)    menuToggle.addEventListener('click', toggleSidebar);
   if (sidebarToggle) sidebarToggle.addEventListener('click', toggleSidebar);
-  if (overlay)       overlay.addEventListener('click', () => {
-    document.body.classList.remove('sidebar-open');
-    if (menuToggle) menuToggle.setAttribute('aria-expanded', 'false');
-    if (sidebarToggle) sidebarToggle.setAttribute('aria-expanded', 'false');
+  if (overlay)       overlay.addEventListener('click', closeSidebar);
+
+  /* Al pulsar cualquier enlace del menú se cierra el drawer en móvil.
+     Necesario para el enlace externo (field-scanner.html), que no pasa por el
+     router y por tanto no ejecutaba el cierre que hace _navigate(). */
+  document.querySelectorAll('.sidebar-nav .nav-link').forEach(link => {
+    link.addEventListener('click', closeSidebar);
   });
+
+  /* Si el viewport pasa a escritorio con el drawer abierto, se limpia el estado
+     para no dejar el overlay activo sobre el contenido. */
+  const desktopQuery = window.matchMedia('(min-width: 768px)');
+  const handleViewportChange = (event) => { if (event.matches) closeSidebar(); };
+  if (desktopQuery.addEventListener) desktopQuery.addEventListener('change', handleViewportChange);
+  else if (desktopQuery.addListener) desktopQuery.addListener(handleViewportChange);
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -806,20 +820,24 @@ function _getFormattedDate(date) {
 // ─────────────────────────────────────────────────────────────────────────────
 async function _initialConnection() {
   try {
-    // firebase-client.js se autoinicializa al cargarse;
-    // aquí solo verificamos el estado y cargamos datos iniciales.
-    
-    // Give auto-initialization a moment to complete
+    // La conexión a Firebase es "fire-and-forget": el splash se oculta de
+    // inmediato (ver _hideSplash) y la conexión se resuelve en segundo plano.
+    // Un timeout de 3 s evita que un Firestore lento o inalcanzable bloquee
+    // indefinidamente la primera carga útil de la app (p. ej. tests headless).
     await delay(500);
-    
-    const connection = await API.ping();
+
+    const timeoutPromise = new Promise((_, reject) =>
+      setTimeout(() => reject(new Error('timeout_inicial')), 3000)
+    );
+
+    const connection = await Promise.race([API.ping(), timeoutPromise]).catch(() => ({
+      success: false,
+      mode: 'local',
+    }));
+
     if (connection.success) {
-      // Connection already established by auto-initialization
       API.obtenerPersonal().catch(err => console.warn('[App] Error obteniendo personal:', err.message));
       API.obtenerConfiguracion().catch(err => console.warn('[App] Error obteniendo configuración:', err.message));
-    } else if (!connection.success && connection.mode === 'local') {
-      // No Firebase config or auto-connection failed
-      // App will work in local mode - user can configure in Settings if needed
     }
   } catch (err) {
     console.warn('[App] Firestore no disponible; se mantiene el modo local:', err.message);
@@ -856,7 +874,7 @@ function _hideSplash() {
     } else {
       if (app) app.hidden = false;
     }
-  }, 1800); // Mínimo de splash para feedback visual
+    }, 800); // Mínimo de splash para feedback visual (reducido de 1800ms)
 }
 
 // ─────────────────────────────────────────────────────────────────────────────

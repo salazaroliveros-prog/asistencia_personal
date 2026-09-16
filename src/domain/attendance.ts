@@ -27,6 +27,11 @@ export function normalizeAttendance(payload: AttendancePayload, previous: Partia
     Horas_Extra: Number(payload.Horas_Extra ?? payload.horasExtra ?? 0) || 0,
     Ubicacion_Obra: payload.Ubicacion_Obra || payload.obra || '',
     Fecha_Registro: payload.Fecha_Registro || nowIso(),
+    GPS_Latitud: payload.GPS_Latitud ?? null,
+    GPS_Longitud: payload.GPS_Longitud ?? null,
+    GPS_Accuracy: payload.GPS_Accuracy ?? null,
+    Geofence_Inside: payload.Geofence_Inside ?? null,
+    Geofence_Distance: payload.Geofence_Distance ?? null,
   };
 }
 

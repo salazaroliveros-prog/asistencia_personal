@@ -31,6 +31,11 @@ export interface AttendanceRecord {
   Horas_Extra: number;
   Ubicacion_Obra: string;
   Fecha_Registro: string;
+  GPS_Latitud?: number | null;
+  GPS_Longitud?: number | null;
+  GPS_Accuracy?: number | null;
+  Geofence_Inside?: boolean | null;
+  Geofence_Distance?: number | null;
 }
 
 export interface AttendanceSummary {

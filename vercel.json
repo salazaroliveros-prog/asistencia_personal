@@ -3,7 +3,7 @@
   "buildCommand": "npm run build",
   "outputDirectory": "dist",
   "devCommand": "npm run dev",
-  "installCommand": "npm ci",
+  "installCommand": "npm ci --include=dev",
   "cleanUrls": true,
   "rewrites": [
     { "source": "/pwa/scanner.html", "destination": "/pwa/scanner.html" },

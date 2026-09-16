@@ -136,7 +136,7 @@
   function _subscribeRealtime() {
     if (!_db) return;
     try {
-      const hoy = new Date().toISOString().slice(0, 10);
+      const hoy = _today();
       _unsubscribe = _db.collection('asistencias')
         .where('Fecha', '==', hoy)
         .limit(50)
@@ -502,6 +502,11 @@
     return _auth?.currentUser?.email || _auth?.currentUser?.uid || 'unknown';
   }
 
+  function _today() {
+    const now = new Date();
+    return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+  }
+
   function _saveAuditLog(record) {
     try {
       const key = 'field_scanner_audit_log';
@@ -544,7 +549,7 @@
     _marking = true;
     _habilitaBotones(false);
 
-    const hoy = new Date().toISOString().slice(0, 10);
+    const hoy = _today();
     const gps = await _captureGPS();
     const payload = {
       ID_Trabajador:    _currentWorker.ID_Trabajador,
@@ -578,7 +583,9 @@
     if (!_db) throw new Error('Firebase no disponible');
 
     const horaReal = new Date().toLocaleTimeString('es-GT', { hour12: false }).substring(0, 5);
-    const id = `${payload.ID_Trabajador}_${payload.Fecha}_${payload.Tipo_Marcacion}_${Date.now()}_${Math.random().toString(36).slice(2, 8).toUpperCase()}`.replace(/[^A-Za-z0-9_-]/g, '_');
+    // La clave determinista hace que un reintento o doble lectura del mismo QR
+    // sea idempotente por trabajador, fecha y tipo de marcación.
+    const id = `${payload.ID_Trabajador}_${payload.Fecha}_${payload.Tipo_Marcacion}`.replace(/[^A-Za-z0-9_-]/g, '_');
     const record = {
       ID_Marcacion:     id,
       ID_Registro:      id,
@@ -597,7 +604,11 @@
     if (payload.GPS_Latitud  !== undefined) record.GPS_Latitud  = payload.GPS_Latitud;
     if (payload.GPS_Longitud !== undefined) record.GPS_Longitud = payload.GPS_Longitud;
 
-    await _db.collection('asistencias').doc(id).set(record, { merge: false });
+    const ref = _db.collection('asistencias').doc(id);
+    await _db.runTransaction(async transaction => {
+      const snapshot = await transaction.get(ref);
+      if (!snapshot.exists) transaction.set(ref, record, { merge: false });
+    });
     _saveAuditLog({ ...record, Nombre_Trabajador: payload.Nombre_Trabajador });
     return id;
   }
@@ -606,7 +617,7 @@
   function _renderFeed(records) {
     const list = document.getElementById('campo-feed-list');
     if (!list) return;
-    const hoy   = new Date().toISOString().slice(0, 10);
+    const hoy   = _today();
     const today = (records || []).filter(a => a.Fecha === hoy).slice(-6).reverse();
 
     if (!today.length) {

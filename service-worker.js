@@ -64,6 +64,10 @@ const PRECACHE_ASSETS = [
   '/js/modules/backup-manager.js',
   '/js/modules/gas-assistant.js',
   // Vendor local (copiados al dist por vite.config)
+  '/vendor/firebase/firebase-app-compat.js',
+  '/vendor/firebase/firebase-auth-compat.js',
+  '/vendor/firebase/firebase-firestore-compat.js',
+  '/vendor/firebase/firebase-functions-compat.js',
   '/vendor/jspdf.umd.min.js',
   '/vendor/jspdf.plugin.autotable.min.js',
   '/vendor/lucide.min.js',

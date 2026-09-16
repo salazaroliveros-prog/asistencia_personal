@@ -66,22 +66,25 @@ function copyLegacyRuntime(mode) {
 
       // Inyectar variables de entorno de Firebase en index.html para que
       // firebase-config.js las pueda leer como window.__FIREBASE_ENV__.
-      const indexPath = resolve(distDir, 'index.html');
-      if (existsSync(indexPath)) {
-        const env = loadEnv(mode, process.cwd(), '');
-        const firebaseEnv = {
-          apiKey: env.VITE_FIREBASE_API_KEY || '',
-          authDomain: env.VITE_FIREBASE_AUTH_DOMAIN || '',
-          projectId: env.VITE_FIREBASE_PROJECT_ID || '',
-          storageBucket: env.VITE_FIREBASE_STORAGE_BUCKET || '',
-          messagingSenderId: env.VITE_FIREBASE_MESSAGING_SENDER_ID || '',
-          appId: env.VITE_FIREBASE_APP_ID || '',
-          measurementId: env.VITE_FIREBASE_MEASUREMENT_ID || '',
-        };
-        const script = `<script>window.__FIREBASE_ENV__ = ${JSON.stringify(firebaseEnv)};</script>`;
-        let html = readFileSync(indexPath, 'utf8');
+      const envTargets = ['index.html', 'field-scanner.html', 'pwa/scanner.html'];
+      const env = loadEnv(mode, process.cwd(), '');
+      const firebaseEnv = {
+        apiKey: env.VITE_FIREBASE_API_KEY || '',
+        authDomain: env.VITE_FIREBASE_AUTH_DOMAIN || '',
+        projectId: env.VITE_FIREBASE_PROJECT_ID || '',
+        storageBucket: env.VITE_FIREBASE_STORAGE_BUCKET || '',
+        messagingSenderId: env.VITE_FIREBASE_MESSAGING_SENDER_ID || '',
+        appId: env.VITE_FIREBASE_APP_ID || '',
+        measurementId: env.VITE_FIREBASE_MEASUREMENT_ID || '',
+      };
+      const script = `<script>window.__FIREBASE_ENV__ = ${JSON.stringify(firebaseEnv)};</script>`;
+
+      for (const target of envTargets) {
+        const targetPath = resolve(distDir, target);
+        if (!existsSync(targetPath)) continue;
+        let html = readFileSync(targetPath, 'utf8');
         html = html.replace('</head>', script + '</head>');
-        writeFileSync(indexPath, html);
+        writeFileSync(targetPath, html);
       }
 
       console.log('[vite] Runtime legado copiado a dist/');

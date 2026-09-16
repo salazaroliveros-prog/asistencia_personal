@@ -28,6 +28,34 @@ html {
   color-scheme: dark;
 }
 
+/* El tema oscuro es el tema base de la aplicación. Al activar el tema claro
+   desde el sidebar (ThemeManager) se declara data-theme="light" en <html> y
+   tanto color-scheme como el bloque [data-theme="light"] remapean los tokens
+   de vidrio. Sin esta regla el atributo no afectaba a los controles nativos. */
+html[data-theme="light"] {
+  color-scheme: light;
+}
+
+/* Elimina el retardo de 300 ms y el zoom por doble toque en móvil */
+@media (hover: none) and (pointer: coarse) {
+  button,
+  a,
+  label,
+  select,
+  summary,
+  [role="button"],
+  [role="tab"],
+  .btn,
+  .nav-link,
+  .tab,
+  .topbar-btn,
+  .table-action-btn,
+  .cal-day,
+  .turno-tab {
+    touch-action: manipulation;
+  }
+}
+
 body {
   min-height: 100vh;
   min-height: 100dvh;
@@ -212,7 +240,11 @@ input.invalid {
 
 /* ─────────────────────────────────────────────────────────────────────────────
    TEMAS PERSONALIZABLES
-   ───────────────────────────────────────────────────────────────────────────── */
+   ─────────────────────────────────────────────────────────────────────────────
+   El tema base (sin atributo) es el OSCURO definido en :root. El tema claro
+   redefine los tokens de superficie/texto de vidrio para que toda la interfaz
+   (cards, topbar, sidebar, modales, tablas) se adapte sin reglas duplicadas.
+   ──────────────────────────────────────────────────────────────────────────── */
 [data-theme="dark"] {
   --bg-primary: #1a1a2e;
   --bg-secondary: #16213e;
@@ -229,26 +261,73 @@ input.invalid {
   --accent: #003459;
 }
 
+/* ────────────────────────────────────────────────────────────────────────────
+   TEMA CLARO — REMAPEO DE TOKENS DE VIDRIO
+   ────────────────────────────────────────────────────────────────────────────
+   Se declara DESPUÉS de :root a propósito: [data-theme="light"] y :root tienen
+   la misma especificidad, por lo que el orden de aparición decide qué valor
+   gana. Si este bloque se colocara antes, :root sobreescribiría el tema claro.
+   ─────────────────────────────────────────────────────────────────────────── */
+
+/* En tema claro los orbes de luz del fondo se atenúan para no ensuciar el
+   blanco y mantener el contraste del texto oscuro. */
+[data-theme="light"] body::before {
+  opacity: 0.45;
+}
+
+/* La interfaz de vidrio oscuro del sidebar/topbar/modal se aclara en tema claro */
+[data-theme="light"] .glass-sidebar {
+  background: rgba(255, 255, 255, 0.82);
+  border-right-color: rgba(15, 43, 71, 0.10);
+  box-shadow: 4px 0 32px rgba(15, 43, 71, 0.12);
+}
+
+[data-theme="light"] .glass-topbar {
+  background: rgba(255, 255, 255, 0.78);
+  box-shadow: 0 4px 16px rgba(15, 43, 71, 0.10);
+}
+
+[data-theme="light"] .glass-modal {
+  background: rgba(255, 255, 255, 0.94);
+  box-shadow: 0 20px 60px rgba(15, 43, 71, 0.22);
+}
+
+[data-theme="light"] .modal-overlay {
+  background: rgba(15, 43, 71, 0.42);
+}
+
+[data-theme="light"] .campo-scanner-card {
+  background: #0b1a2b;
+}
+
+/* Los iconos del logo sobre gradiente mantienen el color claro original */
+[data-theme="light"] .brand-icon svg,
+[data-theme="light"] .pwa-install-icon,
+[data-theme="light"] .splash-logo svg,
+[data-theme="light"] .carne-foto-placeholder span,
+[data-theme="light"] .campo-worker-avatar,
+[data-theme="light"] .gas-step-number,
+[data-theme="light"] .gas-instruction-number,
+[data-theme="light"] .update-icon {
+  color: #ffffff;
+}
+
+/* Conmutador de tema del topbar. Se mantiene visible en móvil, donde el
+   botón del sidebar queda tras el cajón lateral. Antes esta clase describía
+   un botón flotante inexistente (position: fixed, top/right 20px) con los
+   tokens del diseño antiguo; ahora se integra en el topbar y hereda el área
+   táctil de 44×44 px de .topbar-btn. La lógica de los iconos sol/luna se
+   comparte con .theme-toggle-sidebar (ver más abajo). */
 .theme-toggle {
-  position: fixed;
-  top: 20px;
-  right: 20px;
-  z-index: var(--z-sticky);
-  background: var(--bg-secondary);
-  border: 2px solid var(--accent);
-  border-radius: 50%;
-  width: 40px;
-  height: 40px;
-  cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: all 0.3s ease;
+  color: var(--color-text-muted);
 }
 
-.theme-toggle:hover {
-  transform: scale(1.1);
-  box-shadow: 0 2px 10px rgba(var(--color-black-rgb), 0.2);
+/* En tema claro el botón se resalta en ámbar, igual que en el sidebar */
+.theme-toggle[aria-pressed="true"] {
+  color: var(--color-accent-amber);
 }
 
 .theme-toggle-sidebar {
@@ -260,12 +339,63 @@ input.invalid {
   border-radius: 50%;
   transition: all 0.3s ease;
   margin-top: 10px;
+  /* El botón contiene los dos iconos (sol/luna); solo se muestra uno según
+     `data-theme` en <html>, por lo que no hace falta re-renderizar Lucide. */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0;
+}
+
+.theme-toggle-sidebar .theme-icon {
+  display: block;
+}
+
+.theme-toggle-sidebar .theme-icon svg,
+.theme-toggle-sidebar svg {
+  width: 20px;
+  height: 20px;
+}
+
+/* Tema oscuro (base): la acción disponible es pasar a claro → icono sol */
+html:not([data-theme="light"]) .theme-toggle-sidebar .theme-icon-moon {
+  display: none;
+}
+
+/* Tema claro: la acción disponible es pasar a oscuro → icono luna */
+[data-theme="light"] .theme-toggle-sidebar .theme-icon-sun {
+  display: none;
+}
+
+.theme-toggle-sidebar[aria-pressed="true"] {
+  color: var(--color-accent-amber);
 }
 
 .theme-toggle-sidebar:hover {
   background: rgba(var(--color-surface-rgb), 0.1);
   color: var(--text-primary);
   transform: scale(1.1);
+}
+
+/* El conmutador del topbar comparte la lógica de iconos del sidebar: ambos
+   botones contienen los dos iconos y solo se muestra el de la acción
+   disponible según `data-theme` en <html>. */
+.theme-toggle .theme-icon {
+  display: block;
+}
+
+.theme-toggle .theme-icon svg,
+.theme-toggle svg {
+  width: 20px;
+  height: 20px;
+}
+
+html:not([data-theme="light"]) .theme-toggle .theme-icon-moon {
+  display: none;
+}
+
+[data-theme="light"] .theme-toggle .theme-icon-sun {
+  display: none;
 }
 
 button {
@@ -351,6 +481,12 @@ table {
   --glass-shadow-hover:   0 16px 48px 0 rgba(var(--color-navy-dark-rgb), 0.50);
   --glass-blur:           16px;
 
+  /* Sombras genéricas — --shadow-lg era referenciada por .pwa-install-banner
+     sin estar declarada, por lo que el banner quedaba sin elevación. */
+  --shadow-sm: 0 1px 3px rgba(var(--color-navy-dark-rgb), 0.30);
+  --shadow-md: 0 6px 18px rgba(var(--color-navy-dark-rgb), 0.35);
+  --shadow-lg: 0 14px 40px rgba(var(--color-navy-dark-rgb), 0.45);
+
   /* ─── NUEVO FONDO GLASSMORPHISM OPTIMIZADO ───────────────────────────────
    * Paleta de 4 stops para máxima profundidad y contraste con glass cards:
    *   #0A1628 — Azul noche profundo   (fondo base, ancla de oscuridad)
@@ -424,6 +560,36 @@ table {
   --sidebar-collapsed:   72px;
   --topbar-height:       64px;
   --content-max-width:   1400px;
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   TEMA CLARO — TOKENS DE VIDRIO (va DESPUÉS de :root a propósito, ver nota)
+   ───────────────────────────────────────────────────────────────────────────── */
+[data-theme="light"] {
+  /* --color-surface-rgb pasa a ser un azul oscuro para que los tintes
+     translúcidos rgba(...,0.08) sigan siendo visibles sobre fondo blanco. */
+  --color-surface-rgb:     15, 43, 71;
+  --gradient-bg: linear-gradient(145deg, #eef4fb 0%, #e2edf8 35%, #d7e7f5 70%, #cfe3f4 100%);
+
+  --color-text-primary:   #0f2b47;
+  --color-text-secondary: rgba(15, 43, 71, 0.78);
+  --color-text-muted:     rgba(15, 43, 71, 0.62);
+  --color-text-disabled:  rgba(15, 43, 71, 0.40);
+
+  --glass-bg:           rgba(255, 255, 255, 0.72);
+  --glass-bg-hover:     rgba(255, 255, 255, 0.92);
+  --glass-bg-active:    rgba(255, 255, 255, 1);
+  --glass-border:       rgba(15, 43, 71, 0.14);
+  --glass-border-light: rgba(15, 43, 71, 0.08);
+  --glass-shadow:       0 8px 32px 0 rgba(15, 43, 71, 0.14);
+  --glass-shadow-hover: 0 16px 48px 0 rgba(15, 43, 71, 0.22);
+
+  --shadow-sm: 0 1px 3px rgba(15, 43, 71, 0.14);
+  --shadow-md: 0 6px 18px rgba(15, 43, 71, 0.16);
+  --shadow-lg: 0 14px 40px rgba(15, 43, 71, 0.20);
+
+  --color-dark-10: rgba(15, 43, 71, 0.06);
+  --color-dark-20: rgba(15, 43, 71, 0.12);
 }
 
 /* ─────────────────────────────────────────────────────────────────────────────
@@ -575,8 +741,10 @@ p {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  /* env() sin soporte: quedaba padding 0 (regla inválida). Se fija el respaldo. */
-  padding: 0 var(--space-6) 0;
+  /* env(safe-area-inset-*) sí está soportado; max() mantiene el padding mínimo
+     en navegadores sin notch y evita que el contenido quede bajo la cámara o
+     el indicador de gestos en móviles con recorte. */
+  padding: 0 max(var(--space-6), env(safe-area-inset-right)) 0 max(var(--space-6), env(safe-area-inset-left));
   min-height: var(--topbar-height);
   position: sticky;
   top: 0;
@@ -651,6 +819,9 @@ p {
   overflow-y: auto;
   max-width: var(--content-max-width);
   width: 100%;
+  /* Centra el contenido cuando la ventana supera --content-max-width (antes
+     quedaba pegado a la izquierda en monitores ultrawide). */
+  margin-inline: auto;
   position: relative; /* Necesario para animaciones page-exit (position:absolute) */
 }
 
@@ -872,11 +1043,14 @@ p {
 
   .pages-container {
     padding: var(--space-3);
+    padding-left: max(var(--space-3), env(safe-area-inset-left));
+    padding-right: max(var(--space-3), env(safe-area-inset-right));
+    padding-bottom: max(var(--space-6), env(safe-area-inset-bottom));
   }
 
   .topbar {
-    padding-left: var(--space-3);
-    padding-right: var(--space-3);
+    padding-left: max(var(--space-3), env(safe-area-inset-left));
+    padding-right: max(var(--space-3), env(safe-area-inset-right));
     gap: var(--space-2);
   }
 
@@ -894,8 +1068,24 @@ p {
     gap: var(--space-2);
   }
 
+  /* Las acciones de sección ocupan todo el ancho y los botones se reparten,
+     evitando que "Nuevo Trabajador" o el selector de fecha queden cortados. */
+  .section-actions {
+    width: 100%;
+    gap: var(--space-2);
+  }
+
+  .section-actions > .btn,
+  .section-actions > .input-glass {
+    flex: 1 1 auto;
+  }
+
   .topbar-clock {
     display: none;
+  }
+
+  .page-title {
+    font-size: var(--text-lg);
   }
 
   .page {
@@ -913,17 +1103,24 @@ p {
 
   .pages-container {
     padding: var(--space-4);
+    padding-left: max(var(--space-4), env(safe-area-inset-left));
+    padding-right: max(var(--space-4), env(safe-area-inset-right));
+    padding-bottom: max(var(--space-6), env(safe-area-inset-bottom));
   }
 
   .topbar {
-    padding-left: var(--space-4);
-    padding-right: var(--space-4);
+    padding-left: max(var(--space-4), env(safe-area-inset-left));
+    padding-right: max(var(--space-4), env(safe-area-inset-right));
   }
 
   .section-header {
     flex-direction: column;
     align-items: flex-start;
     gap: var(--space-3);
+  }
+
+  .section-actions {
+    width: 100%;
   }
 
   .topbar-clock {
@@ -939,6 +1136,13 @@ p {
   :root { --topbar-height: 56px; }
   .pages-container { padding-top: var(--space-4); }
   .glass-sidebar { min-height: 100dvh; }
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   RESPONSIVE — DESKTOP (≥ 1024px): oculta el botón hamburguesa del topbar
+   ───────────────────────────────────────────────────────────────────────────── */
+@media (min-width: 1024px) {
+  #menu-toggle { display: none; }
 }
 
 /* ─────────────────────────────────────────────────────────────────────────────

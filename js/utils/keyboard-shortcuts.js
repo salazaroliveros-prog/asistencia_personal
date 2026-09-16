@@ -33,10 +33,24 @@ const KeyboardShortcuts = (() => {
       const key = _getKeyCombo(e);
       const shortcut = shortcuts[key];
       
-      if (shortcut) {
-        e.preventDefault();
-        _executeShortcut(shortcut);
+      if (!shortcut) return;
+
+      // Escape: si no hay nada que cerrar, no se intercepta la tecla para no
+      // bloquear el comportamiento nativo del navegador (salir de pantalla
+      // completa, cerrar diálogos nativos, etc.).
+      if (shortcut.action === 'close-modal'
+          && !document.querySelector('.modal-overlay:not([hidden]), .keyboard-help:not([hidden])')) {
+        return;
       }
+
+      // No interceptar atajos mientras se escribe en un campo (salvo Escape)
+      const tag = (e.target && e.target.tagName) || '';
+      const isTextField = tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT'
+        || (e.target && e.target.isContentEditable);
+      if (isTextField && shortcut.action !== 'close-modal') return;
+
+      e.preventDefault();
+      _executeShortcut(shortcut);
     });
   }
   
@@ -102,6 +116,10 @@ const KeyboardShortcuts = (() => {
   }
   
   function _closeCurrentModal() {
+    // Prioridad: la ayuda de atajos (se apila por encima de los modales)
+    const help = document.querySelector('.keyboard-help:not([hidden])');
+    if (help) { help.hidden = true; return; }
+
     const activeModal = document.querySelector('.modal-overlay:not([hidden])');
     if (activeModal) {
       const closeBtn = activeModal.querySelector('.modal-close');
@@ -111,17 +129,29 @@ const KeyboardShortcuts = (() => {
     }
   }
   
+  /**
+   * Crea el panel de ayuda de atajos.
+   *
+   * Corrección: antes se ocultaba con `style.display = 'none'` y se mostraba con
+   * `style.display = 'block'`. Ese estilo en línea anulaba el layout flex del
+   * componente (el diálogo aparecía desalineado) y además el panel no declaraba
+   * rol de diálogo. Ahora se controla con el atributo `hidden`, se cierra con
+   * Escape o clic en el fondo, y anuncia su propósito a lectores de pantalla.
+   */
   function _showHelp() {
+    if (document.getElementById('keyboard-help')) return; // evita duplicados
+
     const helpHTML = `
-      <div id="keyboard-help" class="keyboard-help" style="display:none;">
+      <div id="keyboard-help" class="keyboard-help" role="dialog" aria-modal="true"
+           aria-labelledby="keyboard-help-title" hidden>
         <div class="keyboard-help-content">
-          <h3>Atajos de Teclado</h3>
+          <h3 id="keyboard-help-title">Atajos de teclado</h3>
           <ul>
             ${Object.entries(shortcuts).map(([key, shortcut]) => `
-              <li><kbd>${key}</kbd> - ${shortcut.description}</li>
+              <li><kbd>${key}</kbd> <span>${shortcut.description}</span></li>
             `).join('')}
           </ul>
-          <button id="close-help" class="btn btn-secondary">Cerrar</button>
+          <button id="close-help" type="button" class="btn btn-secondary">Cerrar</button>
         </div>
       </div>
     `;
@@ -131,17 +161,27 @@ const KeyboardShortcuts = (() => {
     const helpEl = document.getElementById('keyboard-help');
     const closeBtn = document.getElementById('close-help');
     
-    if (closeBtn) {
-      closeBtn.addEventListener('click', () => {
-        helpEl.style.display = 'none';
-      });
-    }
+    const setVisible = (visible) => {
+      helpEl.hidden = !visible;
+      if (visible) {
+        closeBtn?.focus();
+      } else {
+        document.getElementById('menu-toggle')?.focus?.();
+      }
+    };
+
+    closeBtn?.addEventListener('click', () => setVisible(false));
+
+    // Clic en el fondo cierra el panel (no en el contenido)
+    helpEl?.addEventListener('click', (e) => {
+      if (e.target === helpEl) setVisible(false);
+    });
     
-    // Mostrar ayuda con Alt+?
+    // Alt+? abre/cierra la ayuda (se acepta "/" para teclados donde "?" requiere Shift)
     document.addEventListener('keydown', (e) => {
-      if (e.altKey && e.key === '?') {
+      if (e.altKey && (e.key === '?' || e.key === '/')) {
         e.preventDefault();
-        helpEl.style.display = helpEl.style.display === 'none' ? 'block' : 'none';
+        setVisible(helpEl.hidden);
       }
     });
   }

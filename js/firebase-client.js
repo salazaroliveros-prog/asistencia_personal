@@ -23,6 +23,21 @@
     latencyMs: 0
   };
 
+  let authPersistenceReady = false;
+
+  function _configureAuthPersistence() {
+    const persistence = firebase?.auth?.Auth?.Persistence?.LOCAL;
+    if (!auth || typeof auth.setPersistence !== 'function' || !persistence) {
+      // Compatibilidad con mocks y versiones antiguas del SDK; Firebase real
+      // sí expone setPersistence y usa LOCAL.
+      authPersistenceReady = true;
+      return Promise.resolve();
+    }
+    return auth.setPersistence(persistence)
+      .then(() => { authPersistenceReady = true; })
+      .catch(error => console.warn('[FirebaseClient] Persistencia Auth no disponible:', error));
+  }
+
   // ─── Inicialización ─────────────────────────────────────────────────────
   let _initialized = false;
   function initialize() {
@@ -55,10 +70,26 @@
 
       db = firebase.firestore();
       auth = firebase.auth();
+      // Mantiene la sesión entre recargas sin guardar credenciales en el
+      // navegador. La contraseña nunca se persiste en localStorage.
+      _configureAuthPersistence();
       _initialized = true;
 
-      connectionState = 'connected';
-      startHealthCheck();
+      auth.onAuthStateChanged(user => {
+        connectionState = user ? 'connected' : 'disconnected';
+        if (user) startHealthCheck();
+        else if (healthCheckInterval) {
+          clearInterval(healthCheckInterval);
+          healthCheckInterval = null;
+        }
+        if (typeof AppState !== 'undefined') {
+          AppState.set('connected', Boolean(user));
+          AppState.set('backendMode', user ? 'firestore' : 'local');
+        }
+      });
+
+      connectionState = auth.currentUser ? 'connected' : 'disconnected';
+      if (auth.currentUser) startHealthCheck();
       
       return { success: true, message: 'Firebase inicializado correctamente' };
     } catch (error) {
@@ -86,6 +117,7 @@
     db = null;
     auth = null;
     app = null;
+    authPersistenceReady = false;
     window.FIREBASE_CONFIG = { ...config };
     try {
       localStorage.setItem('cpc_firebase_config', JSON.stringify(window.FIREBASE_CONFIG));
@@ -139,6 +171,10 @@
   }
 
   async function checkHealth() {
+    if (!db || !auth?.currentUser) {
+      connectionState = 'disconnected';
+      return false;
+    }
     try {
       const start = Date.now();
       await db.collection('configuracion').doc('general').get();
@@ -259,6 +295,29 @@
     }
   }
 
+  async function signInWithEmail(email, password) {
+    if (!auth) throw new Error('Auth no inicializado');
+    if (!email || !password) return { success: false, error: 'Correo y contraseña son requeridos.' };
+    try {
+      if (!authPersistenceReady) await _configureAuthPersistence();
+      const credential = await auth.signInWithEmailAndPassword(email.trim(), password);
+      connectionState = 'connected';
+      startHealthCheck();
+      return { success: true, user: credential.user };
+    } catch (error) {
+      connectionState = 'disconnected';
+      return { success: false, error: error.message };
+    }
+  }
+
+  async function signOut() {
+    if (!auth) return { success: true };
+    await auth.signOut();
+    connectionState = 'disconnected';
+    if (healthCheckInterval) clearInterval(healthCheckInterval);
+    return { success: true };
+  }
+
   function getCurrentUser() {
     if (!auth) return null;
     return auth.currentUser;
@@ -305,6 +364,8 @@
     isConfigured,
     configure,
     signInAnonymously,
+    signInWithEmail,
+    signOut,
     getCurrentUser,
     onAuthStateChanged,
     getConfig,

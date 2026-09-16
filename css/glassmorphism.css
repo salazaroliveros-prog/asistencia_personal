@@ -234,6 +234,28 @@
   border-radius: 0 var(--radius-full) var(--radius-full) 0;
 }
 
+/* Enlace a una aplicación externa (sub-app de escaneo QR). Se distingue de las
+   páginas internas de la SPA para que el usuario sepa que abre otra pestaña. */
+.nav-link-external .nav-link-external-icon {
+  width: 14px;
+  height: 14px;
+  margin-left: auto;
+  opacity: 0.55;
+}
+
+.nav-link-external:hover .nav-link-external-icon {
+  opacity: 1;
+}
+
+.nav-link-external {
+  color: var(--color-secondary);
+}
+
+.nav-link-external span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
 /* ─────────────────────────────────────────────────────────────────────────────
    SIDEBAR - FOOTER
    ───────────────────────────────────────────────────────────────────────────── */
@@ -585,8 +607,10 @@
 }
 
 @media (max-width: 767px) {
+  /* 2 columnas en móvil: con 4 KPIs una sola columna obligaba a desplazar
+     media pantalla antes de llegar al calendario y a las gráficas. */
   .kpi-grid {
-    grid-template-columns: 1fr;
+    grid-template-columns: repeat(2, 1fr);
   }
 
   .glass-modal {
@@ -607,6 +631,14 @@
   }
 }
 
+@media (max-width: 380px) {
+  /* En pantallas muy angostas (iPhone SE, Galaxy Fold cerrado) un KPI por fila
+     evita que los valores numéricos se recorten. */
+  .kpi-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
 /* ─────────────────────────────────────────────────────────────────────────────
    SIDEBAR EN MÓVIL (Standardized Breakpoints)
    ───────────────────────────────────────────────────────────────────────────── */
@@ -615,10 +647,26 @@
     transform: translateX(-100%);
     z-index: var(--z-modal);
     pointer-events: none;
+    /* Ancho ergonómico: deja ver el contenido detrás y respeta el notch */
+    width: min(86vw, 320px);
+    padding-top: env(safe-area-inset-top);
+    padding-bottom: env(safe-area-inset-bottom);
+    box-shadow: 8px 0 40px rgba(var(--color-navy-dark-rgb), 0.55);
   }
 
   .sidebar-open .glass-sidebar {
     transform: translateX(0);
     pointer-events: auto;
+  }
+
+  /* En el drawer móvil los enlaces deben ser cómodos para el pulgar */
+  .nav-link {
+    padding: var(--space-3) var(--space-4);
+    min-height: 48px;
+  }
+
+  .sidebar-toggle {
+    width: 44px;
+    height: 44px;
   }
 }

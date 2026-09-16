@@ -12,64 +12,45 @@ const DashboardEnhancer = (() => {
     }
     _enhanceKPIs();
     _enhanceTurnoPanel();
-    _enhanceActivityFeed();
   }
   
+  /**
+   * Prepara los KPIs para animación progresiva.
+   *
+   * Corrección: antes se aplicaba `title="Click para ver detalles"` a TODAS las
+   * `.glass-card` de la aplicación (no solo a los KPIs), un tooltip engañoso
+   * porque la mayoría de tarjetas no es clicable ni abre un detalle. Ahora solo
+   * se marca la clase observada por PerformanceOptimizer sobre los KPIs reales.
+   */
   function _enhanceKPIs() {
-    // Agregar tooltips y animaciones a KPIs
-    const kpiCards = document.querySelectorAll('.glass-card');
-    kpiCards.forEach(card => {
-      card.classList.add('lazy-fade');
-      card.setAttribute('title', 'Click para ver detalles');
-    });
+    const kpiCards = document.querySelectorAll('.kpi-card');
+    kpiCards.forEach((card) => card.classList.add('lazy-fade'));
   }
   
+  /**
+   * Refuerza visualmente el panel "¿Quién está en obra?".
+   *
+   * Corrección: buscaba `#turno-panel` y `.worker-card`, elementos que no
+   * existen en el marcado. El panel real es `#turno-lista` con ítems
+   * `.turno-item`, que es lo que se procesa ahora.
+   */
   function _enhanceTurnoPanel() {
-    // Mejorar visualización del panel de turno
-    const turnoPanel = document.getElementById('turno-panel');
-    if (turnoPanel) {
-      // Agregar indicadores de estado mejorados
-      const workerCards = turnoPanel.querySelectorAll('.worker-card');
-      workerCards.forEach(card => {
-        const statusBadge = card.querySelector('.status-badge');
-        if (statusBadge) {
-          // Mejorar badges con colores más claros
-          statusBadge.classList.add('status-enhanced');
-        }
-      });
-    }
-  }
-  
-  function _enhanceActivityFeed() {
-    // Mejorar feed de actividad con timestamps mejorados
-    const feedItems = document.querySelectorAll('.feed-item');
-    feedItems.forEach(item => {
-      const timestamp = item.querySelector('.feed-timestamp');
-      if (timestamp) {
-        // Formato relativo de tiempo
-        const time = new Date(timestamp.textContent);
-        const now = new Date();
-        const diff = now - time;
-        
-        let relativeTime;
-        if (diff < 60000) {
-          relativeTime = 'Ahora mismo';
-        } else if (diff < 3600000) {
-          relativeTime = `Hace ${Math.floor(diff / 60000)} min`;
-        } else if (diff < 86400000) {
-          relativeTime = `Hace ${Math.floor(diff / 3600000)} h`;
-        } else {
-          relativeTime = `Hace ${Math.floor(diff / 86400000)} días`;
-        }
-        
-        timestamp.textContent = relativeTime;
-        timestamp.setAttribute('title', time.toLocaleString());
-      }
+    const turnoPanel = document.getElementById('turno-lista');
+    if (!turnoPanel) return;
+
+    turnoPanel.querySelectorAll('.turno-item').forEach((item) => {
+      const badge = item.querySelector('.badge');
+      if (badge) badge.classList.add('status-enhanced');
+      // La lista es informativa; el detalle del trabajador se abre desde Personal
+      item.classList.add('lazy-fade');
     });
   }
-  
+
   function addTrendIndicator(kpiCard, trend, value) {
-    // Agregar indicador de tendencia a KPIs
+    if (!kpiCard) return;
+    // Evita duplicar el indicador si se refresca el dashboard varias veces
+    kpiCard.querySelector('.trend-indicator')?.remove();
+
     const trendElement = document.createElement('div');
     trendElement.className = `trend-indicator ${trend > 0 ? 'trend-up' : 'trend-down'}`;
     trendElement.innerHTML = `
@@ -80,11 +61,12 @@ const DashboardEnhancer = (() => {
     kpiCard.appendChild(trendElement);
     
     if (window.lucide) {
-      lucide.createIcons({ nodes: [trendElement] });
+      lucide.createIcons();
     }
   }
   
   function createSparkline(container, data, color) {
+    if (!container || !Array.isArray(data) || data.length < 2) return;
     // Crear sparkline para mostrar tendencias
     const canvas = document.createElement('canvas');
     canvas.width = 100;
@@ -92,6 +74,7 @@ const DashboardEnhancer = (() => {
     canvas.className = 'sparkline';
     
     const ctx = canvas.getContext('2d');
+    if (!ctx) return;
     ctx.strokeStyle = color;
     ctx.lineWidth = 2;
     
@@ -117,12 +100,10 @@ const DashboardEnhancer = (() => {
   
   function enhanceCalendar() {
     // Mejorar calendario con indicadores visuales
-    const calendarCells = document.querySelectorAll('.calendar-cell');
-    calendarCells.forEach(cell => {
-      const date = cell.dataset.date;
-      const attendanceCount = cell.dataset.attendance || 0;
-      
-      if (attendanceCount > 0) {
+    const calendarCells = document.querySelectorAll('.cal-day');
+    calendarCells.forEach((cell) => {
+      const attendanceCount = Number(cell.dataset.attendance) || 0;
+      if (attendanceCount > 0 && !cell.querySelector('.attendance-indicator')) {
         const indicator = document.createElement('div');
         indicator.className = 'attendance-indicator';
         indicator.style.width = `${Math.min(attendanceCount * 10, 100)}%`;

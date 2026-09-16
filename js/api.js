@@ -590,6 +590,10 @@
         updateConnection(false);
         return { success: false, mode: 'local' };
       }
+      if (!FirebaseClient.getCurrentUser || !FirebaseClient.getCurrentUser()) {
+        updateConnection(false);
+        return { success: false, mode: 'auth-required', error: 'Sesión de Firebase requerida.' };
+      }
       const healthy = await FirebaseClient.checkHealth();
       updateConnection(healthy);
       if (healthy) AppState.set('backendMode', 'firestore');

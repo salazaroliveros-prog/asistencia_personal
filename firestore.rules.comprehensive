@@ -37,7 +37,7 @@ service cloud.firestore {
     }
     
     function canMarkAttendance() {
-      return isAuthenticated() && !isEmployee();
+      return isAuthorizedOperator() || isAdmin() || isManager() || isSupervisor();
     }
     
     function getUserId() {
@@ -59,13 +59,19 @@ service cloud.firestore {
     function isValidTimestamp(value) {
       return value is number && value > 0;
     }
+
+    function isValidDateValue(value) {
+      return value is timestamp ||
+        (value is number && value > 0) ||
+        (value is string && value.length >= 20 && value.length <= 30);
+    }
     
     function isValidArray(value, minLength) {
       return value is list && value.size() >= minLength;
     }
     
     function isValidMap(value, requiredKeys) {
-      return value is map && requiredKeys.hasAll(value.keys());
+      return value is map && value.keys().hasAll(requiredKeys);
     }
     
     function isValidWorkerData(data) {
@@ -81,7 +87,7 @@ service cloud.firestore {
         isValidString(data.WhatsApp, 0, 20) &&
         isValidString(data.Direccion, 0, 200) &&
         data.Estado in ['Activo', 'Inactivo', 'Eliminado', 'Suspendido'] &&
-        isValidTimestamp(data.Fecha_Registro);
+        isValidDateValue(data.Fecha_Registro);
     }
     
     function isValidAttendanceData(data) {
@@ -101,12 +107,10 @@ service cloud.firestore {
     }
     
     function isValidConfiguracion(data) {
-      return data.keys().hasAll(['obra', 'encargado', 'tolerancia', 'horarios', 'gps']) &&
-        isValidString(data.obra, 1, 100) &&
-        isValidString(data.encargado, 1, 100) &&
-        isValidNumber(data.tolerancia, 0, 120) &&
-        isValidMap(data.horarios, ['Entrada', 'Salida_Receso', 'Regreso_Receso', 'Salida_Obra']) &&
-        isValidMap(data.gps, ['habilitado', 'requerido', 'radio']);
+      return data.keys().hasAll(['Nombre_Obra', 'Encargado', 'Tolerancia_Minutos']) &&
+        isValidString(data.Nombre_Obra, 1, 100) &&
+        isValidString(data.Encargado, 1, 100) &&
+        isValidNumber(data.Tolerancia_Minutos, 0, 120);
     }
     
     function isValidDepartamento(data) {
@@ -207,8 +211,7 @@ service cloud.firestore {
       
       allow create: if canManageWorkers() && 
         isValidWorkerData(request.resource.data) &&
-        request.resource.data.keys().size() <= 20 &&
-        request.resource.data.keys().hasAll(['departamentoId', 'proyectoId']);
+        request.resource.data.keys().size() <= 20;
       
       allow update: if canManageWorkers() &&
         isValidWorkerData(request.resource.data) &&
@@ -247,7 +250,8 @@ service cloud.firestore {
     // ─────────────────────────────────────────────────────────────────────────
     match /configuracion/{configId} {
       allow read: if isAuthenticated();
-      allow create, update, delete: if isAdmin() && isValidConfiguracion(request.resource.data);
+      allow create, update: if isAdmin() && isValidConfiguracion(request.resource.data);
+      allow delete: if isAdmin();
     }
     
     // ─────────────────────────────────────────────────────────────────────────

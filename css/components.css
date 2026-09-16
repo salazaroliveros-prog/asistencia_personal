@@ -351,6 +351,8 @@
 .menu-toggle {
   width: 44px;
   height: 44px;
+  min-width: 44px;
+  flex: 0 0 44px;
   border-radius: var(--radius-md);
   display: flex;
   align-items: center;
@@ -620,23 +622,41 @@ input[type="month"].input-glass {
   vertical-align: middle;
 }
 
-/* Densidad y accesibilidad de la vista de personal. La tabla conserva su
-   semántica en móvil; las filas son seleccionables y el detalle vive en el
-   drawer/modal, evitando convertir cada registro en una tarjeta alta. */
+/* Densidad y accesibilidad de las tablas. La tabla conserva su semántica en
+   móvil; las filas son seleccionables y el detalle vive en el drawer/modal,
+   evitando convertir cada registro en una tarjeta alta.
+   IMPORTANTE: los anchos por columna se declaran POR TABLA. Antes eran globles
+   (.data-table th:nth-child(n)), lo que aplicaba las medidas de la tabla de
+   personal (8 columnas) a la de marcaciones (9 columnas) y dejaba la columna
+   "Trabajador" en 44-58 px, ilegible en móvil. */
 .table-card { min-width: 0; }
 .table-responsive { max-width: 100%; overflow-x: auto; overscroll-behavior-x: contain; }
 .data-table { table-layout: fixed; }
 .data-table tbody tr { cursor: pointer; transition: background-color var(--transition-fast), box-shadow var(--transition-fast); }
 .data-table tbody tr:focus-visible { outline: 3px solid var(--color-secondary); outline-offset: -3px; }
 .data-table tbody td, .data-table thead th { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.data-table thead th:nth-child(1) { width: 58px; }
-.data-table thead th:nth-child(2) { width: 105px; }
-.data-table thead th:nth-child(3) { width: 24%; }
-.data-table thead th:nth-child(4) { width: 125px; }
-.data-table thead th:nth-child(5) { width: 140px; }
-.data-table thead th:nth-child(6) { width: 110px; }
-.data-table thead th:nth-child(7) { width: 90px; }
-.data-table thead th:nth-child(8) { width: 170px; }
+
+/* ── Tabla de PERSONAL (8 columnas) ───────────────────────────────────────── */
+#personal-table thead th:nth-child(1) { width: 58px; }   /* Foto */
+#personal-table thead th:nth-child(2) { width: 105px; }  /* ID */
+#personal-table thead th:nth-child(3) { width: 24%; }    /* Nombre */
+#personal-table thead th:nth-child(4) { width: 125px; }  /* DPI */
+#personal-table thead th:nth-child(5) { width: 140px; }  /* Puesto */
+#personal-table thead th:nth-child(6) { width: 110px; }  /* Teléfono */
+#personal-table thead th:nth-child(7) { width: 90px; }   /* Estado */
+#personal-table thead th:nth-child(8) { width: 170px; }  /* Acciones */
+
+/* ── Tabla de MARCACIONES (9 columnas) ────────────────────────────────────── */
+#asistencia-table thead th:nth-child(1) { width: 48%; }  /* Trabajador */
+
+#asistencia-table thead th:nth-child(2) { width: 110px; } /* Tipo */
+#asistencia-table thead th:nth-child(3) { width: 92px; }  /* H. Programada */
+#asistencia-table thead th:nth-child(4) { width: 84px; }  /* H. Real */
+#asistencia-table thead th:nth-child(5) { width: 118px; } /* Estado */
+#asistencia-table thead th:nth-child(6) { width: 96px; }  /* Método */
+#asistencia-table thead th:nth-child(7) { width: 80px; }  /* H. Extra */
+#asistencia-table thead th:nth-child(8) { width: 150px; } /* Ubicación */
+#asistencia-table thead th:nth-child(9) { width: 96px; }  /* Acciones */
 
 #modal-historial .modal { width: min(920px, calc(100vw - 32px)); max-height: min(860px, calc(100dvh - 32px)); }
 #modal-historial .modal-body { overflow-y: auto; min-height: 0; }
@@ -650,20 +670,36 @@ input[type="month"].input-glass {
   .data-table tbody td { display: table-cell; padding: 10px 6px; font-size: 0.8125rem; vertical-align: middle; }
   .data-table tbody td::before { display: none; }
   .data-table thead th { padding: 10px 6px; font-size: 0.6875rem; }
-  .data-table thead th:nth-child(2), .data-table tbody td:nth-child(2),
-  .data-table thead th:nth-child(4), .data-table tbody td:nth-child(4),
-  .data-table thead th:nth-child(6), .data-table tbody td:nth-child(6) { display: none; }
-  .data-table thead th:nth-child(1) { width: 44px; }
-  .data-table thead th:nth-child(3) { width: 42%; }
-  .data-table thead th:nth-child(5) { width: 25%; }
-  .data-table thead th:nth-child(7) { width: 20%; }
-  .data-table thead th:nth-child(8) { width: 52px; }
+
   .data-table tbody td.actions-col { display: table-cell; padding: 4px 2px; }
   .data-table .table-actions { gap: 0; flex-wrap: nowrap; }
   .data-table .table-action-btn:not(.historial) { display: none; }
   .data-table .table-action-btn.historial { width: 44px; height: 44px; }
-#modal-historial .modal { width: 100%; max-width: none; max-height: 100dvh; border-radius: 16px 16px 0 0; align-self: end; }
+
+  /* Personal: Foto · Nombre · Puesto · Estado · Acciones */
+  #personal-table thead th:nth-child(2), #personal-table tbody td:nth-child(2),
+  #personal-table thead th:nth-child(4), #personal-table tbody td:nth-child(4),
+  #personal-table thead th:nth-child(6), #personal-table tbody td:nth-child(6) { display: none; }
+  #personal-table thead th:nth-child(1) { width: 44px; }
+  #personal-table thead th:nth-child(3) { width: 42%; }
+  #personal-table thead th:nth-child(5) { width: 25%; }
+  #personal-table thead th:nth-child(7) { width: 20%; }
+  #personal-table thead th:nth-child(8) { width: 52px; }
+
+  /* Marcaciones: Trabajador · H. Programada · Estado · Acciones */
+  #asistencia-table thead th:nth-child(2), #asistencia-table tbody td:nth-child(2),
+  #asistencia-table thead th:nth-child(4), #asistencia-table tbody td:nth-child(4),
+  #asistencia-table thead th:nth-child(6), #asistencia-table tbody td:nth-child(6),
+  #asistencia-table thead th:nth-child(7), #asistencia-table tbody td:nth-child(7),
+  #asistencia-table thead th:nth-child(8), #asistencia-table tbody td:nth-child(8) { display: none; }
+    #asistencia-table thead th:nth-child(1) { width: 48%; }  /* Trabajador */
+  #asistencia-table thead th:nth-child(3) { width: 68px; }
+  #asistencia-table thead th:nth-child(5) { width: 84px; }
+    #asistencia-table thead th:nth-child(9) { width: 52px; }
 }
+
+/* Modal historial en móvil: hoja inferior */
+#modal-historial .modal { width: 100%; max-width: none; max-height: 100dvh; border-radius: 16px 16px 0 0; align-self: end; }
 
 /* Foto en tabla */
 .worker-photo-small {
@@ -1514,7 +1550,9 @@ input[type="month"].input-glass {
    ───────────────────────────────────────────────────────────────────────────── */
 #toast-container {
   position: fixed;
-  /* env() no está soportado por los navegadores: se usa el espacio fijo. */
+  /* env(safe-area-inset-bottom) sí está soportado; en móvil (ver bloque
+     "UI/UX MÓVIL" al final del archivo) se respeta el área segura del sistema
+     para que los avisos no queden bajo el indicador de gestos. */
   bottom: var(--space-6);
   right: var(--space-6);
   z-index: var(--z-toast);
@@ -2918,4 +2956,309 @@ input[type="month"].input-glass {
 
 .install-app-btn {
   color: var(--color-secondary);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   CLASES UTILIZADAS EN index.html SIN REGLAS CSS (deuda visual)
+   ═══════════════════════════════════════════════════════════════════════════
+   Estas clases existían en el marcado pero no tenían estilos, por lo que los
+   elementos se renderizaban con los valores por defecto del navegador
+   (por ejemplo el PIN del escáner o las acciones de tabla quedaban sin
+   formato). Se declaran aquí para mantener el mismo lenguaje visual.
+   ══════════════════════════════════════════════════════════════════════════ */
+
+/* Texto de ayuda bajo un campo (equivalente a .field-hint) */
+.form-hint {
+  display: block;
+  font-size: var(--text-xs);
+  color: var(--color-text-muted);
+  margin-top: var(--space-1);
+  line-height: 1.4;
+}
+
+/* Fila "vacía" de las tablas: contiene el .empty-state y no debe comportarse
+   como una fila seleccionable. */
+.empty-row,
+.empty-row:hover {
+  background: transparent !important;
+  cursor: default;
+}
+
+.empty-row td {
+  padding: 0 !important;
+  text-align: center;
+}
+
+/* Ítems del menú lateral */
+.nav-item {
+  display: block;
+  min-width: 0;
+}
+
+/* Buscador de trabajador (marcación manual) */
+.search-trabajador {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  width: 100%;
+  max-width: 520px;
+  margin: 0 auto;
+}
+
+/* Contenedor de la marcación manual */
+.manual-marcacion {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+  align-items: center;
+  width: 100%;
+}
+
+/* Selectores de cámara del escáner */
+.scanner-camera-select {
+  max-width: 260px;
+  width: 100%;
+  min-height: 44px;
+}
+
+.scanner-camera-status {
+  display: block;
+  margin-top: var(--space-2);
+  text-align: center;
+  min-height: 1em;
+}
+
+/* Tarjeta "Asistencia de Hoy": necesita ser columna flex para que la lista
+   interna pueda desplazarse sin desbordar la tarjeta. */
+.attendance-today-card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  min-height: 0;
+}
+
+/* Controles y bloques de acciones reutilizados en varias vistas */
+.preview-controls,
+.export-actions,
+.audit-actions,
+.backup-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+}
+
+/* Salida del registro de auditoría del escáner */
+.audit-log,
+.audit-output {
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  line-height: 1.6;
+  background: rgba(var(--color-black-rgb), 0.25);
+  border: 1px solid var(--glass-border-light);
+  border-radius: var(--radius-md);
+  padding: var(--space-3);
+  max-height: 260px;
+  overflow: auto;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+/* Modal de carné QR */
+.modal-carne {
+  max-width: 480px;
+  width: 95vw;
+}
+
+/* Selector de cámara del modal de foto */
+.camera-device-select {
+  max-width: 100%;
+  min-height: 44px;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   AYUDA DE ATAJOS DE TECLADO (creada por keyboard-shortcuts.js)
+   ═══════════════════════════════════════════════════════════════════════════ */
+.keyboard-help {
+  position: fixed;
+  inset: 0;
+  z-index: calc(var(--z-modal) + 50);
+  background: rgba(var(--color-navy-dark-rgb), 0.72);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-4);
+}
+
+.keyboard-help[hidden] {
+  display: none !important;
+}
+
+.keyboard-help-content {
+  background: rgba(var(--color-navy-deep-rgb), 0.92);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-lg);
+  padding: var(--space-6);
+  width: 100%;
+  max-width: 460px;
+  max-height: min(85dvh, 640px);
+  overflow-y: auto;
+}
+
+.keyboard-help-content h3 {
+  font-size: var(--text-lg);
+  margin-bottom: var(--space-4);
+}
+
+.keyboard-help-content ul {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  margin-bottom: var(--space-5);
+}
+
+.keyboard-help-content li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  font-size: var(--text-sm);
+  color: var(--color-text-secondary);
+  border-bottom: 1px solid var(--glass-border-light);
+  padding-bottom: var(--space-2);
+}
+
+.keyboard-help-content kbd {
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-sm);
+  padding: 2px var(--space-2);
+  color: var(--color-text-primary);
+  white-space: nowrap;
+}
+
+.keyboard-help-content .btn {
+  width: 100%;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   UI/UX MÓVIL — mejora de ergonomía táctil
+   ══════════════════════════════════════════════════════════════════════════
+   Reglas agrupadas al final para que sobrescriban por orden de aparición a las
+   definiciones de escritorio sin necesidad de subir la especificidad.
+   ═════════════════════════════════════════════════════════════════════════ */
+@media (max-width: 767px) {
+  /* ── Áreas táctiles mínimas de 44×44 px (recomendación WCAG 2.5.5) ────── */
+  .topbar-btn,
+  .sync-btn,
+  .btn-sm,
+  .pagination-btn,
+  .alert-item .alert-dismiss {
+    min-width: 44px;
+    min-height: 44px;
+  }
+
+  .btn {
+    min-height: 44px;
+  }
+
+  .tab {
+    padding: var(--space-4) var(--space-4);
+    min-height: 52px;
+  }
+
+  .turno-tab {
+    min-height: 44px;
+    padding-inline: var(--space-4);
+  }
+
+  /* Los inputs a 16px evitan el zoom automático de iOS al enfocar */
+  .input-glass,
+  select.input-glass,
+  textarea.input-glass {
+    font-size: 16px;
+    min-height: 44px;
+  }
+
+  /* ── Modales como hoja inferior (bottom sheet) ────────────────────────────
+     Más fáciles de alcanzar con el pulgar y aprovechan el alto de pantalla. */
+  .modal-overlay {
+    align-items: flex-end;
+    padding: 0;
+  }
+
+  .glass-modal {
+    max-width: none;
+    width: 100%;
+    border-radius: var(--radius-xl) var(--radius-xl) 0 0;
+    max-height: 92dvh;
+    margin-bottom: 0;
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+
+  .modal-header,
+  .modal-body,
+  .modal-footer {
+    /* El contenido no queda bajo el indicador de gestos del sistema */
+    padding-left: max(var(--space-4), env(safe-area-inset-left));
+    padding-right: max(var(--space-4), env(safe-area-inset-right));
+  }
+
+  /* ── Notificaciones y acciones flotantes con safe-area ─────────────────── */
+  #toast-container {
+    left: max(var(--space-4), env(safe-area-inset-left));
+    right: max(var(--space-4), env(safe-area-inset-right));
+    bottom: max(var(--space-4), env(safe-area-inset-bottom));
+    max-width: none;
+  }
+
+  .pwa-install-banner {
+    bottom: max(var(--space-4), env(safe-area-inset-bottom));
+    width: calc(100vw - var(--space-6));
+    padding: var(--space-3) var(--space-4);
+  }
+
+  .pwa-install-text span {
+    display: none; /* El subtítulo completo estorba en pantallas pequeñas */
+  }
+
+  /* ── Contenido: evitar desbordes horizontales ──────────────────────────── */
+  .glass-card {
+    padding: var(--space-4);
+  }
+
+  .chart-wrapper {
+    height: 180px;
+  }
+
+  .chart-wrapper canvas {
+    max-height: 180px;
+  }
+
+  /* Las celdas del calendario usan aspect-ratio; se refuerza el tamaño de
+     fuente para que los números sigan legibles en pantallas pequeñas
+     (antes 10px, por debajo del mínimo recomendado). */
+  .cal-day {
+    font-size: 11px;
+  }
+}
+
+@media (max-width: 479px) {
+  /* El panel de turno y las alertas no deben crecer indefinidamente */
+  .turno-lista,
+  .alerts-list,
+  .attendance-list {
+    max-height: 60dvh;
+  }
+
+  /* Los botones de marcación se reparten en 2 columnas para ser alcanzables */
+  .btn-marcacion {
+    flex: 1 1 calc(50% - var(--space-2));
+    min-height: 64px;
+  }
 }

@@ -15,6 +15,10 @@ const ModuloAjustes = (() => {
   function _bindEvents() {
     const btnFirebase = document.getElementById('btn-connect-firebase');
     const btnLocal = document.getElementById('btn-use-local');
+    const btnLogin = document.getElementById('btn-login-firebase');
+    const btnLogout = document.getElementById('btn-logout-firebase');
+    if (btnLogin) btnLogin.addEventListener('click', _iniciarSesionFirebase);
+    if (btnLogout) btnLogout.addEventListener('click', _cerrarSesionFirebase);
     const btnGasAssistant = document.getElementById('btn-open-gas-assistant');
     if (btnFirebase) btnFirebase.addEventListener('click', _conectarFirebase);
     if (btnLocal) btnLocal.addEventListener('click', _usarModoLocal);
@@ -113,10 +117,6 @@ const ModuloAjustes = (() => {
     _setInput('cfg-nombre-obra', config.Nombre_Obra);
     _setInput('cfg-encargado',   config.Encargado);
     _setInput('cfg-tolerancia',  config.Tolerancia_Minutos);
-
-    // Field scanner PIN
-    const scannerPin = localStorage.getItem('cpc_field_scanner_pin');
-    _setInput('cfg-scanner-pin', scannerPin || '');
 
     // Horarios
     _setInput('cfg-hora-entrada',       config.Hora_Entrada       || '07:00');
@@ -218,7 +218,7 @@ const ModuloAjustes = (() => {
     const payload = {
       Nombre_Obra:         document.getElementById('cfg-nombre-obra')?.value.trim(),
       Encargado:           document.getElementById('cfg-encargado')?.value.trim(),
-      Tolerancia_Minutos:  document.getElementById('cfg-tolerancia')?.value || '15',
+      Tolerancia_Minutos:  parseInt(document.getElementById('cfg-tolerancia')?.value || '15', 10),
     };
 
     // Validar tolerancia
@@ -233,15 +233,6 @@ const ModuloAjustes = (() => {
     const newConfig = { ...config, ...payload };
     AppState.set('config', newConfig);
     localStorage.setItem(LS_KEYS.CONFIG, JSON.stringify(newConfig));
-
-    // Guardar PIN del escáner de campo
-    const scannerPinInput = document.getElementById('cfg-scanner-pin');
-    const scannerPin = (scannerPinInput?.value || '').trim();
-    if (scannerPin) {
-      localStorage.setItem('cpc_field_scanner_pin', scannerPin);
-    } else {
-      localStorage.removeItem('cpc_field_scanner_pin');
-    }
 
     // Sincronizar con GAS si hay conexión
     if (AppState.get('backendMode') === 'firestore' && AppState.get('connected')) {
@@ -552,6 +543,7 @@ const ModuloAjustes = (() => {
   // Cargar módulo (llamado desde router)
   async function cargar() {
     _cargarConfigLocal();
+    _actualizarEstadoAuth();
 
     // Si hay conexión, sincronizar config desde GAS
     if (AppState.get('backendMode') === 'firestore' && AppState.get('connected')) {
@@ -562,6 +554,48 @@ const ModuloAjustes = (() => {
         console.warn('[Ajustes] No se pudo sincronizar configuración:', err.message);
       }
     }
+  }
+
+  async function _iniciarSesionFirebase() {
+    const email = document.getElementById('firebase-auth-email')?.value.trim();
+    const password = document.getElementById('firebase-auth-password')?.value || '';
+    const statusEl = document.getElementById('connection-status-detail');
+    if (statusEl) statusEl.textContent = '⏳ Autenticando…';
+    try {
+      const result = await FirebaseClient.signInWithEmail(email, password);
+      if (!result.success) throw new Error(result.error || 'Credenciales rechazadas.');
+      document.getElementById('firebase-auth-password').value = '';
+      AppState.set('connected', true);
+      AppState.set('backendMode', 'firestore');
+      _actualizarEstadoAuth();
+      if (statusEl) statusEl.textContent = `✅ Sesión activa: ${result.user.email}`;
+      await API.ping();
+      await Promise.all([API.obtenerPersonal(), API.obtenerConfiguracion()]);
+      Alerts.success('Sesión persistente de Firestore iniciada.');
+    } catch (error) {
+      AppState.set('connected', false);
+      if (statusEl) statusEl.textContent = `❌ ${error.message}`;
+      Alerts.error('No se pudo iniciar sesión en Firebase.');
+    }
+  }
+
+  async function _cerrarSesionFirebase() {
+    await FirebaseClient.signOut();
+    AppState.set('connected', false);
+    AppState.set('backendMode', 'local');
+    _actualizarEstadoAuth();
+    const statusEl = document.getElementById('connection-status-detail');
+    if (statusEl) statusEl.textContent = '💾 Sesión cerrada; modo local activo.';
+  }
+
+  function _actualizarEstadoAuth() {
+    const user = FirebaseClient.getCurrentUser?.();
+    const login = document.getElementById('btn-login-firebase');
+    const logout = document.getElementById('btn-logout-firebase');
+    const email = document.getElementById('firebase-auth-email');
+    if (login) login.hidden = Boolean(user);
+    if (logout) logout.hidden = !user;
+    if (email && user?.email) email.value = user.email;
   }
 
   // ─── Auditoría Escáner de Campo ──────────────────────────────────────

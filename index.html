@@ -30,7 +30,18 @@
   <!-- ═══════════════════ FUENTES ═══════════════════ -->
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+  <!-- Fuentes: se cargan de forma no bloqueante (media="print" + onload) para
+       que no retrasen DOMContentLoaded ni el primer render, y se activan al
+       terminar de descargarse. Con display=swap el texto ya es legible. -->
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
+    rel="stylesheet"
+    media="print"
+    onload="this.media='all'"
+  />
+  <noscript>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+  </noscript>
 
   <!-- ═══════════════════ ICONOS ═══════════════════ -->
   <!-- Lucide Icons (local vendor + CDN fallback) -->
@@ -153,10 +164,34 @@
 
   <!-- ═══════════════════ SCRIPTS PROPIOS ═══════════════════ -->
   <script src="js/config.js" type="text/javascript"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js" type="text/javascript"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js" type="text/javascript"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js" type="text/javascript"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-functions-compat.js" type="text/javascript"></script>
+  <!-- Firebase SDK (compat) — local primero con respaldo en el CDN.
+       Servir el SDK desde el propio origen evita que el arranque quede bloqueado
+       por un tercero y permite el uso offline con la caché del service worker.
+       La versión local y la del CDN coinciden (12.19.0). -->
+  <script src="vendor/firebase/firebase-app-compat.js" type="text/javascript"></script>
+  <script>
+    if (typeof window.firebase === 'undefined') {
+      document.write('<script src="https://www.gstatic.com/firebasejs/12.19.0/firebase-app-compat.js"><\/script>');
+    }
+  </script>
+  <script src="vendor/firebase/firebase-auth-compat.js" type="text/javascript"></script>
+  <script>
+    if (typeof window.firebase === 'undefined' || !window.firebase.auth) {
+      document.write('<script src="https://www.gstatic.com/firebasejs/12.19.0/firebase-auth-compat.js"><\/script>');
+    }
+  </script>
+  <script src="vendor/firebase/firebase-firestore-compat.js" type="text/javascript"></script>
+  <script>
+    if (typeof window.firebase === 'undefined' || !window.firebase.firestore) {
+      document.write('<script src="https://www.gstatic.com/firebasejs/12.19.0/firebase-firestore-compat.js"><\/script>');
+    }
+  </script>
+  <script src="vendor/firebase/firebase-functions-compat.js" type="text/javascript"></script>
+  <script>
+    if (typeof window.firebase === 'undefined' || !window.firebase.functions) {
+      document.write('<script src="https://www.gstatic.com/firebasejs/12.19.0/firebase-functions-compat.js"><\/script>');
+    }
+  </script>
   <script src="js/firebase-config.js" type="text/javascript"></script>
   <script src="js/firebase-client.js" type="text/javascript"></script>
   <script src="js/api.js" type="text/javascript"></script>
@@ -307,9 +342,11 @@
           </a>
         </li>
         <li class="nav-item">
-          <a href="/field-scanner.html" class="nav-link" target="_blank" rel="noopener noreferrer">
+          <a href="/field-scanner.html" class="nav-link nav-link-external" target="_blank" rel="noopener noreferrer"
+             aria-label="Escáner QR Móvil (abre en una pestaña nueva)">
             <i data-lucide="scan-line" aria-hidden="true"></i>
             <span>Escáner QR Móvil</span>
+            <i data-lucide="external-link" aria-hidden="true" class="nav-link-external-icon"></i>
           </a>
         </li>
         <li class="nav-item">
@@ -332,8 +369,9 @@
           <span class="connection-dot disconnected" aria-hidden="true"></span>
           <span id="connection-text">Modo local</span>
         </div>
-        <button type="button" id="theme-toggle-sidebar" class="theme-toggle-sidebar" aria-label="Cambiar tema" title="Cambiar tema claro/oscuro">
-          <i data-lucide="moon" aria-hidden="true"></i>
+        <button type="button" id="theme-toggle-sidebar" class="theme-toggle-sidebar" aria-label="Cambiar a tema claro" aria-pressed="false" title="Cambiar a tema claro">
+          <i data-lucide="sun" aria-hidden="true" class="theme-icon theme-icon-sun"></i>
+          <i data-lucide="moon" aria-hidden="true" class="theme-icon theme-icon-moon"></i>
         </button>
         <p class="sidebar-version">v1.5.0</p>
       </div>
@@ -381,6 +419,11 @@
           </button>
           <button type="button" id="btn-install-app" class="topbar-btn install-app-btn" aria-label="Instalar aplicación" hidden>
             <i data-lucide="download" aria-hidden="true"></i>
+          </button>
+          <!-- Conmutador de tema (visible en móvil sin abrir el menú) -->
+          <button type="button" id="theme-toggle" class="topbar-btn theme-toggle" aria-label="Cambiar a tema claro" aria-pressed="false" title="Cambiar a tema claro">
+            <i data-lucide="sun" aria-hidden="true" class="theme-icon theme-icon-sun"></i>
+            <i data-lucide="moon" aria-hidden="true" class="theme-icon theme-icon-moon"></i>
           </button>
           <!-- Fecha/Hora actual -->
           <div class="topbar-clock" aria-live="off">
@@ -986,6 +1029,19 @@
                 <input type="text" id="firebase-app-id" class="input-glass" placeholder="1:123:web:abc" />
                 <div id="connection-status-detail" class="connection-status-detail" role="status" aria-live="polite">Modo local disponible</div>
               </div>
+              <div class="form-group">
+                <label for="firebase-auth-email" class="form-label">Correo de acceso Firebase</label>
+                <input type="email" id="firebase-auth-email" class="input-glass" autocomplete="username" placeholder="usuario autorizado" />
+                <label for="firebase-auth-password" class="form-label">Contraseña</label>
+                <input type="password" id="firebase-auth-password" class="input-glass" autocomplete="current-password" />
+                <p class="form-hint">La contraseña se envía directamente a Firebase Auth y nunca se guarda ni se muestra.</p>
+              </div>
+              <button type="button" id="btn-login-firebase" class="btn btn-primary btn-block">
+                <i data-lucide="log-in" aria-hidden="true"></i> Iniciar sesión segura
+              </button>
+              <button type="button" id="btn-logout-firebase" class="btn btn-secondary btn-block" hidden>
+                <i data-lucide="log-out" aria-hidden="true"></i> Cerrar sesión Firebase
+              </button>
               <button type="button" id="btn-connect-firebase" class="btn btn-primary btn-block">
                 <i data-lucide="plug" aria-hidden="true"></i> Conectar Firestore
               </button>
@@ -1002,7 +1058,7 @@
                 <h3><i data-lucide="circle-help" aria-hidden="true"></i> Configuración inicial</h3>
               </div>
               <div class="assistant-intro">
-                <p class="text-muted">En Firebase habilita Firestore Database y Authentication → Anonymous. Luego copia estos cuatro datos desde la configuración de tu aplicación web.</p>
+                <p class="text-muted">En Firebase habilita Firestore Database y Authentication → Email/Password. Luego copia los datos de tu aplicación web.</p>
                 <p class="text-muted">Las reglas incluidas en <code>firestore.rules</code> deben publicarse en tu proyecto. No se solicita ninguna contraseña de Google.</p>
               </div>
             </div>
@@ -1023,11 +1079,6 @@
               <div class="form-group">
                 <label for="cfg-tolerancia" class="form-label">Tolerancia de Marcación (minutos)</label>
                 <input type="number" id="cfg-tolerancia" class="input-glass" min="0" max="60" value="15" aria-label="Minutos de tolerancia" />
-              </div>
-              <div class="form-group">
-                <label for="cfg-scanner-pin" class="form-label">PIN Escáner de Campo</label>
-                <input type="password" id="cfg-scanner-pin" class="input-glass" inputmode="numeric" pattern="[0-9]*" maxlength="10" placeholder="PIN para operadores de campo" aria-label="PIN del escáner de campo" />
-                <p class="form-hint">Este PIN se usará en la subaplicación de escaneo. Si se deja vacío, se usará el valor por defecto.</p>
               </div>
               <button type="button" id="btn-save-general" class="btn btn-primary btn-block">
                 <i data-lucide="save" aria-hidden="true"></i> Guardar Configuración General
