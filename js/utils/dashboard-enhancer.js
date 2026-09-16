@@ -116,7 +116,7 @@ const DashboardEnhancer = (() => {
     init,
     addTrendIndicator,
     createSparkline,
-    enhanceCalendar
+    enhanceCalendar,
   };
 })();
 

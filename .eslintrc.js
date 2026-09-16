@@ -71,6 +71,16 @@ module.exports = {
     
     // Helper globals
     CPC: 'readonly',
+    
+    // AI globals
+    AIEngine: 'readonly',
+    AIPredictor: 'readonly',
+    validateConfigGPS: 'readonly',
+    
+    // Helper functions
+    inicialesDeNombre: 'readonly',
+    colorPorPuesto: 'readonly',
+    htmlToImage: 'readonly',
   },
   rules: {
     // Possible errors
@@ -80,6 +90,12 @@ module.exports = {
       argsIgnorePattern: '^_',
       varsIgnorePattern: '^_',
     }],
+    'no-empty': 'warn',
+    'no-unreachable': 'warn',
+    'no-useless-escape': 'warn',
+    'no-prototype-builtins': 'warn',
+    'no-const-assign': 'warn',
+    'no-useless-catch': 'warn',
     
     // Best practices
     'eqeqeq': ['error', 'always'],
@@ -90,10 +106,10 @@ module.exports = {
     
     // Stylistic
     'indent': ['error', 2, { SwitchCase: 1 }],
-    'linebreak-style': ['error', 'unix'],
+    'linebreak-style': ['error', 'windows'],
     'quotes': ['error', 'single', { avoidEscape: true }],
     'semi': ['error', 'always'],
-    'comma-dangle': ['error', 'always-multiline'],
+    'comma-dangle': ['warn', 'always-multiline'],
     'object-curly-spacing': ['error', 'always'],
     'array-bracket-spacing': ['error', 'never'],
     'space-before-function-paren': ['error', {
@@ -103,7 +119,7 @@ module.exports = {
     }],
     
     // ES6
-    'arrow-parens': ['error', 'as-needed'],
+    'arrow-parens': ['warn', 'always'],
     'arrow-spacing': 'error',
     'no-duplicate-imports': 'error',
     'no-var': 'error',

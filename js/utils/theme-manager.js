@@ -76,11 +76,11 @@ const ThemeManager = (() => {
       toggle.setAttribute('aria-pressed', isLight ? 'true' : 'false');
       toggle.setAttribute(
         'aria-label',
-        isLight ? 'Cambiar a tema oscuro' : 'Cambiar a tema claro'
+        isLight ? 'Cambiar a tema oscuro' : 'Cambiar a tema claro',
       );
       toggle.setAttribute(
         'title',
-        isLight ? 'Cambiar a tema oscuro' : 'Cambiar a tema claro'
+        isLight ? 'Cambiar a tema oscuro' : 'Cambiar a tema claro',
       );
     });
     if (window.lucide) {
@@ -97,7 +97,7 @@ const ThemeManager = (() => {
     init,
     toggleTheme,
     setTheme,
-    getTheme
+    getTheme,
   };
 })();
 

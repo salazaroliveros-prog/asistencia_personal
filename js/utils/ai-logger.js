@@ -17,8 +17,8 @@ const AILogger = (() => {
         'Verificar permisos de cámara en configuración del dispositivo',
         'Asegurar que el dispositivo tiene cámara disponible',
         'Reiniciar la aplicación y solicitar permisos nuevamente',
-        'Verificar que no otra aplicación está usando la cámara'
-      ]
+        'Verificar que no otra aplicación está usando la cámara',
+      ],
     },
     gps: {
       patterns: ['getCurrentPosition', 'Permission denied', 'Position unavailable', 'timeout'],
@@ -26,8 +26,8 @@ const AILogger = (() => {
         'Verificar permisos de ubicación en configuración del dispositivo',
         'Asegurar que el GPS está habilitado en el dispositivo',
         'Verificar que la aplicación tiene acceso a ubicación',
-        'Intentar conectarse a una red diferente para mejorar GPS'
-      ]
+        'Intentar conectarse a una red diferente para mejorar GPS',
+      ],
     },
     network: {
       patterns: ['NetworkError', 'fetch failed', 'Network request failed', 'offline'],
@@ -35,8 +35,8 @@ const AILogger = (() => {
         'Verificar conexión a internet',
         'Reiniciar router o módem',
         'Verificar que el servidor está disponible',
-        'Activar modo offline del sistema'
-      ]
+        'Activar modo offline del sistema',
+      ],
     },
     firebase: {
       patterns: ['FirebaseError', 'auth/network-request-failed', 'firestore/unavailable'],
@@ -44,8 +44,8 @@ const AILogger = (() => {
         'Verificar configuración de Firebase',
         'Revisar credenciales de Firebase',
         'Verificar que el proyecto Firebase está activo',
-        'Comprobar reglas de Firestore'
-      ]
+        'Comprobar reglas de Firestore',
+      ],
     },
     storage: {
       patterns: ['QuotaExceededError', 'localStorage quota exceeded', 'storage full'],
@@ -53,8 +53,8 @@ const AILogger = (() => {
         'Limpiar caché del navegador',
         'Eliminar datos antiguos del sistema',
         'Reducir tamaño de imágenes almacenadas',
-        'Considerar usar IndexedDB para más almacenamiento'
-      ]
+        'Considerar usar IndexedDB para más almacenamiento',
+      ],
     },
     cameraHardware: {
       patterns: ['OverconstrainedError', 'Could not start video source', 'Hardware error'],
@@ -62,9 +62,9 @@ const AILogger = (() => {
         'Intentar usar cámara trasera en lugar de frontal',
         'Reducir resolución solicitada de cámara',
         'Verificar que no otra app está usando la cámara',
-        'Reiniciar dispositivo móvil'
-      ]
-    }
+        'Reiniciar dispositivo móvil',
+      ],
+    },
   };
 
   /**
@@ -113,7 +113,7 @@ const AILogger = (() => {
       isHardwareIssue,
       timestamp: Date.now(),
       error: error.message,
-      stack: error.stack
+      stack: error.stack,
     };
   }
 
@@ -145,12 +145,12 @@ const AILogger = (() => {
     const patterns = {};
     
     // Contar errores por categoría
-    errorHistory.forEach(error => {
+    errorHistory.forEach((error) => {
       if (!patterns[error.category]) {
         patterns[error.category] = {
           count: 0,
           lastOccurrence: 0,
-          severity: error.severity
+          severity: error.severity,
         };
       }
       patterns[error.category].count++;
@@ -160,10 +160,10 @@ const AILogger = (() => {
 
     // Detectar patrones recurrentes (más de 3 veces en última hora)
     const oneHourAgo = Date.now() - (60 * 60 * 1000);
-    const recentErrors = errorHistory.filter(e => e.timestamp > oneHourAgo);
+    const recentErrors = errorHistory.filter((e) => e.timestamp > oneHourAgo);
     
     const recurrentPatterns = {};
-    Object.keys(patterns).forEach(category => {
+    Object.keys(patterns).forEach((category) => {
       if (patterns[category].count >= 3) {
         recurrentPatterns[category] = patterns[category];
       }
@@ -172,7 +172,7 @@ const AILogger = (() => {
     return {
       patterns,
       recurrentPatterns,
-      recentErrors: recentErrors.length
+      recentErrors: recentErrors.length,
     };
   }
 
@@ -191,7 +191,7 @@ const AILogger = (() => {
       message: '',
       actions: analysis.solutions,
       autoFixable: false,
-      suggestedCodeFix: null
+      suggestedCodeFix: null,
     };
 
     // Generar mensaje de sugerencia
@@ -229,7 +229,7 @@ const AILogger = (() => {
           count: data.count,
           severity: data.severity,
           message: `Error recurrente detectado: ${category} (ocurrió ${data.count} veces en la última hora)`,
-          suggestion: 'Considerar revisar la configuración o reportar el problema al equipo técnico'
+          suggestion: 'Considerar revisar la configuración o reportar el problema al equipo técnico',
         });
       }
     });
@@ -245,7 +245,7 @@ const AILogger = (() => {
     const performance = {
       memory: {},
       network: {},
-      errors: {}
+      errors: {},
     };
 
     // Analizar memoria
@@ -277,7 +277,7 @@ const AILogger = (() => {
       recentErrors: patterns.recentErrors,
       recurrentPatterns: Object.keys(patterns.recurrentPatterns),
       alerts,
-      suggestions: alerts.map(alert => alert.suggestion)
+      suggestions: alerts.map((alert) => alert.suggestion),
     };
   }
 
@@ -295,7 +295,7 @@ const AILogger = (() => {
       context,
       timestamp: Date.now(),
       userAgent: navigator.userAgent,
-      url: window.location.href
+      url: window.location.href,
     };
 
     // Si hay error, analizarlo
@@ -366,7 +366,7 @@ const AILogger = (() => {
     generateHealthReport,
     getErrorHistory,
     getLogs,
-    clearHistory
+    clearHistory,
   };
 })();
 

@@ -15,7 +15,7 @@ const HardwareDiagnostics = (() => {
       facingMode: null,
       resolution: null,
       error: null,
-      suggestions: []
+      suggestions: [],
     };
 
     try {
@@ -29,7 +29,7 @@ const HardwareDiagnostics = (() => {
 
       // Solicitar permisos de cámara
       const stream = await navigator.mediaDevices.getUserMedia({ 
-        video: { facingMode: 'environment' } 
+        video: { facingMode: 'environment' }, 
       });
       
       result.available = true;
@@ -41,11 +41,11 @@ const HardwareDiagnostics = (() => {
       result.facingMode = settings.facingMode;
       result.resolution = {
         width: settings.width,
-        height: settings.height
+        height: settings.height,
       };
       
       // Detener stream
-      stream.getTracks().forEach(track => track.stop());
+      stream.getTracks().forEach((track) => track.stop());
       
     } catch (error) {
       result.error = error.name;
@@ -92,7 +92,7 @@ const HardwareDiagnostics = (() => {
       available: false,
       accuracy: null,
       error: null,
-      suggestions: []
+      suggestions: [],
     };
 
     try {
@@ -112,8 +112,8 @@ const HardwareDiagnostics = (() => {
           {
             enableHighAccuracy: true,
             timeout: 10000,
-            maximumAge: 0
-          }
+            maximumAge: 0,
+          },
         );
       });
 
@@ -163,7 +163,7 @@ const HardwareDiagnostics = (() => {
       effectiveType: null,
       downlink: null,
       rtt: null,
-      suggestions: []
+      suggestions: [],
     };
 
     // Verificar API de Network Information
@@ -203,7 +203,7 @@ const HardwareDiagnostics = (() => {
       total: null,
       limit: null,
       percentage: null,
-      suggestions: []
+      suggestions: [],
     };
 
     // Verificar API de Performance Memory
@@ -241,13 +241,13 @@ const HardwareDiagnostics = (() => {
     const result = {
       localStorage: { used: 0, available: 0, percentage: 0 },
       indexedDB: { used: 0, available: 0, percentage: 0 },
-      suggestions: []
+      suggestions: [],
     };
 
     try {
       // Verificar localStorage
       let localStorageSize = 0;
-      for (let key in localStorage) {
+      for (const key in localStorage) {
         if (localStorage.hasOwnProperty(key)) {
           localStorageSize += localStorage[key].length + key.length;
         }
@@ -298,7 +298,7 @@ const HardwareDiagnostics = (() => {
       network: checkNetworkAvailability(),
       memory: checkMemoryStatus(),
       storage: await checkStorageStatus(),
-      overallHealth: 'unknown'
+      overallHealth: 'unknown',
     };
 
     // Determinar salud general del sistema
@@ -348,7 +348,7 @@ const HardwareDiagnostics = (() => {
       components: {},
       allSuggestions: [],
       autoFixable: [],
-      manualFixRequired: []
+      manualFixRequired: [],
     };
 
     // Procesar cada componente
@@ -356,7 +356,7 @@ const HardwareDiagnostics = (() => {
       if (typeof data === 'object' && data.suggestions) {
         report.components[component] = {
           status: data.available !== undefined ? (data.available ? 'available' : 'unavailable') : 'checked',
-          suggestions: data.suggestions
+          suggestions: data.suggestions,
         };
         
         report.allSuggestions.push(...data.suggestions);
@@ -364,7 +364,7 @@ const HardwareDiagnostics = (() => {
     });
 
     // Categorizar sugerencias
-    report.allSuggestions.forEach(suggestion => {
+    report.allSuggestions.forEach((suggestion) => {
       if (suggestion.includes('automático') || suggestion.includes('auto')) {
         report.autoFixable.push(suggestion);
       } else {
@@ -382,7 +382,7 @@ const HardwareDiagnostics = (() => {
     checkMemoryStatus,
     checkStorageStatus,
     runFullDiagnostics,
-    generateDiagnosticReport
+    generateDiagnosticReport,
   };
 })();
 

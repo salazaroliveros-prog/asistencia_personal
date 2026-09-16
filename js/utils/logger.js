@@ -12,7 +12,7 @@ const Logger = (() => {
     INFO: 1,
     WARN: 2,
     ERROR: 3,
-    FATAL: 4
+    FATAL: 4,
   };
   
   const CURRENT_LEVEL = LOG_LEVELS.DEBUG; // Cambiar a INFO en producción
@@ -66,14 +66,14 @@ const Logger = (() => {
           filename: event.filename,
           lineno: event.lineno,
           colno: event.colno,
-          stack: event.error?.stack
+          stack: event.error?.stack,
         });
       });
       
       window.addEventListener('unhandledrejection', (event) => {
         error('Unhandled Promise Rejection', event.reason?.message || 'Unknown rejection', {
           reason: event.reason,
-          stack: event.reason?.stack
+          stack: event.reason?.stack,
         });
       });
     }
@@ -119,7 +119,7 @@ const Logger = (() => {
       category,
       message,
       data,
-      sessionId: 'session-' + Date.now().toString(36).substring(2, 8)
+      sessionId: 'session-' + Date.now().toString(36).substring(2, 8),
     };
     
     // Agregar stack trace para errores
@@ -189,11 +189,11 @@ const Logger = (() => {
     let filtered = [...logEntries];
     
     if (level) {
-      filtered = filtered.filter(entry => entry.level === level);
+      filtered = filtered.filter((entry) => entry.level === level);
     }
     
     if (category) {
-      filtered = filtered.filter(entry => entry.category === category);
+      filtered = filtered.filter((entry) => entry.category === category);
     }
     
     if (limit) {
@@ -220,7 +220,7 @@ const Logger = (() => {
     const exportData = {
       exportDate: new Date().toISOString(),
       totalLogs: logs.length,
-      logs: logs
+      logs: logs,
     };
     
     return JSON.stringify(exportData, null, 2);
@@ -232,18 +232,18 @@ const Logger = (() => {
       total: logEntries.length,
       byLevel: {},
       byCategory: {},
-      recentErrors: logEntries.filter(e => e.level === 'ERROR' || e.level === 'FATAL').slice(-10)
+      recentErrors: logEntries.filter((e) => e.level === 'ERROR' || e.level === 'FATAL').slice(-10),
     };
     
     // Contar por nivel
-    Object.keys(LOG_LEVELS).forEach(level => {
-      stats.byLevel[level] = logEntries.filter(e => e.level === level).length;
+    Object.keys(LOG_LEVELS).forEach((level) => {
+      stats.byLevel[level] = logEntries.filter((e) => e.level === level).length;
     });
     
     // Contar por categoría
-    const categories = new Set(logEntries.map(e => e.category));
-    categories.forEach(category => {
-      stats.byCategory[category] = logEntries.filter(e => e.category === category).length;
+    const categories = new Set(logEntries.map((e) => e.category));
+    categories.forEach((category) => {
+      stats.byCategory[category] = logEntries.filter((e) => e.category === category).length;
     });
     
     return stats;
@@ -269,7 +269,7 @@ const Logger = (() => {
     clearLogs,
     exportLogs,
     getStats,
-    setLevel
+    setLevel,
   };
 })();
 

@@ -16,7 +16,7 @@ const CryptoUtils = (() => {
     const data = encoder.encode(text);
     const hashBuffer = await crypto.subtle.digest('SHA-256', data);
     const hashArray = Array.from(new Uint8Array(hashBuffer));
-    const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+    const hashHex = hashArray.map((b) => b.toString(16).padStart(2, '0')).join('');
     return hashHex;
   }
 
@@ -28,7 +28,7 @@ const CryptoUtils = (() => {
   async function generateSecureId(length = 16) {
     const array = new Uint8Array(length);
     crypto.getRandomValues(array);
-    return Array.from(array, byte => byte.toString(16).padStart(2, '0')).join('');
+    return Array.from(array, (byte) => byte.toString(16).padStart(2, '0')).join('');
   }
 
   /**
@@ -47,7 +47,7 @@ const CryptoUtils = (() => {
       keyBuffer,
       { name: 'PBKDF2' },
       false,
-      ['deriveKey']
+      ['deriveKey'],
     );
     
     const salt = crypto.getRandomValues(new Uint8Array(16));
@@ -56,12 +56,12 @@ const CryptoUtils = (() => {
         name: 'PBKDF2',
         salt: salt,
         iterations: 100000,
-        hash: 'SHA-256'
+        hash: 'SHA-256',
       },
       keyMaterial,
       { name: 'AES-GCM', length: 256 },
       false,
-      ['encrypt']
+      ['encrypt'],
     );
     
     const iv = crypto.getRandomValues(new Uint8Array(12));
@@ -70,13 +70,13 @@ const CryptoUtils = (() => {
     const encrypted = await crypto.subtle.encrypt(
       { name: 'AES-GCM', iv },
       derivedKey,
-      dataBuffer
+      dataBuffer,
     );
     
     return {
-      encrypted: Array.from(new Uint8Array(encrypted), byte => byte.toString(16).padStart(2, '0')).join(''),
-      iv: Array.from(iv, byte => byte.toString(16).padStart(2, '0')).join(''),
-      salt: Array.from(salt, byte => byte.toString(16).padStart(2, '0')).join('')
+      encrypted: Array.from(new Uint8Array(encrypted), (byte) => byte.toString(16).padStart(2, '0')).join(''),
+      iv: Array.from(iv, (byte) => byte.toString(16).padStart(2, '0')).join(''),
+      salt: Array.from(salt, (byte) => byte.toString(16).padStart(2, '0')).join(''),
     };
   }
 
@@ -99,30 +99,30 @@ const CryptoUtils = (() => {
       keyBuffer,
       { name: 'PBKDF2' },
       false,
-      ['deriveKey']
+      ['deriveKey'],
     );
     
-    const saltArray = new Uint8Array(salt.match(/.{1,2}/g).map(byte => parseInt(byte, 16)));
+    const saltArray = new Uint8Array(salt.match(/.{1,2}/g).map((byte) => parseInt(byte, 16)));
     const derivedKey = await crypto.subtle.deriveKey(
       {
         name: 'PBKDF2',
         salt: saltArray,
         iterations: 100000,
-        hash: 'SHA-256'
+        hash: 'SHA-256',
       },
       keyMaterial,
       { name: 'AES-GCM', length: 256 },
       false,
-      ['decrypt']
+      ['decrypt'],
     );
     
-    const ivArray = new Uint8Array(iv.match(/.{1,2}/g).map(byte => parseInt(byte, 16)));
-    const encryptedArray = new Uint8Array(encrypted.match(/.{1,2}/g).map(byte => parseInt(byte, 16)));
+    const ivArray = new Uint8Array(iv.match(/.{1,2}/g).map((byte) => parseInt(byte, 16)));
+    const encryptedArray = new Uint8Array(encrypted.match(/.{1,2}/g).map((byte) => parseInt(byte, 16)));
     
     const decrypted = await crypto.subtle.decrypt(
       { name: 'AES-GCM', iv: ivArray },
       derivedKey,
-      encryptedArray
+      encryptedArray,
     );
     
     return decoder.decode(decrypted);
@@ -136,7 +136,7 @@ const CryptoUtils = (() => {
   async function generateToken(length = 32) {
     const array = new Uint8Array(length);
     crypto.getRandomValues(array);
-    return Array.from(array, byte => byte.toString(16).padStart(2, '0')).join('');
+    return Array.from(array, (byte) => byte.toString(16).padStart(2, '0')).join('');
   }
 
   /**
@@ -153,7 +153,7 @@ const CryptoUtils = (() => {
     encrypt,
     decrypt,
     generateToken,
-    isAvailable
+    isAvailable,
   };
 })();
 

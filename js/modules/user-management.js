@@ -56,7 +56,7 @@ const UserManagement = (() => {
           email: user.email,
           emailVerified: user.emailVerified,
           customClaims: idTokenResult.claims,
-          isAdmin: isAdmin
+          isAdmin: isAdmin,
         };
         
         _updateUserClaimsUI(currentUserClaims);
@@ -150,7 +150,7 @@ const UserManagement = (() => {
           </tr>
         </thead>
         <tbody>
-          ${users.map(user => `
+          ${users.map((user) => `
             <tr>
               <td>${user.email || 'Anónimo'}</td>
               <td><code>${user.uid.substring(0, 8)}...</code></td>
@@ -303,7 +303,7 @@ const UserManagement = (() => {
     cleanup,
     toggleAdmin,
     deleteUser,
-    checkClaims: _checkCurrentUserClaims
+    checkClaims: _checkCurrentUserClaims,
   };
 })();
 

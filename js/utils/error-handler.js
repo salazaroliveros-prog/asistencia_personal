@@ -14,7 +14,7 @@ const ErrorHandler = (() => {
     PERMISSION: 'PERMISSION_ERROR',
     OFFLINE: 'OFFLINE_ERROR',
     TIMEOUT: 'TIMEOUT_ERROR',
-    UNKNOWN: 'UNKNOWN_ERROR'
+    UNKNOWN: 'UNKNOWN_ERROR',
   };
   
   // ─── Mapeo de códigos de error a mensajes amigables ───────────────────────
@@ -36,7 +36,7 @@ const ErrorHandler = (() => {
     'network/offline': 'Sin conexión a internet',
     
     // Generic errors
-    'unknown': 'Ocurrió un error inesperado'
+    'unknown': 'Ocurrió un error inesperado',
   };
   
   // ─── Función principal de manejo de errores ───────────────────────────────
@@ -60,7 +60,7 @@ const ErrorHandler = (() => {
       originalError: error,
       context,
       recovery,
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
     };
   }
   
@@ -135,7 +135,7 @@ const ErrorHandler = (() => {
         error: error.message || String(error),
         code: error.code,
         context,
-        stack: error.stack
+        stack: error.stack,
       });
     } else {
       console.error(`[ErrorHandler] ${errorType}:`, error, context);
@@ -234,7 +234,7 @@ const ErrorHandler = (() => {
     showErrorToast,
     showWarningToast,
     recoverFromFirebaseError,
-    ERROR_TYPES
+    ERROR_TYPES,
   };
 })();
 

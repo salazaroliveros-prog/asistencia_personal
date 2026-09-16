@@ -15,7 +15,7 @@ const CarnetGenerator = (() => {
       id: trabajador.ID_Trabajador,
       dpi: trabajador.DPI_CUI,
       nombre: trabajador.Nombre_Completo,
-      puesto: trabajador.Puesto
+      puesto: trabajador.Puesto,
     };
 
     return new Promise((resolve, reject) => {
@@ -31,7 +31,7 @@ const CarnetGenerator = (() => {
           height: 150,
           colorDark: '#000000',
           colorLight: '#ffffff',
-          correctLevel: QRCode.CorrectLevel.H
+          correctLevel: QRCode.CorrectLevel.H,
         });
 
         // Esperar a que se genere el QR
@@ -92,9 +92,9 @@ const CarnetGenerator = (() => {
             overflow: hidden;
           ">
             ${trabajador.Fotografia_URL ? 
-              `<img src="${trabajador.Fotografia_URL}" alt="Foto" style="width: 100%; height: 100%; object-fit: cover;" />` :
-              `<div style="font-size: 40px; font-weight: bold;">${trabajador.Nombre_Completo?.charAt(0) || '?'}</div>`
-            }
+    `<img src="${trabajador.Fotografia_URL}" alt="Foto" style="width: 100%; height: 100%; object-fit: cover;" />` :
+    `<div style="font-size: 40px; font-weight: bold;">${trabajador.Nombre_Completo?.charAt(0) || '?'}</div>`
+  }
           </div>
 
           <div class="carnet-info" style="flex: 1; font-size: 11px;">
@@ -190,7 +190,7 @@ const CarnetGenerator = (() => {
         html,
         imageDataUrl,
         qrDataUrl,
-        trabajador
+        trabajador,
       };
     } catch (error) {
       console.error('[CarnetGenerator] Error al generar carnet:', error);
@@ -214,7 +214,7 @@ const CarnetGenerator = (() => {
         console.error(`[CarnetGenerator] Error generando carnet para ${trabajador.ID_Trabajador}:`, error);
         carnets.push({
           error: error.message,
-          trabajador
+          trabajador,
         });
       }
     }
@@ -303,7 +303,7 @@ const CarnetGenerator = (() => {
     return {
       valid: errors.length === 0,
       errors,
-      warnings
+      warnings,
     };
   }
 
@@ -315,7 +315,7 @@ const CarnetGenerator = (() => {
     generateMultipleCarnets,
     printCarnet,
     downloadCarnet,
-    validateWorkerForCarnet
+    validateWorkerForCarnet,
   };
 })();
 

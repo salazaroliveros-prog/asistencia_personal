@@ -12,34 +12,34 @@ const RealtimeValidation = (() => {
       minLength: 2,
       maxLength: 100,
       pattern: /^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s'-]+$/,
-      message: 'Nombre debe tener entre 2-100 caracteres, solo letras y espacios'
+      message: 'Nombre debe tener entre 2-100 caracteres, solo letras y espacios',
     },
     dpi: {
       required: true,
       pattern: /^\d{13}$|^\d{15}$/,
-      message: 'DPI debe tener 13 o 15 dígitos'
+      message: 'DPI debe tener 13 o 15 dígitos',
     },
     puesto: {
       required: true,
       minLength: 2,
       maxLength: 50,
-      message: 'Puesto debe tener entre 2-50 caracteres'
+      message: 'Puesto debe tener entre 2-50 caracteres',
     },
     telefono: {
       required: false,
       pattern: /^\d{8}$/,
-      message: 'Teléfono debe tener 8 dígitos'
+      message: 'Teléfono debe tener 8 dígitos',
     },
     whatsapp: {
       required: false,
       pattern: /^\d{8}$/,
-      message: 'WhatsApp debe tener 8 dígitos'
+      message: 'WhatsApp debe tener 8 dígitos',
     },
     email: {
       required: false,
       pattern: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
-      message: 'Email debe tener formato válido'
-    }
+      message: 'Email debe tener formato válido',
+    },
   };
   
   function validateField(fieldName, value) {
@@ -77,7 +77,7 @@ const RealtimeValidation = (() => {
     const form = document.getElementById(formId);
     if (!form) return;
     
-    fieldConfigs.forEach(config => {
+    fieldConfigs.forEach((config) => {
       const input = document.getElementById(config.inputId);
       if (!input) return;
       
@@ -133,7 +133,7 @@ const RealtimeValidation = (() => {
     
     const errors = [];
     
-    fieldConfigs.forEach(config => {
+    fieldConfigs.forEach((config) => {
       const input = document.getElementById(config.inputId);
       if (!input) return;
       
@@ -141,7 +141,7 @@ const RealtimeValidation = (() => {
       if (!result.valid) {
         errors.push({
           field: config.fieldName,
-          message: result.message
+          message: result.message,
         });
         showValidationFeedback(config.inputId, result);
       }
@@ -149,14 +149,14 @@ const RealtimeValidation = (() => {
     
     return {
       valid: errors.length === 0,
-      errors
+      errors,
     };
   }
   
   return {
     validateField,
     setupFormValidation,
-    validateForm
+    validateForm,
   };
 })();
 

@@ -32,7 +32,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         autoHealing: true,
         learning: true,
         autoHealingThreshold: 3,
-        healthCheckInterval: 300000 // 5 minutos
+        healthCheckInterval: 300000, // 5 minutos
       });
     }
 
@@ -43,7 +43,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         memoryUsage: 0.8,
         networkLatency: 5000,
         storageUsage: 0.9,
-        batteryLevel: 0.2
+        batteryLevel: 0.2,
       });
       console.log('[App] Sistema de predicción de IA inicializado');
     }
@@ -99,7 +99,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       UpdateManager.init();
     }
 
-            // 9. Navegar a la página según el hash actual o dashboard
+    // 9. Navegar a la página según el hash actual o dashboard
     _navigateToHash();
     // 10. Conectar a Firebase — no bloquea el splash (timeout 3s)
     _initialConnection().catch(() => {});
@@ -180,7 +180,7 @@ function _setInstallCtaMode(banner, mode) {
 function _triggerUninstall() {
   Alerts.info(
     'Para quitar la aplicación ve a chrome://apps (o a tu gestor de aplicaciones) y desinstala "Control Personal Campo".',
-    'Quitar aplicación'
+    'Quitar aplicación',
   );
 }
 
@@ -424,7 +424,7 @@ function _showUpdateNotification(registration, newWorker) {
       try {
         await newWorker.postMessage({ type: 'SKIP_WAITING' });
         // Esperar a que el SW se active y luego recargar la página
-        newWorker.addEventListener('statechange', function waitForActive() {
+        newWorker.addEventListener('statechange', () => {
           if (newWorker.state === 'activated') {
             window.location.reload();
           }
@@ -469,7 +469,7 @@ let _currentPage = null;
 
 function _initRouter() {
   // Click en links de navegación del sidebar
-  document.querySelectorAll('.nav-link[data-page]').forEach(link => {
+  document.querySelectorAll('.nav-link[data-page]').forEach((link) => {
     link.addEventListener('click', (e) => {
       e.preventDefault();
       const page = link.dataset.page;
@@ -551,7 +551,7 @@ async function _navigate(page, updateHash = true) {
   }
 
   // Actualizar links del sidebar
-  document.querySelectorAll('.nav-link').forEach(link => {
+  document.querySelectorAll('.nav-link').forEach((link) => {
     const isActive = link.dataset.page === page;
     link.classList.toggle('active', isActive);
     link.setAttribute('aria-current', isActive ? 'page' : 'false');
@@ -566,7 +566,7 @@ async function _navigate(page, updateHash = true) {
 
   if (!prefersReduced && prevEl && nextEl && prevPage !== page) {
     // 1. Ocultar todas las demás páginas (que no son prev ni next)
-    document.querySelectorAll('.page').forEach(pageEl => {
+    document.querySelectorAll('.page').forEach((pageEl) => {
       if (pageEl !== prevEl && pageEl !== nextEl) {
         pageEl.classList.remove('active');
         pageEl.hidden = true;
@@ -612,7 +612,7 @@ async function _navigate(page, updateHash = true) {
 
   } else {
     // Sin animación (reduced motion o primer render)
-    document.querySelectorAll('.page').forEach(pageEl => {
+    document.querySelectorAll('.page').forEach((pageEl) => {
       const isActive = pageEl.dataset.page === page;
       pageEl.classList.toggle('active', isActive);
       pageEl.hidden = !isActive;
@@ -751,7 +751,7 @@ function _initSidebar() {
   /* Al pulsar cualquier enlace del menú se cierra el drawer en móvil.
      Necesario para el enlace externo (field-scanner.html), que no pasa por el
      router y por tanto no ejecutaba el cierre que hace _navigate(). */
-  document.querySelectorAll('.sidebar-nav .nav-link').forEach(link => {
+  document.querySelectorAll('.sidebar-nav .nav-link').forEach((link) => {
     link.addEventListener('click', closeSidebar);
   });
 
@@ -854,7 +854,7 @@ async function _initialConnection() {
     await delay(500);
 
     const timeoutPromise = new Promise((_, reject) =>
-      setTimeout(() => reject(new Error('timeout_inicial')), 3000)
+      setTimeout(() => reject(new Error('timeout_inicial')), 3000),
     );
 
     const connection = await Promise.race([API.ping(), timeoutPromise]).catch(() => ({
@@ -863,8 +863,8 @@ async function _initialConnection() {
     }));
 
     if (connection.success) {
-      API.obtenerPersonal().catch(err => console.warn('[App] Error obteniendo personal:', err.message));
-      API.obtenerConfiguracion().catch(err => console.warn('[App] Error obteniendo configuración:', err.message));
+      API.obtenerPersonal().catch((err) => console.warn('[App] Error obteniendo personal:', err.message));
+      API.obtenerConfiguracion().catch((err) => console.warn('[App] Error obteniendo configuración:', err.message));
     }
   } catch (err) {
     console.warn('[App] Firestore no disponible; se mantiene el modo local:', err.message);
@@ -873,7 +873,7 @@ async function _initialConnection() {
 
 // Helper delay function
 function delay(ms) {
-  return new Promise(resolve => setTimeout(resolve, ms));
+  return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -901,7 +901,7 @@ function _hideSplash() {
     } else {
       if (app) app.hidden = false;
     }
-    }, 800); // Mínimo de splash para feedback visual (reducido de 1800ms)
+  }, 800); // Mínimo de splash para feedback visual (reducido de 1800ms)
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -924,7 +924,7 @@ function _limpiarDatosDemo() {
 
   // Si había datos demo, limpiar todo
   if (localStorage.getItem('cpc_demo_loaded') === '1') {
-    CLAVES_DEMO.forEach(k => localStorage.removeItem(k));
+    CLAVES_DEMO.forEach((k) => localStorage.removeItem(k));
 
   }
 }
@@ -1108,11 +1108,11 @@ function _initRealtimeRefresh() {
     if (!REFRESHABLE.includes(_currentPage)) return;
     const mod = PAGES[_currentPage]?.module;
     if (mod && typeof mod.cargar === 'function') {
-      mod.cargar().catch(err => console.warn('[Realtime] Error refrescando', _currentPage, err.message));
+      mod.cargar().catch((err) => console.warn('[Realtime] Error refrescando', _currentPage, err.message));
     }
   }
 
-  ['personal', 'asistencias', 'alertas', 'config'].forEach(key => {
+  ['personal', 'asistencias', 'alertas', 'config'].forEach((key) => {
     AppState.on(key, (value) => {
       const snapshot = JSON.stringify(value ?? []);
       if (snapshot === lastApplied[key]) return;

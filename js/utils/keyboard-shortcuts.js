@@ -17,7 +17,7 @@ const KeyboardShortcuts = (() => {
     'Alt+b': { action: 'backup', description: 'Crear backup' },
     'Alt+t': { action: 'theme', description: 'Cambiar tema' },
     'Escape': { action: 'close-modal', description: 'Cerrar modal actual' },
-    'Ctrl+Shift+R': { action: 'refresh', description: 'Refrescar dashboard' }
+    'Ctrl+Shift+R': { action: 'refresh', description: 'Refrescar dashboard' },
   };
   
   function init() {
@@ -69,7 +69,7 @@ const KeyboardShortcuts = (() => {
   function _executeShortcut(shortcut) {
     if (window.Logger) {
       window.Logger.info('KeyboardShortcuts', 'Atajo ejecutado', { 
-        action: shortcut.action 
+        action: shortcut.action, 
       });
     }
     
@@ -192,7 +192,7 @@ const KeyboardShortcuts = (() => {
   
   return {
     init,
-    getShortcuts
+    getShortcuts,
   };
 })();
 

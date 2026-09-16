@@ -54,7 +54,7 @@ const GPS = (() => {
             }
             reject(new Error(message));
           },
-          GPS_OPTIONS
+          GPS_OPTIONS,
         );
       });
     },
@@ -98,7 +98,7 @@ const GPS = (() => {
         position.latitude,
         position.longitude,
         center.latitude,
-        center.longitude
+        center.longitude,
       );
 
       return {

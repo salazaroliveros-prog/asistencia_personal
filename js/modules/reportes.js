@@ -44,7 +44,7 @@ const ModuloReportes = (() => {
         fechaInicio: document.getElementById('reporte-fecha-diario')?.value,
         fechaFin:    document.getElementById('reporte-fecha-diario')?.value,
         tipo:        'diario',
-      })
+      }),
     );
 
     // Semanal
@@ -56,7 +56,7 @@ const ModuloReportes = (() => {
         fechaInicio: document.getElementById('reporte-semana-inicio')?.value,
         fechaFin:    document.getElementById('reporte-semana-fin')?.value,
         tipo:        'semanal',
-      })
+      }),
     );
 
     // Mensual
@@ -74,7 +74,7 @@ const ModuloReportes = (() => {
           fechaFin:    `${mes}-${String(ultimoDia).padStart(2, '0')}`,
           tipo:        'mensual',
         };
-      }
+      },
     );
 
     // Control de orientación en vista previa
@@ -264,7 +264,7 @@ const ModuloReportes = (() => {
   function _formatPeriodo(params) {
     if (params.fechaInicio === params.fechaFin) {
       return new Date(params.fechaInicio + 'T12:00:00').toLocaleDateString('es-GT', {
-        weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
+        weekday: 'long', year: 'numeric', month: 'long', day: 'numeric',
       });
     }
     const ini = new Date(params.fechaInicio + 'T12:00:00').toLocaleDateString('es-GT');

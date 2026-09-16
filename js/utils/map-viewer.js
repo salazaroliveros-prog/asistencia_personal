@@ -162,8 +162,8 @@ const MapViewer = (() => {
 
       // Add attendance markers
       const locations = attendances
-        .filter(a => a.GPS_Latitud && a.GPS_Longitud)
-        .map(a => ({
+        .filter((a) => a.GPS_Latitud && a.GPS_Longitud)
+        .map((a) => ({
           lat: parseFloat(a.GPS_Latitud),
           lon: parseFloat(a.GPS_Longitud),
           name: a.Nombre_Trabajador || 'Desconocido',
@@ -171,11 +171,11 @@ const MapViewer = (() => {
           distance: a.Geofence_Distance,
         }));
 
-      locations.forEach(loc => addMarker(loc, loc.type));
+      locations.forEach((loc) => addMarker(loc, loc.type));
 
       // Fit bounds to show all markers
       if (locations.length > 0) {
-        const bounds = L.latLngBounds(locations.map(loc => [loc.lat, loc.lon]));
+        const bounds = L.latLngBounds(locations.map((loc) => [loc.lat, loc.lon]));
         _map.fitBounds(bounds, { padding: [50, 50] });
       }
     }, 100);

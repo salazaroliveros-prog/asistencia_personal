@@ -17,11 +17,11 @@ const DataExport = (() => {
     const headers = Object.keys(data[0]);
     const csvContent = [
       headers.join(','),
-      ...data.map(row => headers.map(header => {
+      ...data.map((row) => headers.map((header) => {
         const value = row[header];
         const stringValue = typeof value === 'object' ? JSON.stringify(value) : String(value);
         return `"${stringValue.replace(/"/g, '""')}"`;
-      }).join(','))
+      }).join(',')),
     ].join('\n');
     
     // BOM UTF-8 para que Excel español reconozca caracteres especiales
@@ -40,7 +40,7 @@ const DataExport = (() => {
     if (window.Logger) {
       window.Logger.info('DataExport', 'Datos exportados a CSV', { 
         filename, 
-        recordCount: data.length 
+        recordCount: data.length, 
       });
     }
   }
@@ -68,7 +68,7 @@ const DataExport = (() => {
     if (window.Logger) {
       window.Logger.info('DataExport', 'Datos exportados a JSON', { 
         filename, 
-        recordCount: data.length 
+        recordCount: data.length, 
       });
     }
   }
@@ -82,7 +82,7 @@ const DataExport = (() => {
         
         if (window.Logger) {
           window.Logger.info('DataExport', 'Datos importados desde JSON', { 
-            recordCount: Array.isArray(data) ? data.length : 1 
+            recordCount: Array.isArray(data) ? data.length : 1, 
           });
         }
         
@@ -90,7 +90,7 @@ const DataExport = (() => {
       } catch (error) {
         if (window.Logger) {
           window.Logger.error('DataExport', 'Error al importar JSON', { 
-            error: error.message 
+            error: error.message, 
           });
         }
         callback({ success: false, error: 'Formato JSON inválido' });
@@ -108,8 +108,8 @@ const DataExport = (() => {
   }
   
   function exportAttendanceReport(asistencias, personal, fecha) {
-    const report = asistencias.map(a => {
-      const trabajador = personal.find(p => p.ID_Trabajador === a.ID_Trabajador);
+    const report = asistencias.map((a) => {
+      const trabajador = personal.find((p) => p.ID_Trabajador === a.ID_Trabajador);
       return {
         'ID Trabajador': a.ID_Trabajador || '',
         'Nombre Completo': trabajador?.Nombre_Completo || 'Desconocido',
@@ -125,7 +125,7 @@ const DataExport = (() => {
         'Método Registro': a.Metodo_Registro || 'N/A',
         'Horas Extra': a.Horas_Extra || '0',
         'Ubicación Obra': a.Ubicacion_Obra || 'N/A',
-        'Última Actualización': a.Ultima_Actualizacion ? new Date(a.Ultima_Actualizacion).toLocaleString('es-GT') : 'N/A'
+        'Última Actualización': a.Ultima_Actualizacion ? new Date(a.Ultima_Actualizacion).toLocaleString('es-GT') : 'N/A',
       };
     });
     
@@ -133,7 +133,7 @@ const DataExport = (() => {
   }
   
   function exportWorkerReport(personal) {
-    const report = personal.map(p => ({
+    const report = personal.map((p) => ({
       'ID Trabajador': p.ID_Trabajador || '',
       'Nombre Completo': p.Nombre_Completo || '',
       'DPI/CUI': p.DPI_CUI || 'N/A',
@@ -144,7 +144,7 @@ const DataExport = (() => {
       'Dirección': p.Direccion || 'N/A',
       'Estado': p.Estado || 'Activo',
       'Fecha Registro': p.Fecha_Registro || 'N/A',
-      'Fecha Última Actualización': p.Ultima_Actualizacion ? new Date(p.Ultima_Actualizacion).toLocaleString('es-GT') : 'N/A'
+      'Fecha Última Actualización': p.Ultima_Actualizacion ? new Date(p.Ultima_Actualizacion).toLocaleString('es-GT') : 'N/A',
     }));
     
     exportToCSV(report, 'reporte_trabajadores');
@@ -157,8 +157,8 @@ const DataExport = (() => {
       data: {
         personal: AppState.get('personal') || [],
         asistencias: AppState.get('asistencias') || [],
-        configuracion: AppState.get('config') || {}
-      }
+        configuracion: AppState.get('config') || {},
+      },
     };
     
     exportToJSON(backup, 'backup_completo');
@@ -166,7 +166,7 @@ const DataExport = (() => {
     if (window.Logger) {
       window.Logger.info('DataExport', 'Backup completo creado', { 
         personalCount: backup.data.personal.length,
-        asistenciasCount: backup.data.asistencias.length
+        asistenciasCount: backup.data.asistencias.length,
       });
     }
   }
@@ -202,7 +202,7 @@ const DataExport = (() => {
         window.Logger.info('DataExport', 'Backup restaurado exitosamente', { 
           backupDate: backup.timestamp,
           personalCount: backup.data.personal.length,
-          asistenciasCount: backup.data.asistencias.length
+          asistenciasCount: backup.data.asistencias.length,
         });
       }
       
@@ -217,7 +217,7 @@ const DataExport = (() => {
     exportAttendanceReport,
     exportWorkerReport,
     createBackup,
-    restoreBackup
+    restoreBackup,
   };
 })();
 

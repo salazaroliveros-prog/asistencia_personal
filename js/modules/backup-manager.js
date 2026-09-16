@@ -53,7 +53,7 @@ const BackupManager = (() => {
       } catch (error) {
         if (window.Logger) {
           window.Logger.error('BackupManager', 'Error al exportar backup', { 
-            error: error.message 
+            error: error.message, 
           });
         }
         if (window.Alerts) {
@@ -94,7 +94,7 @@ const BackupManager = (() => {
       } catch (error) {
         if (window.Logger) {
           window.Logger.error('BackupManager', 'Error al importar backup', { 
-            error: error.message 
+            error: error.message, 
           });
         }
         if (window.Alerts) {
@@ -130,7 +130,7 @@ const BackupManager = (() => {
       } catch (error) {
         if (window.Logger) {
           window.Logger.error('BackupManager', 'Error al exportar trabajadores', { 
-            error: error.message 
+            error: error.message, 
           });
         }
         if (window.Alerts) {
@@ -145,7 +145,7 @@ const BackupManager = (() => {
     const personal = AppState.get('personal') || [];
     const today = new Date().toISOString().split('T')[0];
     
-    const todayAsistencias = asistencias.filter(a => a.Fecha === today);
+    const todayAsistencias = asistencias.filter((a) => a.Fecha === today);
     
     if (todayAsistencias.length === 0) {
       if (window.Alerts) {
@@ -163,7 +163,7 @@ const BackupManager = (() => {
       } catch (error) {
         if (window.Logger) {
           window.Logger.error('BackupManager', 'Error al exportar asistencias', { 
-            error: error.message 
+            error: error.message, 
           });
         }
         if (window.Alerts) {
@@ -183,7 +183,7 @@ const BackupManager = (() => {
     _handleExportBackup,
     _handleImportBackup,
     _handleExportTrabajadores,
-    _handleExportAsistencias
+    _handleExportAsistencias,
   };
 })();
 

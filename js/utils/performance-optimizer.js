@@ -6,12 +6,12 @@
 
 const PerformanceOptimizer = (() => {
   
-  let performanceMetrics = {
+  const performanceMetrics = {
     pageLoad: 0,
     firstPaint: 0,
     firstContentfulPaint: 0,
     domContentLoaded: 0,
-    loadComplete: 0
+    loadComplete: 0,
   };
   
   function init() {
@@ -41,7 +41,7 @@ const PerformanceOptimizer = (() => {
     if (!('IntersectionObserver' in window)) return;
     
     const observer = new IntersectionObserver((entries) => {
-      entries.forEach(entry => {
+      entries.forEach((entry) => {
         if (entry.isIntersecting) {
           entry.target.classList.add('fade-in');
           observer.unobserve(entry.target);
@@ -49,11 +49,11 @@ const PerformanceOptimizer = (() => {
       });
     }, {
       threshold: 0.1,
-      rootMargin: '0px 0px -50px 0px'
+      rootMargin: '0px 0px -50px 0px',
     });
     
     // Observar elementos con clase lazy-fade
-    document.querySelectorAll('.lazy-fade').forEach(el => {
+    document.querySelectorAll('.lazy-fade').forEach((el) => {
       observer.observe(el);
     });
   }
@@ -62,7 +62,7 @@ const PerformanceOptimizer = (() => {
     // Lazy loading de imágenes
     if ('IntersectionObserver' in window) {
       const imageObserver = new IntersectionObserver((entries) => {
-        entries.forEach(entry => {
+        entries.forEach((entry) => {
           if (entry.isIntersecting) {
             const img = entry.target;
             if (img.dataset.src) {
@@ -74,7 +74,7 @@ const PerformanceOptimizer = (() => {
         });
       });
       
-      document.querySelectorAll('img[data-src]').forEach(img => {
+      document.querySelectorAll('img[data-src]').forEach((img) => {
         imageObserver.observe(img);
       });
     }
@@ -94,7 +94,7 @@ const PerformanceOptimizer = (() => {
   
   function throttle(func, limit) {
     let inThrottle;
-    return function(...args) {
+    return function (...args) {
       if (!inThrottle) {
         func.apply(this, args);
         inThrottle = true;
@@ -104,7 +104,7 @@ const PerformanceOptimizer = (() => {
   }
   
   function measureFunction(name, fn) {
-    return async function(...args) {
+    return async function (...args) {
       const start = performance.now();
       try {
         const result = await fn(...args);
@@ -113,7 +113,7 @@ const PerformanceOptimizer = (() => {
         
         if (window.Logger) {
           window.Logger.debug('PerformanceOptimizer', `${name} ejecutado`, { 
-            duration: duration.toFixed(2) + 'ms' 
+            duration: duration.toFixed(2) + 'ms', 
           });
         }
         
@@ -125,7 +125,7 @@ const PerformanceOptimizer = (() => {
         if (window.Logger) {
           window.Logger.error('PerformanceOptimizer', `${name} falló`, { 
             duration: duration.toFixed(2) + 'ms',
-            error: error.message
+            error: error.message,
           });
         }
         
@@ -143,7 +143,7 @@ const PerformanceOptimizer = (() => {
     const cacheKeys = ['cpc_personal_cache', 'cpc_asistencias_cache', 'cpc_config_cache'];
     let totalSize = 0;
     
-    cacheKeys.forEach(key => {
+    cacheKeys.forEach((key) => {
       const value = localStorage.getItem(key);
       if (value) {
         totalSize += value.length;
@@ -152,13 +152,13 @@ const PerformanceOptimizer = (() => {
     
     // Si el cache es > 5MB, limpiar
     if (totalSize > 5 * 1024 * 1024) {
-      cacheKeys.forEach(key => {
+      cacheKeys.forEach((key) => {
         localStorage.removeItem(key);
       });
       
       if (window.Logger) {
         window.Logger.info('PerformanceOptimizer', 'Cache limpiado', { 
-          previousSize: totalSize 
+          previousSize: totalSize, 
         });
       }
     }
@@ -170,7 +170,7 @@ const PerformanceOptimizer = (() => {
     throttle,
     measureFunction,
     getMetrics,
-    clearCache
+    clearCache,
   };
 })();
 

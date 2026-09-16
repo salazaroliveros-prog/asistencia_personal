@@ -174,15 +174,15 @@ const PDFBuilder = (() => {
       doc.text(
         `${config.Nombre_Obra || 'Obra Principal'} — ${APP_NAME} v${APP_VERSION}`,
         margin,
-        pageH - 13
+        pageH - 13,
       );
 
       // Información adicional
       doc.setFontSize(6);
       doc.text(
-        `Sistema de Control de Asistencia — Documento Oficial`,
+        'Sistema de Control de Asistencia — Documento Oficial',
         margin,
-        pageH - 8
+        pageH - 8,
       );
 
       // Paginación (derecha)
@@ -191,7 +191,7 @@ const PDFBuilder = (() => {
         `Página ${i} de ${pageCount}`,
         pageW - margin,
         pageH - 13,
-        { align: 'right' }
+        { align: 'right' },
       );
 
       // Confidencial (centro)
@@ -202,7 +202,7 @@ const PDFBuilder = (() => {
         'DOCUMENTO CONFIDENCIAL',
         pageW / 2,
         pageH - 13,
-        { align: 'center' }
+        { align: 'center' },
       );
 
       // Fecha generación (centro, abajo)
@@ -213,7 +213,7 @@ const PDFBuilder = (() => {
         `Generado el ${_formatDate(new Date())} a las ${_formatTime(new Date())}`,
         pageW / 2,
         pageH - 8,
-        { align: 'center' }
+        { align: 'center' },
       );
     }
   }
@@ -265,17 +265,17 @@ const PDFBuilder = (() => {
   function reporteDiario(fecha, asistencias, orientation = 'portrait') {
     const doc      = _newDoc(orientation);
     const personal = AppState.get('personal') || [];
-    const personalMap = new Map(personal.map(p => [p.ID_Trabajador, p]));
+    const personalMap = new Map(personal.map((p) => [p.ID_Trabajador, p]));
 
     // Resumen
-    const presentes = new Set(asistencias.map(a => a.ID_Trabajador)).size;
+    const presentes = new Set(asistencias.map((a) => a.ID_Trabajador)).size;
     const total     = personal.length;
     const porcentaje = total > 0 ? Math.round((presentes / total) * 100) : 0;
-    const tardanzas = asistencias.filter(a => a.Estado_Marcacion === 'Atraso').length;
-    const presentesIds = new Set(asistencias.map(a => a.ID_Trabajador));
+    const tardanzas = asistencias.filter((a) => a.Estado_Marcacion === 'Atraso').length;
+    const presentesIds = new Set(asistencias.map((a) => a.ID_Trabajador));
     const ausentes = personal
-      .filter(p => p.Estado === 'Activo' && !presentesIds.has(p.ID_Trabajador))
-      .map(worker => ({ __absence: true, worker }));
+      .filter((p) => p.Estado === 'Activo' && !presentesIds.has(p.ID_Trabajador))
+      .map((worker) => ({ __absence: true, worker }));
     const reporteRows = [...asistencias, ...ausentes];
 
     const fechaFormateada = fecha
@@ -307,7 +307,7 @@ const PDFBuilder = (() => {
         startY: y,
         margin: { left: 15, right: 15, top: 10, bottom: 22 },
         head: [['Trabajador', 'DPI', 'Puesto', 'Tipo', 'H. Prog.', 'H. Real', 'Estado', 'Método', 'H. Extra']],
-        body: reporteRows.map(a => {
+        body: reporteRows.map((a) => {
           if (a.__absence) {
             return [
               a.worker.Nombre_Completo || '--', a.worker.DPI_CUI || '--', a.worker.Puesto || '--',
@@ -386,7 +386,7 @@ const PDFBuilder = (() => {
     // ─── Consolidar datos por trabajador ─────────────────────────────────
     const resumen = {};
 
-    personal.forEach(p => {
+    personal.forEach((p) => {
       resumen[p.ID_Trabajador] = {
         id:         p.ID_Trabajador,
         nombre:     p.Nombre_Completo,
@@ -401,7 +401,7 @@ const PDFBuilder = (() => {
 
     // Calcular días únicos por trabajador
     const diasPorTrabajador = {};
-    asistencias.forEach(a => {
+    asistencias.forEach((a) => {
       const id   = a.ID_Trabajador;
       const fecha = a.Fecha;
       if (!diasPorTrabajador[id]) diasPorTrabajador[id] = new Set();
@@ -415,7 +415,7 @@ const PDFBuilder = (() => {
       }
     });
 
-    Object.keys(diasPorTrabajador).forEach(id => {
+    Object.keys(diasPorTrabajador).forEach((id) => {
       if (resumen[id]) {
         resumen[id].diasTrabajados = diasPorTrabajador[id].size;
       }
@@ -424,11 +424,11 @@ const PDFBuilder = (() => {
     // Calcular días hábiles en el período
     const diasHabiles = _contarDiasHabiles(fechaInicio, fechaFin);
 
-    Object.values(resumen).forEach(r => {
+    Object.values(resumen).forEach((r) => {
       r.ausencias = Math.max(0, diasHabiles - r.diasTrabajados);
     });
 
-    const tableData = Object.values(resumen).map(r => [
+    const tableData = Object.values(resumen).map((r) => [
       r.nombre,
       r.puesto,
       String(r.diasTrabajados),
@@ -551,18 +551,18 @@ const PDFBuilder = (() => {
    * @param {string} filename
    */
   function exportarCSV(asistencias, filename = 'asistencias.csv', fechaInicio = '', fechaFin = fechaInicio) {
-    const personalMap = new Map((AppState.get('personal') || []).map(p => [p.ID_Trabajador, p]));
+    const personalMap = new Map((AppState.get('personal') || []).map((p) => [p.ID_Trabajador, p]));
     const headers = [
       'ID_Marcacion', 'ID_Trabajador', 'Nombre_Completo', 'DPI_CUI', 'Puesto', 'Jefe_Inmediato',
       'Fecha', 'Tipo_Marcacion', 'Hora_Programada', 'Hora_Real', 'Estado_Marcacion', 
-      'Estado_General', 'Metodo_Registro', 'Horas_Extra', 'Ubicacion_Obra', 'Ultima_Actualizacion'
+      'Estado_General', 'Metodo_Registro', 'Horas_Extra', 'Ubicacion_Obra', 'Ultima_Actualizacion',
     ];
 
-    const presentesIds = new Set(asistencias.filter(a => a.Tipo_Marcacion === 'Entrada').map(a => a.ID_Trabajador));
+    const presentesIds = new Set(asistencias.filter((a) => a.Tipo_Marcacion === 'Entrada').map((a) => a.ID_Trabajador));
     const absentRows = fechaInicio === fechaFin
-      ? [...personalMap.values()].filter(p => p.Estado === 'Activo' && !presentesIds.has(p.ID_Trabajador)).map(worker => ({ __absence: true, worker }))
+      ? [...personalMap.values()].filter((p) => p.Estado === 'Activo' && !presentesIds.has(p.ID_Trabajador)).map((worker) => ({ __absence: true, worker }))
       : [];
-    const rawRows = [...asistencias, ...absentRows].map(a => a.__absence ? [
+    const rawRows = [...asistencias, ...absentRows].map((a) => a.__absence ? [
       '', a.worker.ID_Trabajador || '', a.worker.Nombre_Completo || '', a.worker.DPI_CUI || '',
       a.worker.Puesto || '', a.worker.Jefe_Inmediato || '', fechaInicio, '', '', '', 'Ausencia', '', '', '0', '', '',
     ] : [
@@ -583,9 +583,9 @@ const PDFBuilder = (() => {
       a.Ubicacion_Obra   || '',
       a.Ultima_Actualizacion ? new Date(a.Ultima_Actualizacion).toLocaleString('es-GT') : '',
     ]);
-    const rows = rawRows.map(row => row.map(v => `"${String(v).replace(/"/g, '""')}"`));
+    const rows = rawRows.map((row) => row.map((v) => `"${String(v).replace(/"/g, '""')}"`));
 
-    const csvContent = [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
+    const csvContent = [headers.join(','), ...rows.map((r) => r.join(','))].join('\n');
     const BOM        = '\uFEFF'; // UTF-8 BOM para Excel español
     const blob       = new Blob([BOM + csvContent], { type: 'text/csv;charset=utf-8;' });
     const url        = URL.createObjectURL(blob);
@@ -611,7 +611,7 @@ const PDFBuilder = (() => {
   function generarHTMLPreview(tipo, asistencias, periodo, orientation = 'portrait') {
     const config   = _getConfig();
     const personal = AppState.get('personal') || [];
-    const presentes = new Set(asistencias.map(a => a.ID_Trabajador)).size;
+    const presentes = new Set(asistencias.map((a) => a.ID_Trabajador)).size;
 
     const filas = asistencias.map((a, idx) => `
       <tr>

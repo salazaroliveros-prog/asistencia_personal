@@ -46,7 +46,7 @@ const Alerts = (() => {
     if (!container) return;
 
     // Aceptar string directo
-    let opts = typeof options === 'string'
+    const opts = typeof options === 'string'
       ? { message: options, type, duration }
       : { ...options };
 

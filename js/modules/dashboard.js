@@ -12,7 +12,7 @@ const ModuloDashboard = (() => {
     `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`);
 
   // ─── Estado del módulo ────────────────────────────────────────────────────
-  let _asistenciaDelMes = {};  // { 'YYYY-MM-DD': { presentes, total } }
+  const _asistenciaDelMes = {};  // { 'YYYY-MM-DD': { presentes, total } }
   let _chartSemana      = null; // Instancia Chart.js semanal
   let _chartMes         = null; // Instancia Chart.js mensual
   let _turnoFiltroActivo = 'en-obra'; // tab activo del panel turno
@@ -49,7 +49,7 @@ const ModuloDashboard = (() => {
   function _onAttendanceStateChanged() {
     const fecha = AppState.get('dashboardDate') || AppState.today();
     const personal = AppState.get('personal') || [];
-    const asistencias = (AppState.get('asistencias') || []).filter(a => a.Fecha === fecha);
+    const asistencias = (AppState.get('asistencias') || []).filter((a) => a.Fecha === fecha);
     _actualizarKPIs(personal, asistencias, fecha);
     _renderListaAsistenciaHoy(personal, asistencias);
     _renderPanelTurno(personal, asistencias);
@@ -78,10 +78,10 @@ const ModuloDashboard = (() => {
     document.getElementById('btn-clear-alerts')?.addEventListener('click', _marcarTodasAlertas);
 
     // Tabs del panel de turno
-    document.querySelectorAll('.turno-tab').forEach(tab => {
+    document.querySelectorAll('.turno-tab').forEach((tab) => {
       tab.addEventListener('click', () => {
         _turnoFiltroActivo = tab.dataset.turno;
-        document.querySelectorAll('.turno-tab').forEach(t => {
+        document.querySelectorAll('.turno-tab').forEach((t) => {
           t.classList.remove('active');
           t.setAttribute('aria-selected', 'false');
         });
@@ -138,7 +138,7 @@ const ModuloDashboard = (() => {
 
       const asistencias = asistenciaResult.status === 'fulfilled' && asistenciaResult.value.success
         ? asistenciaResult.value.data
-        : (AppState.get('asistencias') || []).filter(a => a.Fecha === fecha);
+        : (AppState.get('asistencias') || []).filter((a) => a.Fecha === fecha);
 
       _actualizarKPIs(personal, asistencias, fecha);
       _renderListaAsistenciaHoy(personal, asistencias);
@@ -162,7 +162,7 @@ const ModuloDashboard = (() => {
   // KPI CARDS
   // ─────────────────────────────────────────────────────────────────────────
   function _mostrarKPIsSkeleton() {
-    ['kpi-total', 'kpi-asistencia', 'kpi-tardanzas', 'kpi-ausencias'].forEach(id => {
+    ['kpi-total', 'kpi-asistencia', 'kpi-tardanzas', 'kpi-ausencias'].forEach((id) => {
       const el = document.getElementById(id);
       if (el) el.textContent = '...';
     });
@@ -170,11 +170,11 @@ const ModuloDashboard = (() => {
 
   function _actualizarKPIs(personal, asistencias, fecha) {
     const total      = personal.length;
-    const presentes  = new Set(asistencias.map(a => a.ID_Trabajador)).size;
+    const presentes  = new Set(asistencias.map((a) => a.ID_Trabajador)).size;
     const ausentes   = Math.max(0, total - presentes);
     const porcentaje = total > 0 ? Math.round((presentes / total) * 100) : 0;
-    const tardanzas  = asistencias.filter(a =>
-      a.Estado_Marcacion === 'Atraso' || a.Estado_Marcacion === 'Tolerancia'
+    const tardanzas  = asistencias.filter((a) =>
+      a.Estado_Marcacion === 'Atraso' || a.Estado_Marcacion === 'Tolerancia',
     ).length;
 
     _setKPI('kpi-total',      total);
@@ -186,7 +186,7 @@ const ModuloDashboard = (() => {
     if (kpiAsistencia) {
       kpiAsistencia.style.color = porcentaje >= 90 ? 'var(--color-accent-green)'
         : porcentaje >= 75 ? 'var(--color-accent-amber)'
-        : 'var(--color-accent-red)';
+          : 'var(--color-accent-red)';
     }
 
     _asistenciaDelMes[fecha] = { presentes, total };
@@ -210,8 +210,8 @@ const ModuloDashboard = (() => {
     const counter   = document.getElementById('today-count');
     if (!container) return;
 
-    const presentesIds = [...new Set(asistencias.map(a => a.ID_Trabajador))];
-    const presentes    = presentesIds.map(id => personal.find(p => p.ID_Trabajador === id)).filter(Boolean);
+    const presentesIds = [...new Set(asistencias.map((a) => a.ID_Trabajador))];
+    const presentes    = presentesIds.map((id) => personal.find((p) => p.ID_Trabajador === id)).filter(Boolean);
 
     if (counter) counter.textContent = presentes.length;
 
@@ -226,7 +226,7 @@ const ModuloDashboard = (() => {
     }
 
     const ultimaMarcacion = {};
-    asistencias.forEach(a => {
+    asistencias.forEach((a) => {
       if (!ultimaMarcacion[a.ID_Trabajador] || a.Hora_Real > ultimaMarcacion[a.ID_Trabajador].Hora_Real) {
         ultimaMarcacion[a.ID_Trabajador] = a;
       }
@@ -239,14 +239,14 @@ const ModuloDashboard = (() => {
       'Salida_Obra':    '🏠 Salida',
     };
 
-    container.innerHTML = presentes.map(p => {
+    container.innerHTML = presentes.map((p) => {
       const ultima = ultimaMarcacion[p.ID_Trabajador];
       const whatsappNum = p.WhatsApp
         ? p.WhatsApp.replace('https://wa.me/', '')
         : (p.Telefono || '').replace(/\D/g, '');
 
       const iniciales = p.Nombre_Completo
-        ? p.Nombre_Completo.split(' ').slice(0, 2).map(n => n[0]).join('').toUpperCase()
+        ? p.Nombre_Completo.split(' ').slice(0, 2).map((n) => n[0]).join('').toUpperCase()
         : '??';
 
       // Color del tipo de marcación
@@ -260,15 +260,15 @@ const ModuloDashboard = (() => {
       return `
         <div class="attendance-item">
           ${p.Fotografia_URL
-            ? `<img src="${window.CPC.StringHelpers.escHtml(p.Fotografia_URL)}"
+    ? `<img src="${window.CPC.StringHelpers.escHtml(p.Fotografia_URL)}"
                   class="item-photo"
                   alt="${window.CPC.StringHelpers.escHtml(p.Nombre_Completo)}"
                   loading="lazy"
                   style="border-color:${estadoColor};"
                   onerror="this.onerror=null;this.style.display='none';this.nextElementSibling.style.display='flex';" />
                <div class="item-photo" style="display:none;align-items:center;justify-content:center;background:var(--glass-bg);border:2px solid ${estadoColor};font-size:var(--text-xs);font-weight:700;color:${estadoColor};flex-shrink:0;">${iniciales}</div>`
-            : `<div class="item-photo" style="display:flex;align-items:center;justify-content:center;background:var(--glass-bg);border:2px solid ${estadoColor};font-size:var(--text-xs);font-weight:700;color:${estadoColor};flex-shrink:0;">${iniciales}</div>`
-          }
+    : `<div class="item-photo" style="display:flex;align-items:center;justify-content:center;background:var(--glass-bg);border:2px solid ${estadoColor};font-size:var(--text-xs);font-weight:700;color:${estadoColor};flex-shrink:0;">${iniciales}</div>`
+  }
           <div class="item-info">
             <div class="item-name">${window.CPC.StringHelpers.escHtml(p.Nombre_Completo)}</div>
             <div class="item-detail">
@@ -277,11 +277,11 @@ const ModuloDashboard = (() => {
             </div>
           </div>
           ${whatsappNum
-            ? `<a href="https://wa.me/${window.CPC.StringHelpers.escHtml(whatsappNum)}" target="_blank" rel="noopener noreferrer" class="table-action-btn" style="color:var(--color-accent-green)" title="Contactar por WhatsApp" aria-label="Contactar a ${window.CPC.StringHelpers.escHtml(p.Nombre_Completo)} por WhatsApp">
+    ? `<a href="https://wa.me/${window.CPC.StringHelpers.escHtml(whatsappNum)}" target="_blank" rel="noopener noreferrer" class="table-action-btn" style="color:var(--color-accent-green)" title="Contactar por WhatsApp" aria-label="Contactar a ${window.CPC.StringHelpers.escHtml(p.Nombre_Completo)} por WhatsApp">
                 <i data-lucide="message-circle"></i>
               </a>`
-            : ''
-          }
+    : ''
+  }
         </div>`;
     }).join('');
 
@@ -298,7 +298,7 @@ const ModuloDashboard = (() => {
   function _renderPanelTurno(personal, asistencias) {
     // Calcular el ÚLTIMO tipo de marcación de cada trabajador hoy
     const ultimaMap = {};
-    asistencias.forEach(a => {
+    asistencias.forEach((a) => {
       const prev = ultimaMap[a.ID_Trabajador];
       if (!prev || a.Hora_Real > prev.Hora_Real) {
         ultimaMap[a.ID_Trabajador] = a;
@@ -310,7 +310,7 @@ const ModuloDashboard = (() => {
     const salio     = [];
     const sinMarcar = [];
 
-    personal.filter(p => p.Estado === 'Activo').forEach(p => {
+    personal.filter((p) => p.Estado === 'Activo').forEach((p) => {
       const ultima = ultimaMap[p.ID_Trabajador];
       if (!ultima) {
         sinMarcar.push({ trabajador: p, marcacion: null });
@@ -387,23 +387,23 @@ const ModuloDashboard = (() => {
 
       // Iniciales para el placeholder
       const iniciales = p.Nombre_Completo
-        ? p.Nombre_Completo.split(' ').slice(0, 2).map(n => n[0]).join('').toUpperCase()
+        ? p.Nombre_Completo.split(' ').slice(0, 2).map((n) => n[0]).join('').toUpperCase()
         : '??';
 
       return `
         <div class="turno-item" role="listitem">
           <div class="turno-item-indicator" style="background:${grupo.color}" aria-hidden="true"></div>
           ${p.Fotografia_URL
-            ? `<img src="${window.CPC.StringHelpers.escHtml(p.Fotografia_URL)}"
+    ? `<img src="${window.CPC.StringHelpers.escHtml(p.Fotografia_URL)}"
                   class="item-photo"
                   alt="${window.CPC.StringHelpers.escHtml(p.Nombre_Completo)}"
                   loading="lazy"
                   style="border-color:${grupo.color};"
                   onerror="this.onerror=null;this.style.display='none';this.nextElementSibling.style.display='flex';" />
                <div class="turno-photo-placeholder" style="display:none;border-color:${grupo.color};color:${grupo.color};">${iniciales}</div>`
-            : `<div class="turno-photo-placeholder" style="border-color:${grupo.color};color:${grupo.color};"
+    : `<div class="turno-photo-placeholder" style="border-color:${grupo.color};color:${grupo.color};"
                     aria-hidden="true">${iniciales}</div>`
-          }
+  }
           <div class="item-info">
             <div class="item-name">${window.CPC.StringHelpers.escHtml(p.Nombre_Completo)}</div>
             <div class="item-detail">
@@ -414,13 +414,13 @@ const ModuloDashboard = (() => {
             </div>
           </div>
           ${whatsappNum
-            ? `<a href="https://wa.me/${window.CPC.StringHelpers.escHtml(whatsappNum)}" target="_blank" rel="noopener noreferrer"
+    ? `<a href="https://wa.me/${window.CPC.StringHelpers.escHtml(whatsappNum)}" target="_blank" rel="noopener noreferrer"
                   class="table-action-btn" style="color:var(--color-accent-green)"
                   title="WhatsApp" aria-label="WhatsApp de ${window.CPC.StringHelpers.escHtml(p.Nombre_Completo)}">
                 <i data-lucide="message-circle"></i>
               </a>`
-            : ''
-          }
+    : ''
+  }
         </div>`;
     }).join('');
 
@@ -444,7 +444,7 @@ const ModuloDashboard = (() => {
     }
 
     // Cargar asistencias del rango (funciona tanto en modo real como en modo demo)
-    let datosPorDia = {};
+    const datosPorDia = {};
     try {
       const result = await API.obtenerAsistenciaRango(dias[0], dias[6]);
       if (result.success && Array.isArray(result.data)) {
@@ -452,13 +452,13 @@ const ModuloDashboard = (() => {
         const total    = personal.length || 1;
 
         // Contar presentes únicos por día
-        result.data.forEach(a => {
+        result.data.forEach((a) => {
           if (!datosPorDia[a.Fecha]) datosPorDia[a.Fecha] = new Set();
           datosPorDia[a.Fecha].add(a.ID_Trabajador);
         });
 
         // Convertir a porcentajes
-        Object.keys(datosPorDia).forEach(fecha => {
+        Object.keys(datosPorDia).forEach((fecha) => {
           datosPorDia[fecha] = Math.round((datosPorDia[fecha].size / total) * 100);
         });
       }
@@ -466,22 +466,22 @@ const ModuloDashboard = (() => {
       console.warn('[Dashboard] Error cargando datos gráfica semanal:', err.message);
     }
 
-    const labels     = dias.map(d => _formatDiaLabel(d));
-    const dataValues = dias.map(d => datosPorDia[d] || 0);
+    const labels     = dias.map((d) => _formatDiaLabel(d));
+    const dataValues = dias.map((d) => datosPorDia[d] || 0);
 
     // Colores dinámicos por valor
-    const bgColors = dataValues.map(v =>
+    const bgColors = dataValues.map((v) =>
       v >= 90 ? 'rgba(56, 203, 137, 0.7)' :
-      v >= 75 ? 'rgba(251, 191, 36, 0.7)' :
-      v > 0   ? 'rgba(239, 68, 68, 0.7)'  :
-                'rgba(100, 116, 139, 0.3)'
+        v >= 75 ? 'rgba(251, 191, 36, 0.7)' :
+          v > 0   ? 'rgba(239, 68, 68, 0.7)'  :
+            'rgba(100, 116, 139, 0.3)',
     );
 
-    const borderColors = dataValues.map(v =>
+    const borderColors = dataValues.map((v) =>
       v >= 90 ? 'rgb(56, 203, 137)' :
-      v >= 75 ? 'rgb(251, 191, 36)' :
-      v > 0   ? 'rgb(239, 68, 68)'  :
-                'rgb(100, 116, 139)'
+        v >= 75 ? 'rgb(251, 191, 36)' :
+          v > 0   ? 'rgb(239, 68, 68)'  :
+            'rgb(100, 116, 139)',
     );
 
     if (_chartSemana) {
@@ -514,7 +514,7 @@ const ModuloDashboard = (() => {
           legend: { display: false },
           tooltip: {
             callbacks: {
-              label: ctx => ` ${ctx.parsed.y}% asistencia`,
+              label: (ctx) => ` ${ctx.parsed.y}% asistencia`,
             },
           },
         },
@@ -524,7 +524,7 @@ const ModuloDashboard = (() => {
             max: 100,
             ticks: {
               color: 'rgba(255,255,255,0.6)',
-              callback: v => v + '%',
+              callback: (v) => v + '%',
             },
             grid: {
               color: 'rgba(255,255,255,0.08)',
@@ -568,7 +568,7 @@ const ModuloDashboard = (() => {
       labels.push(dia);
       dataValues.push(datos && datos.total > 0
         ? Math.round((datos.presentes / datos.total) * 100)
-        : null // null = gap en la línea
+        : null, // null = gap en la línea
       );
     }
 
@@ -611,8 +611,8 @@ const ModuloDashboard = (() => {
           legend: { display: false },
           tooltip: {
             callbacks: {
-              title: ctx => `Día ${ctx[0].label}`,
-              label: ctx => ctx.parsed.y !== null ? ` ${ctx.parsed.y}% asistencia` : ' Sin datos',
+              title: (ctx) => `Día ${ctx[0].label}`,
+              label: (ctx) => ctx.parsed.y !== null ? ` ${ctx.parsed.y}% asistencia` : ' Sin datos',
             },
           },
         },
@@ -622,7 +622,7 @@ const ModuloDashboard = (() => {
             max: 100,
             ticks: {
               color: 'rgba(255,255,255,0.6)',
-              callback: v => v + '%',
+              callback: (v) => v + '%',
             },
             grid: { color: 'rgba(255,255,255,0.08)' },
             border: { color: 'rgba(255,255,255,0.1)' },
@@ -663,12 +663,12 @@ const ModuloDashboard = (() => {
           const total    = personal.length || 1;
 
           const porFecha = {};
-          result.data.forEach(a => {
+          result.data.forEach((a) => {
             if (!porFecha[a.Fecha]) porFecha[a.Fecha] = new Set();
             porFecha[a.Fecha].add(a.ID_Trabajador);
           });
 
-          Object.keys(porFecha).forEach(fecha => {
+          Object.keys(porFecha).forEach((fecha) => {
             _asistenciaDelMes[fecha] = { presentes: porFecha[fecha].size, total };
           });
         }
@@ -697,7 +697,7 @@ const ModuloDashboard = (() => {
     const hoy             = AppState.today();
 
     let html = '';
-    diasSemana.forEach(d => { html += `<div class="cal-day-header" role="columnheader">${d}</div>`; });
+    diasSemana.forEach((d) => { html += `<div class="cal-day-header" role="columnheader">${d}</div>`; });
     for (let i = 0; i < primerDiaSemana; i++) { html += '<div class="cal-day empty" aria-hidden="true"></div>'; }
 
     for (let dia = 1; dia <= diasEnMes; dia++) {
@@ -781,9 +781,9 @@ const ModuloDashboard = (() => {
         asistencias = AppState.get('asistencias') || [];
       }
 
-      const presentesIds = [...new Set(asistencias.map(a => a.ID_Trabajador))];
-      const presentes    = presentesIds.map(id => personal.find(p => p.ID_Trabajador === id)).filter(Boolean);
-      const ausentes     = personal.filter(p => !presentesIds.includes(p.ID_Trabajador));
+      const presentesIds = [...new Set(asistencias.map((a) => a.ID_Trabajador))];
+      const presentes    = presentesIds.map((id) => personal.find((p) => p.ID_Trabajador === id)).filter(Boolean);
+      const ausentes     = personal.filter((p) => !presentesIds.includes(p.ID_Trabajador));
       const pct          = personal.length > 0 ? Math.round((presentes.length / personal.length) * 100) : 0;
 
       if (content) {
@@ -807,51 +807,51 @@ const ModuloDashboard = (() => {
               <i data-lucide="user-x"></i> Ausentes (${ausentes.length})
             </h4>
             <div style="display:flex;flex-direction:column;gap:var(--space-2);margin-bottom:var(--space-5)">
-              ${ausentes.map(p => {
-                const wa  = p.WhatsApp ? p.WhatsApp.replace('https://wa.me/', '') : (p.Telefono || '').replace(/\D/g, '');
-                const ini = p.Nombre_Completo ? p.Nombre_Completo.split(' ').slice(0,2).map(n=>n[0]).join('').toUpperCase() : '??';
-                const col = 'var(--color-accent-red)';
-                return `
+              ${ausentes.map((p) => {
+    const wa  = p.WhatsApp ? p.WhatsApp.replace('https://wa.me/', '') : (p.Telefono || '').replace(/\D/g, '');
+    const ini = p.Nombre_Completo ? p.Nombre_Completo.split(' ').slice(0,2).map((n) => n[0]).join('').toUpperCase() : '??';
+    const col = 'var(--color-accent-red)';
+    return `
                   <div class="attendance-item">
                     ${p.Fotografia_URL
-                      ? `<img src="${window.CPC.StringHelpers.escHtml(p.Fotografia_URL)}" class="item-photo" alt="${window.CPC.StringHelpers.escHtml(p.Nombre_Completo)}" loading="lazy"
+    ? `<img src="${window.CPC.StringHelpers.escHtml(p.Fotografia_URL)}" class="item-photo" alt="${window.CPC.StringHelpers.escHtml(p.Nombre_Completo)}" loading="lazy"
                               style="border-color:${col};"
                               onerror="this.onerror=null;this.style.display='none';this.nextElementSibling.style.display='flex';" />
                          <div class="item-photo" style="display:none;align-items:center;justify-content:center;background:var(--glass-bg);border:2px solid ${col};font-size:var(--text-xs);font-weight:700;color:${col};flex-shrink:0;">${ini}</div>`
-                      : `<div class="item-photo" style="display:flex;align-items:center;justify-content:center;background:var(--glass-bg);border:2px solid ${col};font-size:var(--text-xs);font-weight:700;color:${col};flex-shrink:0;">${ini}</div>`
-                    }
+    : `<div class="item-photo" style="display:flex;align-items:center;justify-content:center;background:var(--glass-bg);border:2px solid ${col};font-size:var(--text-xs);font-weight:700;color:${col};flex-shrink:0;">${ini}</div>`
+  }
                     <div class="item-info">
                       <div class="item-name">${window.CPC.StringHelpers.escHtml(p.Nombre_Completo)}</div>
                       <div class="item-detail">${window.CPC.StringHelpers.escHtml(p.Puesto)}</div>
                     </div>
                     ${wa ? `<a href="https://wa.me/${window.CPC.StringHelpers.escHtml(wa)}?text=${encodeURIComponent(`Hola ${p.Nombre_Completo}, tienes ausencia el ${fechaFormateada}`)}" target="_blank" rel="noopener noreferrer" class="btn btn-sm btn-success"><i data-lucide="message-circle"></i> WA</a>` : ''}
                   </div>`;
-              }).join('')}
+  }).join('')}
             </div>` : ''}
           ${presentes.length > 0 ? `
             <h4 style="margin-bottom:var(--space-3);color:var(--color-accent-green)">
               <i data-lucide="user-check"></i> Presentes (${presentes.length})
             </h4>
             <div style="display:flex;flex-direction:column;gap:var(--space-2)">
-              ${presentes.map(p => {
-                const ultimaP   = asistencias.filter(a => a.ID_Trabajador === p.ID_Trabajador).sort((a,b) => (b.Hora_Real||'') > (a.Hora_Real||'') ? 1 : -1)[0];
-                const colPresente = {
-                  'Entrada':        'var(--color-accent-green)',
-                  'Salida_Receso':  'var(--color-accent-amber)',
-                  'Regreso_Receso': 'var(--color-accent-green)',
-                  'Salida_Obra':    'var(--color-text-muted)',
-                }[ultimaP?.Tipo_Marcacion] || 'var(--color-accent-green)';
-                const ini = p.Nombre_Completo ? p.Nombre_Completo.split(' ').slice(0,2).map(n=>n[0]).join('').toUpperCase() : '??';
-                const tipoLabel = { 'Entrada':'✓ Entrada', 'Salida_Receso':'☕ Receso', 'Regreso_Receso':'↩ En Obra', 'Salida_Obra':'🏠 Salida' };
-                return `
+              ${presentes.map((p) => {
+    const ultimaP   = asistencias.filter((a) => a.ID_Trabajador === p.ID_Trabajador).sort((a,b) => (b.Hora_Real||'') > (a.Hora_Real||'') ? 1 : -1)[0];
+    const colPresente = {
+      'Entrada':        'var(--color-accent-green)',
+      'Salida_Receso':  'var(--color-accent-amber)',
+      'Regreso_Receso': 'var(--color-accent-green)',
+      'Salida_Obra':    'var(--color-text-muted)',
+    }[ultimaP?.Tipo_Marcacion] || 'var(--color-accent-green)';
+    const ini = p.Nombre_Completo ? p.Nombre_Completo.split(' ').slice(0,2).map((n) => n[0]).join('').toUpperCase() : '??';
+    const tipoLabel = { 'Entrada':'✓ Entrada', 'Salida_Receso':'☕ Receso', 'Regreso_Receso':'↩ En Obra', 'Salida_Obra':'🏠 Salida' };
+    return `
                   <div class="attendance-item">
                     ${p.Fotografia_URL
-                      ? `<img src="${window.CPC.StringHelpers.escHtml(p.Fotografia_URL)}" class="item-photo" alt="${window.CPC.StringHelpers.escHtml(p.Nombre_Completo)}" loading="lazy"
+    ? `<img src="${window.CPC.StringHelpers.escHtml(p.Fotografia_URL)}" class="item-photo" alt="${window.CPC.StringHelpers.escHtml(p.Nombre_Completo)}" loading="lazy"
                               style="border-color:${colPresente};"
                               onerror="this.onerror=null;this.style.display='none';this.nextElementSibling.style.display='flex';" />
                          <div class="item-photo" style="display:none;align-items:center;justify-content:center;background:var(--glass-bg);border:2px solid ${colPresente};font-size:var(--text-xs);font-weight:700;color:${colPresente};flex-shrink:0;">${ini}</div>`
-                      : `<div class="item-photo" style="display:flex;align-items:center;justify-content:center;background:var(--glass-bg);border:2px solid ${colPresente};font-size:var(--text-xs);font-weight:700;color:${colPresente};flex-shrink:0;">${ini}</div>`
-                    }
+    : `<div class="item-photo" style="display:flex;align-items:center;justify-content:center;background:var(--glass-bg);border:2px solid ${colPresente};font-size:var(--text-xs);font-weight:700;color:${colPresente};flex-shrink:0;">${ini}</div>`
+  }
                     <div class="item-info">
                       <div class="item-name">${window.CPC.StringHelpers.escHtml(p.Nombre_Completo)}</div>
                       <div class="item-detail">
@@ -860,7 +860,7 @@ const ModuloDashboard = (() => {
                       </div>
                     </div>
                   </div>`;
-              }).join('')}
+  }).join('')}
             </div>` : ''}`;
 
         if (window.lucide) lucide.createIcons({ nodes: [content] });
@@ -900,7 +900,7 @@ const ModuloDashboard = (() => {
 
     // Mapa de ID → nombre para mostrar nombres en alertas
     const personalMap = {};
-    (AppState.get('personal') || []).forEach(p => {
+    (AppState.get('personal') || []).forEach((p) => {
       personalMap[p.ID_Trabajador] = p.Nombre_Completo || p.ID_Trabajador;
     });
 
@@ -914,7 +914,7 @@ const ModuloDashboard = (() => {
       return;
     }
 
-    container.innerHTML = alertas.slice(0, 10).map(a => {
+    container.innerHTML = alertas.slice(0, 10).map((a) => {
       const nombreTrab = a.ID_Trabajador ? (personalMap[a.ID_Trabajador] || a.ID_Trabajador) : '';
       return `
       <div class="alert-item" data-id="${window.CPC.StringHelpers.escHtml(a.ID_Alerta)}">
@@ -931,7 +931,7 @@ const ModuloDashboard = (() => {
 
     if (window.lucide) lucide.createIcons({ nodes: [container] });
 
-    container.querySelectorAll('.alert-dismiss').forEach(btn => {
+    container.querySelectorAll('.alert-dismiss').forEach((btn) => {
       btn.addEventListener('click', async (e) => {
         e.stopPropagation();
         await _descartarAlerta(btn.dataset.id);
@@ -953,7 +953,7 @@ const ModuloDashboard = (() => {
     if (!confirmed) return;
     const loader = Alerts.loading('Procesando alertas...');
     try {
-      await Promise.allSettled(alertas.map(a => API.marcarAlertaRevisada(a.ID_Alerta)));
+      await Promise.allSettled(alertas.map((a) => API.marcarAlertaRevisada(a.ID_Alerta)));
       loader.close();
       Alerts.success('Todas las alertas marcadas como revisadas');
       await _cargarAlertas();

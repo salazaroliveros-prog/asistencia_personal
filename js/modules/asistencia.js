@@ -39,7 +39,7 @@ const ModuloAsistencia = (() => {
    */
   function _bindEvents() {
     // Tabs QR / Manual
-    document.querySelectorAll('.tab').forEach(tab => {
+    document.querySelectorAll('.tab').forEach((tab) => {
       tab.addEventListener('click', () => _switchTab(tab.dataset.tab));
     });
 
@@ -111,7 +111,7 @@ const ModuloAsistencia = (() => {
     const display = document.getElementById('asistencia-date-display');
     if (display) {
       display.textContent = new Date(hoy + 'T12:00:00').toLocaleDateString('es-GT', {
-        weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
+        weekday: 'long', year: 'numeric', month: 'long', day: 'numeric',
       });
     }
   }
@@ -156,12 +156,12 @@ const ModuloAsistencia = (() => {
   // TABS
   // ─────────────────────────────────────────────────────────────────────────
   function _switchTab(tabId) {
-    document.querySelectorAll('.tab').forEach(t => {
+    document.querySelectorAll('.tab').forEach((t) => {
       t.classList.toggle('active', t.dataset.tab === tabId);
       t.setAttribute('aria-selected', t.dataset.tab === tabId ? 'true' : 'false');
     });
 
-    document.querySelectorAll('.tab-content').forEach(content => {
+    document.querySelectorAll('.tab-content').forEach((content) => {
       const isActive = content.id === `tab-${tabId}`;
       content.classList.toggle('active', isActive);
       content.hidden = !isActive;
@@ -195,8 +195,8 @@ const ModuloAsistencia = (() => {
     if (!session || !select) return;
     try {
       const devices = await session.listDevices();
-      select.innerHTML = devices.map(d =>
-        `<option value="${window.CPC.StringHelpers.escHtml(d.id)}">${window.CPC.StringHelpers.escHtml(d.label)}</option>`
+      select.innerHTML = devices.map((d) =>
+        `<option value="${window.CPC.StringHelpers.escHtml(d.id)}">${window.CPC.StringHelpers.escHtml(d.label)}</option>`,
       ).join('');
       const multi = devices.length >= 2;
       select.hidden    = !multi;
@@ -363,10 +363,10 @@ const ModuloAsistencia = (() => {
       return;
     }
 
-    const results  = personal.filter(p =>
+    const results  = personal.filter((p) =>
       (p.Nombre_Completo || '').toLowerCase().includes(query) ||
       (p.DPI_CUI         || '').includes(query) ||
-      (p.Puesto          || '').toLowerCase().includes(query)
+      (p.Puesto          || '').toLowerCase().includes(query),
     ).slice(0, 8);
 
     if (results.length === 0) {
@@ -374,18 +374,18 @@ const ModuloAsistencia = (() => {
       return;
     }
 
-    listEl.innerHTML = results.map(p => {
+    listEl.innerHTML = results.map((p) => {
       const ini = inicialesDeNombre(p.Nombre_Completo);
       const col = colorPorPuesto(p.Puesto);
       return `
       <li class="autocomplete-item" data-id="${window.CPC.StringHelpers.escHtml(p.ID_Trabajador)}" role="option" tabindex="0">
         ${p.Fotografia_URL
-          ? `<img src="${window.CPC.StringHelpers.escHtml(p.Fotografia_URL)}" alt="" style="width:32px;height:32px;border-radius:50%;object-fit:cover;border:2px solid ${col};"
+    ? `<img src="${window.CPC.StringHelpers.escHtml(p.Fotografia_URL)}" alt="" style="width:32px;height:32px;border-radius:50%;object-fit:cover;border:2px solid ${col};"
                  loading="lazy"
                  onerror="this.onerror=null;this.style.display='none';this.nextElementSibling.style.display='flex';" />
              <span style="display:none;width:32px;height:32px;border-radius:50%;border:2px solid ${col};background:var(--glass-bg);align-items:center;justify-content:center;font-size:11px;font-weight:700;color:${col};flex-shrink:0;">${ini}</span>`
-          : `<span style="display:flex;width:32px;height:32px;border-radius:50%;border:2px solid ${col};background:var(--glass-bg);align-items:center;justify-content:center;font-size:11px;font-weight:700;color:${col};flex-shrink:0;">${ini}</span>`
-        }
+    : `<span style="display:flex;width:32px;height:32px;border-radius:50%;border:2px solid ${col};background:var(--glass-bg);align-items:center;justify-content:center;font-size:11px;font-weight:700;color:${col};flex-shrink:0;">${ini}</span>`
+  }
         <div>
           <div class="item-name">${window.CPC.StringHelpers.escHtml(p.Nombre_Completo)}</div>
           <div class="item-detail">${window.CPC.StringHelpers.escHtml(p.Puesto)} · ${window.CPC.StringHelpers.escHtml(p.DPI_CUI)}</div>
@@ -402,7 +402,7 @@ const ModuloAsistencia = (() => {
       const item = e.target.closest('.autocomplete-item');
       if (!item) return;
       const id = item.dataset.id;
-      const t  = personal.find(p => p.ID_Trabajador === id);
+      const t  = personal.find((p) => p.ID_Trabajador === id);
       if (t) _seleccionarTrabajadorManual(t);
     };
 
@@ -531,7 +531,7 @@ const ModuloAsistencia = (() => {
             const confirmed = await Alerts.confirm(
               `Estás a ${geofenceStatus.distance}m del sitio de obra (${radius}m permitido). ` +
               '¿Deseas registrar la marcación de todas formas?',
-              'Fuera del área permitida'
+              'Fuera del área permitida',
             );
             if (!confirmed) {
               Alerts.warning('Marcación cancelada por estar fuera del área permitida');
@@ -592,7 +592,7 @@ const ModuloAsistencia = (() => {
         // Si fue guardado offline, API.registrarMarcacion ya actualizó AppState y cache.
         // Renderizar directamente desde AppState para evitar duplicados.
         if (result.offline) {
-          _renderTablaMarcaciones((AppState.get('asistencias') || []).filter(a => a.Fecha === hoy));
+          _renderTablaMarcaciones((AppState.get('asistencias') || []).filter((a) => a.Fecha === hoy));
         } else {
           // Recargar tabla desde servidor
           await _cargarMarcaciones(hoy);
@@ -635,7 +635,7 @@ const ModuloAsistencia = (() => {
 
     // Modo offline: mostrar asistencias locales del AppState para la fecha
     if (!AppState.get('connected') || AppState.get('backendMode') !== 'firestore') {
-      const locales = (AppState.get('asistencias') || []).filter(a => a.Fecha === fecha);
+      const locales = (AppState.get('asistencias') || []).filter((a) => a.Fecha === fecha);
       _renderTablaMarcaciones(locales);
       return;
     }
@@ -670,7 +670,7 @@ const ModuloAsistencia = (() => {
       'Salida_Obra':    'Salida Obra',
     };
 
-    tbody.innerHTML = marcaciones.map(m => {
+    tbody.innerHTML = marcaciones.map((m) => {
       const estadoClase = {
         'A Tiempo':   'estado-a-tiempo',
         'Tolerancia': 'estado-tolerancia',
@@ -710,9 +710,9 @@ const ModuloAsistencia = (() => {
           <td data-label="Estado"><span class="${estadoClase}">${window.CPC.StringHelpers.escHtml(m.Estado_Marcacion || '--')}</span></td>
           <td data-label="Método">
             ${m.Metodo_Registro === 'Escaneo_QR'
-              ? '<span class="badge badge-green"><i data-lucide="qr-code" style="width:10px;height:10px"></i> QR</span>'
-              : '<span class="badge badge-gray">Manual</span>'
-            }
+    ? '<span class="badge badge-green"><i data-lucide="qr-code" style="width:10px;height:10px"></i> QR</span>'
+    : '<span class="badge badge-gray">Manual</span>'
+  }
           </td>
           <td data-label="Horas Extra">${parseFloat(m.Horas_Extra || 0) > 0 ? `<strong style="color:var(--color-accent-amber)">${m.Horas_Extra}h</strong>` : '—'}</td>
           <td data-label="Ubicación">${locationDisplay}</td>
@@ -793,7 +793,7 @@ const ModuloAsistencia = (() => {
     };
 
     // Actualizar TODOS los botones de marcación en el DOM (QR y manual)
-    document.querySelectorAll('.btn-marcacion[data-tipo]').forEach(btn => {
+    document.querySelectorAll('.btn-marcacion[data-tipo]').forEach((btn) => {
       const tipo = btn.dataset.tipo;
       if (horaMap[tipo]) {
         btn.dataset.hora = horaMap[tipo];
@@ -822,11 +822,11 @@ const ModuloAsistencia = (() => {
     } catch (err) {
       console.warn('[Asistencia] Error cargando asistencias para mapa:', err.message);
       // Try local data
-      asistencias = (AppState.get('asistencias') || []).filter(a => a.Fecha === fecha);
+      asistencias = (AppState.get('asistencias') || []).filter((a) => a.Fecha === fecha);
     }
 
     // Filter records with GPS data
-    const conGPS = asistencias.filter(a => a.GPS_Latitud && a.GPS_Longitud);
+    const conGPS = asistencias.filter((a) => a.GPS_Latitud && a.GPS_Longitud);
 
     if (conGPS.length === 0) {
       Alerts.info('No hay marcaciones con GPS para esta fecha');
@@ -854,7 +854,7 @@ const ModuloAsistencia = (() => {
   // ─────────────────────────────────────────────────────────────────────────
   async function _editarMarcacion(id) {
     const asistencias = AppState.get('asistencias') || [];
-    const marcacion = asistencias.find(a => (a.ID_Marcacion === id || a.ID_Asistencia === id));
+    const marcacion = asistencias.find((a) => (a.ID_Marcacion === id || a.ID_Asistencia === id));
 
     if (!marcacion) {
       Alerts.error('Marcación no encontrada');
@@ -960,7 +960,7 @@ const ModuloAsistencia = (() => {
   // ─────────────────────────────────────────────────────────────────────────
   async function _eliminarMarcacion(id) {
     const asistencias = AppState.get('asistencias') || [];
-    const marcacion = asistencias.find(a => (a.ID_Marcacion === id || a.ID_Asistencia === id));
+    const marcacion = asistencias.find((a) => (a.ID_Marcacion === id || a.ID_Asistencia === id));
     
     if (!marcacion) {
       Alerts.error('Marcación no encontrada');
@@ -969,7 +969,7 @@ const ModuloAsistencia = (() => {
 
     const confirmed = await Alerts.confirm(
       `¿Eliminar la marcación de "${marcacion.Nombre_Trabajador}" - ${marcacion.Tipo_Marcacion}?\n\nHora: ${marcacion.Hora_Real?.substring(0, 5) || '--'}\nEsta acción no se puede deshacer.`,
-      'Confirmar eliminación'
+      'Confirmar eliminación',
     );
 
     if (!confirmed) return;

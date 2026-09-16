@@ -94,7 +94,7 @@ const ModuloCampo = (() => {
     const grid = document.getElementById('campo-mark-grid');
     if (!grid) return;
     const config = AppState.get('config') || window.DEFAULT_CONFIG || {};
-    grid.innerHTML = MARK_TYPES.map(m => {
+    grid.innerHTML = MARK_TYPES.map((m) => {
       const hora = config[m.horaKey] || m.fallback;
       return `
         <button type="button" class="campo-mark-btn ${m.cls}" data-tipo="${m.tipo}" aria-label="Marcar ${m.tipo.replace(/_/g, ' ')} a las ${hora}">
@@ -119,7 +119,7 @@ const ModuloCampo = (() => {
   }
 
   function _setScannerBusy(busy) {
-    ['campo-btn-scan', 'campo-btn-stop', 'campo-btn-switch-camera', 'campo-camera-select'].forEach(id => {
+    ['campo-btn-scan', 'campo-btn-stop', 'campo-btn-switch-camera', 'campo-camera-select'].forEach((id) => {
       const el = document.getElementById(id);
       if (el) el.disabled = busy;
     });
@@ -132,8 +132,8 @@ const ModuloCampo = (() => {
     if (!session || !select) return;
     try {
       const devices = await session.listDevices();
-      select.innerHTML = devices.map(d =>
-        `<option value="${esc(d.id)}">${esc(d.label)}</option>`
+      select.innerHTML = devices.map((d) =>
+        `<option value="${esc(d.id)}">${esc(d.label)}</option>`,
       ).join('');
       const multi = devices.length >= 2;
       select.hidden = !multi;
@@ -275,7 +275,7 @@ const ModuloCampo = (() => {
       else { photo.removeAttribute('src'); photo.style.display = 'none'; }
     }
     if (avatar) {
-      const ini = String(trabajador.Nombre_Completo || '?').trim().split(/\s+/).map(p => p[0]).slice(0, 2).join('').toUpperCase();
+      const ini = String(trabajador.Nombre_Completo || '?').trim().split(/\s+/).map((p) => p[0]).slice(0, 2).join('').toUpperCase();
       avatar.textContent = ini || '?';
     }
 
@@ -284,7 +284,7 @@ const ModuloCampo = (() => {
   }
 
   function _habilitaBotones(enable) {
-    document.querySelectorAll('.campo-mark-btn').forEach(btn => { btn.disabled = !enable; });
+    document.querySelectorAll('.campo-mark-btn').forEach((btn) => { btn.disabled = !enable; });
   }
 
   // ─── GPS / geocerca ──────────────────────────────────────────────────────
@@ -315,7 +315,7 @@ const ModuloCampo = (() => {
         const f = GPS.checkGeofence(
           { latitude: pos.latitude, longitude: pos.longitude },
           { latitude: s.center.lat, longitude: s.center.lon },
-          s.radius
+          s.radius,
         );
         info += f.inside ? ' · Dentro de geocerca' : ` · Fuera (${f.distance}m)`;
         if (gpsEl) gpsEl.classList.toggle('out-of-fence', !f.inside);
@@ -346,7 +346,7 @@ const ModuloCampo = (() => {
           dentroFence = GPS.checkGeofence(
             { latitude: lat, longitude: lon },
             { latitude: s.center.lat, longitude: s.center.lon },
-            s.radius
+            s.radius,
           ).inside;
         }
       } catch (_) { /* sin GPS → se marca sin ubicación */ }
@@ -390,14 +390,14 @@ const ModuloCampo = (() => {
     if (!list) return;
     const all    = AppState.get('asistencias') || [];
     const hoy    = AppState.today ? AppState.today() : new Date().toISOString().slice(0, 10);
-    const recent = all.filter(a => a.Fecha === hoy).slice(-6).reverse();
+    const recent = all.filter((a) => a.Fecha === hoy).slice(-6).reverse();
 
     if (!recent.length) {
       list.innerHTML = '<li class="campo-feed-empty">Aún no hay marcaciones hoy.</li>';
       return;
     }
-    const pendSet = new Set((API.getOfflineQueue ? API.getOfflineQueue() : []).map(q => q && q.payload && q.payload.ID_Marcacion));
-    list.innerHTML = recent.map(a => {
+    const pendSet = new Set((API.getOfflineQueue ? API.getOfflineQueue() : []).map((q) => q && q.payload && q.payload.ID_Marcacion));
+    list.innerHTML = recent.map((a) => {
       const pend = pendSet.has(a.ID_Marcacion) ? ' pending' : '';
       const hora = (a.Hora_Real || '').substring(0, 5);
       return `<li class="campo-feed-item${pend}">

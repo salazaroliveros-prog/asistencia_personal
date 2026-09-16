@@ -20,7 +20,7 @@
     healthy: false,
     lastCheck: 0,
     consecutiveFailures: 0,
-    latencyMs: 0
+    latencyMs: 0,
   };
 
   let authPersistenceReady = false;
@@ -35,7 +35,7 @@
     }
     return auth.setPersistence(persistence)
       .then(() => { authPersistenceReady = true; })
-      .catch(error => console.warn('[FirebaseClient] Persistencia Auth no disponible:', error));
+      .catch((error) => console.warn('[FirebaseClient] Persistencia Auth no disponible:', error));
   }
 
   // ─── Inicialización ─────────────────────────────────────────────────────
@@ -85,7 +85,7 @@
       _configureAuthPersistence();
       _initialized = true;
 
-      auth.onAuthStateChanged(user => {
+      auth.onAuthStateChanged((user) => {
         connectionState = user ? 'connected' : 'disconnected';
         if (user) startHealthCheck();
         else if (healthCheckInterval) {
@@ -152,7 +152,7 @@
           healthy: true,
           lastCheck: Date.now(),
           consecutiveFailures: 0,
-          latencyMs: latency
+          latencyMs: latency,
         };
         
         connectionState = latency < 1000 ? 'connected' : 'degraded';
@@ -194,7 +194,7 @@
         healthy: true,
         lastCheck: Date.now(),
         consecutiveFailures: 0,
-        latencyMs: latency
+        latencyMs: latency,
       };
       
       connectionState = latency < 1000 ? 'connected' : 'degraded';
@@ -228,7 +228,7 @@
     }
     
     const snapshot = await query.get();
-    return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    return snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
   }
 
   async function save(collection, id, data, merge = true) {
@@ -251,7 +251,7 @@
     
     const unsubscribe = db.collection(collection)
       .onSnapshot((snapshot) => {
-        const records = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        const records = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
         callback(records);
       }, (error) => {
         console.error(`[FirebaseClient] Error en suscripción ${collection}:`, error);
@@ -276,7 +276,7 @@
     if (!connectionPollInterval) {
       connectionPollInterval = setInterval(() => {
         const newState = getConnectionState();
-        connectionChangeListeners.forEach(cb => {
+        connectionChangeListeners.forEach((cb) => {
           try { cb(newState); } catch (e) { console.error('[FirebaseClient] Listener error:', e); }
         });
       }, 5000);
@@ -284,7 +284,7 @@
     
     // Return cleanup function
     return () => {
-      connectionChangeListeners = connectionChangeListeners.filter(cb => cb !== callback);
+      connectionChangeListeners = connectionChangeListeners.filter((cb) => cb !== callback);
       if (connectionChangeListeners.length === 0 && connectionPollInterval) {
         clearInterval(connectionPollInterval);
         connectionPollInterval = null;
@@ -379,7 +379,7 @@
     getCurrentUser,
     onAuthStateChanged,
     getConfig,
-    stop
+    stop,
   };
 
   // Auto-inicializar en cuanto el módulo se carga, pero solo marcar

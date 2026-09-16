@@ -171,7 +171,7 @@ const ModuloPersonal = (() => {
           _filteredPersonal = result.data;
           _filtrarTabla();
           // Sin toast en carga normal — solo si hay cambio real
-        if (window.Logger) window.Logger.info('ModuloPersonal', `${result.data.length} trabajadores cargados`);
+          if (window.Logger) window.Logger.info('ModuloPersonal', `${result.data.length} trabajadores cargados`);
         } else {
           Alerts.warning('No se pudo actualizar la lista: ' + (result.error || 'Error desconocido'));
         }
@@ -216,19 +216,19 @@ const ModuloPersonal = (() => {
     let data = AppState.get('personal') || [];
 
     if (search) {
-      data = data.filter(p =>
+      data = data.filter((p) =>
         (p.Nombre_Completo || '').toLowerCase().includes(search) ||
         (p.DPI_CUI         || '').includes(search) ||
-        (p.Puesto          || '').toLowerCase().includes(search)
+        (p.Puesto          || '').toLowerCase().includes(search),
       );
     }
 
     if (puesto) {
-      data = data.filter(p => p.Puesto === puesto);
+      data = data.filter((p) => p.Puesto === puesto);
     }
 
     if (estado) {
-      data = data.filter(p => p.Estado === estado);
+      data = data.filter((p) => p.Estado === estado);
     }
 
     _filteredPersonal = data;
@@ -259,22 +259,22 @@ const ModuloPersonal = (() => {
       return;
     }
 
-    tbody.innerHTML = data.map(p => {
+    tbody.innerHTML = data.map((p) => {
       const ini = inicialesDeNombre(p.Nombre_Completo);
       const col = colorPorPuesto(p.Puesto);
       return `
       <tr data-id="${window.CPC.StringHelpers.escHtml(p.ID_Trabajador)}" tabindex="0" aria-label="Abrir detalle de ${window.CPC.StringHelpers.escHtml(p.Nombre_Completo)}">
         <td data-label="Foto">
           ${p.Fotografia_URL
-            ? `<img src="${window.CPC.StringHelpers.escHtml(p.Fotografia_URL)}"
+    ? `<img src="${window.CPC.StringHelpers.escHtml(p.Fotografia_URL)}"
                    alt="Foto de ${window.CPC.StringHelpers.escHtml(p.Nombre_Completo)}"
                    class="worker-photo-small"
                    loading="lazy"
                    style="border-color:${col};"
                    onerror="this.onerror=null;this.style.display='none';this.nextElementSibling.style.display='flex';" />
                <div class="worker-photo-placeholder" style="border-color:${col};color:${col};font-size:var(--text-xs);font-weight:700;display:none;">${ini}</div>`
-            : `<div class="worker-photo-placeholder" style="border-color:${col};color:${col};font-size:var(--text-xs);font-weight:700;">${ini}</div>`
-          }
+    : `<div class="worker-photo-placeholder" style="border-color:${col};color:${col};font-size:var(--text-xs);font-weight:700;">${ini}</div>`
+  }
         </td>
         <td data-label="ID">
           <code style="font-family:var(--font-mono);font-size:var(--text-xs);color:var(--color-secondary)">
@@ -286,9 +286,9 @@ const ModuloPersonal = (() => {
         <td data-label="Puesto"><span class="badge badge-blue">${window.CPC.StringHelpers.escHtml(p.Puesto)}</span></td>
         <td data-label="Teléfono">
           ${p.Telefono
-            ? `<a href="tel:${window.CPC.StringHelpers.escHtml(p.Telefono)}" style="color:var(--color-secondary)">${window.CPC.StringHelpers.escHtml(p.Telefono)}</a>`
-            : '<span class="text-muted">—</span>'
-          }
+    ? `<a href="tel:${window.CPC.StringHelpers.escHtml(p.Telefono)}" style="color:var(--color-secondary)">${window.CPC.StringHelpers.escHtml(p.Telefono)}</a>`
+    : '<span class="text-muted">—</span>'
+  }
         </td>
         <td data-label="Estado">
           <span class="${p.Estado === 'Activo' ? 'estado-activo' : 'estado-inactivo'}">
@@ -345,7 +345,7 @@ const ModuloPersonal = (() => {
 
   function _abrirModalEditar(id) {
     const personal = AppState.get('personal') || [];
-    const trabajador = personal.find(p => p.ID_Trabajador === id);
+    const trabajador = personal.find((p) => p.ID_Trabajador === id);
     if (!trabajador) {
       Alerts.error('Trabajador no encontrado en cache. Actualiza la lista.');
       return;
@@ -415,7 +415,7 @@ const ModuloPersonal = (() => {
 
     if (isEdit) {
       // Edición: actualizar el registro existente
-      const idx = personal.findIndex(p => p.ID_Trabajador === payload.id);
+      const idx = personal.findIndex((p) => p.ID_Trabajador === payload.id);
       if (idx === -1) {
         return { success: false, error: 'Trabajador no encontrado en datos locales' };
       }
@@ -473,7 +473,7 @@ const ModuloPersonal = (() => {
     if (window.Logger) {
       window.Logger.info('ModuloPersonal', 'Iniciando guardado de trabajador', { 
         isEdit: !!_editingId,
-        hasPhoto: !!_fotoBase64
+        hasPhoto: !!_fotoBase64,
       });
     }
 
@@ -502,7 +502,7 @@ const ModuloPersonal = (() => {
       const firstError = validation.errors[0];
       if (window.Logger) {
         window.Logger.warn('ModuloPersonal', 'Validación de trabajador fallida', { 
-          error: firstError.error 
+          error: firstError.error, 
         });
       }
       Alerts.error(firstError.error, 'Error de validación');
@@ -515,12 +515,12 @@ const ModuloPersonal = (() => {
       if (window.Logger) {
         window.Logger.warn('ModuloPersonal', 'DPI duplicado detectado', { 
           dpi: payload.dpi,
-          existingWorker: dpiCheck.existingWorker.Nombre_Completo
+          existingWorker: dpiCheck.existingWorker.Nombre_Completo,
         });
       }
       Alerts.error(
         `El DPI ${payload.dpi} ya está registrado a nombre de "${dpiCheck.existingWorker.Nombre_Completo}" (${dpiCheck.existingWorker.ID_Trabajador}). No se permiten DPI duplicados.`,
-        'DPI duplicado'
+        'DPI duplicado',
       );
       return;
     }
@@ -537,7 +537,7 @@ const ModuloPersonal = (() => {
       if (result.success) {
         if (window.Logger) {
           window.Logger.info('ModuloPersonal', 'Trabajador guardado localmente', { 
-            isEdit: !!_editingId 
+            isEdit: !!_editingId, 
           });
         }
         Alerts.success(result.message);
@@ -546,7 +546,7 @@ const ModuloPersonal = (() => {
       } else {
         if (window.Logger) {
           window.Logger.error('ModuloPersonal', 'Error al guardar localmente', { 
-            error: result.error 
+            error: result.error, 
           });
         }
         Alerts.error(result.error || 'Error al guardar localmente', 'Error');
@@ -573,7 +573,7 @@ const ModuloPersonal = (() => {
         if (window.Logger) {
           window.Logger.info('ModuloPersonal', 'Trabajador guardado exitosamente en Firestore', { 
             isEdit: !!_editingId,
-            workerId: payload.id
+            workerId: payload.id,
           });
         }
         Alerts.success(result.message || (_editingId ? 'Trabajador actualizado' : 'Trabajador registrado'));
@@ -582,7 +582,7 @@ const ModuloPersonal = (() => {
       } else {
         if (window.Logger) {
           window.Logger.error('ModuloPersonal', 'Error al guardar en Firestore', { 
-            error: result.error 
+            error: result.error, 
           });
         }
         Alerts.error(result.error || 'Error al guardar', 'Error');
@@ -592,7 +592,7 @@ const ModuloPersonal = (() => {
       if (window.Logger) {
         window.Logger.error('ModuloPersonal', 'Excepción al guardar trabajador', { 
           error: err.message,
-          stack: err.stack
+          stack: err.stack,
         });
       }
       if (window.ErrorHandler) {
@@ -611,20 +611,20 @@ const ModuloPersonal = (() => {
   // ─────────────────────────────────────────────────────────────────────────
   async function _confirmarEliminar(id) {
     const personal = AppState.get('personal') || [];
-    const t = personal.find(p => p.ID_Trabajador === id);
+    const t = personal.find((p) => p.ID_Trabajador === id);
     if (!t) return;
 
     const confirmed = await Alerts.confirm(
       `¿Dar de baja a "${t.Nombre_Completo}"?\n\nEsto cambiará su estado a Inactivo${AppState.get('backendMode') === 'firestore' ? ' en Firestore' : ' localmente'}.`,
-      'Confirmar baja de trabajador'
+      'Confirmar baja de trabajador',
     );
 
     if (!confirmed) return;
 
     // ── Modo offline ────────────────────────────────────────────────────────
     if (AppState.get('backendMode') !== 'firestore' || !AppState.get('connected')) {
-      const lista = personal.map(p =>
-        p.ID_Trabajador === id ? { ...p, Estado: 'Inactivo' } : p
+      const lista = personal.map((p) =>
+        p.ID_Trabajador === id ? { ...p, Estado: 'Inactivo' } : p,
       );
       AppState.set('personal', lista);
       try { localStorage.setItem(LS_KEYS.PERSONAL_CACHE, JSON.stringify(lista)); } catch (e) {}
@@ -657,7 +657,7 @@ const ModuloPersonal = (() => {
   // ─────────────────────────────────────────────────────────────────────────
   function _abrirModalCarne(id) {
     const personal = AppState.get('personal') || [];
-    const t = personal.find(p => p.ID_Trabajador === id);
+    const t = personal.find((p) => p.ID_Trabajador === id);
     if (!t) {
       Alerts.error('Trabajador no encontrado');
       return;
@@ -836,7 +836,7 @@ const ModuloPersonal = (() => {
         // Reintentar sin restricciones de facing mode
         try {
           _cameraStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
-          if (videoEl) { videoEl.srcObject = _cameraStream; videoEl.play().catch(e => console.warn('[Personal] Error reproduciendo video:', e.message)); }
+          if (videoEl) { videoEl.srcObject = _cameraStream; videoEl.play().catch((e) => console.warn('[Personal] Error reproduciendo video:', e.message)); }
           if (statusLabel) statusLabel.textContent = 'Cámara activa';
           return;
         } catch (_) { msg = 'No se pudo configurar la cámara. Intenta voltear.'; }
@@ -848,7 +848,7 @@ const ModuloPersonal = (() => {
   /** Detiene el stream y libera la cámara. */
   function _detenerStream() {
     if (_cameraStream) {
-      _cameraStream.getTracks().forEach(t => t.stop());
+      _cameraStream.getTracks().forEach((t) => t.stop());
       _cameraStream = null;
     }
     const videoEl = document.getElementById('camera-video');
@@ -1048,8 +1048,8 @@ const ModuloPersonal = (() => {
     if (clean.length !== 13) return { duplicated: false, existingWorker: null };
 
     const personal = AppState.get('personal') || [];
-    const existing = personal.find(p =>
-      p.DPI_CUI === clean && p.ID_Trabajador !== excludeId
+    const existing = personal.find((p) =>
+      p.DPI_CUI === clean && p.ID_Trabajador !== excludeId,
     );
     return { duplicated: !!existing, existingWorker: existing };
   }
@@ -1148,7 +1148,7 @@ const ModuloPersonal = (() => {
 
   function _abrirModalHistorial(id) {
     const personal  = AppState.get('personal') || [];
-    const trabajador = personal.find(p => p.ID_Trabajador === id);
+    const trabajador = personal.find((p) => p.ID_Trabajador === id);
     if (!trabajador) { Alerts.error('Trabajador no encontrado'); return; }
 
     _historialWorkerId = id;
@@ -1227,7 +1227,7 @@ const ModuloPersonal = (() => {
       }
 
       // Filtrar solo las del trabajador
-      const misMarcaciones = asistencias.filter(a => a.ID_Trabajador === workerId);
+      const misMarcaciones = asistencias.filter((a) => a.ID_Trabajador === workerId);
 
       // ── Calcular estadísticas ──────────────────────────────────────────
       const personal  = (AppState.get('personal') || []);
@@ -1235,11 +1235,11 @@ const ModuloPersonal = (() => {
 
       // Días con al menos una marcación de Entrada
       const diasConEntrada = new Set(
-        misMarcaciones.filter(a => a.Tipo_Marcacion === 'Entrada').map(a => a.Fecha)
+        misMarcaciones.filter((a) => a.Tipo_Marcacion === 'Entrada').map((a) => a.Fecha),
       );
-      const tardanzas = misMarcaciones.filter(a =>
+      const tardanzas = misMarcaciones.filter((a) =>
         a.Tipo_Marcacion === 'Entrada' &&
-        (a.Estado_Marcacion === 'Atraso' || a.Estado_Marcacion === 'Tolerancia')
+        (a.Estado_Marcacion === 'Atraso' || a.Estado_Marcacion === 'Tolerancia'),
       ).length;
       const horasExtra = misMarcaciones.reduce((sum, a) => sum + (parseFloat(a.Horas_Extra) || 0), 0);
       const ausencias  = Math.max(0, diasRango - diasConEntrada.size);
@@ -1263,7 +1263,7 @@ const ModuloPersonal = (() => {
 
       // ── Agrupar por día para el timeline ──────────────────────────────
       const porDia = {};
-      misMarcaciones.forEach(a => {
+      misMarcaciones.forEach((a) => {
         if (!porDia[a.Fecha]) porDia[a.Fecha] = [];
         porDia[a.Fecha].push(a);
       });
@@ -1291,17 +1291,17 @@ const ModuloPersonal = (() => {
         'Salida_Obra':    'Salida Obra',
       };
 
-      const html = fechasOrdenadas.map(fecha => {
+      const html = fechasOrdenadas.map((fecha) => {
         const marcsDia = porDia[fecha].sort((a, b) => (a.Hora_Real || '').localeCompare(b.Hora_Real || ''));
         const fechaFmt = new Date(fecha + 'T12:00:00').toLocaleDateString('es-GT', {
           weekday: 'long', day: 'numeric', month: 'long',
         });
 
-        const tieneEntrada = marcsDia.some(m => m.Tipo_Marcacion === 'Entrada');
-        const tieneSalida  = marcsDia.some(m => m.Tipo_Marcacion === 'Salida_Obra');
-        const estadosDia   = marcsDia.filter(m => m.Estado_Marcacion).map(m => m.Estado_Marcacion);
-        const tieneAtraso  = estadosDia.some(e => e === 'Atraso');
-        const tieneToler   = estadosDia.some(e => e === 'Tolerancia');
+        const tieneEntrada = marcsDia.some((m) => m.Tipo_Marcacion === 'Entrada');
+        const tieneSalida  = marcsDia.some((m) => m.Tipo_Marcacion === 'Salida_Obra');
+        const estadosDia   = marcsDia.filter((m) => m.Estado_Marcacion).map((m) => m.Estado_Marcacion);
+        const tieneAtraso  = estadosDia.some((e) => e === 'Atraso');
+        const tieneToler   = estadosDia.some((e) => e === 'Tolerancia');
 
         const badgeColor = tieneAtraso ? 'badge-red' : tieneToler ? 'badge-amber' : 'badge-green';
         const badgeText  = tieneAtraso ? 'Tardanza' : tieneToler ? 'Tolerancia' : 'Puntual';
@@ -1319,7 +1319,7 @@ const ModuloPersonal = (() => {
               </div>
             </div>
             <div class="historial-timeline">
-              ${marcsDia.map(m => `
+              ${marcsDia.map((m) => `
                 <div class="historial-marcacion">
                   <span class="historial-hora">${m.Hora_Real ? m.Hora_Real.substring(0,5) : '--:--'}</span>
                   <span class="historial-icono" style="color:${estadoColor[m.Estado_Marcacion] || 'var(--color-text-muted)'}">

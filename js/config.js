@@ -138,7 +138,7 @@ function colorPorPuesto(puesto) {
  */
 function inicialesDeNombre(nombre) {
   if (!nombre) return '??';
-  return nombre.split(' ').slice(0, 2).map(n => n[0]).join('').toUpperCase();
+  return nombre.split(' ').slice(0, 2).map((n) => n[0]).join('').toUpperCase();
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -150,7 +150,7 @@ const DEPARTAMENTOS_GT = [
   'Izabal', 'Jalapa', 'Jutiapa', 'Petén',
   'Quetzaltenango', 'Quiché', 'Retalhuleu', 'Sacatepéquez',
   'San Marcos', 'Santa Rosa', 'Sololá', 'Suchitepéquez',
-  'Totonicapán', 'Zacapa'
+  'Totonicapán', 'Zacapa',
 ];
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -261,7 +261,7 @@ const AppState = (() => {
       
       _state[key] = value;
       if (_listeners[key]) {
-        _listeners[key].forEach(fn => {
+        _listeners[key].forEach((fn) => {
           try { fn(value, prev); } catch (e) { console.error('AppState listener error:', e); }
         });
       }
@@ -294,7 +294,7 @@ const AppState = (() => {
      */
     off(key, callback) {
       if (_listeners[key]) {
-        _listeners[key] = _listeners[key].filter(fn => fn !== callback);
+        _listeners[key] = _listeners[key].filter((fn) => fn !== callback);
       }
     },
 
@@ -327,7 +327,7 @@ window.AppState = AppState;
     const tieneDatosDemo = localStorage.getItem('cpc_demo_loaded') === '1';
 
     if (tieneDatosDemo) {
-      ['cpc_demo_loaded', 'cpc_personal_cache', 'cpc_attendance_cache', 'cpc_last_sync', 'cpc_config'].forEach(k => {
+      ['cpc_demo_loaded', 'cpc_personal_cache', 'cpc_attendance_cache', 'cpc_last_sync', 'cpc_config'].forEach((k) => {
         localStorage.removeItem(k);
       });
       localStorage.removeItem(LS_KEYS.FIREBASE_CONFIG);

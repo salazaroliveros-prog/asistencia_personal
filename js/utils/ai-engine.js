@@ -114,7 +114,7 @@ const AIEngine = (() => {
       overallHealth: 'unknown',
       components: {},
       recommendations: [],
-      autoHealingActions: []
+      autoHealingActions: [],
     };
 
     // Verificar diagnóstico de hardware
@@ -124,11 +124,11 @@ const AIEngine = (() => {
       healthReport.overallHealth = diagnostics.overallHealth;
       
       // Generar recomendaciones
-      healthReport.recommendations.push(...diagnostics.criticalIssues.map(issue => 
-        `CRÍTICO: ${issue}`
+      healthReport.recommendations.push(...diagnostics.criticalIssues.map((issue) => 
+        `CRÍTICO: ${issue}`,
       ));
-      healthReport.recommendations.push(...diagnostics.warnings.map(warning => 
-        `ADVERTENCIA: ${warning}`
+      healthReport.recommendations.push(...diagnostics.warnings.map((warning) => 
+        `ADVERTENCIA: ${warning}`,
       ));
     }
 
@@ -138,8 +138,8 @@ const AIEngine = (() => {
       healthReport.components.ai = aiLogs;
       
       if (aiLogs.alerts.length > 0) {
-        healthReport.recommendations.push(...aiLogs.alerts.map(alert => 
-          `IA: ${alert.message}`
+        healthReport.recommendations.push(...aiLogs.alerts.map((alert) => 
+          `IA: ${alert.message}`,
         ));
       }
     }
@@ -179,7 +179,7 @@ const AIEngine = (() => {
       ai: {},
       hardware: {},
       health: {},
-      recommendations: []
+      recommendations: [],
     };
 
     // Reporte de IA
@@ -188,7 +188,7 @@ const AIEngine = (() => {
         logs: window.AILogger.getLogs(),
         errorHistory: window.AILogger.getErrorHistory(),
         patterns: window.AILogger.analyzePatterns(),
-        health: window.AILogger.generateHealthReport()
+        health: window.AILogger.generateHealthReport(),
       };
     }
 
@@ -221,7 +221,7 @@ const AIEngine = (() => {
         priority: 'critical',
         category: 'hardware',
         message: 'Problemas críticos de hardware detectados',
-        actions: report.hardware.manualFixRequired
+        actions: report.hardware.manualFixRequired,
       });
     }
 
@@ -231,7 +231,7 @@ const AIEngine = (() => {
         priority: 'high',
         category: 'software',
         message: 'Problemas de software detectados',
-        actions: report.ai.health.suggestions
+        actions: report.ai.health.suggestions,
       });
     }
 
@@ -241,7 +241,7 @@ const AIEngine = (() => {
         priority: 'medium',
         category: 'performance',
         message: 'Alta actividad de errores detectada',
-        actions: ['Revisar configuración del sistema', 'Verificar conectividad', 'Considerar reiniciar aplicación']
+        actions: ['Revisar configuración del sistema', 'Verificar conectividad', 'Considerar reiniciar aplicación'],
       });
     }
 
@@ -275,7 +275,7 @@ const AIEngine = (() => {
       initialized,
       autoHealingEnabled,
       learningEnabled,
-      healthMonitoring: healthCheckInterval !== null
+      healthMonitoring: healthCheckInterval !== null,
     };
   }
 
@@ -304,7 +304,7 @@ const AIEngine = (() => {
     setAutoHealing,
     setLearning,
     getStatus,
-    cleanup
+    cleanup,
   };
 })();
 

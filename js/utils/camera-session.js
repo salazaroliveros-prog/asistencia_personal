@@ -36,7 +36,7 @@
    */
   function stopTracks(stream) {
     if (!stream || typeof stream.getTracks !== 'function') return;
-    stream.getTracks().forEach(track => {
+    stream.getTracks().forEach((track) => {
       try { track.stop(); } catch (_) { /* Track ya detenido. */ }
     });
   }
@@ -113,7 +113,7 @@
     if (!mediaDevices || typeof mediaDevices.enumerateDevices !== 'function') return [];
     const devices = await mediaDevices.enumerateDevices();
     return devices
-      .filter(device => device.kind === 'videoinput')
+      .filter((device) => device.kind === 'videoinput')
       .map((device, index) => ({
         id: device.deviceId,
         label: device.label || `Cámara ${index + 1}`,
@@ -122,7 +122,7 @@
 
   function nextDevice(devices, currentId) {
     if (!Array.isArray(devices) || devices.length < 2) return null;
-    const current = devices.findIndex(device => device.id === currentId);
+    const current = devices.findIndex((device) => device.id === currentId);
     return devices[(current + 1 + devices.length) % devices.length];
   }
 
@@ -183,7 +183,7 @@
     }
     candidates.push({ facingMode: { ideal: 'environment' } });
     return candidates.filter((candidate, index, all) =>
-      index === all.findIndex(item => JSON.stringify(item) === JSON.stringify(candidate))
+      index === all.findIndex((item) => JSON.stringify(item) === JSON.stringify(candidate)),
     );
   }
 
@@ -216,7 +216,7 @@
             candidate,
             { fps: 10, qrbox: { width: 220, height: 220 }, aspectRatio: 1, disableFlip: false, ...config },
             onSuccess,
-            onError || (() => {})
+            onError || (() => {}),
           );
           if (token !== operation) {
             await dispose(instance);

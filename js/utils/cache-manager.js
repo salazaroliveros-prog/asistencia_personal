@@ -23,7 +23,7 @@ const CacheManager = (() => {
     // Memory cache
     memoryCache.set(key, {
       value,
-      expires
+      expires,
     });
     
     // LocalStorage cache for persistence
@@ -31,7 +31,7 @@ const CacheManager = (() => {
       const cacheItem = {
         value,
         expires,
-        timestamp: Date.now()
+        timestamp: Date.now(),
       };
       localStorage.setItem(`${CACHE_PREFIX}${key}`, JSON.stringify(cacheItem));
     } catch (e) {
@@ -102,8 +102,8 @@ const CacheManager = (() => {
     
     try {
       Object.keys(localStorage)
-        .filter(k => k.startsWith(CACHE_PREFIX))
-        .forEach(k => localStorage.removeItem(k));
+        .filter((k) => k.startsWith(CACHE_PREFIX))
+        .forEach((k) => localStorage.removeItem(k));
     } catch (e) {
       console.warn('[CacheManager] Cache clear failed:', e);
     }
@@ -115,14 +115,14 @@ const CacheManager = (() => {
    */
   function getStats() {
     const memKeys = Array.from(memoryCache.keys());
-    const localStorageKeys = Object.keys(localStorage).filter(k => k.startsWith(CACHE_PREFIX));
+    const localStorageKeys = Object.keys(localStorage).filter((k) => k.startsWith(CACHE_PREFIX));
     
     return {
       memoryCacheSize: memoryCache.size,
       localStorageCacheSize: localStorageKeys.length,
       totalCacheSize: memKeys.length + localStorageKeys.length,
       memoryKeys: memKeys,
-      localStorageKeys: localStorageKeys.map(k => k.replace(CACHE_PREFIX, ''))
+      localStorageKeys: localStorageKeys.map((k) => k.replace(CACHE_PREFIX, '')),
     };
   }
 
@@ -142,8 +142,8 @@ const CacheManager = (() => {
     // Clean localStorage cache
     try {
       Object.keys(localStorage)
-        .filter(k => k.startsWith(CACHE_PREFIX))
-        .forEach(k => {
+        .filter((k) => k.startsWith(CACHE_PREFIX))
+        .forEach((k) => {
           try {
             const parsed = JSON.parse(localStorage.getItem(k));
             if (parsed.expires <= now) {
@@ -204,7 +204,7 @@ const CacheManager = (() => {
     getStats, 
     cleanExpired,
     getOrSet,
-    checkQuota
+    checkQuota,
   };
 })();
 

@@ -7,7 +7,7 @@
 
 const UpdateManager = (() => {
   let _registration = null;
-  let _deferredPrompt = null;
+  const _deferredPrompt = null;
   let _updateAvailable = false;
   let _dismissedUntil = null;
   let _checkIntervalId = null;
@@ -31,7 +31,7 @@ const UpdateManager = (() => {
 
     // Registrar service worker
     navigator.serviceWorker.register('/service-worker.js')
-      .then(registration => {
+      .then((registration) => {
         _registration = registration;
 
         // Verificar actualizaciones periódicamente
@@ -45,7 +45,7 @@ const UpdateManager = (() => {
         // Escuchar mensajes del service worker
         navigator.serviceWorker.addEventListener('message', handleServiceWorkerMessage);
       })
-      .catch(error => {
+      .catch((error) => {
         console.error('[UpdateManager] Error registrando Service Worker:', error);
       });
 
@@ -93,9 +93,9 @@ const UpdateManager = (() => {
    */
   function checkForUpdates() {
     if (_registration) {
-      _registration.update().catch(error => {
-          console.error('[UpdateManager] Error verificando actualización:', error);
-        });
+      _registration.update().catch((error) => {
+        console.error('[UpdateManager] Error verificando actualización:', error);
+      });
     }
   }
 
@@ -189,7 +189,7 @@ const UpdateManager = (() => {
     showUpdateBanner,
     hideUpdateBanner,
     applyUpdate,
-    dismissUpdate
+    dismissUpdate,
   };
 })();
 

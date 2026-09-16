@@ -181,8 +181,8 @@ const ModuloAjustes = (() => {
         }
         Alerts.success('Firestore conectado y sincronización en tiempo real activa.');
         // Cargar datos iniciales desde Firestore
-        API.obtenerPersonal().catch(err => console.warn('[Ajustes] Error cargando personal tras conexión:', err.message));
-        API.obtenerConfiguracion().catch(err => console.warn('[Ajustes] Error cargando config tras conexión:', err.message));
+        API.obtenerPersonal().catch((err) => console.warn('[Ajustes] Error cargando personal tras conexión:', err.message));
+        API.obtenerConfiguracion().catch((err) => console.warn('[Ajustes] Error cargando config tras conexión:', err.message));
       } else {
         AppState.set('backendMode', 'local');
         AppState.set('connected', false);
@@ -431,7 +431,7 @@ const ModuloAjustes = (() => {
 
         const confirmed = await Alerts.confirm(
           `¿Restaurar configuración del backup del ${new Date(backup.fecha).toLocaleString('es-GT')}?\n\nEsto sobreescribirá la configuración actual.`,
-          'Restaurar Backup'
+          'Restaurar Backup',
         );
 
         if (!confirmed) return;
@@ -679,7 +679,7 @@ const ModuloAjustes = (() => {
         'Escáner de Campo — Control Personal\n\n' +
         'Instalá la subaplicación de escaneo QR desde el siguiente link:\n' +
         url + '\n\n' +
-        'PIN de acceso: consultá al administrador.'
+        'PIN de acceso: consultá al administrador.',
       );
       const waUrl = `https://wa.me/?text=${mensaje}`;
       window.open(waUrl, '_blank', 'noopener,noreferrer');
@@ -711,13 +711,13 @@ const ModuloAjustes = (() => {
       'WhatsApp',
       'Direccion',
       'Estado',
-      'Fecha_Registro'
+      'Fecha_Registro',
     ];
 
     // Convertir datos a CSV
     const csvRows = [headers.join(',')];
     
-    personal.forEach(trabajador => {
+    personal.forEach((trabajador) => {
       const row = [
         trabajador.ID_Trabajador || '',
         `"${(trabajador.Nombre_Completo || '').replace(/"/g, '""')}"`,
@@ -728,7 +728,7 @@ const ModuloAjustes = (() => {
         trabajador.WhatsApp || '',
         `"${(trabajador.Direccion || '').replace(/"/g, '""')}"`,
         trabajador.Estado || 'Activo',
-        trabajador.Fecha_Registro || ''
+        trabajador.Fecha_Registro || '',
       ];
       csvRows.push(row.join(','));
     });
@@ -773,13 +773,13 @@ const ModuloAjustes = (() => {
       'Metodo_Registro',
       'Horas_Extra',
       'GPS_Latitud',
-      'GPS_Longitud'
+      'GPS_Longitud',
     ];
 
     // Convertir datos a CSV
     const csvRows = [headers.join(',')];
     
-    asistencias.forEach(asistencia => {
+    asistencias.forEach((asistencia) => {
       const row = [
         asistencia.ID_Marcacion || asistencia.ID_Asistencia || '',
         asistencia.ID_Trabajador || '',
@@ -792,7 +792,7 @@ const ModuloAjustes = (() => {
         `"${(asistencia.Metodo_Registro || '').replace(/"/g, '""')}"`,
         asistencia.Horas_Extra || '0',
         asistencia.GPS_Latitud || '',
-        asistencia.GPS_Longitud || ''
+        asistencia.GPS_Longitud || '',
       ];
       csvRows.push(row.join(','));
     });

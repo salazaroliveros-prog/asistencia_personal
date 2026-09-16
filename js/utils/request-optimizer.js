@@ -84,8 +84,8 @@ const RequestOptimizer = (() => {
    * Clear all pending timers and requests
    */
   function clearAll() {
-    debounceTimers.forEach(timer => clearTimeout(timer));
-    throttleTimers.forEach(timer => clearTimeout(timer));
+    debounceTimers.forEach((timer) => clearTimeout(timer));
+    throttleTimers.forEach((timer) => clearTimeout(timer));
     
     debounceTimers.clear();
     throttleTimers.clear();
@@ -120,6 +120,6 @@ const RequestOptimizer = (() => {
     deduplicateRequest, 
     clearAll, 
     clearDebounce, 
-    clearThrottle 
+    clearThrottle, 
   };
 })();

@@ -75,7 +75,7 @@ const DataValidator = (() => {
       
       // Validate time formats
       const timeFields = ['Hora_Entrada', 'Hora_Salida_Receso', 'Hora_Regreso_Receso', 'Hora_Salida_Obra'];
-      timeFields.forEach(field => {
+      timeFields.forEach((field) => {
         if (data[field] && !/^([01]?[0-9]|2[0-3]):[0-5][0-9]$/.test(data[field])) {
           errors.push(`${field} debe tener formato HH:MM`);
         }
@@ -113,7 +113,7 @@ const DataValidator = (() => {
       }
       
       return { valid: errors.length === 0, errors };
-    }
+    },
   };
 
   /**
@@ -177,6 +177,6 @@ const DataValidator = (() => {
     validateAttendance, 
     validateWorker, 
     validateConfig,
-    formatErrors 
+    formatErrors, 
   };
 })();

@@ -229,7 +229,7 @@ function doPost(e) {
   // ─── Navegación entre pasos ───────────────────────────────────────────────
   function _goToStep(stepNumber) {
     // Ocultar todos los pasos
-    document.querySelectorAll('.gas-step').forEach(step => {
+    document.querySelectorAll('.gas-step').forEach((step) => {
       step.classList.remove('active');
       step.hidden = true;
     });
@@ -396,7 +396,7 @@ function doPost(e) {
   // ─── Exportar funciones públicas ───────────────────────────────────────────
   return {
     init,
-    open
+    open,
   };
 })();
 

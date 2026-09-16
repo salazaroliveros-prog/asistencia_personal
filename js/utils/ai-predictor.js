@@ -6,13 +6,13 @@
 
 const AIPredictor = (() => {
   let predictionHistory = [];
-  let patterns = [];
+  const patterns = [];
   let thresholds = {
     errorRate: 0.1,        // 10% de tasa de error
     memoryUsage: 0.8,     // 80% de uso de memoria
     networkLatency: 5000, // 5 segundos de latencia
     storageUsage: 0.9,    // 90% de uso de almacenamiento
-    batteryLevel: 0.2      // 20% de batería
+    batteryLevel: 0.2,      // 20% de batería
   };
 
   /**
@@ -26,7 +26,7 @@ const AIPredictor = (() => {
       predictedErrors: [],
       timeFrame: '1 hora',
       confidence: 0,
-      recommendations: []
+      recommendations: [],
     };
 
     if (!Array.isArray(errorHistory) || errorHistory.length === 0) {
@@ -35,7 +35,7 @@ const AIPredictor = (() => {
 
     // Analizar frecuencia de errores por tipo
     const errorFrequency = {};
-    errorHistory.forEach(error => {
+    errorHistory.forEach((error) => {
       const type = error.type || 'unknown';
       errorFrequency[type] = (errorFrequency[type] || 0) + 1;
     });
@@ -47,10 +47,10 @@ const AIPredictor = (() => {
 
     if (recurrentErrors.length > 0) {
       prediction.likelihood = Math.min(0.9, recurrentErrors.length * 0.3);
-      prediction.predictedErrors = recurrentErrors.map(r => r.type);
+      prediction.predictedErrors = recurrentErrors.map((r) => r.type);
       prediction.confidence = 0.7;
-      prediction.recommendations = recurrentErrors.map(r => 
-        `Prevenir ${r.type}: Verificar ${getErrorPreventionTip(r.type)}`
+      prediction.recommendations = recurrentErrors.map((r) => 
+        `Prevenir ${r.type}: Verificar ${getErrorPreventionTip(r.type)}`,
       );
     }
 
@@ -80,7 +80,7 @@ const AIPredictor = (() => {
       'memory': 'uso de memoria y leaks',
       'firebase': 'conexión Firebase y límites',
       'scanner': 'configuración de escáner y calidad de imagen',
-      'unknown': 'configuración general del sistema'
+      'unknown': 'configuración general del sistema',
     };
     return tips[errorType] || tips.unknown;
   }
@@ -95,7 +95,7 @@ const AIPredictor = (() => {
       peakHours: [],
       frequentActions: [],
       resourceUsage: {},
-      trends: []
+      trends: [],
     };
 
     if (!usageData) return patterns;
@@ -103,7 +103,7 @@ const AIPredictor = (() => {
     // Analizar horarios pico
     if (usageData.timestamps) {
       const hourCounts = {};
-      usageData.timestamps.forEach(ts => {
+      usageData.timestamps.forEach((ts) => {
         const hour = new Date(ts).getHours();
         hourCounts[hour] = (hourCounts[hour] || 0) + 1;
       });
@@ -117,7 +117,7 @@ const AIPredictor = (() => {
     // Analizar acciones frecuentes
     if (usageData.actions) {
       const actionCounts = {};
-      usageData.actions.forEach(action => {
+      usageData.actions.forEach((action) => {
         actionCounts[action] = (actionCounts[action] || 0) + 1;
       });
 
@@ -132,7 +132,7 @@ const AIPredictor = (() => {
       patterns.resourceUsage = {
         memory: usageData.resources.memory || 0,
         storage: usageData.resources.storage || 0,
-        network: usageData.resources.network || 0
+        network: usageData.resources.network || 0,
       };
     }
 
@@ -149,7 +149,7 @@ const AIPredictor = (() => {
     const anomalies = {
       detected: [],
       severity: 'none',
-      actions: []
+      actions: [],
     };
 
     if (!currentMetrics || !baselineMetrics) {
@@ -162,7 +162,7 @@ const AIPredictor = (() => {
         type: 'memory',
         value: currentMetrics.memoryUsage,
         baseline: baselineMetrics.memoryUsage,
-        severity: 'high'
+        severity: 'high',
       });
       anomalies.actions.push('Limpiar caché y reiniciar si el uso de memoria es crítico');
     }
@@ -173,7 +173,7 @@ const AIPredictor = (() => {
         type: 'network',
         value: currentMetrics.networkLatency,
         baseline: baselineMetrics.networkLatency,
-        severity: 'medium'
+        severity: 'medium',
       });
       anomalies.actions.push('Verificar conectividad y considerar modo offline');
     }
@@ -184,15 +184,15 @@ const AIPredictor = (() => {
         type: 'errors',
         value: currentMetrics.errorRate,
         baseline: baselineMetrics.errorRate,
-        severity: 'high'
+        severity: 'high',
       });
       anomalies.actions.push('Investigar causa del aumento en errores');
     }
 
     // Determinar severidad general
-    if (anomalies.detected.some(a => a.severity === 'high')) {
+    if (anomalies.detected.some((a) => a.severity === 'high')) {
       anomalies.severity = 'high';
-    } else if (anomalies.detected.some(a => a.severity === 'medium')) {
+    } else if (anomalies.detected.some((a) => a.severity === 'medium')) {
       anomalies.severity = 'medium';
     } else if (anomalies.detected.length > 0) {
       anomalies.severity = 'low';
@@ -217,7 +217,7 @@ const AIPredictor = (() => {
         type: 'performance',
         priority: 'high',
         action: 'Reducir calidad de video y activar modo de ahorro de memoria',
-        reason: 'Uso de memoria crítico'
+        reason: 'Uso de memoria crítico',
       });
     }
 
@@ -226,7 +226,7 @@ const AIPredictor = (() => {
         type: 'network',
         priority: 'medium',
         action: 'Activar modo offline y sincronización diferida',
-        reason: 'Latencia de red alta'
+        reason: 'Latencia de red alta',
       });
     }
 
@@ -235,7 +235,7 @@ const AIPredictor = (() => {
         type: 'storage',
         priority: 'high',
         action: 'Limpiar caché y datos antiguos',
-        reason: 'Almacenamiento casi lleno'
+        reason: 'Almacenamiento casi lleno',
       });
     }
 
@@ -245,7 +245,7 @@ const AIPredictor = (() => {
         type: 'battery',
         priority: 'medium',
         action: 'Reducir FPS y optimizar para ahorro de batería',
-        reason: 'Nivel de batería bajo'
+        reason: 'Nivel de batería bajo',
       });
     }
 
@@ -255,7 +255,7 @@ const AIPredictor = (() => {
         type: 'reliability',
         priority: 'high',
         action: 'Activar modo seguro y limitar operaciones críticas',
-        reason: 'Tasa de errores alta'
+        reason: 'Tasa de errores alta',
       });
     }
 
@@ -274,7 +274,7 @@ const AIPredictor = (() => {
     const analysis = {
       score: 100,
       factors: [],
-      status: 'excellent'
+      status: 'excellent',
     };
 
     if (!metrics) return analysis;
@@ -286,7 +286,7 @@ const AIPredictor = (() => {
       analysis.factors.push({
         name: 'memory',
         score: memoryScore,
-        impact: 0.3
+        impact: 0.3,
       });
     }
 
@@ -297,7 +297,7 @@ const AIPredictor = (() => {
       analysis.factors.push({
         name: 'network',
         score: networkScore,
-        impact: 0.25
+        impact: 0.25,
       });
     }
 
@@ -308,7 +308,7 @@ const AIPredictor = (() => {
       analysis.factors.push({
         name: 'errors',
         score: errorScore,
-        impact: 0.35
+        impact: 0.35,
       });
     }
 
@@ -339,7 +339,7 @@ const AIPredictor = (() => {
       videoQuality: 'balanced',
       cacheSize: 50,
       syncInterval: 30000,
-      performanceMode: 'balanced'
+      performanceMode: 'balanced',
     };
 
     if (!systemState) return parameters;
@@ -390,7 +390,7 @@ const AIPredictor = (() => {
       direction: 'stable',
       changeRate: 0,
       prediction: null,
-      confidence: 0
+      confidence: 0,
     };
 
     if (!Array.isArray(dataPoints) || dataPoints.length < 2) {
@@ -440,7 +440,7 @@ const AIPredictor = (() => {
         type: 'error_prediction',
         severity: predictions.errorPrediction.likelihood > 0.7 ? 'high' : 'medium',
         message: `Probabilidad ${(predictions.errorPrediction.likelihood * 100).toFixed(0)}% de errores en ${predictions.errorPrediction.timeFrame}`,
-        recommendations: predictions.errorPrediction.recommendations
+        recommendations: predictions.errorPrediction.recommendations,
       });
     }
 
@@ -451,7 +451,7 @@ const AIPredictor = (() => {
         severity: predictions.anomalies.severity,
         message: `${predictions.anomalies.detected.length} anomalías detectadas`,
         details: predictions.anomalies.detected,
-        actions: predictions.anomalies.actions
+        actions: predictions.anomalies.actions,
       });
     }
 
@@ -461,7 +461,7 @@ const AIPredictor = (() => {
         type: 'performance',
         severity: predictions.performance.score < 50 ? 'high' : 'medium',
         message: `Rendimiento del sistema: ${predictions.performance.status} (${predictions.performance.score.toFixed(0)}/100)`,
-        factors: predictions.performance.factors
+        factors: predictions.performance.factors,
       });
     }
 
@@ -483,7 +483,7 @@ const AIPredictor = (() => {
       performance: null,
       parameters: null,
       trends: null,
-      alerts: []
+      alerts: [],
     };
 
     if (!systemData) return analysis;
@@ -571,7 +571,7 @@ const AIPredictor = (() => {
     runPredictiveAnalysis,
     getPredictionHistory,
     setThresholds,
-    getThresholds
+    getThresholds,
   };
 })();
 

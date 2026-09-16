@@ -85,7 +85,7 @@ const Validators = (() => {
 
     return {
       valid: errors.length === 0,
-      errors
+      errors,
     };
   }
 
@@ -137,7 +137,7 @@ const Validators = (() => {
 
     return {
       valid: errors.length === 0,
-      errors
+      errors,
     };
   }
 
@@ -182,7 +182,7 @@ const Validators = (() => {
 
     return {
       valid: errors.length === 0,
-      errors
+      errors,
     };
   }
 
@@ -226,7 +226,7 @@ const Validators = (() => {
     const digits = dpi.split('').map(Number);
     
     // Verificar que todos sean dígitos
-    if (digits.some(d => isNaN(d))) {
+    if (digits.some((d) => isNaN(d))) {
       return { valid: false };
     }
 
@@ -564,7 +564,7 @@ const Validators = (() => {
 
       return {
         valid: errors.length === 0,
-        errors
+        errors,
       };
     },
 

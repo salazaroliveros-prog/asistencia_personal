@@ -60,11 +60,11 @@ const Constants = (() => {
     FACING_MODE: 'environment',   // Modo cámara (trasera)
     MAX_RESOLUTION: {             // Resolución máxima
       width: 1280,
-      height: 720
+      height: 720,
     },
     MIN_RESOLUTION: {             // Resolución mínima
       width: 640,
-      height: 480
+      height: 480,
     },
   };
 

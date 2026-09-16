@@ -182,11 +182,11 @@ const QRGenerator = (() => {
     const personal = AppState.get('personal') || [];
 
     // Buscar por ID primero
-    let trabajador = personal.find(p => p.ID_Trabajador === qrData.id);
+    let trabajador = personal.find((p) => p.ID_Trabajador === qrData.id);
 
     // Si no, buscar por DPI
     if (!trabajador && qrData.dpi) {
-      trabajador = personal.find(p => p.DPI_CUI === qrData.dpi);
+      trabajador = personal.find((p) => p.DPI_CUI === qrData.dpi);
     }
 
     return trabajador || null;

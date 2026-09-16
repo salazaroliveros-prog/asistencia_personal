@@ -98,11 +98,11 @@
   function findRecentDuplicate(record) {
     const cached = read(LS_KEYS.ATTENDANCE_CACHE, []);
     const appState = AppState.get('asistencias') || [];
-    const combined = [...cached, ...appState.filter(a => !cached.find(c => c.ID_Marcacion === a.ID_Marcacion))];
-    const same = combined.find(c =>
+    const combined = [...cached, ...appState.filter((a) => !cached.find((c) => c.ID_Marcacion === a.ID_Marcacion))];
+    const same = combined.find((c) =>
       c.ID_Trabajador === record.ID_Trabajador &&
       c.Tipo_Marcacion === record.Tipo_Marcacion &&
-      c.Fecha === record.Fecha
+      c.Fecha === record.Fecha,
     );
     if (!same || !same.Hora_Real || !record.Hora_Real) return false;
     const toMin = (h) => { const p = h.split(':').map(Number); return (p[0] || 0) * 60 + (p[1] || 0); };
@@ -139,8 +139,8 @@
   }
 
   async function guardarTrabajador(payload) {
-    const isEdit = !!(payload.id && (AppState.get('personal') || []).find(w => w.ID_Trabajador === payload.id));
-    const existing = isEdit ? (AppState.get('personal') || []).find(w => w.ID_Trabajador === payload.id) : null;
+    const isEdit = !!(payload.id && (AppState.get('personal') || []).find((w) => w.ID_Trabajador === payload.id));
+    const existing = isEdit ? (AppState.get('personal') || []).find((w) => w.ID_Trabajador === payload.id) : null;
     const worker = normalizeWorker(payload, existing);
     try {
       if (connected()) {
@@ -168,7 +168,7 @@
         return { success: true, data: worker, message: isEdit ? 'Trabajador actualizado' : 'Trabajador registrado' };
       } else {
         const personal = AppState.get('personal') || [];
-        const idx = personal.findIndex(w => w.ID_Trabajador === worker.ID_Trabajador);
+        const idx = personal.findIndex((w) => w.ID_Trabajador === worker.ID_Trabajador);
         const updated = [...personal];
         if (idx >= 0) updated[idx] = { ...updated[idx], ...worker }; else updated.push(worker);
         AppState.set('personal', updated);
@@ -183,7 +183,7 @@
       if (error.code === 'permission-denied') {
         console.warn('[API] Permiso denegado, guardando localmente');
         const personal = AppState.get('personal') || [];
-        const idx = personal.findIndex(w => w.ID_Trabajador === worker.ID_Trabajador);
+        const idx = personal.findIndex((w) => w.ID_Trabajador === worker.ID_Trabajador);
         const updated = [...personal];
         if (idx >= 0) updated[idx] = { ...updated[idx], ...worker }; else updated.push(worker);
         AppState.set('personal', updated);
@@ -196,7 +196,7 @@
       if (error.code === 'unavailable' || error.code === 'network-request-failed') {
         console.warn('[API] Error de red, guardando localmente');
         const personal = AppState.get('personal') || [];
-        const idx = personal.findIndex(w => w.ID_Trabajador === worker.ID_Trabajador);
+        const idx = personal.findIndex((w) => w.ID_Trabajador === worker.ID_Trabajador);
         const updated = [...personal];
         if (idx >= 0) updated[idx] = { ...updated[idx], ...worker }; else updated.push(worker);
         AppState.set('personal', updated);
@@ -220,7 +220,7 @@
       if (connected()) {
         // Firestore allow update requiere isValidWorkerData → documento completo
         const personal = AppState.get('personal') || [];
-        const existing = personal.find(w => w.ID_Trabajador === workerId);
+        const existing = personal.find((w) => w.ID_Trabajador === workerId);
         if (!existing) return { success: false, error: 'Trabajador no encontrado en cache' };
         const updateFields = {
           ID_Trabajador:   existing.ID_Trabajador,
@@ -239,8 +239,8 @@
         return { success: true };
       } else {
         const personal = AppState.get('personal') || [];
-        const updated = personal.map(w =>
-          w.ID_Trabajador === workerId ? { ...w, Estado: 'Inactivo' } : w
+        const updated = personal.map((w) =>
+          w.ID_Trabajador === workerId ? { ...w, Estado: 'Inactivo' } : w,
         );
         AppState.set('personal', updated);
         write(LS_KEYS.PERSONAL_CACHE, updated);
@@ -251,8 +251,8 @@
       console.error('[API] Error eliminarPersonal:', error);
       if (error.code === 'permission-denied' || (error.message && error.message.includes('permission'))) {
         const personal = AppState.get('personal') || [];
-        const updated = personal.map(w =>
-          w.ID_Trabajador === workerId ? { ...w, Estado: 'Inactivo' } : w
+        const updated = personal.map((w) =>
+          w.ID_Trabajador === workerId ? { ...w, Estado: 'Inactivo' } : w,
         );
         AppState.set('personal', updated);
         write(LS_KEYS.PERSONAL_CACHE, updated);
@@ -270,22 +270,22 @@
         // Query eficiente con filtro where en Firestore
         const asistencias = await FirebaseClient.list(
           'asistencias', 'Hora_Real', null,
-          [['Fecha', '==', fecha]]
+          [['Fecha', '==', fecha]],
         );
         AppState.set('asistencias', asistencias);
-        const existing = read(LS_KEYS.ATTENDANCE_CACHE, []).filter(a => a.Fecha !== fecha);
+        const existing = read(LS_KEYS.ATTENDANCE_CACHE, []).filter((a) => a.Fecha !== fecha);
         write(LS_KEYS.ATTENDANCE_CACHE, [...existing, ...asistencias]);
         return { success: true, data: asistencias };
       } else {
         const cached = read(LS_KEYS.ATTENDANCE_CACHE, []);
-        const filtered = cached.filter(a => a.Fecha === fecha);
+        const filtered = cached.filter((a) => a.Fecha === fecha);
         AppState.set('asistencias', filtered);
         return { success: true, data: filtered, offline: true };
       }
     } catch (error) {
       console.error('[API] Error obtenerAsistencias:', error);
       const cached = read(LS_KEYS.ATTENDANCE_CACHE, []);
-      const filtered = cached.filter(a => a.Fecha === fecha);
+      const filtered = cached.filter((a) => a.Fecha === fecha);
       return { success: true, data: filtered, offline: true };
     }
   }
@@ -298,19 +298,19 @@
         // cuando no hay orderBy. El orden se aplica en cliente.
         const asistencias = await FirebaseClient.list(
           'asistencias', null, null,
-          [['Fecha', '>=', fechaInicio], ['Fecha', '<=', fechaFin]]
+          [['Fecha', '>=', fechaInicio], ['Fecha', '<=', fechaFin]],
         );
         asistencias.sort((a, b) => (a.Fecha || '').localeCompare(b.Fecha || ''));
         return { success: true, data: asistencias };
       } else {
         const cached = read(LS_KEYS.ATTENDANCE_CACHE, []);
-        const filtered = cached.filter(a => a.Fecha >= fechaInicio && a.Fecha <= fechaFin);
+        const filtered = cached.filter((a) => a.Fecha >= fechaInicio && a.Fecha <= fechaFin);
         return { success: true, data: filtered, offline: true };
       }
     } catch (error) {
       console.error('[API] Error obtenerAsistenciaRango:', error);
       const cached = read(LS_KEYS.ATTENDANCE_CACHE, []);
-      const filtered = cached.filter(a => a.Fecha >= fechaInicio && a.Fecha <= fechaFin);
+      const filtered = cached.filter((a) => a.Fecha >= fechaInicio && a.Fecha <= fechaFin);
       return { success: true, data: filtered, offline: true };
     }
   }
@@ -372,7 +372,7 @@
     try {
       if (connected()) {
         const asistencias = AppState.get('asistencias') || [];
-        const existing = asistencias.find(a => a.ID_Marcacion === marcacionId);
+        const existing = asistencias.find((a) => a.ID_Marcacion === marcacionId);
         if (!existing) return { success: false, error: 'Marcación no encontrada' };
         const horaReal       = payload.horaReal       || existing.Hora_Real;
         const estadoMarcacion = payload.estadoMarcacion || existing.Estado_Marcacion;
@@ -387,14 +387,14 @@
         };
         await FirebaseClient.save('asistencias', marcacionId, fullDoc, true);
         const updated = { ...existing, Hora_Real: horaReal, Estado_Marcacion: estadoMarcacion, Horas_Extra: horasExtra };
-        const newCache = asistencias.map(a => a.ID_Marcacion === marcacionId ? updated : a);
+        const newCache = asistencias.map((a) => a.ID_Marcacion === marcacionId ? updated : a);
         AppState.set('asistencias', newCache);
         write(LS_KEYS.ATTENDANCE_CACHE, newCache);
         return { success: true, data: updated };
       } else {
         const asistencias = AppState.get('asistencias') || [];
-        const updated = asistencias.map(a =>
-          a.ID_Marcacion === marcacionId ? { ...a, Hora_Real: payload.horaReal || a.Hora_Real, Estado_Marcacion: payload.estadoMarcacion || a.Estado_Marcacion, Horas_Extra: payload.horasExtra !== undefined ? payload.horasExtra : a.Horas_Extra } : a
+        const updated = asistencias.map((a) =>
+          a.ID_Marcacion === marcacionId ? { ...a, Hora_Real: payload.horaReal || a.Hora_Real, Estado_Marcacion: payload.estadoMarcacion || a.Estado_Marcacion, Horas_Extra: payload.horasExtra !== undefined ? payload.horasExtra : a.Horas_Extra } : a,
         );
         AppState.set('asistencias', updated);
         write(LS_KEYS.ATTENDANCE_CACHE, updated);
@@ -405,8 +405,8 @@
       console.error('[API] Error actualizarAsistencia:', error);
       if (error.code === 'permission-denied' || (error.message && error.message.includes('permission'))) {
         const asistencias = AppState.get('asistencias') || [];
-        const updated = asistencias.map(a =>
-          a.ID_Marcacion === marcacionId ? { ...a, Hora_Real: payload.horaReal || a.Hora_Real, Estado_Marcacion: payload.estadoMarcacion || a.Estado_Marcacion, Horas_Extra: payload.horasExtra !== undefined ? payload.horasExtra : a.Horas_Extra } : a
+        const updated = asistencias.map((a) =>
+          a.ID_Marcacion === marcacionId ? { ...a, Hora_Real: payload.horaReal || a.Hora_Real, Estado_Marcacion: payload.estadoMarcacion || a.Estado_Marcacion, Horas_Extra: payload.horasExtra !== undefined ? payload.horasExtra : a.Horas_Extra } : a,
         );
         AppState.set('asistencias', updated);
         write(LS_KEYS.ATTENDANCE_CACHE, updated);
@@ -422,13 +422,13 @@
       if (connected()) {
         await FirebaseClient.remove('asistencias', marcacionId);
         const asistencias = AppState.get('asistencias') || [];
-        const newCache = asistencias.filter(a => a.ID_Marcacion !== marcacionId);
+        const newCache = asistencias.filter((a) => a.ID_Marcacion !== marcacionId);
         AppState.set('asistencias', newCache);
         write(LS_KEYS.ATTENDANCE_CACHE, newCache);
         return { success: true };
       } else {
         const asistencias = AppState.get('asistencias') || [];
-        const newCache = asistencias.filter(a => a.ID_Marcacion !== marcacionId);
+        const newCache = asistencias.filter((a) => a.ID_Marcacion !== marcacionId);
         AppState.set('asistencias', newCache);
         write(LS_KEYS.ATTENDANCE_CACHE, newCache);
         enqueue('attendance-delete', { id: marcacionId });
@@ -438,7 +438,7 @@
       console.error('[API] Error eliminarAsistencia:', error);
       if (error.code === 'permission-denied' || (error.message && error.message.includes('permission'))) {
         const asistencias = AppState.get('asistencias') || [];
-        const newCache = asistencias.filter(a => a.ID_Marcacion !== marcacionId);
+        const newCache = asistencias.filter((a) => a.ID_Marcacion !== marcacionId);
         AppState.set('asistencias', newCache);
         write(LS_KEYS.ATTENDANCE_CACHE, newCache);
         enqueue('attendance-delete', { id: marcacionId });
@@ -474,8 +474,8 @@
         await FirebaseClient.save('alertas', alertId, { Revisada: true });
       }
       const alertas = AppState.get('alertas') || [];
-      const updated = alertas.map(a =>
-        (a.ID_Alerta === alertId || a.id === alertId) ? { ...a, Revisada: true } : a
+      const updated = alertas.map((a) =>
+        (a.ID_Alerta === alertId || a.id === alertId) ? { ...a, Revisada: true } : a,
       );
       AppState.set('alertas', updated);
       write(LS_KEYS.ALERTS_CACHE, updated);
@@ -484,8 +484,8 @@
       console.error('[API] Error marcarAlertaRevisada:', error);
       if (error.code === 'permission-denied' || (error.message && error.message.includes('permission'))) {
         const alertas = AppState.get('alertas') || [];
-        const updated = alertas.map(a =>
-          (a.ID_Alerta === alertId || a.id === alertId) ? { ...a, Revisada: true } : a
+        const updated = alertas.map((a) =>
+          (a.ID_Alerta === alertId || a.id === alertId) ? { ...a, Revisada: true } : a,
         );
         AppState.set('alertas', updated);
         write(LS_KEYS.ALERTS_CACHE, updated);
@@ -544,7 +544,7 @@
           const worker = normalizeWorker(item.payload);
           await FirebaseClient.save('personal', worker.ID_Trabajador, worker, false);
         } else if (item.type === 'personal-update') {
-          const existing = (AppState.get('personal') || []).find(w => w.ID_Trabajador === item.payload.id);
+          const existing = (AppState.get('personal') || []).find((w) => w.ID_Trabajador === item.payload.id);
           const worker = normalizeWorker(item.payload, existing);
           const updateFields = {
             ID_Trabajador: worker.ID_Trabajador, Nombre_Completo: worker.Nombre_Completo,
@@ -555,7 +555,7 @@
           await FirebaseClient.save('personal', worker.ID_Trabajador, updateFields, true);
         } else if (item.type === 'personal-delete') {
           // Igual que eliminarPersonal: necesita documento completo para isValidWorkerData
-          const existingW = (AppState.get('personal') || []).find(w => w.ID_Trabajador === item.payload.id);
+          const existingW = (AppState.get('personal') || []).find((w) => w.ID_Trabajador === item.payload.id);
           if (existingW) {
             const delFields = {
               ID_Trabajador:   existingW.ID_Trabajador,
@@ -577,7 +577,7 @@
           const marcacion = normalizeAttendance(item.payload);
           await FirebaseClient.save('asistencias', marcacion.ID_Marcacion, marcacion, false);
         } else if (item.type === 'attendance-update') {
-          const existing = (AppState.get('asistencias') || []).find(a => a.ID_Marcacion === item.payload.id);
+          const existing = (AppState.get('asistencias') || []).find((a) => a.ID_Marcacion === item.payload.id);
           if (!existing) throw new Error('Marcación pendiente no encontrada para actualizar');
           const patch = item.payload.payload || {};
           // Documento completo para pasar isValidAttendanceData en Firestore

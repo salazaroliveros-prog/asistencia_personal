@@ -49,16 +49,16 @@ const MobileCameraOptimizer = (() => {
     const resolutions = {
       android: {
         portrait: { width: 720, height: 1280 },
-        landscape: { width: 1280, height: 720 }
+        landscape: { width: 1280, height: 720 },
       },
       ios: {
         portrait: { width: 1080, height: 1920 },
-        landscape: { width: 1920, height: 1080 }
+        landscape: { width: 1920, height: 1080 },
       },
       other: {
         portrait: { width: 640, height: 480 },
-        landscape: { width: 800, height: 600 }
-      }
+        landscape: { width: 800, height: 600 },
+      },
     };
 
     const deviceRes = resolutions[deviceType] || resolutions.other;
@@ -82,7 +82,7 @@ const MobileCameraOptimizer = (() => {
         torch: capabilities.torch,
         focusMode: capabilities.focusMode,
         exposureMode: capabilities.exposureMode,
-        whiteBalanceMode: capabilities.whiteBalanceMode
+        whiteBalanceMode: capabilities.whiteBalanceMode,
       };
     } catch (error) {
       console.warn('[MobileCameraOptimizer] No se pueden obtener capacidades:', error);
@@ -101,7 +101,7 @@ const MobileCameraOptimizer = (() => {
       if (!capabilities) return false;
 
       const constraints = {
-        advanced: []
+        advanced: [],
       };
 
       // Optimizar para móvil: baja latencia
@@ -141,30 +141,30 @@ const MobileCameraOptimizer = (() => {
     const permissions = {
       granted: false,
       error: null,
-      needsManualAction: false
+      needsManualAction: false,
     };
 
     try {
       if (deviceType === 'ios') {
         // iOS requiere contexto de usuario explícito
         const stream = await navigator.mediaDevices.getUserMedia({ 
-          video: { facingMode: 'environment' } 
+          video: { facingMode: 'environment' }, 
         });
-        stream.getTracks().forEach(track => track.stop());
+        stream.getTracks().forEach((track) => track.stop());
         permissions.granted = true;
       } else if (deviceType === 'android') {
         // Android permite solicitud directa
         const stream = await navigator.mediaDevices.getUserMedia({ 
-          video: { facingMode: 'environment' } 
+          video: { facingMode: 'environment' }, 
         });
-        stream.getTracks().forEach(track => track.stop());
+        stream.getTracks().forEach((track) => track.stop());
         permissions.granted = true;
       } else {
         // Otros dispositivos
         const stream = await navigator.mediaDevices.getUserMedia({ 
-          video: true 
+          video: true, 
         });
-        stream.getTracks().forEach(track => track.stop());
+        stream.getTracks().forEach((track) => track.stop());
         permissions.granted = true;
       }
     } catch (error) {
@@ -193,14 +193,14 @@ const MobileCameraOptimizer = (() => {
         facingMode: options.facingMode || 'environment',
         width: {
           ideal: resolution.width,
-          max: resolution.width
+          max: resolution.width,
         },
         height: {
           ideal: resolution.height,
-          max: resolution.height
-        }
+          max: resolution.height,
+        },
       },
-      audio: false
+      audio: false,
     };
 
     // Optimizaciones específicas por dispositivo
@@ -250,7 +250,7 @@ const MobileCameraOptimizer = (() => {
         
         await track.applyConstraints({
           width: { ideal: newResolution.width },
-          height: { ideal: newResolution.height }
+          height: { ideal: newResolution.height },
         });
       } catch (error) {
         console.warn('[MobileCameraOptimizer] Error al manejar rotación:', error);
@@ -272,7 +272,7 @@ const MobileCameraOptimizer = (() => {
       screenHeight: window.screen.height,
       pixelRatio: window.devicePixelRatio,
       memory: navigator.deviceMemory,
-      cores: navigator.hardwareConcurrency
+      cores: navigator.hardwareConcurrency,
     };
   }
 
@@ -290,7 +290,7 @@ const MobileCameraOptimizer = (() => {
       webGL: !!window.WebGLRenderingContext,
       webSocket: !!window.WebSocket,
       serviceWorker: !!navigator.serviceWorker,
-      pwa: !!window.matchMedia('(display-mode: standalone)').matches
+      pwa: !!window.matchMedia('(display-mode: standalone)').matches,
     };
   }
 
@@ -343,7 +343,7 @@ const MobileCameraOptimizer = (() => {
     handleDeviceRotation,
     getDeviceInfo,
     getSupportedFeatures,
-    getOptimizationSuggestions
+    getOptimizationSuggestions,
   };
 })();
 

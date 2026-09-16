@@ -25,12 +25,12 @@
  */
 const FirebaseConfigManager = (() => {
   const bundledFirebaseConfig = window.bundledFirebaseConfig || {
-    apiKey: "AIzaSyDriDh1SC5_8T1rx5EmgFi0pUEKUGQU5xg",
-    authDomain: "sistema-de-control-aee89.firebaseapp.com",
-    projectId: "sistema-de-control-aee89",
-    storageBucket: "sistema-de-control-aee89.firebasestorage.app",
-    messagingSenderId: "265655332442",
-    appId: "1:265655332442:web:c4e8617741e3b916987263",
+    apiKey: 'AIzaSyDriDh1SC5_8T1rx5EmgFi0pUEKUGQU5xg',
+    authDomain: 'sistema-de-control-aee89.firebaseapp.com',
+    projectId: 'sistema-de-control-aee89',
+    storageBucket: 'sistema-de-control-aee89.firebasestorage.app',
+    messagingSenderId: '265655332442',
+    appId: '1:265655332442:web:c4e8617741e3b916987263',
   };
 
   // Las variables de entorno inyectadas por Vite tienen prioridad sobre los
@@ -44,7 +44,7 @@ const FirebaseConfigManager = (() => {
     storedFirebaseConfig = {};
   }
 
-  const hasEnvConfig = window.__FIREBASE_ENV__ && Object.values(window.__FIREBASE_ENV__).some(v => v);
+  const hasEnvConfig = window.__FIREBASE_ENV__ && Object.values(window.__FIREBASE_ENV__).some((v) => v);
   const hasStoredConfig = storedFirebaseConfig && Object.keys(storedFirebaseConfig).length > 0;
   const hasBundledConfig = bundledFirebaseConfig && Object.keys(bundledFirebaseConfig).length > 0;
   const existingConfig = (window.FIREBASE_CONFIG && Object.keys(window.FIREBASE_CONFIG).length > 0)
@@ -99,7 +99,7 @@ const FirebaseConfigManager = (() => {
 
   return {
     getFirebaseConfig,
-    validateFirebaseConfig
+    validateFirebaseConfig,
   };
 })();
 

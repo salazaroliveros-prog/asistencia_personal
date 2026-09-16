@@ -16,7 +16,7 @@ const CarnetValidator = (() => {
       valid: false,
       worker: null,
       errors: [],
-      warnings: []
+      warnings: [],
     };
 
     try {
@@ -39,9 +39,9 @@ const CarnetValidator = (() => {
 
       // Buscar trabajador en datos disponibles
       if (Array.isArray(personalData)) {
-        result.worker = personalData.find(p => 
+        result.worker = personalData.find((p) => 
           p.ID_Trabajador === workerId || 
-          (p.DPI_CUI && String(p.DPI_CUI).replace(/\D/g, '') === String(workerId).replace(/\D/g, ''))
+          (p.DPI_CUI && String(p.DPI_CUI).replace(/\D/g, '') === String(workerId).replace(/\D/g, '')),
         );
       }
 
@@ -90,7 +90,7 @@ const CarnetValidator = (() => {
     const result = {
       valid: false,
       errors: [],
-      warnings: []
+      warnings: [],
     };
 
     if (!carnet) {
@@ -155,7 +155,7 @@ const CarnetValidator = (() => {
         Puesto: puesto,
         Fotografia_URL: null,
         Estado: 'Activo',
-        Fecha_Ingreso: new Date().toISOString().split('T')[0]
+        Fecha_Ingreso: new Date().toISOString().split('T')[0],
       });
     }
 
@@ -172,14 +172,14 @@ const CarnetValidator = (() => {
       id: worker.ID_Trabajador,
       dpi: worker.DPI_CUI,
       nombre: worker.Nombre_Completo,
-      puesto: worker.Puesto
+      puesto: worker.Puesto,
     };
 
     return {
       success: true,
       qrData: JSON.stringify(qrData),
       worker,
-      timestamp: Date.now()
+      timestamp: Date.now(),
     };
   }
 
@@ -193,7 +193,7 @@ const CarnetValidator = (() => {
       cameras: [],
       errors: [],
       warnings: [],
-      recommendations: []
+      recommendations: [],
     };
 
     try {
@@ -217,15 +217,15 @@ const CarnetValidator = (() => {
       // Solicitar permisos y enumerar cámaras
       try {
         const stream = await navigator.mediaDevices.getUserMedia({ video: true });
-        stream.getTracks().forEach(track => track.stop());
+        stream.getTracks().forEach((track) => track.stop());
 
         const devices = await navigator.mediaDevices.enumerateDevices();
         result.cameras = devices
-          .filter(device => device.kind === 'videoinput')
+          .filter((device) => device.kind === 'videoinput')
           .map((device, index) => ({
             id: device.deviceId,
             label: device.label || `Cámara ${index + 1}`,
-            groupId: device.groupId
+            groupId: device.groupId,
           }));
 
         if (result.cameras.length === 0) {
@@ -267,7 +267,7 @@ const CarnetValidator = (() => {
       mobileOptimized: false,
       errors: [],
       warnings: [],
-      recommendations: []
+      recommendations: [],
     };
 
     // Verificar Html5Qrcode
@@ -320,8 +320,8 @@ const CarnetValidator = (() => {
         total: workers.length,
         successful: 0,
         failed: 0,
-        warnings: 0
-      }
+        warnings: 0,
+      },
     };
 
     // Validar sistema de cámara
@@ -347,7 +347,7 @@ const CarnetValidator = (() => {
           worker: worker.ID_Trabajador,
           scanSuccess: scanResult.success,
           validation: validation,
-          timestamp: scanResult.timestamp
+          timestamp: scanResult.timestamp,
         });
 
         if (validation.valid) {
@@ -365,7 +365,7 @@ const CarnetValidator = (() => {
           worker: worker.ID_Trabajador,
           scanSuccess: false,
           error: error.message,
-          timestamp: Date.now()
+          timestamp: Date.now(),
         });
         result.summary.failed++;
       }
@@ -381,7 +381,7 @@ const CarnetValidator = (() => {
     simulateQRScan,
     validateCameraSystem,
     validateQRScannerSystem,
-    runScanTest
+    runScanTest,
   };
 })();
 

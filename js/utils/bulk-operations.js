@@ -13,7 +13,7 @@ const BulkOperations = (() => {
     
     if (window.Logger) {
       window.Logger.info('BulkOperations', 'Iniciando eliminación en lote', { 
-        count: workerIds.length 
+        count: workerIds.length, 
       });
     }
     
@@ -36,7 +36,7 @@ const BulkOperations = (() => {
     if (window.Logger) {
       window.Logger.info('BulkOperations', 'Eliminación en lote completada', { 
         success: results.length,
-        errors: errors.length
+        errors: errors.length,
       });
     }
     
@@ -44,7 +44,7 @@ const BulkOperations = (() => {
       success: errors.length === 0,
       results,
       errors,
-      message: `${results.length} trabajadores eliminados, ${errors.length} errores`
+      message: `${results.length} trabajadores eliminados, ${errors.length} errores`,
     };
   }
   
@@ -55,7 +55,7 @@ const BulkOperations = (() => {
     
     if (window.Logger) {
       window.Logger.info('BulkOperations', 'Iniciando actualización en lote', { 
-        count: updates.length 
+        count: updates.length, 
       });
     }
     
@@ -78,7 +78,7 @@ const BulkOperations = (() => {
     if (window.Logger) {
       window.Logger.info('BulkOperations', 'Actualización en lote completada', { 
         success: results.length,
-        errors: errors.length
+        errors: errors.length,
       });
     }
     
@@ -86,7 +86,7 @@ const BulkOperations = (() => {
       success: errors.length === 0,
       results,
       errors,
-      message: `${results.length} trabajadores actualizados, ${errors.length} errores`
+      message: `${results.length} trabajadores actualizados, ${errors.length} errores`,
     };
   }
   
@@ -97,7 +97,7 @@ const BulkOperations = (() => {
     
     if (window.Logger) {
       window.Logger.info('BulkOperations', 'Iniciando eliminación de asistencias en lote', { 
-        count: attendanceIds.length 
+        count: attendanceIds.length, 
       });
     }
     
@@ -120,7 +120,7 @@ const BulkOperations = (() => {
     if (window.Logger) {
       window.Logger.info('BulkOperations', 'Eliminación de asistencias en lote completada', { 
         success: results.length,
-        errors: errors.length
+        errors: errors.length,
       });
     }
     
@@ -128,7 +128,7 @@ const BulkOperations = (() => {
       success: errors.length === 0,
       results,
       errors,
-      message: `${results.length} asistencias eliminadas, ${errors.length} errores`
+      message: `${results.length} asistencias eliminadas, ${errors.length} errores`,
     };
   }
   
@@ -144,7 +144,7 @@ const BulkOperations = (() => {
     bulkDeleteWorkers,
     bulkUpdateWorkers,
     bulkDeleteAttendances,
-    showBulkProgress
+    showBulkProgress,
   };
 })();
 

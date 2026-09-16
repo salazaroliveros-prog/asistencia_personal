@@ -24,22 +24,22 @@ const MobileQRScanner = (() => {
         qrbox: { width: 200, height: 200 },
         aspectRatio: 1,
         disableFlip: false,
-        maxScansPerSecond: 1
+        maxScansPerSecond: 1,
       },
       balanced: {
         fps: 10,
         qrbox: { width: 250, height: 250 },
         aspectRatio: 1,
         disableFlip: false,
-        maxScansPerSecond: 2
+        maxScansPerSecond: 2,
       },
       high: {
         fps: 15,
         qrbox: { width: 300, height: 300 },
         aspectRatio: 1,
         disableFlip: false,
-        maxScansPerSecond: 5
-      }
+        maxScansPerSecond: 5,
+      },
     };
     return configs[mode] || configs.balanced;
   }
@@ -72,7 +72,7 @@ const MobileQRScanner = (() => {
 
     return {
       ...baseConfig,
-      ...options
+      ...options,
     };
   }
 
@@ -100,7 +100,7 @@ const MobileQRScanner = (() => {
 
     // Obtener configuración móvil optimizada
     const mobileConstraints = window.MobileCameraOptimizer?.getMobileOptimizedConstraints(cameraOptions) || {
-      video: { facingMode: 'environment' }
+      video: { facingMode: 'environment' },
     };
 
     const scanConfig = getMobileOptimizedConfig(cameraOptions);
@@ -128,7 +128,7 @@ const MobileQRScanner = (() => {
         },
         (errorMessage) => {
           if (onError) onError(errorMessage);
-        }
+        },
       );
 
       active = true;
@@ -137,7 +137,7 @@ const MobileQRScanner = (() => {
       return {
         success: true,
         camera: selectedCamera,
-        config: scanConfig
+        config: scanConfig,
       };
     } catch (error) {
       active = false;
@@ -194,13 +194,13 @@ const MobileQRScanner = (() => {
       const result = await start({
         elementId: scanner?._elementId,
         onSuccess: () => {},
-        cameraOptions: { facingMode: newFacingMode }
+        cameraOptions: { facingMode: newFacingMode },
       });
 
       return {
         success: true,
         camera: newFacingMode,
-        previousCamera: currentFacingMode
+        previousCamera: currentFacingMode,
       };
     } catch (error) {
       // Intentar revertir si falla
@@ -208,7 +208,7 @@ const MobileQRScanner = (() => {
         await start({
           elementId: scanner?._elementId,
           onSuccess: () => {},
-          cameraOptions: { facingMode: currentFacingMode }
+          cameraOptions: { facingMode: currentFacingMode },
         });
       } catch (_) {}
       throw error;
@@ -242,7 +242,7 @@ const MobileQRScanner = (() => {
     try {
       torchEnabled = !torchEnabled;
       await scanner.applyVideoConstraints({
-        advanced: [{ torch: torchEnabled }]
+        advanced: [{ torch: torchEnabled }],
       });
       return torchEnabled;
     } catch (error) {
@@ -273,13 +273,13 @@ const MobileQRScanner = (() => {
         await start({
           elementId,
           onSuccess: () => {},
-          cameraOptions: { facingMode: selectedCamera }
+          cameraOptions: { facingMode: selectedCamera },
         });
 
         return {
           success: true,
           previousMode,
-          currentMode: mode
+          currentMode: mode,
         };
       } catch (error) {
         // Revertir si falla
@@ -288,7 +288,7 @@ const MobileQRScanner = (() => {
           await start({
             elementId,
             onSuccess: () => {},
-            cameraOptions: { facingMode: selectedCamera }
+            cameraOptions: { facingMode: selectedCamera },
           });
         } catch (_) {}
         throw error;
@@ -298,7 +298,7 @@ const MobileQRScanner = (() => {
     return {
       success: true,
       previousMode,
-      currentMode: mode
+      currentMode: mode,
     };
   }
 
@@ -314,11 +314,11 @@ const MobileQRScanner = (() => {
     try {
       const devices = await navigator.mediaDevices.enumerateDevices();
       return devices
-        .filter(device => device.kind === 'videoinput')
+        .filter((device) => device.kind === 'videoinput')
         .map((device, index) => ({
           id: device.deviceId,
           label: device.label || `Cámara ${index + 1}`,
-          groupId: device.groupId
+          groupId: device.groupId,
         }));
     } catch (error) {
       console.warn('[MobileQRScanner] Error al enumerar cámaras:', error);
@@ -343,13 +343,13 @@ const MobileQRScanner = (() => {
       const result = await start({
         elementId,
         onSuccess: () => {},
-        cameraOptions: { deviceId }
+        cameraOptions: { deviceId },
       });
 
       selectedCamera = deviceId;
       return {
         success: true,
-        camera: deviceId
+        camera: deviceId,
       };
     } catch (error) {
       throw error;
@@ -366,7 +366,7 @@ const MobileQRScanner = (() => {
       selectedCamera,
       torchEnabled,
       performanceMode,
-      supportsTorch: supportsTorch()
+      supportsTorch: supportsTorch(),
     };
   }
 
@@ -418,7 +418,7 @@ const MobileQRScanner = (() => {
     listCameras,
     selectCamera,
     getStatus,
-    getOptimizationSuggestions
+    getOptimizationSuggestions,
   };
 })();
 

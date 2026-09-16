@@ -23,7 +23,7 @@ const AutoHealing = (() => {
               keysToRemove.push(key);
             }
           }
-          keysToRemove.forEach(key => localStorage.removeItem(key));
+          keysToRemove.forEach((key) => localStorage.removeItem(key));
           
           // Limpiar IndexedDB (si existe)
           if (window.indexedDB) {
@@ -43,7 +43,7 @@ const AutoHealing = (() => {
         } catch (error) {
           return { success: false, message: 'Error al limpiar caché', error: error.message };
         }
-      }
+      },
     },
 
     // Estrategia: Activar modo offline
@@ -60,7 +60,7 @@ const AutoHealing = (() => {
         } catch (error) {
           return { success: false, message: 'Error al activar modo offline', error: error.message };
         }
-      }
+      },
     },
 
     // Estrategia: Reiniciar conexión Firebase
@@ -77,7 +77,7 @@ const AutoHealing = (() => {
         } catch (error) {
           return { success: false, message: 'Error al reiniciar Firebase', error: error.message };
         }
-      }
+      },
     },
 
     // Estrategia: Reducir calidad de cámara
@@ -94,7 +94,7 @@ const AutoHealing = (() => {
         } catch (error) {
           return { success: false, message: 'Error al reducir calidad', error: error.message };
         }
-      }
+      },
     },
 
     // Estrategia: Liberar memoria
@@ -117,7 +117,7 @@ const AutoHealing = (() => {
         } catch (error) {
           return { success: false, message: 'Error al liberar memoria', error: error.message };
         }
-      }
+      },
     },
 
     // Estrategia: Reiniciar aplicación
@@ -131,7 +131,7 @@ const AutoHealing = (() => {
         } catch (error) {
           return { success: false, message: 'Error al reiniciar', error: error.message };
         }
-      }
+      },
     },
 
     // Estrategia: Optimizar imágenes
@@ -146,7 +146,7 @@ const AutoHealing = (() => {
         } catch (error) {
           return { success: false, message: 'Error al optimizar imágenes', error: error.message };
         }
-      }
+      },
     },
 
     // Estrategia: Recuperar datos corruptos
@@ -161,8 +161,8 @@ const AutoHealing = (() => {
         } catch (error) {
           return { success: false, message: 'Error al recuperar datos', error: error.message };
         }
-      }
-    }
+      },
+    },
   };
 
   /**
@@ -216,7 +216,7 @@ const AutoHealing = (() => {
     if (!strategy) {
       return {
         success: false,
-        message: `Estrategia ${strategyName} no encontrada`
+        message: `Estrategia ${strategyName} no encontrada`,
       };
     }
 
@@ -230,7 +230,7 @@ const AutoHealing = (() => {
         result.success ? 'info' : 'error',
         `Estrategia de autoreparación: ${strategy.description}`,
         { strategy: strategyName },
-        result.success ? null : new Error(result.message)
+        result.success ? null : new Error(result.message),
       );
     }
 
@@ -249,7 +249,7 @@ const AutoHealing = (() => {
       const result = await executeHealingStrategy(strategyName);
       results.push({
         strategy: strategyName,
-        ...result
+        ...result,
       });
       
       // Si una estrategia falla, continuar con la siguiente
@@ -274,21 +274,21 @@ const AutoHealing = (() => {
     if (strategies.length === 0) {
       return {
         success: false,
-        message: 'No se encontraron estrategias de autoreparación'
+        message: 'No se encontraron estrategias de autoreparación',
       };
     }
 
     const results = await executeHealingStrategies(strategies);
     
-    const successful = results.filter(r => r.success);
-    const failed = results.filter(r => !r.success);
+    const successful = results.filter((r) => r.success);
+    const failed = results.filter((r) => !r.success);
     
     return {
       success: successful.length > 0,
       message: `Autoreparación completada: ${successful.length} exitosas, ${failed.length} fallidas`,
       results,
       successfulCount: successful.length,
-      failedCount: failed.length
+      failedCount: failed.length,
     };
   }
 
@@ -302,7 +302,7 @@ const AutoHealing = (() => {
     if (!diagnostics) {
       return {
         success: false,
-        message: 'HardwareDiagnostics no disponible'
+        message: 'HardwareDiagnostics no disponible',
       };
     }
 
@@ -331,7 +331,7 @@ const AutoHealing = (() => {
       return {
         success: true,
         message: 'No se requieren acciones de autoreparación',
-        diagnostics
+        diagnostics,
       };
     }
 
@@ -342,7 +342,7 @@ const AutoHealing = (() => {
       message: `Autoreparación ejecutada: ${healingActions.length} acciones`,
       diagnostics,
       healingActions,
-      results
+      results,
     };
   }
 
@@ -385,7 +385,7 @@ const AutoHealing = (() => {
     autoHeal,
     diagnoseAndHeal,
     setupAutoHealing,
-    getAvailableStrategies
+    getAvailableStrategies,
   };
 })();
 
