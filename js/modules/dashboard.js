@@ -20,6 +20,10 @@ const ModuloDashboard = (() => {
   let _kpiTimeout = null; // Timeout de animación KPI
 
   // ─── Inicialización ───────────────────────────────────────────────────────
+  /**
+   * Inicializa el módulo de dashboard
+   * @returns {void}
+   */
   function init() {
     if (window.Logger) {
       window.Logger.info('ModuloDashboard', 'Inicializando módulo de dashboard');
@@ -38,6 +42,10 @@ const ModuloDashboard = (() => {
     }
   }
 
+  /**
+   * Maneja cambios en el estado de asistencia
+   * @returns {void}
+   */
   function _onAttendanceStateChanged() {
     const fecha = AppState.get('dashboardDate') || AppState.today();
     const personal = AppState.get('personal') || [];
@@ -47,6 +55,10 @@ const ModuloDashboard = (() => {
     _renderPanelTurno(personal, asistencias);
   }
 
+  /**
+   * Configura los event listeners del dashboard
+   * @returns {void}
+   */
   function _bindEvents() {
     // Botón refrescar dashboard
     const btnRefresh = document.getElementById('btn-refresh-dashboard');
@@ -85,6 +97,10 @@ const ModuloDashboard = (() => {
     });
   }
 
+  /**
+   * Establece la fecha actual en el input de fecha del dashboard
+   * @returns {void}
+   */
   function _setFechaInput() {
     const hoy   = AppState.today();
     const input = document.getElementById('dashboard-date');

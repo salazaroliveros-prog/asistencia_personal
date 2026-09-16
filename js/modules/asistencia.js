@@ -16,6 +16,10 @@ const ModuloAsistencia = (() => {
   const DEFAULT_GEOFENCE_RADIUS = 200; // meters
 
   // ─── Inicialización ───────────────────────────────────────────────────────
+  /**
+   * Inicializa el módulo de asistencia
+   * @returns {void}
+   */
   function init() {
     if (window.Logger) {
       window.Logger.info('ModuloAsistencia', 'Inicializando módulo de asistencia');
@@ -29,6 +33,10 @@ const ModuloAsistencia = (() => {
     AppState.on('config', () => _actualizarHorariosBotones());
   }
 
+  /**
+   * Configura los event listeners del módulo
+   * @returns {void}
+   */
   function _bindEvents() {
     // Tabs QR / Manual
     document.querySelectorAll('.tab').forEach(tab => {
@@ -91,6 +99,10 @@ const ModuloAsistencia = (() => {
     }
   }
 
+  /**
+   * Establece la fecha actual en los campos de fecha
+   * @returns {void}
+   */
   function _setFechaHoy() {
     const hoy = AppState.today();
     const filtroFecha = document.getElementById('asistencia-filter-date');
@@ -369,6 +381,7 @@ const ModuloAsistencia = (() => {
       <li class="autocomplete-item" data-id="${window.CPC.StringHelpers.escHtml(p.ID_Trabajador)}" role="option" tabindex="0">
         ${p.Fotografia_URL
           ? `<img src="${window.CPC.StringHelpers.escHtml(p.Fotografia_URL)}" alt="" style="width:32px;height:32px;border-radius:50%;object-fit:cover;border:2px solid ${col};"
+                 loading="lazy"
                  onerror="this.onerror=null;this.style.display='none';this.nextElementSibling.style.display='flex';" />
              <span style="display:none;width:32px;height:32px;border-radius:50%;border:2px solid ${col};background:var(--glass-bg);align-items:center;justify-content:center;font-size:11px;font-weight:700;color:${col};flex-shrink:0;">${ini}</span>`
           : `<span style="display:flex;width:32px;height:32px;border-radius:50%;border:2px solid ${col};background:var(--glass-bg);align-items:center;justify-content:center;font-size:11px;font-weight:700;color:${col};flex-shrink:0;">${ini}</span>`

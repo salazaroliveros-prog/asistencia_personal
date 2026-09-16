@@ -86,6 +86,10 @@ const ModuloCampo = (() => {
     } catch (e) { /* Audio no disponible */ }
   }
 
+  /**
+   * Renderiza los botones de marcación con horarios configurados
+   * @returns {void}
+   */
   function _renderMarkButtons() {
     const grid = document.getElementById('campo-mark-grid');
     if (!grid) return;
@@ -93,7 +97,7 @@ const ModuloCampo = (() => {
     grid.innerHTML = MARK_TYPES.map(m => {
       const hora = config[m.horaKey] || m.fallback;
       return `
-        <button type="button" class="campo-mark-btn ${m.cls}" data-tipo="${m.tipo}" aria-label="Marcar ${m.tipo}">
+        <button type="button" class="campo-mark-btn ${m.cls}" data-tipo="${m.tipo}" aria-label="Marcar ${m.tipo.replace(/_/g, ' ')} a las ${hora}">
           <i data-lucide="${m.icono}" aria-hidden="true"></i>
           <span>${m.tipo.replace(/_/g, ' ')}</span>
           <span class="campo-mark-time">${hora}</span>

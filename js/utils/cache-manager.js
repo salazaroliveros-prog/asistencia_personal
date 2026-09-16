@@ -207,3 +207,6 @@ const CacheManager = (() => {
     checkQuota
   };
 })();
+
+// Exponer el módulo globalmente
+window.CacheManager = CacheManager;

@@ -26,6 +26,33 @@ document.addEventListener('DOMContentLoaded', async () => {
       FirebaseClient.initialize();
     }
 
+    // 1.6 Inicializar motor de IA para autodiagnóstico y autoreparación
+    if (typeof AIEngine !== 'undefined') {
+      AIEngine.initialize({
+        autoHealing: true,
+        learning: true,
+        autoHealingThreshold: 3,
+        healthCheckInterval: 300000 // 5 minutos
+      });
+    }
+
+    // 1.7 Inicializar sistema de predicción de IA
+    if (typeof AIPredictor !== 'undefined') {
+      AIPredictor.setThresholds({
+        errorRate: 0.1,
+        memoryUsage: 0.8,
+        networkLatency: 5000,
+        storageUsage: 0.9,
+        batteryLevel: 0.2
+      });
+      console.log('[App] Sistema de predicción de IA inicializado');
+    }
+
+    // 1.8 Inicializar sistema de aprendizaje de IA
+    if (typeof AILearning !== 'undefined') {
+      console.log('[App] Sistema de aprendizaje de IA inicializado');
+    }
+
     // 2. Inicializar todos los módulos
     _initModules();
 

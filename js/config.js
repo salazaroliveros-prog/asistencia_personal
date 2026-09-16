@@ -117,8 +117,11 @@ const PUESTO_COLORES = {
 
 /**
  * Devuelve el color CSS para un puesto dado, con fallback al color primary.
- * @param {string} puesto
- * @returns {string} color CSS
+ * @param {string} puesto - Nombre del puesto del trabajador
+ * @returns {string} Color CSS (puede ser valor hex o variable CSS)
+ * @example
+ * colorPorPuesto('Maestro de Obra') // returns 'var(--color-primary)'
+ * colorPorPuesto('Electricista')    // returns '#6A0DAD'
  */
 function colorPorPuesto(puesto) {
   return PUESTO_COLORES[puesto] || 'var(--color-primary)';
@@ -126,8 +129,12 @@ function colorPorPuesto(puesto) {
 
 /**
  * Genera las iniciales de un nombre completo (máx. 2 palabras).
- * @param {string} nombre
- * @returns {string}
+ * @param {string} nombre - Nombre completo del trabajador
+ * @returns {string} Iniciales en mayúsculas (máximo 2 caracteres)
+ * @example
+ * inicialesDeNombre('Juan Pérez')       // returns 'JP'
+ * inicialesDeNombre('María')           // returns 'M'
+ * inicialesDeNombre('')                // returns '??'
  */
 function inicialesDeNombre(nombre) {
   if (!nombre) return '??';
@@ -198,17 +205,36 @@ const AppState = (() => {
   }
 
   return {
-    /** Leer una propiedad del estado */
+    /**
+     * Leer una propiedad del estado
+     * @param {string} key - Nombre de la propiedad a leer
+     * @returns {*} Valor de la propiedad
+     * @example
+     * const currentPage = AppState.get('currentPage');
+     * const personal = AppState.get('personal');
+     */
     get(key) {
       return _state[key];
     },
 
-    /** Leer todo el estado (copia superficial) */
+    /**
+     * Leer todo el estado (copia superficial)
+     * @returns {Object} Copia del estado completo
+     * @example
+     * const fullState = AppState.getAll();
+     */
     getAll() {
       return { ..._state };
     },
 
-    /** Actualizar una propiedad y notificar listeners */
+    /**
+     * Actualizar una propiedad y notificar listeners
+     * @param {string} key - Nombre de la propiedad a actualizar
+     * @param {*} value - Nuevo valor
+     * @example
+     * AppState.set('currentPage', 'personal');
+     * AppState.set('connected', true);
+     */
     set(key, value) {
       const prev = _state[key];
       
@@ -241,20 +267,43 @@ const AppState = (() => {
       }
     },
 
-    /** Suscribirse a cambios de una propiedad */
+    /**
+     * Suscribirse a cambios de una propiedad
+     * @param {string} key - Nombre de la propiedad a observar
+     * @param {Function} callback - Función a ejecutar cuando cambie la propiedad
+     * @returns {void}
+     * @example
+     * AppState.on('personal', (newPersonal, oldPersonal) => {
+     *   console.log('Personal actualizado:', newPersonal);
+     * });
+     */
     on(key, callback) {
       if (!_listeners[key]) _listeners[key] = [];
       _listeners[key].push(callback);
     },
 
-    /** Quitar suscriptor */
+    /**
+     * Quitar suscriptor
+     * @param {string} key - Nombre de la propiedad
+     * @param {Function} callback - Función a remover de los listeners
+     * @returns {void}
+     * @example
+     * const handler = (data) => console.log(data);
+     * AppState.on('asistencias', handler);
+     * AppState.off('asistencias', handler);
+     */
     off(key, callback) {
       if (_listeners[key]) {
         _listeners[key] = _listeners[key].filter(fn => fn !== callback);
       }
     },
 
-    /** Obtener la fecha de hoy en formato YYYY-MM-DD */
+    /**
+     * Obtener la fecha de hoy en formato YYYY-MM-DD
+     * @returns {string} Fecha actual en formato ISO
+     * @example
+     * const hoy = AppState.today(); // "2026-09-15"
+     */
     today() {
       return _today();
     },

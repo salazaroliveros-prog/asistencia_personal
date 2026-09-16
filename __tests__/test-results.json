@@ -1,0 +1,1260 @@
+{
+  "passed": 204,
+  "failed": 5,
+  "tests": [
+    {
+      "category": "Configuración",
+      "name": "Archivo config.js existe",
+      "passed": true,
+      "message": ""
+    },
+    {
+      "category": "Configuración",
+      "name": "Constantes APP_VERSION definidas",
+      "passed": true,
+      "message": ""
+    },
+    {
+      "category": "Configuración",
+      "name": "LocalStorage keys definidas",
+      "passed": true,
+      "message": ""
+    },
+    {
+      "category": "Configuración",
+      "name": "AppState definido",
+      "passed": true,
+      "message": ""
+    },
+    {
+      "category": "Configuración",
+      "name": "Configuración por defecto definida",
+      "passed": true,
+      "message": ""
+    },
+    {
+      "category": "Configuración",
+      "name": "Tolerancia configurada",
+      "passed": true,
+      "message": ""
+    },
+    {
+      "category": "Firebase",
+      "name": "Archivo firebase-config.js existe",
+      "passed": true,
+      "message": ""
+    },
+    {
+      "category": "Firebase",
+      "name": "API Key configurada",
+      "passed": true,
+      "message": ""
+    },
+    {
+      "category": "Firebase",
+      "name": "Project ID configurado",
+      "passed": true,
+      "message": ""
+    },
+    {
+      "category": "Firebase",
+      "name": "Auth Domain configurado",
+      "passed": true,
+      "message": ""
+    },
+    {
+      "category": "Firebase",
+      "name": "Función de validación definida",
+      "passed": true,
+      "message": ""
+    },
+    {
+      "category": "Firebase",
+      "name": "Sin credenciales privadas hardcoded",
+      "passed": true,
+      "message": ""
+    },
+    {
+      "category": "LocalStorage",
+      "name": "Escritura de datos",
+      "passed": true,
+      "message": ""
+    },
+    {
+      "category": "LocalStorage",
+      "name": "Lectura de datos complejos",
+      "passed": true,
+      "message": ""
+    },
+    {
+      "category": "LocalStorage",
+      "name": "Eliminación de datos",
+      "passed": true,
+      "message": ""
+    },
+    {
+      "category": "LocalStorage",
+      "name": "Limpieza completa",
+      "passed": true,
+      "message": ""
+    },
+    {
+      "category": "Validadores",
+      "name": "Archivo validators.js existe",
+      "passed": true,
+      "message": ""
+    },
+    {
+      "category": "Validadores",
+      "name": "Validación de DPI",
+      "passed": true,
+      "message": ""
+    },
+    {
+      "category": "Validadores",
+      "name": "Validación de nombre",
+      "passed": true,
+      "message": ""
+    },
+    {
+      "category": "Validadores",
+      "name": "Validación de teléfono",
+      "passed": true,
+      "message": ""
+    },
+    {
+      "category": "Validadores",
+      "name": "Validación de tolerancia",
+      "passed": true,
+      "message": ""
+    },
+    {
+      "category": "Validadores",
+      "name": "Validación de GPS",
+      "passed": true,
+      "message": ""
+    },
+    {
+      "category": "Validadores",
+      "name": "Validación completa de trabajador",
+      "passed": true,
+      "message": ""
+    },
+    {
+      "category": "Validadores",
+      "name": "Validación de marcación",
+      "passed": true,
+      "message": ""
+    },
+    {
+      "category": "Validadores",
+      "name": "Validación de configuración",
+      "passed": true,
+      "message": ""
+    },
+    {
+      "category": "Estructura",
+      "name": "Archivo index.html existe",
+      "passed": true,
+      "message": ""
+    },
+    {
+      "category": "Estructura",
+      "name": "Archivo js/config.js existe",
+      "passed": true,
+      "message": ""
+    },
+    {
+      "category": "Estructura",
+      "name": "Archivo js/firebase-config.js existe",
+      "passed": true,
+      "message": ""
+    },
+    {
+      "category": "Estructura",
+      "name": "Archivo js/firebase-client.js existe",
+      "passed": true,
+      "message": ""
+    },
+    {
+      "category": "Estructura",
+      "name": "Archivo js/api.js existe",
+      "passed": true,
+      "message": ""
+    },
+    {
+      "category": "Estructura",
+      "name": "Archivo js/app.js existe",
+      "passed": true,
+      "message": ""
+    },
+    {
+      "category": "Estructura",
+      "name": "Archivo js/modules/dashboard.js existe",
+      "passed": true,
+      "message": ""
+    },
+    {
+      "category": "Estructura",
+      "name": "Archivo js/modules/personal.js existe",
+      "passed": true,
+      "message": ""
+    },
+    {
+      "category": "Estructura",
+      "name": "Archivo js/modules/asistencia.js existe",
+      "passed": true,
+      "message": ""
+    },
+    {
+      "category": "Estructura",
+      "name": "Archivo js/modules/campo.js existe",
+      "passed": true,
+      "message": ""
+    },
+    {
+      "category": "Estructura",
+      "name": "Archivo js/modules/reportes.js existe",
+      "passed": true,
+      "message": ""
+    },
+    {
+      "category": "Estructura",
+      "name": "Archivo js/modules/ajustes.js existe",
+      "passed": true,
+      "message": ""
+    },
+    {
+      "category": "Estructura",
+      "name": "Archivo js/utils/validators.js existe",
+      "passed": true,
+      "message": ""
+    },
+    {
+      "category": "Estructura",
+      "name": "Archivo js/utils/constants.js existe",
+      "passed": true,
+      "message": ""
+    },
+    {
+      "category": "Estructura",
+      "name": "Archivo css/main.css existe",
+      "passed": true,
+      "message": ""
+    },
+    {
+      "category": "Estructura",
+      "name": "Archivo css/components.css existe",
+      "passed": true,
+      "message": ""
+    },
+    {
+      "category": "Estructura",
+      "name": "Archivo css/glassmorphism.css existe",
+      "passed": true,
+      "message": ""
+    },
+    {
+      "category": "Estructura",
+      "name": "Archivo css/accessibility.css existe",
+      "passed": true,
+      "message": ""
+    },
+    {
+      "category": "Estructura",
+      "name": "Archivo css/campo.css existe",
+      "passed": true,
+      "message": ""
+    },
+    {
+      "category": "Estructura",
+      "name": "Archivo firebase.json existe",
+      "passed": true,
+      "message": ""
+    },
+    {
+      "category": "Estructura",
+      "name": "Archivo firestore.rules existe",
+      "passed": true,
+      "message": ""
+    },
+    {
+      "category": "Estructura",
+      "name": "Archivo package.json existe",
+      "passed": true,
+      "message": ""
+    },
+    {
+      "category": "CSS",
+      "name": "css/main.css existe y es válido",
+      "passed": true,
+      "message": ""
+    },
+    {
+      "category": "CSS",
+      "name": "css/main.css usa variables CSS",
+      "passed": true,
+      "message": ""
+    },
+    {
+      "category": "CSS",
+      "name": "css/main.css tiene media queries",
+      "passed": true,
+      "message": ""
+    },
+    {
+      "category": "CSS",
+      "name": "css/main.css es responsive",
+      "passed": true,
+      "message": ""
+    },
+    {
+      "category": "CSS",
+      "name": "css/components.css existe y es válido",
+      "passed": true,
+      "message": ""
+    },
+    {
+      "category": "CSS",
+      "name": "css/components.css usa variables CSS",
+      "passed": true,
+      "message": ""
+    },
+    {
+      "category": "CSS",
+      "name": "css/components.css tiene media queries",
+      "passed": true,
+      "message": ""
+    },
+    {
+      "category": "CSS",
+      "name": "css/components.css es responsive",
+      "passed": true,
+      "message": ""
+    },
+    {
+      "category": "CSS",
+      "name": "css/glassmorphism.css existe y es válido",
+      "passed": true,
+      "message": ""
+    },
+    {
+      "category": "CSS",
+      "name": "css/glassmorphism.css usa variables CSS",
+      "passed": true,
+      "message": ""
+    },
+    {
+      "category": "CSS",
+      "name": "css/glassmorphism.css tiene media queries",
+      "passed": true,
+      "message": ""
+    },
+    {
+      "category": "CSS",
+      "name": "css/glassmorphism.css es responsive",
+      "passed": true,
+      "message": ""
+    },
+    {
+      "category": "CSS",
+      "name": "css/accessibility.css existe y es válido",
+      "passed": true,
+      "message": ""
+    },
+    {
+      "category": "CSS",
+      "name": "css/accessibility.css usa variables CSS",
+      "passed": true,
+      "message": ""
+    },
+    {
+      "category": "CSS",
+      "name": "css/accessibility.css tiene media queries",
+      "passed": true,
+      "message": ""
+    },
+    {
+      "category": "CSS",
+      "name": "css/accessibility.css es responsive",
+      "passed": true,
+      "message": ""
+    },
+    {
+      "category": "CSS",
+      "name": "css/campo.css existe y es válido",
+      "passed": true,
+      "message": ""
+    },
+    {
+      "category": "CSS",
+      "name": "css/campo.css usa variables CSS",
+      "passed": true,
+      "message": ""
+    },
+    {
+      "category": "CSS",
+      "name": "css/campo.css tiene media queries",
+      "passed": true,
+      "message": ""
+    },
+    {
+      "category": "CSS",
+      "name": "css/campo.css es responsive",
+      "passed": true,
+      "message": ""
+    },
+    {
+      "category": "CSS",
+      "name": "css/print.css existe y es válido",
+      "passed": true,
+      "message": ""
+    },
+    {
+      "category": "CSS",
+      "name": "css/print.css usa variables CSS",
+      "passed": true,
+      "message": ""
+    },
+    {
+      "category": "CSS",
+      "name": "css/print.css tiene media queries",
+      "passed": true,
+      "message": ""
+    },
+    {
+      "category": "CSS",
+      "name": "css/print.css es responsive",
+      "passed": true,
+      "message": ""
+    },
+    {
+      "category": "Seguridad",
+      "name": "CSP definido en HTML",
+      "passed": true,
+      "message": ""
+    },
+    {
+      "category": "Seguridad",
+      "name": "Sin tokens privados hardcoded",
+      "passed": true,
+      "message": ""
+    },
+    {
+      "category": "Seguridad",
+      "name": "Validación de Firebase configurada",
+      "passed": true,
+      "message": ""
+    },
+    {
+      "category": "Build",
+      "name": "Script de test definido",
+      "passed": true,
+      "message": ""
+    },
+    {
+      "category": "Build",
+      "name": "Script de build definido",
+      "passed": true,
+      "message": ""
+    },
+    {
+      "category": "Build",
+      "name": "Script de dev definido",
+      "passed": true,
+      "message": ""
+    },
+    {
+      "category": "Build",
+      "name": "Script de lint definido",
+      "passed": true,
+      "message": ""
+    },
+    {
+      "category": "Build",
+      "name": "Script de format definido",
+      "passed": true,
+      "message": ""
+    },
+    {
+      "category": "Dependencias",
+      "name": "Firebase incluido",
+      "passed": true,
+      "message": ""
+    },
+    {
+      "category": "Dependencias",
+      "name": "Vite incluido",
+      "passed": true,
+      "message": ""
+    },
+    {
+      "category": "Dependencias",
+      "name": "ESLint incluido",
+      "passed": true,
+      "message": ""
+    },
+    {
+      "category": "Dependencias",
+      "name": "Prettier incluido",
+      "passed": true,
+      "message": ""
+    },
+    {
+      "category": "Dependencias",
+      "name": "Playwright incluido",
+      "passed": true,
+      "message": ""
+    },
+    {
+      "category": "Configuración",
+      "name": "vite.config.js existe",
+      "passed": true,
+      "message": ""
+    },
+    {
+      "category": "Configuración",
+      "name": ".eslintrc.js existe",
+      "passed": true,
+      "message": ""
+    },
+    {
+      "category": "Configuración",
+      "name": ".prettierrc existe",
+      "passed": true,
+      "message": ""
+    },
+    {
+      "category": "Configuración",
+      "name": "tsconfig.json existe",
+      "passed": true,
+      "message": ""
+    },
+    {
+      "category": "Firestore Rules",
+      "name": "Archivo firestore.rules existe",
+      "passed": true,
+      "message": ""
+    },
+    {
+      "category": "Firestore Rules",
+      "name": "Contiene reglas allow",
+      "passed": true,
+      "message": ""
+    },
+    {
+      "category": "Firestore Rules",
+      "name": "Contiene reglas deny",
+      "passed": true,
+      "message": ""
+    },
+    {
+      "category": "Firestore Rules",
+      "name": "Versión de reglas definida",
+      "passed": true,
+      "message": ""
+    },
+    {
+      "category": "Firestore Rules",
+      "name": "Servicio Firestore definido",
+      "passed": true,
+      "message": ""
+    },
+    {
+      "category": "Firestore Rules",
+      "name": "Colección personal definida",
+      "passed": true,
+      "message": ""
+    },
+    {
+      "category": "Firestore Rules",
+      "name": "Colección asistencias definida",
+      "passed": true,
+      "message": ""
+    },
+    {
+      "category": "Firestore Rules",
+      "name": "Colección configuración definida",
+      "passed": true,
+      "message": ""
+    },
+    {
+      "category": "Accesibilidad",
+      "name": "Skip link definido",
+      "passed": true,
+      "message": ""
+    },
+    {
+      "category": "Accesibilidad",
+      "name": "aria-labels usados",
+      "passed": true,
+      "message": ""
+    },
+    {
+      "category": "Accesibilidad",
+      "name": "aria-hidden usado",
+      "passed": true,
+      "message": ""
+    },
+    {
+      "category": "Accesibilidad",
+      "name": "role=\"navigation\" definido",
+      "passed": true,
+      "message": ""
+    },
+    {
+      "category": "Accesibilidad",
+      "name": "role=\"main\" definido",
+      "passed": true,
+      "message": ""
+    },
+    {
+      "category": "Accesibilidad",
+      "name": "role=\"banner\" definido",
+      "passed": true,
+      "message": ""
+    },
+    {
+      "category": "Accesibilidad",
+      "name": "Labels en formularios",
+      "passed": true,
+      "message": ""
+    },
+    {
+      "category": "Accesibilidad",
+      "name": "Campos required marcados",
+      "passed": true,
+      "message": ""
+    },
+    {
+      "category": "Accesibilidad",
+      "name": "CSS accessibility.css existe",
+      "passed": true,
+      "message": ""
+    },
+    {
+      "category": "Accesibilidad",
+      "name": "focus-visible definido",
+      "passed": true,
+      "message": ""
+    },
+    {
+      "category": "Accesibilidad",
+      "name": "prefers-reduced-motion soportado",
+      "passed": true,
+      "message": ""
+    },
+    {
+      "category": "Accesibilidad",
+      "name": "sr-only class definida",
+      "passed": true,
+      "message": ""
+    },
+    {
+      "category": "Performance",
+      "name": "Lazy loading implementado",
+      "passed": true,
+      "message": ""
+    },
+    {
+      "category": "Performance",
+      "name": "Formato WebP soportado",
+      "passed": false,
+      "message": ""
+    },
+    {
+      "category": "Performance",
+      "name": "Imágenes responsive",
+      "passed": false,
+      "message": ""
+    },
+    {
+      "category": "Performance",
+      "name": "Scripts con defer",
+      "passed": false,
+      "message": ""
+    },
+    {
+      "category": "Performance",
+      "name": "Scripts con async",
+      "passed": false,
+      "message": ""
+    },
+    {
+      "category": "Performance",
+      "name": "Módulos ES usados",
+      "passed": false,
+      "message": ""
+    },
+    {
+      "category": "Performance",
+      "name": "Service Worker definido",
+      "passed": true,
+      "message": ""
+    },
+    {
+      "category": "Performance",
+      "name": "Web App Manifest definido",
+      "passed": true,
+      "message": ""
+    },
+    {
+      "category": "Módulos JS",
+      "name": "js/config.js existe",
+      "passed": true,
+      "message": ""
+    },
+    {
+      "category": "Módulos JS",
+      "name": "js/config.js usa IIFE",
+      "passed": true,
+      "message": ""
+    },
+    {
+      "category": "Módulos JS",
+      "name": "js/config.js exporta a window",
+      "passed": true,
+      "message": ""
+    },
+    {
+      "category": "Módulos JS",
+      "name": "js/config.js tiene JSDoc",
+      "passed": true,
+      "message": ""
+    },
+    {
+      "category": "Módulos JS",
+      "name": "js/firebase-config.js existe",
+      "passed": true,
+      "message": ""
+    },
+    {
+      "category": "Módulos JS",
+      "name": "js/firebase-config.js usa IIFE",
+      "passed": true,
+      "message": ""
+    },
+    {
+      "category": "Módulos JS",
+      "name": "js/firebase-config.js exporta a window",
+      "passed": true,
+      "message": ""
+    },
+    {
+      "category": "Módulos JS",
+      "name": "js/firebase-config.js tiene JSDoc",
+      "passed": true,
+      "message": ""
+    },
+    {
+      "category": "Módulos JS",
+      "name": "js/firebase-client.js existe",
+      "passed": true,
+      "message": ""
+    },
+    {
+      "category": "Módulos JS",
+      "name": "js/firebase-client.js usa IIFE",
+      "passed": true,
+      "message": ""
+    },
+    {
+      "category": "Módulos JS",
+      "name": "js/firebase-client.js exporta a window",
+      "passed": true,
+      "message": ""
+    },
+    {
+      "category": "Módulos JS",
+      "name": "js/firebase-client.js tiene JSDoc",
+      "passed": true,
+      "message": ""
+    },
+    {
+      "category": "Módulos JS",
+      "name": "js/api.js existe",
+      "passed": true,
+      "message": ""
+    },
+    {
+      "category": "Módulos JS",
+      "name": "js/api.js usa IIFE",
+      "passed": true,
+      "message": ""
+    },
+    {
+      "category": "Módulos JS",
+      "name": "js/api.js exporta a window",
+      "passed": true,
+      "message": ""
+    },
+    {
+      "category": "Módulos JS",
+      "name": "js/api.js tiene JSDoc",
+      "passed": true,
+      "message": ""
+    },
+    {
+      "category": "Módulos JS",
+      "name": "js/app.js existe",
+      "passed": true,
+      "message": ""
+    },
+    {
+      "category": "Módulos JS",
+      "name": "js/app.js usa IIFE",
+      "passed": true,
+      "message": ""
+    },
+    {
+      "category": "Módulos JS",
+      "name": "js/app.js exporta a window",
+      "passed": true,
+      "message": ""
+    },
+    {
+      "category": "Módulos JS",
+      "name": "js/app.js tiene JSDoc",
+      "passed": true,
+      "message": ""
+    },
+    {
+      "category": "Módulos JS",
+      "name": "js/utils/constants.js existe",
+      "passed": true,
+      "message": ""
+    },
+    {
+      "category": "Módulos JS",
+      "name": "js/utils/constants.js usa IIFE",
+      "passed": true,
+      "message": ""
+    },
+    {
+      "category": "Módulos JS",
+      "name": "js/utils/constants.js exporta a window",
+      "passed": true,
+      "message": ""
+    },
+    {
+      "category": "Módulos JS",
+      "name": "js/utils/constants.js tiene JSDoc",
+      "passed": true,
+      "message": ""
+    },
+    {
+      "category": "Módulos JS",
+      "name": "js/utils/validators.js existe",
+      "passed": true,
+      "message": ""
+    },
+    {
+      "category": "Módulos JS",
+      "name": "js/utils/validators.js usa IIFE",
+      "passed": true,
+      "message": ""
+    },
+    {
+      "category": "Módulos JS",
+      "name": "js/utils/validators.js exporta a window",
+      "passed": true,
+      "message": ""
+    },
+    {
+      "category": "Módulos JS",
+      "name": "js/utils/validators.js tiene JSDoc",
+      "passed": true,
+      "message": ""
+    },
+    {
+      "category": "Módulos JS",
+      "name": "js/utils/alerts.js existe",
+      "passed": true,
+      "message": ""
+    },
+    {
+      "category": "Módulos JS",
+      "name": "js/utils/alerts.js usa IIFE",
+      "passed": true,
+      "message": ""
+    },
+    {
+      "category": "Módulos JS",
+      "name": "js/utils/alerts.js exporta a window",
+      "passed": true,
+      "message": ""
+    },
+    {
+      "category": "Módulos JS",
+      "name": "js/utils/alerts.js tiene JSDoc",
+      "passed": true,
+      "message": ""
+    },
+    {
+      "category": "Módulos JS",
+      "name": "js/utils/camera-session.js existe",
+      "passed": true,
+      "message": ""
+    },
+    {
+      "category": "Módulos JS",
+      "name": "js/utils/camera-session.js usa IIFE",
+      "passed": true,
+      "message": ""
+    },
+    {
+      "category": "Módulos JS",
+      "name": "js/utils/camera-session.js exporta a window",
+      "passed": true,
+      "message": ""
+    },
+    {
+      "category": "Módulos JS",
+      "name": "js/utils/camera-session.js tiene JSDoc",
+      "passed": true,
+      "message": ""
+    },
+    {
+      "category": "Módulos JS",
+      "name": "js/utils/gps.js existe",
+      "passed": true,
+      "message": ""
+    },
+    {
+      "category": "Módulos JS",
+      "name": "js/utils/gps.js usa IIFE",
+      "passed": true,
+      "message": ""
+    },
+    {
+      "category": "Módulos JS",
+      "name": "js/utils/gps.js exporta a window",
+      "passed": true,
+      "message": ""
+    },
+    {
+      "category": "Módulos JS",
+      "name": "js/utils/gps.js tiene JSDoc",
+      "passed": true,
+      "message": ""
+    },
+    {
+      "category": "Módulos JS",
+      "name": "js/utils/pdf-builder.js existe",
+      "passed": true,
+      "message": ""
+    },
+    {
+      "category": "Módulos JS",
+      "name": "js/utils/pdf-builder.js usa IIFE",
+      "passed": true,
+      "message": ""
+    },
+    {
+      "category": "Módulos JS",
+      "name": "js/utils/pdf-builder.js exporta a window",
+      "passed": true,
+      "message": ""
+    },
+    {
+      "category": "Módulos JS",
+      "name": "js/utils/pdf-builder.js tiene JSDoc",
+      "passed": true,
+      "message": ""
+    },
+    {
+      "category": "Módulos JS",
+      "name": "js/utils/data-export.js existe",
+      "passed": true,
+      "message": ""
+    },
+    {
+      "category": "Módulos JS",
+      "name": "js/utils/data-export.js usa IIFE",
+      "passed": true,
+      "message": ""
+    },
+    {
+      "category": "Módulos JS",
+      "name": "js/utils/data-export.js exporta a window",
+      "passed": true,
+      "message": ""
+    },
+    {
+      "category": "Módulos JS",
+      "name": "js/utils/data-export.js tiene JSDoc",
+      "passed": true,
+      "message": ""
+    },
+    {
+      "category": "Módulos JS",
+      "name": "js/utils/cache-manager.js existe",
+      "passed": true,
+      "message": ""
+    },
+    {
+      "category": "Módulos JS",
+      "name": "js/utils/cache-manager.js usa IIFE",
+      "passed": true,
+      "message": ""
+    },
+    {
+      "category": "Módulos JS",
+      "name": "js/utils/cache-manager.js exporta a window",
+      "passed": true,
+      "message": ""
+    },
+    {
+      "category": "Módulos JS",
+      "name": "js/utils/cache-manager.js tiene JSDoc",
+      "passed": true,
+      "message": ""
+    },
+    {
+      "category": "Módulos JS",
+      "name": "js/utils/theme-manager.js existe",
+      "passed": true,
+      "message": ""
+    },
+    {
+      "category": "Módulos JS",
+      "name": "js/utils/theme-manager.js usa IIFE",
+      "passed": true,
+      "message": ""
+    },
+    {
+      "category": "Módulos JS",
+      "name": "js/utils/theme-manager.js exporta a window",
+      "passed": true,
+      "message": ""
+    },
+    {
+      "category": "Módulos JS",
+      "name": "js/utils/theme-manager.js tiene JSDoc",
+      "passed": true,
+      "message": ""
+    },
+    {
+      "category": "Módulos JS",
+      "name": "js/modules/dashboard.js existe",
+      "passed": true,
+      "message": ""
+    },
+    {
+      "category": "Módulos JS",
+      "name": "js/modules/dashboard.js usa IIFE",
+      "passed": true,
+      "message": ""
+    },
+    {
+      "category": "Módulos JS",
+      "name": "js/modules/dashboard.js exporta a window",
+      "passed": true,
+      "message": ""
+    },
+    {
+      "category": "Módulos JS",
+      "name": "js/modules/dashboard.js tiene JSDoc",
+      "passed": true,
+      "message": ""
+    },
+    {
+      "category": "Módulos JS",
+      "name": "js/modules/personal.js existe",
+      "passed": true,
+      "message": ""
+    },
+    {
+      "category": "Módulos JS",
+      "name": "js/modules/personal.js usa IIFE",
+      "passed": true,
+      "message": ""
+    },
+    {
+      "category": "Módulos JS",
+      "name": "js/modules/personal.js exporta a window",
+      "passed": true,
+      "message": ""
+    },
+    {
+      "category": "Módulos JS",
+      "name": "js/modules/personal.js tiene JSDoc",
+      "passed": true,
+      "message": ""
+    },
+    {
+      "category": "Módulos JS",
+      "name": "js/modules/asistencia.js existe",
+      "passed": true,
+      "message": ""
+    },
+    {
+      "category": "Módulos JS",
+      "name": "js/modules/asistencia.js usa IIFE",
+      "passed": true,
+      "message": ""
+    },
+    {
+      "category": "Módulos JS",
+      "name": "js/modules/asistencia.js exporta a window",
+      "passed": true,
+      "message": ""
+    },
+    {
+      "category": "Módulos JS",
+      "name": "js/modules/asistencia.js tiene JSDoc",
+      "passed": true,
+      "message": ""
+    },
+    {
+      "category": "Módulos JS",
+      "name": "js/modules/campo.js existe",
+      "passed": true,
+      "message": ""
+    },
+    {
+      "category": "Módulos JS",
+      "name": "js/modules/campo.js usa IIFE",
+      "passed": true,
+      "message": ""
+    },
+    {
+      "category": "Módulos JS",
+      "name": "js/modules/campo.js exporta a window",
+      "passed": true,
+      "message": ""
+    },
+    {
+      "category": "Módulos JS",
+      "name": "js/modules/campo.js tiene JSDoc",
+      "passed": true,
+      "message": ""
+    },
+    {
+      "category": "Módulos JS",
+      "name": "js/modules/reportes.js existe",
+      "passed": true,
+      "message": ""
+    },
+    {
+      "category": "Módulos JS",
+      "name": "js/modules/reportes.js usa IIFE",
+      "passed": true,
+      "message": ""
+    },
+    {
+      "category": "Módulos JS",
+      "name": "js/modules/reportes.js exporta a window",
+      "passed": true,
+      "message": ""
+    },
+    {
+      "category": "Módulos JS",
+      "name": "js/modules/reportes.js tiene JSDoc",
+      "passed": true,
+      "message": ""
+    },
+    {
+      "category": "Módulos JS",
+      "name": "js/modules/ajustes.js existe",
+      "passed": true,
+      "message": ""
+    },
+    {
+      "category": "Módulos JS",
+      "name": "js/modules/ajustes.js usa IIFE",
+      "passed": true,
+      "message": ""
+    },
+    {
+      "category": "Módulos JS",
+      "name": "js/modules/ajustes.js exporta a window",
+      "passed": true,
+      "message": ""
+    },
+    {
+      "category": "Módulos JS",
+      "name": "js/modules/ajustes.js tiene JSDoc",
+      "passed": true,
+      "message": ""
+    },
+    {
+      "category": "Integración",
+      "name": "Orden de scripts correcto",
+      "passed": true,
+      "message": ""
+    },
+    {
+      "category": "Integración",
+      "name": "Lucide Icons integrado",
+      "passed": true,
+      "message": ""
+    },
+    {
+      "category": "Integración",
+      "name": "QRCode.js integrado",
+      "passed": true,
+      "message": ""
+    },
+    {
+      "category": "Integración",
+      "name": "HTML5-QRCode integrado",
+      "passed": true,
+      "message": ""
+    },
+    {
+      "category": "Integración",
+      "name": "Leaflet integrado",
+      "passed": true,
+      "message": ""
+    },
+    {
+      "category": "Integración",
+      "name": "Chart.js integrado",
+      "passed": true,
+      "message": ""
+    },
+    {
+      "category": "Integración",
+      "name": "jsPDF integrado",
+      "passed": true,
+      "message": ""
+    },
+    {
+      "category": "Responsive",
+      "name": "Media queries definidas",
+      "passed": true,
+      "message": ""
+    },
+    {
+      "category": "Responsive",
+      "name": "Breakpoint móvil definido",
+      "passed": true,
+      "message": ""
+    },
+    {
+      "category": "Responsive",
+      "name": "Breakpoint tablet definido",
+      "passed": true,
+      "message": ""
+    },
+    {
+      "category": "Responsive",
+      "name": "Touch action optimizado",
+      "passed": true,
+      "message": ""
+    },
+    {
+      "category": "Responsive",
+      "name": "Campo CSS tiene optimizaciones móvil",
+      "passed": true,
+      "message": ""
+    },
+    {
+      "category": "Responsive",
+      "name": "Campo CSS optimizado para extra small",
+      "passed": true,
+      "message": ""
+    }
+  ]
+}

@@ -1,6 +1,7 @@
 /**
  * CONTROL PERSONAL CAMPO — utils/validators.js
  * Módulo de validaciones compartido para consistencia en toda la aplicación.
+ * Centraliza todas las validaciones de datos para evitar duplicación.
  * @version 1.5.0
  */
 
@@ -25,6 +26,165 @@ const Validators = (() => {
     IMAGEN_MAX_SIZE: 600 * 1024,
     IMAGEN_MAX_DIMENSION: 300,
   };
+
+  // ─── Validaciones de Datos de Trabajador ───────────────────────────────────────
+
+  /**
+   * Valida datos completos de un trabajador
+   * @param {Object} trabajador - Datos del trabajador a validar
+   * @returns {Object} { valid: boolean, errors: Array<{campo: string, error: string}> }
+   * @example
+   * const result = Validators.validateTrabajadorCompleto({
+   *   nombre: 'Juan Pérez',
+   *   dpi: '1234567890101',
+   *   puesto: 'Albañil'
+   * });
+   */
+  function validateTrabajadorCompleto(trabajador) {
+    const errors = [];
+
+    // Validar nombre
+    if (!trabajador.nombre) {
+      errors.push({ campo: 'nombre', error: 'El nombre es requerido' });
+    } else {
+      const nombreResult = validateNombre(trabajador.nombre);
+      if (!nombreResult.valid) {
+        errors.push({ campo: 'nombre', error: nombreResult.error });
+      }
+    }
+
+    // Validar DPI
+    if (!trabajador.dpi) {
+      errors.push({ campo: 'dpi', error: 'El DPI es requerido' });
+    } else {
+      const dpiResult = validateDPI(trabajador.dpi);
+      if (!dpiResult.valid) {
+        errors.push({ campo: 'dpi', error: dpiResult.error });
+      }
+    }
+
+    // Validar puesto
+    if (!trabajador.puesto) {
+      errors.push({ campo: 'puesto', error: 'El puesto es requerido' });
+    }
+
+    // Validar teléfono (opcional)
+    if (trabajador.telefono) {
+      const telResult = validateTelefono(trabajador.telefono);
+      if (!telResult.valid) {
+        errors.push({ campo: 'telefono', error: telResult.error });
+      }
+    }
+
+    // Validar dirección (opcional)
+    if (trabajador.direccion && typeof trabajador.direccion === 'string') {
+      if (trabajador.direccion.trim().length < 5) {
+        errors.push({ campo: 'direccion', error: 'La dirección debe tener al menos 5 caracteres' });
+      }
+    }
+
+    return {
+      valid: errors.length === 0,
+      errors
+    };
+  }
+
+  /**
+   * Valida datos de marcación de asistencia
+   * @param {Object} marcacion - Datos de la marcación a validar
+   * @returns {Object} { valid: boolean, errors: Array<{campo: string, error: string}> }
+   * @example
+   * const result = Validators.validateMarcacion({
+   *   idTrabajador: 'TRAB-123',
+   *   tipo: 'Entrada',
+   *   fecha: '2026-09-15'
+   * });
+   */
+  function validateMarcacion(marcacion) {
+    const errors = [];
+
+    // Validar ID de trabajador
+    if (!marcacion.idTrabajador && !marcacion.ID_Trabajador) {
+      errors.push({ campo: 'idTrabajador', error: 'El ID del trabajador es requerido' });
+    }
+
+    // Validar tipo de marcación
+    const tiposValidos = ['Entrada', 'Salida_Receso', 'Regreso_Receso', 'Salida_Obra'];
+    const tipo = marcacion.tipo || marcacion.Tipo_Marcacion;
+    if (!tipo || !tiposValidos.includes(tipo)) {
+      errors.push({ campo: 'tipo', error: `Tipo de marcación inválido. Debe ser: ${tiposValidos.join(', ')}` });
+    }
+
+    // Validar fecha
+    const fecha = marcacion.fecha || marcacion.Fecha;
+    if (!fecha) {
+      errors.push({ campo: 'fecha', error: 'La fecha es requerida' });
+    } else {
+      const fechaRegex = /^\d{4}-\d{2}-\d{2}$/;
+      if (!fechaRegex.test(fecha)) {
+        errors.push({ campo: 'fecha', error: 'La fecha debe tener formato YYYY-MM-DD' });
+      }
+    }
+
+    // Validar hora si está presente
+    if (marcacion.horaReal || marcacion.Hora_Real) {
+      const hora = marcacion.horaReal || marcacion.Hora_Real;
+      const horaResult = validateHora(hora);
+      if (!horaResult.valid) {
+        errors.push({ campo: 'horaReal', error: horaResult.error });
+      }
+    }
+
+    return {
+      valid: errors.length === 0,
+      errors
+    };
+  }
+
+  /**
+   * Valida configuración del sistema
+   * @param {Object} config - Configuración a validar
+   * @returns {Object} { valid: boolean, errors: Array<{campo: string, error: string}> }
+   * @example
+   * const result = Validators.validateConfigSistema({
+   *   Hora_Entrada: '07:00',
+   *   Hora_Salida_Obra: '17:00',
+   *   GPS_Radio_Metros: 200
+   * });
+   */
+  function validateConfigSistema(config) {
+    const errors = [];
+
+    // Validar horarios si están presentes
+    if (config.Hora_Entrada) {
+      const result = validateHora(config.Hora_Entrada);
+      if (!result.valid) errors.push({ campo: 'Hora_Entrada', error: result.error });
+    }
+
+    if (config.Hora_Salida_Obra) {
+      const result = validateHora(config.Hora_Salida_Obra);
+      if (!result.valid) errors.push({ campo: 'Hora_Salida_Obra', error: result.error });
+    }
+
+    // Validar GPS si está presente
+    if (config.GPS_Centro_Lat || config.GPS_Centro_Lon || config.GPS_Radio_Metros) {
+      const gpsResult = validateConfigGPS(config);
+      if (!gpsResult.valid) {
+        errors.push(...gpsResult.errors);
+      }
+    }
+
+    // Validar tolerancia si está presente
+    if (config.Tolerancia_Minutos !== undefined) {
+      const result = validateTolerancia(config.Tolerancia_Minutos);
+      if (!result.valid) errors.push({ campo: 'Tolerancia_Minutos', error: result.error });
+    }
+
+    return {
+      valid: errors.length === 0,
+      errors
+    };
+  }
 
   // ─── Validaciones de Campos ──────────────────────────────────────────────────
 
@@ -374,25 +534,14 @@ const Validators = (() => {
     validateImagen,
     validateGASUrl,
 
-    // Validaciones compuestas
+    // Validaciones compuestas (centralizadas)
+    validateTrabajadorCompleto,
+    validateMarcacion,
+    validateConfigSistema,
+
+    // Validaciones compuestas (legacy - mantenidas por compatibilidad)
     validateTrabajador(trabajador) {
-      const errors = [];
-
-      const nombreResult = this.validateNombre(trabajador.nombre);
-      if (!nombreResult.valid) errors.push({ campo: 'nombre', error: nombreResult.error });
-
-      const dpiResult = this.validateDPI(trabajador.dpi);
-      if (!dpiResult.valid) errors.push({ campo: 'dpi', error: dpiResult.error });
-
-      if (trabajador.telefono) {
-        const telResult = this.validateTelefono(trabajador.telefono);
-        if (!telResult.valid) errors.push({ campo: 'telefono', error: telResult.error });
-      }
-
-      return {
-        valid: errors.length === 0,
-        errors
-      };
+      return this.validateTrabajadorCompleto(trabajador);
     },
 
     validateConfigGPS(config) {

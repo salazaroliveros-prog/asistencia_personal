@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Pruebas de Carnets - Control Personal Campo</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 20px;
+      background: #f5f5f5;
+    }
+    .header {
+      text-align: center;
+      margin-bottom: 30px;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      padding: 30px;
+      border-radius: 15px;
+    }
+    .test-section {
+      background: white;
+      padding: 20px;
+      margin-bottom: 20px;
+      border-radius: 10px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+    .btn {
+      padding: 12px 24px;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      font-size: 16px;
+      margin: 5px;
+      background: #667eea;
+      color: white;
+    }
+    .btn:hover {
+      background: #5568d3;
+    }
+    .btn-secondary {
+      background: #764ba2;
+    }
+    .btn-secondary:hover {
+      background: #6337a3;
+    }
+    .results {
+      background: #f9f9f9;
+      padding: 15px;
+      border-radius: 5px;
+      margin-top: 15px;
+      font-family: monospace;
+      white-space: pre-wrap;
+    }
+    .carnet-preview {
+      border: 1px solid #ddd;
+      padding: 10px;
+      margin: 10px 0;
+      border-radius: 5px;
+      background: white;
+    }
+    .status {
+      padding: 10px;
+      margin: 10px 0;
+      border-radius: 5px;
+    }
+    .status.success { background: #d4edda; color: #155724; }
+    .status.error { background: #f8d7da; color: #721c24; }
+    .status.warning { background: #fff3cd; color: #856404; }
+    .status.info { background: #d1ecf1; color: #0c5460; }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h1>🎨 Pruebas de Carnets y Escaneo QR</h1>
+    <p>Control Personal Campo - Sistema de Generación y Validación de Carnets</p>
+  </div>
+
+  <div class="test-section">
+    <h2>📊 Pruebas Completas de Carnets</h2>
+    <p>Ejecuta todas las pruebas de generación, validación, cámara y escaneo QR.</p>
+    <button class="btn" onclick="window.CarnetTest?.runCarnetTests()">🧪 Ejecutar Pruebas Completas</button>
+    <button class="btn btn-secondary" onclick="window.CarnetTest?.generateCarnetReport()">📄 Generar Reporte de Carnets</button>
+    <div id="test-results" class="results">Los resultados de las pruebas aparecerán aquí...</div>
+  </div>
+
+  <div class="test-section">
+    <h2>👥 Generar Carnets de Prueba</h2>
+    <p>Genera carnets para trabajadores de prueba.</p>
+    <label for="worker-count">Cantidad de trabajadores:</label>
+    <input type="number" id="worker-count" value="5" min="1" max="20" style="padding: 8px; margin: 10px;">
+    <button class="btn" onclick="generateTestCarnets()">🎨 Generar Carnets</button>
+    <div id="carnet-results" class="results"></div>
+  </div>
+
+  <div class="test-section">
+    <h2>📷 Validar Sistema de Cámara</h2>
+    <p>Verifica que el sistema de cámara esté funcionando correctamente.</p>
+    <button class="btn" onclick="validateCamera()">📷 Validar Cámara</button>
+    <div id="camera-results" class="results"></div>
+  </div>
+
+  <div class="test-section">
+    <h2>📱 Validar Sistema de Escáner QR</h2>
+    <p>Verifica que el sistema de escáner QR esté funcionando correctamente.</p>
+    <button class="btn" onclick="validateScanner()">📱 Validar Escáner QR</button>
+    <div id="scanner-results" class="results"></div>
+  </div>
+
+  <div class="test-section">
+    <h2>🧪 Prueba de Escaneo QR</h2>
+    <p>Simula escaneo de QR codes de trabajadores.</p>
+    <label for="test-workers">Cantidad de trabajadores para probar:</label>
+    <input type="number" id="test-workers" value="5" min="1" max="20" style="padding: 8px; margin: 10px;">
+    <button class="btn" onclick="runScanTest()">📷 Ejecutar Prueba de Escaneo</button>
+    <div id="scan-results" class="results"></div>
+  </div>
+
+  <script src="../js/utils/carnet-generator.js"></script>
+  <script src="../js/utils/carnet-validator.js"></script>
+  <script src="../__tests__/carnet-test.js"></script>
+  <script>
+    // Sobrescribir console.log para mostrar en la página
+    const originalLog = console.log;
+    console.log = function(...args) {
+      originalLog.apply(console, args);
+      const resultsDiv = document.getElementById('test-results');
+      if (resultsDiv) {
+        resultsDiv.textContent += '\n' + args.join(' ');
+        resultsDiv.scrollTop = resultsDiv.scrollHeight;
+      }
+    };
+
+    async function generateTestCarnets() {
+      const count = parseInt(document.getElementById('worker-count').value) || 5;
+      const resultsDiv = document.getElementById('carnet-results');
+      
+      resultsDiv.textContent = 'Generando carnets...';
+      
+      try {
+        const workers = window.CarnetValidator?.generateTestWorkers(count) || [];
+        const carnets = await window.CarnetGenerator?.generateMultipleCarnets(workers) || [];
+        
+        let html = `✅ ${carnets.length} carnets generados\n\n`;
+        
+        carnets.forEach((carnet, index) => {
+          if (carnet.error) {
+            html += `❌ Trabajador ${index + 1}: ${carnet.error}\n`;
+          } else {
+            html += `✅ Trabajador ${index + 1}: ${carnet.trabajador.ID_Trabajador}\n`;
+            html += `   HTML: ${carnet.html ? 'Generado' : 'No generado'}\n`;
+            html += `   Imagen: ${carnet.imageDataUrl ? 'Generada' : 'No generada'}\n`;
+            html += `   QR: ${carnet.qrDataUrl ? 'Generado' : 'No generado'}\n\n`;
+          }
+        });
+        
+        resultsDiv.textContent = html;
+      } catch (error) {
+        resultsDiv.textContent = `❌ Error: ${error.message}`;
+      }
+    }
+
+    async function validateCamera() {
+      const resultsDiv = document.getElementById('camera-results');
+      resultsDiv.textContent = 'Validando sistema de cámara...';
+      
+      try {
+        const validation = await window.CarnetValidator?.validateCameraSystem() || {};
+        
+        let html = '';
+        if (validation.supported) {
+          html += `✅ Sistema de cámara soportado\n`;
+          html += `✅ ${validation.cameras.length} cámaras detectadas\n`;
+        } else {
+          html += `❌ Sistema de cámara no soportado\n`;
+        }
+        
+        if (validation.errors.length > 0) {
+          html += '\n❌ Errores:\n';
+          validation.errors.forEach(err => html += `   ${err}\n`);
+        }
+        
+        if (validation.warnings.length > 0) {
+          html += '\n⚠️  Advertencias:\n';
+          validation.warnings.forEach(warn => html += `   ${warn}\n`);
+        }
+        
+        if (validation.recommendations.length > 0) {
+          html += '\n💡 Recomendaciones:\n';
+          validation.recommendations.forEach(rec => html += `   ${rec}\n`);
+        }
+        
+        resultsDiv.textContent = html;
+      } catch (error) {
+        resultsDiv.textContent = `❌ Error: ${error.message}`;
+      }
+    }
+
+    function validateScanner() {
+      const resultsDiv = document.getElementById('scanner-results');
+      resultsDiv.textContent = 'Validando sistema de escáner QR...';
+      
+      try {
+        const validation = window.CarnetValidator?.validateQRScannerSystem() || {};
+        
+        let html = '';
+        if (validation.supported) {
+          html += `✅ Sistema de escáner QR soportado\n`;
+        } else {
+          html += `❌ Sistema de escáner QR no soportado\n`;
+        }
+        
+        if (validation.html5Qrcode) {
+          html += `✅ Html5Qrcode disponible\n`;
+        }
+        
+        if (validation.mobileOptimized) {
+          html += `✅ Sistema móvil optimizado disponible\n`;
+        }
+        
+        if (validation.errors.length > 0) {
+          html += '\n❌ Errores:\n';
+          validation.errors.forEach(err => html += `   ${err}\n`);
+        }
+        
+        if (validation.warnings.length > 0) {
+          html += '\n⚠️  Advertencias:\n';
+          validation.warnings.forEach(warn => html += `   ${warn}\n`);
+        }
+        
+        if (validation.recommendations.length > 0) {
+          html += '\n💡 Recomendaciones:\n';
+          validation.recommendations.forEach(rec => html += `   ${rec}\n`);
+        }
+        
+        resultsDiv.textContent = html;
+      } catch (error) {
+        resultsDiv.textContent = `❌ Error: ${error.message}`;
+      }
+    }
+
+    async function runScanTest() {
+      const count = parseInt(document.getElementById('test-workers').value) || 5;
+      const resultsDiv = document.getElementById('scan-results');
+      
+      resultsDiv.textContent = 'Ejecutando prueba de escaneo...';
+      
+      try {
+        const workers = window.CarnetValidator?.generateTestWorkers(count) || [];
+        const scanTest = await window.CarnetValidator?.runScanTest(workers) || {};
+        
+        let html = '';
+        if (scanTest.summary) {
+          html += `📊 Pruebas de Escaneo:\n`;
+          html += `   Total: ${scanTest.summary.total}\n`;
+          html += `   Exitosos: ${scanTest.summary.successful}\n`;
+          html += `   Fallidos: ${scanTest.summary.failed}\n`;
+          html += `   Advertencias: ${scanTest.summary.warnings}\n\n`;
+        }
+        
+        if (scanTest.scanResults) {
+          html += `📋 Resultados por Trabajador:\n`;
+          scanTest.scanResults.forEach(result => {
+            if (result.validation && result.validation.valid) {
+              html += `✅ ${result.worker}: Válido\n`;
+            } else {
+              html += `❌ ${result.worker}: Inválido\n`;
+            }
+          });
+        }
+        
+        resultsDiv.textContent = html;
+      } catch (error) {
+        resultsDiv.textContent = `❌ Error: ${error.message}`;
+      }
+    }
+  </script>
+</body>
+</html>

@@ -1,14 +1,24 @@
-/*
+/**
+ * CONTROL PERSONAL CAMPO — utils/camera-session.js
  * Cámara compartida para los flujos legacy.
  * Centraliza el acceso físico: una vista nunca debe dejar tracks activos al
  * cambiar de lente, cerrar el modal o abandonar la página.
+ * @version 1.5.0
  */
 (() => {
   'use strict';
 
+  /**
+   * Obtiene el objeto mediaDevices del navegador
+   * @returns {MediaDevices|null} Objeto mediaDevices o null si no está disponible
+   */
   const getMediaDevices = () =>
     typeof navigator !== 'undefined' ? navigator.mediaDevices : null;
 
+  /**
+   * Verifica el soporte de cámaras en el entorno actual
+   * @returns {Object} { supported: boolean, secure: boolean }
+   */
   function getSupport() {
     const protocol = typeof location === 'undefined' ? '' : location.protocol;
     const secure = protocol === 'https:' || protocol === 'capacitor:' || protocol === 'http:';
@@ -19,6 +29,11 @@
     };
   }
 
+  /**
+   * Detiene todos los tracks de un stream de video
+   * @param {MediaStream} stream - Stream de video a detener
+   * @returns {void}
+   */
   function stopTracks(stream) {
     if (!stream || typeof stream.getTracks !== 'function') return;
     stream.getTracks().forEach(track => {
@@ -26,12 +41,26 @@
     });
   }
 
+  /**
+   * Detiene el stream de un elemento de video
+   * @param {HTMLVideoElement} videoElement - Elemento de video
+   * @returns {void}
+   */
   function stopStream(videoElement) {
     if (!videoElement) return;
     stopTracks(videoElement.srcObject);
     videoElement.srcObject = null;
   }
 
+  /**
+   * Construye candidatos de configuración para getUserMedia
+   * @param {Object} options - Opciones de configuración
+   * @param {string} options.deviceId - ID del dispositivo específico
+   * @param {string} options.facingMode - Modo de cámara ('environment' o 'user')
+   * @param {number} options.width - Ancho deseado
+   * @param {number} options.height - Alto deseado
+   * @returns {Array} Array de candidatos de configuración
+   */
   function buildCandidates({ deviceId, facingMode = 'environment', width, height } = {}) {
     const dimensions = {};
     if (width) dimensions.width = { ideal: width };
@@ -43,10 +72,20 @@
     return candidates;
   }
 
+  /**
+   * Determina si se puede usar fallback ante un error
+   * @param {Error} error - Error a evaluar
+   * @returns {boolean} true si se puede usar fallback
+   */
   function canFallback(error) {
     return ['OverconstrainedError', 'NotFoundError', 'DevicesNotFoundError'].includes(error && error.name);
   }
 
+  /**
+   * Inicia un stream de video con las opciones especificadas
+   * @param {Object} options - Opciones de configuración
+   * @returns {Promise<MediaStream>} Stream de video iniciado
+   */
   async function startStream(options = {}) {
     const support = getSupport();
     if (!support.supported) {

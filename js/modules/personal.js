@@ -38,6 +38,10 @@ const ModuloPersonal = (() => {
   const genId = () => CPC.StringHelpers?.generateLocalId?.() ?? _generarIdLocal();
 
   // ─── Inicialización ───────────────────────────────────────────────────────
+  /**
+   * Inicializa el módulo de personal
+   * @returns {void}
+   */
   function init() {
     if (window.Logger) {
       window.Logger.info('ModuloPersonal', 'Inicializando módulo de personal');
@@ -49,6 +53,10 @@ const ModuloPersonal = (() => {
   // ─────────────────────────────────────────────────────────────────────────
   // EVENTOS
   // ─────────────────────────────────────────────────────────────────────────
+  /**
+   * Configura los event listeners del módulo de personal
+   * @returns {void}
+   */
   function _bindEvents() {
     // Abrir modal nuevo trabajador
     const btnNuevo = document.getElementById('btn-nuevo-personal');

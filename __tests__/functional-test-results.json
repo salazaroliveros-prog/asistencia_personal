@@ -1,0 +1,869 @@
+{
+  "passed": 53,
+  "failed": 0,
+  "tests": [
+    {
+      "category": "Datos de Prueba",
+      "name": "Generación de trabajadores",
+      "passed": true,
+      "message": "10 trabajadores creados"
+    },
+    {
+      "category": "Datos de Prueba",
+      "name": "Configuración generada",
+      "passed": true,
+      "message": "GPS habilitado en Guatemala"
+    },
+    {
+      "category": "Datos de Prueba",
+      "name": "Generación de marcaciones",
+      "passed": true,
+      "message": "19 marcaciones creadas"
+    },
+    {
+      "category": "Validaciones",
+      "name": "Validación de DPI en trabajadores",
+      "passed": true,
+      "message": "0/10 válidos"
+    },
+    {
+      "category": "Validaciones",
+      "name": "Validación de nombres en trabajadores",
+      "passed": true,
+      "message": "0/10 válidos"
+    },
+    {
+      "category": "Validaciones",
+      "name": "Validación de teléfonos en trabajadores",
+      "passed": true,
+      "message": "0/10 válidos"
+    },
+    {
+      "category": "Validaciones",
+      "name": "Validación de hora de entrada",
+      "passed": true,
+      "message": ""
+    },
+    {
+      "category": "Validaciones",
+      "name": "Validación de hora de salida",
+      "passed": true,
+      "message": ""
+    },
+    {
+      "category": "Validaciones",
+      "name": "Validación de latitud GPS",
+      "passed": true,
+      "message": ""
+    },
+    {
+      "category": "Validaciones",
+      "name": "Validación de longitud GPS",
+      "passed": true,
+      "message": ""
+    },
+    {
+      "category": "Validaciones",
+      "name": "Validación de radio de geocerca",
+      "passed": true,
+      "message": ""
+    },
+    {
+      "category": "LocalStorage",
+      "name": "Guardado de configuración",
+      "passed": true,
+      "message": ""
+    },
+    {
+      "category": "LocalStorage",
+      "name": "Guardado de trabajadores",
+      "passed": true,
+      "message": ""
+    },
+    {
+      "category": "LocalStorage",
+      "name": "Guardado de asistencias",
+      "passed": true,
+      "message": ""
+    },
+    {
+      "category": "LocalStorage",
+      "name": "Cola offline",
+      "passed": true,
+      "message": ""
+    },
+    {
+      "category": "LocalStorage",
+      "name": "Timestamp de sincronización",
+      "passed": true,
+      "message": ""
+    },
+    {
+      "category": "LocalStorage",
+      "name": "Persistencia de tema",
+      "passed": true,
+      "message": ""
+    },
+    {
+      "category": "Lógica de Negocio",
+      "name": "Cálculo de estado de marcación",
+      "passed": true,
+      "message": "100.0% correctos"
+    },
+    {
+      "category": "Lógica de Negocio",
+      "name": "Cálculo de horas extra",
+      "passed": true,
+      "message": "0 marcaciones correctas"
+    },
+    {
+      "category": "Lógica de Negocio",
+      "name": "Cálculo de geocerca",
+      "passed": true,
+      "message": "100.0% correctos"
+    },
+    {
+      "category": "Consistencia",
+      "name": "IDs de trabajadores únicos",
+      "passed": true,
+      "message": ""
+    },
+    {
+      "category": "Consistencia",
+      "name": "IDs de marcaciones únicos",
+      "passed": true,
+      "message": ""
+    },
+    {
+      "category": "Consistencia",
+      "name": "Referencias trabajador-marcación",
+      "passed": true,
+      "message": "100.0% válidas"
+    },
+    {
+      "category": "Consistencia",
+      "name": "Formato de fechas YYYY-MM-DD",
+      "passed": true,
+      "message": "100.0% válidas"
+    },
+    {
+      "category": "Consistencia",
+      "name": "Formato de horas HH:MM",
+      "passed": true,
+      "message": "50.0% válidas"
+    },
+    {
+      "category": "Performance",
+      "name": "Tamaño total de datos",
+      "passed": true,
+      "message": "14.54 KB (0.01 MB)"
+    },
+    {
+      "category": "Performance",
+      "name": "Dentro de límites localStorage",
+      "passed": true,
+      "message": "< 5MB"
+    },
+    {
+      "category": "Performance",
+      "name": "Tamaño promedio trabajador",
+      "passed": true,
+      "message": "426 bytes"
+    },
+    {
+      "category": "Performance",
+      "name": "Tamaño promedio marcación",
+      "passed": true,
+      "message": "512 bytes"
+    },
+    {
+      "category": "Performance",
+      "name": "Timestamps válidos",
+      "passed": true,
+      "message": "100.0% válidos"
+    },
+    {
+      "category": "Flujo Usuario",
+      "name": "Simulación: Alta de trabajador",
+      "passed": true,
+      "message": ""
+    },
+    {
+      "category": "Flujo Usuario",
+      "name": "Puesto válido en sistema",
+      "passed": true,
+      "message": ""
+    },
+    {
+      "category": "Flujo Usuario",
+      "name": "Simulación: Registro de marcación",
+      "passed": true,
+      "message": ""
+    },
+    {
+      "category": "Flujo Usuario",
+      "name": "Hora de marcación válida",
+      "passed": true,
+      "message": ""
+    },
+    {
+      "category": "Flujo Usuario",
+      "name": "Fecha de marcación válida",
+      "passed": true,
+      "message": ""
+    },
+    {
+      "category": "Flujo Usuario",
+      "name": "Trabajador existe en sistema",
+      "passed": true,
+      "message": ""
+    },
+    {
+      "category": "Flujo Usuario",
+      "name": "Simulación: Consulta de reportes",
+      "passed": true,
+      "message": ""
+    },
+    {
+      "category": "Flujo Usuario",
+      "name": "Filtrado por rango de fechas",
+      "passed": true,
+      "message": "0 marcaciones en rango"
+    },
+    {
+      "category": "Flujo Usuario",
+      "name": "Cálculo de estadísticas",
+      "passed": true,
+      "message": "10/10 trabajadores activos, 10 presentes hoy"
+    },
+    {
+      "category": "Integración",
+      "name": "Relación trabajador-marcación",
+      "passed": true,
+      "message": ""
+    },
+    {
+      "category": "Integración",
+      "name": "Puestos definidos en trabajadores",
+      "passed": true,
+      "message": ""
+    },
+    {
+      "category": "Integración",
+      "name": "Tipos de marcación válidos",
+      "passed": true,
+      "message": "3 tipos únicos encontrados"
+    },
+    {
+      "category": "Integración",
+      "name": "Estados de marcación válidos",
+      "passed": true,
+      "message": "2 estados únicos encontrados"
+    },
+    {
+      "category": "Edge Case",
+      "name": "Validación rechaza nombre vacío",
+      "passed": true,
+      "message": ""
+    },
+    {
+      "category": "Edge Case",
+      "name": "Validación rechaza DPI corto",
+      "passed": true,
+      "message": ""
+    },
+    {
+      "category": "Edge Case",
+      "name": "Validación rechaza teléfono inválido",
+      "passed": true,
+      "message": ""
+    },
+    {
+      "category": "Edge Case",
+      "name": "Validación rechaza hora inválida",
+      "passed": true,
+      "message": ""
+    },
+    {
+      "category": "Edge Case",
+      "name": "Validación rechaza latitud inválida",
+      "passed": true,
+      "message": ""
+    },
+    {
+      "category": "Edge Case",
+      "name": "Validación rechaza radio excesivo",
+      "passed": true,
+      "message": ""
+    },
+    {
+      "category": "Seguridad",
+      "name": "Sin datos sensibles en trabajadores",
+      "passed": true,
+      "message": ""
+    },
+    {
+      "category": "Seguridad",
+      "name": "Sin tokens en configuración",
+      "passed": true,
+      "message": ""
+    },
+    {
+      "category": "Seguridad",
+      "name": "IDs son únicos y no predecibles",
+      "passed": true,
+      "message": ""
+    },
+    {
+      "category": "Seguridad",
+      "name": "Sin nulls en campos críticos de trabajadores",
+      "passed": true,
+      "message": ""
+    }
+  ],
+  "testData": {
+    "workers": [
+      {
+        "ID_Trabajador": "TRAB-1789583331223-0",
+        "Nombre_Completo": "Juan Pérez García",
+        "DPI_CUI": "0001000100001",
+        "Puesto": "Albañil",
+        "Jefe_Inmediato": "",
+        "Telefono": "23274",
+        "WhatsApp": "+502 265223",
+        "Direccion": "Zona 1, Obra Principal, Ciudad de Guatemala",
+        "Fotografia_URL": "",
+        "Codigo_QR_Data": "{\"id\":\"TRAB-1789583331223-0\",\"dpi\":\"\",\"nombre\":\"Juan Pérez García\"}",
+        "Fecha_Registro": "2026-09-16T18:28:51.223Z",
+        "Estado": "Activo"
+      },
+      {
+        "ID_Trabajador": "TRAB-1789583331223-1",
+        "Nombre_Completo": "María López Hernández",
+        "DPI_CUI": "0002000200002",
+        "Puesto": "Maestro de Obra",
+        "Jefe_Inmediato": "Juan Pérez García",
+        "Telefono": "27502",
+        "WhatsApp": "+502 235707",
+        "Direccion": "Zona 2, Obra Principal, Ciudad de Guatemala",
+        "Fotografia_URL": "",
+        "Codigo_QR_Data": "{\"id\":\"TRAB-1789583331223-1\",\"dpi\":\"\",\"nombre\":\"María López Hernández\"}",
+        "Fecha_Registro": "2026-09-16T18:28:51.223Z",
+        "Estado": "Activo"
+      },
+      {
+        "ID_Trabajador": "TRAB-1789583331223-2",
+        "Nombre_Completo": "Carlos Rodríguez Martínez",
+        "DPI_CUI": "0003000300003",
+        "Puesto": "Armador",
+        "Jefe_Inmediato": "Juan Pérez García",
+        "Telefono": "24103",
+        "WhatsApp": "+502 292445",
+        "Direccion": "Zona 3, Obra Principal, Ciudad de Guatemala",
+        "Fotografia_URL": "",
+        "Codigo_QR_Data": "{\"id\":\"TRAB-1789583331223-2\",\"dpi\":\"\",\"nombre\":\"Carlos Rodríguez Martínez\"}",
+        "Fecha_Registro": "2026-09-16T18:28:51.223Z",
+        "Estado": "Activo"
+      },
+      {
+        "ID_Trabajador": "TRAB-1789583331223-3",
+        "Nombre_Completo": "Ana García Sánchez",
+        "DPI_CUI": "0004000400004",
+        "Puesto": "Carpintero",
+        "Jefe_Inmediato": "Juan Pérez García",
+        "Telefono": "29670",
+        "WhatsApp": "+502 221565",
+        "Direccion": "Zona 4, Obra Principal, Ciudad de Guatemala",
+        "Fotografia_URL": "",
+        "Codigo_QR_Data": "{\"id\":\"TRAB-1789583331223-3\",\"dpi\":\"\",\"nombre\":\"Ana García Sánchez\"}",
+        "Fecha_Registro": "2026-09-16T18:28:51.223Z",
+        "Estado": "Activo"
+      },
+      {
+        "ID_Trabajador": "TRAB-1789583331223-4",
+        "Nombre_Completo": "Pedro Jiménez Castro",
+        "DPI_CUI": "0005000500005",
+        "Puesto": "Electricista",
+        "Jefe_Inmediato": "Juan Pérez García",
+        "Telefono": "26726",
+        "WhatsApp": "+502 271771",
+        "Direccion": "Zona 5, Obra Principal, Ciudad de Guatemala",
+        "Fotografia_URL": "",
+        "Codigo_QR_Data": "{\"id\":\"TRAB-1789583331223-4\",\"dpi\":\"\",\"nombre\":\"Pedro Jiménez Castro\"}",
+        "Fecha_Registro": "2026-09-16T18:28:51.223Z",
+        "Estado": "Activo"
+      },
+      {
+        "ID_Trabajador": "TRAB-1789583331223-5",
+        "Nombre_Completo": "Laura Méndez Flores",
+        "DPI_CUI": "0006000600006",
+        "Puesto": "Operador",
+        "Jefe_Inmediato": "Juan Pérez García",
+        "Telefono": "22056",
+        "WhatsApp": "+502 233026",
+        "Direccion": "Zona 6, Obra Principal, Ciudad de Guatemala",
+        "Fotografia_URL": "",
+        "Codigo_QR_Data": "{\"id\":\"TRAB-1789583331223-5\",\"dpi\":\"\",\"nombre\":\"Laura Méndez Flores\"}",
+        "Fecha_Registro": "2026-09-16T18:28:51.223Z",
+        "Estado": "Activo"
+      },
+      {
+        "ID_Trabajador": "TRAB-1789583331223-6",
+        "Nombre_Completo": "Roberto Díaz Ramírez",
+        "DPI_CUI": "0007000700007",
+        "Puesto": "Residente",
+        "Jefe_Inmediato": "Juan Pérez García",
+        "Telefono": "29321",
+        "WhatsApp": "+502 237241",
+        "Direccion": "Zona 7, Obra Principal, Ciudad de Guatemala",
+        "Fotografia_URL": "",
+        "Codigo_QR_Data": "{\"id\":\"TRAB-1789583331223-6\",\"dpi\":\"\",\"nombre\":\"Roberto Díaz Ramírez\"}",
+        "Fecha_Registro": "2026-09-16T18:28:51.223Z",
+        "Estado": "Activo"
+      },
+      {
+        "ID_Trabajador": "TRAB-1789583331223-7",
+        "Nombre_Completo": "Carmen Torres Vega",
+        "DPI_CUI": "0008000800008",
+        "Puesto": "Bodeguero",
+        "Jefe_Inmediato": "Juan Pérez García",
+        "Telefono": "24577",
+        "WhatsApp": "+502 294117",
+        "Direccion": "Zona 8, Obra Principal, Ciudad de Guatemala",
+        "Fotografia_URL": "",
+        "Codigo_QR_Data": "{\"id\":\"TRAB-1789583331223-7\",\"dpi\":\"\",\"nombre\":\"Carmen Torres Vega\"}",
+        "Fecha_Registro": "2026-09-16T18:28:51.223Z",
+        "Estado": "Activo"
+      },
+      {
+        "ID_Trabajador": "TRAB-1789583331223-8",
+        "Nombre_Completo": "Miguel Ángel Ruiz Mendoza",
+        "DPI_CUI": "0009000900009",
+        "Puesto": "Plomero",
+        "Jefe_Inmediato": "Juan Pérez García",
+        "Telefono": "29707",
+        "WhatsApp": "+502 295220",
+        "Direccion": "Zona 9, Obra Principal, Ciudad de Guatemala",
+        "Fotografia_URL": "",
+        "Codigo_QR_Data": "{\"id\":\"TRAB-1789583331223-8\",\"dpi\":\"\",\"nombre\":\"Miguel Ángel Ruiz Mendoza\"}",
+        "Fecha_Registro": "2026-09-16T18:28:51.223Z",
+        "Estado": "Activo"
+      },
+      {
+        "ID_Trabajador": "TRAB-1789583331223-9",
+        "Nombre_Completo": "Sofía Castillo Morales",
+        "DPI_CUI": "0010001000010",
+        "Puesto": "Soldador",
+        "Jefe_Inmediato": "Juan Pérez García",
+        "Telefono": "26365",
+        "WhatsApp": "+502 261257",
+        "Direccion": "Zona 10, Obra Principal, Ciudad de Guatemala",
+        "Fotografia_URL": "",
+        "Codigo_QR_Data": "{\"id\":\"TRAB-1789583331223-9\",\"dpi\":\"\",\"nombre\":\"Sofía Castillo Morales\"}",
+        "Fecha_Registro": "2026-09-16T18:28:51.223Z",
+        "Estado": "Activo"
+      }
+    ],
+    "attendances": [
+      {
+        "ID_Marcacion": "MARC-1789583331224-0-0",
+        "ID_Registro": "MARC-1789583331224-0-0",
+        "ID_Trabajador": "TRAB-1789583331223-0",
+        "Nombre_Trabajador": "Juan Pérez García",
+        "Fecha": "2026-09-16",
+        "Tipo_Marcacion": "Entrada",
+        "Hora_Programada": "07:00",
+        "Hora_Real": "07:00",
+        "Estado_Marcacion": "A Tiempo",
+        "Metodo_Registro": "QR",
+        "Horas_Extra": 0,
+        "Ubicacion_Obra": "Obra Principal",
+        "GPS_Latitud": 14.63495612129835,
+        "GPS_Longitud": -90.50649676762758,
+        "GPS_Accuracy": 11,
+        "Geofence_Inside": true,
+        "Geofence_Distance": 38,
+        "Timestamp": 1789583331224
+      },
+      {
+        "ID_Marcacion": "MARC-1789583331224-1-0",
+        "ID_Registro": "MARC-1789583331224-1-0",
+        "ID_Trabajador": "TRAB-1789583331223-1",
+        "Nombre_Trabajador": "María López Hernández",
+        "Fecha": "2026-09-16",
+        "Tipo_Marcacion": "Entrada",
+        "Hora_Programada": "07:00",
+        "Hora_Real": "07:14",
+        "Estado_Marcacion": "Tolerancia",
+        "Metodo_Registro": "QR",
+        "Horas_Extra": 0,
+        "Ubicacion_Obra": "Obra Principal",
+        "GPS_Latitud": 14.634696723926979,
+        "GPS_Longitud": -90.50680768049367,
+        "GPS_Accuracy": 15,
+        "Geofence_Inside": true,
+        "Geofence_Distance": 40,
+        "Timestamp": 1789583331224
+      },
+      {
+        "ID_Marcacion": "MARC-1789583331224-2-0",
+        "ID_Registro": "MARC-1789583331224-2-0",
+        "ID_Trabajador": "TRAB-1789583331223-2",
+        "Nombre_Trabajador": "Carlos Rodríguez Martínez",
+        "Fecha": "2026-09-16",
+        "Tipo_Marcacion": "Entrada",
+        "Hora_Programada": "07:00",
+        "Hora_Real": "07:06",
+        "Estado_Marcacion": "Tolerancia",
+        "Metodo_Registro": "QR",
+        "Horas_Extra": 0,
+        "Ubicacion_Obra": "Obra Principal",
+        "GPS_Latitud": 14.634576078670253,
+        "GPS_Longitud": -90.50679469133138,
+        "GPS_Accuracy": 11,
+        "Geofence_Inside": true,
+        "Geofence_Distance": 9,
+        "Timestamp": 1789583331224
+      },
+      {
+        "ID_Marcacion": "MARC-1789583331224-3-0",
+        "ID_Registro": "MARC-1789583331224-3-0",
+        "ID_Trabajador": "TRAB-1789583331223-3",
+        "Nombre_Trabajador": "Ana García Sánchez",
+        "Fecha": "2026-09-16",
+        "Tipo_Marcacion": "Entrada",
+        "Hora_Programada": "07:00",
+        "Hora_Real": "07:10",
+        "Estado_Marcacion": "Tolerancia",
+        "Metodo_Registro": "QR",
+        "Horas_Extra": 0,
+        "Ubicacion_Obra": "Obra Principal",
+        "GPS_Latitud": 14.634610901329903,
+        "GPS_Longitud": -90.50669042896612,
+        "GPS_Accuracy": 19,
+        "Geofence_Inside": true,
+        "Geofence_Distance": 40,
+        "Timestamp": 1789583331224
+      },
+      {
+        "ID_Marcacion": "MARC-1789583331224-3-1",
+        "ID_Registro": "MARC-1789583331224-3-1",
+        "ID_Trabajador": "TRAB-1789583331223-3",
+        "Nombre_Trabajador": "Ana García Sánchez",
+        "Fecha": "2026-09-16",
+        "Tipo_Marcacion": "Salida_Receso",
+        "Hora_Programada": "10:00",
+        "Hora_Real": "10:00",
+        "Estado_Marcacion": "A Tiempo",
+        "Metodo_Registro": "QR",
+        "Horas_Extra": 0,
+        "Ubicacion_Obra": "Obra Principal",
+        "GPS_Latitud": 14.634862283488664,
+        "GPS_Longitud": -90.50648261062209,
+        "GPS_Accuracy": 19,
+        "Geofence_Inside": true,
+        "Geofence_Distance": 29,
+        "Timestamp": 1789583331224
+      },
+      {
+        "ID_Marcacion": "MARC-1789583331224-4-0",
+        "ID_Registro": "MARC-1789583331224-4-0",
+        "ID_Trabajador": "TRAB-1789583331223-4",
+        "Nombre_Trabajador": "Pedro Jiménez Castro",
+        "Fecha": "2026-09-16",
+        "Tipo_Marcacion": "Entrada",
+        "Hora_Programada": "07:00",
+        "Hora_Real": "07:00",
+        "Estado_Marcacion": "A Tiempo",
+        "Metodo_Registro": "QR",
+        "Horas_Extra": 0,
+        "Ubicacion_Obra": "Obra Principal",
+        "GPS_Latitud": 14.635132562081797,
+        "GPS_Longitud": -90.5067777795957,
+        "GPS_Accuracy": 26,
+        "Geofence_Inside": true,
+        "Geofence_Distance": 12,
+        "Timestamp": 1789583331224
+      },
+      {
+        "ID_Marcacion": "MARC-1789583331224-4-1",
+        "ID_Registro": "MARC-1789583331224-4-1",
+        "ID_Trabajador": "TRAB-1789583331223-4",
+        "Nombre_Trabajador": "Pedro Jiménez Castro",
+        "Fecha": "2026-09-16",
+        "Tipo_Marcacion": "Salida_Receso",
+        "Hora_Programada": "10:00",
+        "Hora_Real": "10:10",
+        "Estado_Marcacion": "Tolerancia",
+        "Metodo_Registro": "QR",
+        "Horas_Extra": 0,
+        "Ubicacion_Obra": "Obra Principal",
+        "GPS_Latitud": 14.634743963103709,
+        "GPS_Longitud": -90.50691423705878,
+        "GPS_Accuracy": 25,
+        "Geofence_Inside": true,
+        "Geofence_Distance": 22,
+        "Timestamp": 1789583331224
+      },
+      {
+        "ID_Marcacion": "MARC-1789583331224-4-2",
+        "ID_Registro": "MARC-1789583331224-4-2",
+        "ID_Trabajador": "TRAB-1789583331223-4",
+        "Nombre_Trabajador": "Pedro Jiménez Castro",
+        "Fecha": "2026-09-16",
+        "Tipo_Marcacion": "Regreso_Receso",
+        "Hora_Programada": "10:30",
+        "Hora_Real": "10:41",
+        "Estado_Marcacion": "Tolerancia",
+        "Metodo_Registro": "QR",
+        "Horas_Extra": 0,
+        "Ubicacion_Obra": "Obra Principal",
+        "GPS_Latitud": 14.634416610579478,
+        "GPS_Longitud": -90.50659111703699,
+        "GPS_Accuracy": 27,
+        "Geofence_Inside": true,
+        "Geofence_Distance": 39,
+        "Timestamp": 1789583331224
+      },
+      {
+        "ID_Marcacion": "MARC-1789583331224-5-0",
+        "ID_Registro": "MARC-1789583331224-5-0",
+        "ID_Trabajador": "TRAB-1789583331223-5",
+        "Nombre_Trabajador": "Laura Méndez Flores",
+        "Fecha": "2026-09-16",
+        "Tipo_Marcacion": "Entrada",
+        "Hora_Programada": "07:00",
+        "Hora_Real": "07:00",
+        "Estado_Marcacion": "A Tiempo",
+        "Metodo_Registro": "QR",
+        "Horas_Extra": 0,
+        "Ubicacion_Obra": "Obra Principal",
+        "GPS_Latitud": 14.63526477958242,
+        "GPS_Longitud": -90.50691697866237,
+        "GPS_Accuracy": 18,
+        "Geofence_Inside": true,
+        "Geofence_Distance": 40,
+        "Timestamp": 1789583331224
+      },
+      {
+        "ID_Marcacion": "MARC-1789583331224-6-0",
+        "ID_Registro": "MARC-1789583331224-6-0",
+        "ID_Trabajador": "TRAB-1789583331223-6",
+        "Nombre_Trabajador": "Roberto Díaz Ramírez",
+        "Fecha": "2026-09-16",
+        "Tipo_Marcacion": "Entrada",
+        "Hora_Programada": "07:00",
+        "Hora_Real": "07:10",
+        "Estado_Marcacion": "Tolerancia",
+        "Metodo_Registro": "QR",
+        "Horas_Extra": 0,
+        "Ubicacion_Obra": "Obra Principal",
+        "GPS_Latitud": 14.634760554946551,
+        "GPS_Longitud": -90.50666835535097,
+        "GPS_Accuracy": 10,
+        "Geofence_Inside": true,
+        "Geofence_Distance": 3,
+        "Timestamp": 1789583331224
+      },
+      {
+        "ID_Marcacion": "MARC-1789583331224-6-1",
+        "ID_Registro": "MARC-1789583331224-6-1",
+        "ID_Trabajador": "TRAB-1789583331223-6",
+        "Nombre_Trabajador": "Roberto Díaz Ramírez",
+        "Fecha": "2026-09-16",
+        "Tipo_Marcacion": "Salida_Receso",
+        "Hora_Programada": "10:00",
+        "Hora_Real": "10:05",
+        "Estado_Marcacion": "Tolerancia",
+        "Metodo_Registro": "QR",
+        "Horas_Extra": 0,
+        "Ubicacion_Obra": "Obra Principal",
+        "GPS_Latitud": 14.635294191682307,
+        "GPS_Longitud": -90.50672659128259,
+        "GPS_Accuracy": 11,
+        "Geofence_Inside": true,
+        "Geofence_Distance": 18,
+        "Timestamp": 1789583331224
+      },
+      {
+        "ID_Marcacion": "MARC-1789583331224-7-0",
+        "ID_Registro": "MARC-1789583331224-7-0",
+        "ID_Trabajador": "TRAB-1789583331223-7",
+        "Nombre_Trabajador": "Carmen Torres Vega",
+        "Fecha": "2026-09-16",
+        "Tipo_Marcacion": "Entrada",
+        "Hora_Programada": "07:00",
+        "Hora_Real": "07:02",
+        "Estado_Marcacion": "Tolerancia",
+        "Metodo_Registro": "QR",
+        "Horas_Extra": 0,
+        "Ubicacion_Obra": "Obra Principal",
+        "GPS_Latitud": 14.634728037711248,
+        "GPS_Longitud": -90.5066281583773,
+        "GPS_Accuracy": 24,
+        "Geofence_Inside": true,
+        "Geofence_Distance": 22,
+        "Timestamp": 1789583331224
+      },
+      {
+        "ID_Marcacion": "MARC-1789583331224-7-1",
+        "ID_Registro": "MARC-1789583331224-7-1",
+        "ID_Trabajador": "TRAB-1789583331223-7",
+        "Nombre_Trabajador": "Carmen Torres Vega",
+        "Fecha": "2026-09-16",
+        "Tipo_Marcacion": "Salida_Receso",
+        "Hora_Programada": "10:00",
+        "Hora_Real": "10:00",
+        "Estado_Marcacion": "A Tiempo",
+        "Metodo_Registro": "QR",
+        "Horas_Extra": 0,
+        "Ubicacion_Obra": "Obra Principal",
+        "GPS_Latitud": 14.635193977732422,
+        "GPS_Longitud": -90.50710261874153,
+        "GPS_Accuracy": 27,
+        "Geofence_Inside": true,
+        "Geofence_Distance": 3,
+        "Timestamp": 1789583331224
+      },
+      {
+        "ID_Marcacion": "MARC-1789583331224-7-2",
+        "ID_Registro": "MARC-1789583331224-7-2",
+        "ID_Trabajador": "TRAB-1789583331223-7",
+        "Nombre_Trabajador": "Carmen Torres Vega",
+        "Fecha": "2026-09-16",
+        "Tipo_Marcacion": "Regreso_Receso",
+        "Hora_Programada": "10:30",
+        "Hora_Real": "10:26",
+        "Estado_Marcacion": "A Tiempo",
+        "Metodo_Registro": "QR",
+        "Horas_Extra": 0,
+        "Ubicacion_Obra": "Obra Principal",
+        "GPS_Latitud": 14.635261852032805,
+        "GPS_Longitud": -90.50687456141576,
+        "GPS_Accuracy": 17,
+        "Geofence_Inside": true,
+        "Geofence_Distance": 27,
+        "Timestamp": 1789583331224
+      },
+      {
+        "ID_Marcacion": "MARC-1789583331224-8-0",
+        "ID_Registro": "MARC-1789583331224-8-0",
+        "ID_Trabajador": "TRAB-1789583331223-8",
+        "Nombre_Trabajador": "Miguel Ángel Ruiz Mendoza",
+        "Fecha": "2026-09-16",
+        "Tipo_Marcacion": "Entrada",
+        "Hora_Programada": "07:00",
+        "Hora_Real": "07:01",
+        "Estado_Marcacion": "Tolerancia",
+        "Metodo_Registro": "QR",
+        "Horas_Extra": 0,
+        "Ubicacion_Obra": "Obra Principal",
+        "GPS_Latitud": 14.634421952837146,
+        "GPS_Longitud": -90.50671591058419,
+        "GPS_Accuracy": 11,
+        "Geofence_Inside": true,
+        "Geofence_Distance": 33,
+        "Timestamp": 1789583331224
+      },
+      {
+        "ID_Marcacion": "MARC-1789583331224-8-1",
+        "ID_Registro": "MARC-1789583331224-8-1",
+        "ID_Trabajador": "TRAB-1789583331223-8",
+        "Nombre_Trabajador": "Miguel Ángel Ruiz Mendoza",
+        "Fecha": "2026-09-16",
+        "Tipo_Marcacion": "Salida_Receso",
+        "Hora_Programada": "10:00",
+        "Hora_Real": "10:07",
+        "Estado_Marcacion": "Tolerancia",
+        "Metodo_Registro": "QR",
+        "Horas_Extra": 0,
+        "Ubicacion_Obra": "Obra Principal",
+        "GPS_Latitud": 14.63524708093788,
+        "GPS_Longitud": -90.50739433633366,
+        "GPS_Accuracy": 19,
+        "Geofence_Inside": true,
+        "Geofence_Distance": 6,
+        "Timestamp": 1789583331224
+      },
+      {
+        "ID_Marcacion": "MARC-1789583331224-8-2",
+        "ID_Registro": "MARC-1789583331224-8-2",
+        "ID_Trabajador": "TRAB-1789583331223-8",
+        "Nombre_Trabajador": "Miguel Ángel Ruiz Mendoza",
+        "Fecha": "2026-09-16",
+        "Tipo_Marcacion": "Regreso_Receso",
+        "Hora_Programada": "10:30",
+        "Hora_Real": "10:28",
+        "Estado_Marcacion": "A Tiempo",
+        "Metodo_Registro": "QR",
+        "Horas_Extra": 0,
+        "Ubicacion_Obra": "Obra Principal",
+        "GPS_Latitud": 14.63492368194897,
+        "GPS_Longitud": -90.50671779061616,
+        "GPS_Accuracy": 22,
+        "Geofence_Inside": true,
+        "Geofence_Distance": 12,
+        "Timestamp": 1789583331224
+      },
+      {
+        "ID_Marcacion": "MARC-1789583331224-9-0",
+        "ID_Registro": "MARC-1789583331224-9-0",
+        "ID_Trabajador": "TRAB-1789583331223-9",
+        "Nombre_Trabajador": "Sofía Castillo Morales",
+        "Fecha": "2026-09-16",
+        "Tipo_Marcacion": "Entrada",
+        "Hora_Programada": "07:00",
+        "Hora_Real": "07:03",
+        "Estado_Marcacion": "Tolerancia",
+        "Metodo_Registro": "QR",
+        "Horas_Extra": 0,
+        "Ubicacion_Obra": "Obra Principal",
+        "GPS_Latitud": 14.635013309311702,
+        "GPS_Longitud": -90.50663464295877,
+        "GPS_Accuracy": 23,
+        "Geofence_Inside": true,
+        "Geofence_Distance": 46,
+        "Timestamp": 1789583331224
+      },
+      {
+        "ID_Marcacion": "MARC-1789583331224-9-1",
+        "ID_Registro": "MARC-1789583331224-9-1",
+        "ID_Trabajador": "TRAB-1789583331223-9",
+        "Nombre_Trabajador": "Sofía Castillo Morales",
+        "Fecha": "2026-09-16",
+        "Tipo_Marcacion": "Salida_Receso",
+        "Hora_Programada": "10:00",
+        "Hora_Real": "10:02",
+        "Estado_Marcacion": "Tolerancia",
+        "Metodo_Registro": "QR",
+        "Horas_Extra": 0,
+        "Ubicacion_Obra": "Obra Principal",
+        "GPS_Latitud": 14.634516849382301,
+        "GPS_Longitud": -90.50670795347926,
+        "GPS_Accuracy": 28,
+        "Geofence_Inside": true,
+        "Geofence_Distance": 40,
+        "Timestamp": 1789583331224
+      }
+    ],
+    "config": {
+      "Nombre_App": "CONTROL PERSONAL CAMPO",
+      "Nombre_Obra": "Obra Principal de Prueba",
+      "Tolerancia_Minutos": 15,
+      "Hora_Entrada": "07:00",
+      "Hora_Salida_Receso": "10:00",
+      "Hora_Regreso_Receso": "10:30",
+      "Hora_Salida_Obra": "17:00",
+      "Encargado": "Administrador de Prueba",
+      "Logo_Base64": "",
+      "Webhook_URL": "",
+      "Version": "1.5.0",
+      "GPS_Habilitado": true,
+      "GPS_Requerir_Ubicacion": false,
+      "GPS_Centro_Lat": 14.6349,
+      "GPS_Centro_Lon": -90.5069,
+      "GPS_Radio_Metros": 200
+    }
+  },
+  "timestamp": "2026-09-16T18:28:51.234Z"
+}

@@ -40,6 +40,16 @@
 
   // ─── Inicialización ─────────────────────────────────────────────────────
   let _initialized = false;
+  
+  /**
+   * Inicializa Firebase con la configuración actual
+   * @returns {Object} Resultado de inicialización { success: boolean, message: string, fallback?: string }
+   * @example
+   * const result = FirebaseClient.initialize();
+   * if (result.success) {
+   *   console.log('Firebase inicializado correctamente');
+   * }
+   */
   function initialize() {
     try {
       const config = window.FIREBASE_CONFIG || {};

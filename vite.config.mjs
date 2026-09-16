@@ -1,4 +1,6 @@
 import { defineConfig, createLogger, loadEnv } from 'vite';
+import { VitePWA } from 'vite-plugin-pwa';
+import viteCompression from 'vite-plugin-compression';
 import { cpSync, existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -66,7 +68,6 @@ function copyLegacyRuntime(mode) {
 
       // Inyectar variables de entorno de Firebase en index.html para que
       // firebase-config.js las pueda leer como window.__FIREBASE_ENV__.
-      const envTargets = ['index.html', 'field-scanner.html', 'pwa/scanner.html'];
       const env = loadEnv(mode, process.cwd(), '');
       const firebaseEnv = {
         apiKey: env.VITE_FIREBASE_API_KEY || '',
@@ -79,12 +80,12 @@ function copyLegacyRuntime(mode) {
       };
       const script = `<script>window.__FIREBASE_ENV__ = ${JSON.stringify(firebaseEnv)};</script>`;
 
-      for (const target of envTargets) {
-        const targetPath = resolve(distDir, target);
-        if (!existsSync(targetPath)) continue;
-        let html = readFileSync(targetPath, 'utf8');
+      // Inyectar en index.html después de copiar runtime
+      const indexHtmlPath = resolve(distDir, 'index.html');
+      if (existsSync(indexHtmlPath)) {
+        let html = readFileSync(indexHtmlPath, 'utf8');
         html = html.replace('</head>', script + '</head>');
-        writeFileSync(targetPath, html);
+        writeFileSync(indexHtmlPath, html);
       }
 
       console.log('[vite] Runtime legado copiado a dist/');
@@ -98,7 +99,74 @@ export default defineConfig(({ mode }) => ({
 
   publicDir: 'public',
 
-  plugins: [copyLegacyRuntime(mode)],
+  plugins: [
+    copyLegacyRuntime(mode),
+    // PWA Plugin para service worker mejorado
+    VitePWA({
+      registerType: 'autoUpdate',
+      includeAssets: ['favicon.svg', 'manifest.json'],
+      manifest: {
+        name: 'Control Personal Campo',
+        short_name: 'Control Campo',
+        description: 'Sistema de Control de Asistencia Personal con GPS y QR',
+        theme_color: '#003459',
+        background_color: '#ffffff',
+        display: 'standalone',
+        icons: [
+          {
+            src: '/android-chrome-192x192.png',
+            sizes: '192x192',
+            type: 'image/png'
+          },
+          {
+            src: '/android-chrome-512x512.png',
+            sizes: '512x512',
+            type: 'image/png'
+          }
+        ]
+      },
+      workbox: {
+        globPatterns: ['**/*.{js,css,html,ico,png,svg,woff,woff2}'],
+        runtimeCaching: [
+          {
+            urlPattern: /^https:\/\/unpkg\.com\/.*/i,
+            handler: 'CacheFirst',
+            options: {
+              cacheName: 'unpkg-cache',
+              expiration: {
+                maxEntries: 10,
+                maxAgeSeconds: 60 * 60 * 24 * 7 // 7 days
+              }
+            }
+          },
+          {
+            urlPattern: /^https:\/\/cdnjs\.cloudflare\.com\/.*/i,
+            handler: 'CacheFirst',
+            options: {
+              cacheName: 'cdnjs-cache',
+              expiration: {
+                maxEntries: 10,
+                maxAgeSeconds: 60 * 60 * 24 * 7 // 7 days
+              }
+            }
+          }
+        ]
+      }
+    }),
+    // Plugin de compresión para producción
+    viteCompression({
+      algorithm: 'gzip',
+      ext: '.gz',
+      threshold: 10240, // Solo comprimir archivos mayores a 10KB
+      deleteOriginFile: false
+    }),
+    viteCompression({
+      algorithm: 'brotliCompress',
+      ext: '.br',
+      threshold: 10240,
+      deleteOriginFile: false
+    })
+  ],
 
   server: {
     host: '127.0.0.1',
@@ -115,6 +183,8 @@ export default defineConfig(({ mode }) => ({
     emptyOutDir: true,
     sourcemap:   mode === 'development',
     modulePreload: false,
+    reportCompressedSize: true,
+    chunkSizeWarningLimit: 1000,
     rollupOptions: {
       input:    resolve(__dirname, 'index.html'),
       external: [/\.ts$/],

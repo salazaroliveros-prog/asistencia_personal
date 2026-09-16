@@ -178,7 +178,10 @@
       }
     } catch (error) {
       console.error('[API] Error guardarTrabajador:', error);
-      if (error.code === 'permission-denied' || (error.message && error.message.includes('permission'))) {
+      
+      // Manejo específico de errores de Firebase
+      if (error.code === 'permission-denied') {
+        console.warn('[API] Permiso denegado, guardando localmente');
         const personal = AppState.get('personal') || [];
         const idx = personal.findIndex(w => w.ID_Trabajador === worker.ID_Trabajador);
         const updated = [...personal];
@@ -186,9 +189,29 @@
         AppState.set('personal', updated);
         write(LS_KEYS.PERSONAL_CACHE, updated);
         enqueue(isEdit ? 'personal-update' : 'personal-create', { ...payload, id: worker.ID_Trabajador });
-        return { success: true, data: worker, offline: true, message: isEdit ? 'Trabajador actualizado localmente' : 'Trabajador registrado localmente' };
+        return { success: true, data: worker, offline: true, message: isEdit ? 'Trabajador actualizado localmente (sin conexión)' : 'Trabajador registrado localmente (sin conexión)' };
       }
-      return { success: false, error: error.message };
+      
+      // Manejo de errores de red
+      if (error.code === 'unavailable' || error.code === 'network-request-failed') {
+        console.warn('[API] Error de red, guardando localmente');
+        const personal = AppState.get('personal') || [];
+        const idx = personal.findIndex(w => w.ID_Trabajador === worker.ID_Trabajador);
+        const updated = [...personal];
+        if (idx >= 0) updated[idx] = { ...updated[idx], ...worker }; else updated.push(worker);
+        AppState.set('personal', updated);
+        write(LS_KEYS.PERSONAL_CACHE, updated);
+        enqueue(isEdit ? 'personal-update' : 'personal-create', { ...payload, id: worker.ID_Trabajador });
+        return { success: true, data: worker, offline: true, message: 'Error de conexión - datos guardados localmente' };
+      }
+      
+      // Manejo de errores de validación
+      if (error.code === 'invalid-argument' || error.code === 'failed-precondition') {
+        return { success: false, error: 'Datos inválidos: ' + error.message };
+      }
+      
+      // Error genérico
+      return { success: false, error: error.message || 'Error desconocido al guardar trabajador' };
     }
   }
 

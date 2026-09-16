@@ -162,6 +162,26 @@ service cloud.firestore {
     // COLECCIÓN: USUARIOS (Perfiles vinculados a Firebase Auth)
     // ─────────────────────────────────────────────────────────────────────────
     match /users/{userId} {
+      // Reglas deny explícitas para seguridad
+      deny: if !isAuthenticated();
+      deny: if request.method == 'read' && 
+              userId != getUserId() && 
+              !isAdmin() && 
+              !isManager();
+      deny: if request.method == 'create' && !isAdmin();
+      deny: if request.method == 'create' && 
+              isAdmin() && 
+              request.resource.data.uid != getUserId();
+      deny: if request.method == 'update' && 
+              !isAdmin() && 
+              userId != getUserId();
+      deny: if request.method == 'update' && 
+              userId == getUserId() && 
+              !request.resource.data.diff(resource.data).affectedKeys()
+                .hasOnly(['telefono', 'whatsapp', 'direccion', 'fotografiaUrl']);
+      deny: if request.method == 'delete' && !isAdmin();
+      
+      // Reglas allow positivas
       allow read: if isAuthenticated() && 
         (userId == getUserId() || isAdmin() || isManager());
       
@@ -209,6 +229,27 @@ service cloud.firestore {
     // COLECCIÓN: PERSONAL (Trabajadores)
     // ─────────────────────────────────────────────────────────────────────────
     match /personal/{workerId} {
+      // Reglas deny explícitas para seguridad
+      deny: if !isAuthenticated();
+      deny: if request.method == 'create' && !canManageWorkers();
+      deny: if request.method == 'create' && 
+              canManageWorkers() && 
+              !isValidWorkerData(request.resource.data);
+      deny: if request.method == 'update' && !canManageWorkers();
+      deny: if request.method == 'update' && 
+              canManageWorkers() && 
+              !isValidWorkerData(request.resource.data);
+      deny: if request.method == 'update' && 
+              canManageWorkers() && 
+              !request.resource.data.diff(resource.data).affectedKeys()
+                .hasOnly([
+                  'Nombre_Completo', 'DPI_CUI', 'Puesto', 'Jefe_Inmediato',
+                  'Telefono', 'WhatsApp', 'Direccion', 'Fotografia_URL', 
+                  'Estado', 'departamentoId', 'proyectoId', 'fechaBaja', 'motivoBaja'
+                ]);
+      deny: if request.method == 'delete' && !isAdmin();
+      
+      // Reglas allow positivas
       allow read: if isAuthenticated();
       
       allow create: if canManageWorkers() && 
@@ -232,6 +273,23 @@ service cloud.firestore {
     // COLECCIÓN: ASISTENCIAS (Registros de marcación)
     // ─────────────────────────────────────────────────────────────────────────
     match /asistencias/{attendanceId} {
+      // Reglas deny explícitas para seguridad
+      deny: if !isAuthenticated();
+      deny: if request.method == 'create' && !canMarkAttendance();
+      deny: if request.method == 'create' && 
+              canMarkAttendance() && 
+              !isValidAttendanceData(request.resource.data);
+      deny: if request.method == 'update' && !canManageWorkers();
+      deny: if request.method == 'update' && 
+              canManageWorkers() && 
+              !isValidAttendanceData(request.resource.data);
+      deny: if request.method == 'update' && 
+              canManageWorkers() && 
+              !request.resource.data.diff(resource.data).affectedKeys()
+                .hasOnly(['Hora_Real', 'Estado_Marcacion', 'Horas_Extra', 'observaciones', 'corregidoPor', 'corregidoEn']);
+      deny: if request.method == 'delete' && !isAdmin();
+      
+      // Reglas allow positivas
       allow read: if isAuthenticated();
       
       allow create: if canMarkAttendance() &&
@@ -251,6 +309,19 @@ service cloud.firestore {
     // COLECCIÓN: CONFIGURACIÓN (Configuración global del sistema)
     // ─────────────────────────────────────────────────────────────────────────
     match /configuracion/{configId} {
+      // Reglas deny explícitas para seguridad
+      deny: if !isAuthenticated();
+      deny: if request.method == 'create' && !isAdmin();
+      deny: if request.method == 'create' && 
+              isAdmin() && 
+              !isValidConfiguracion(request.resource.data);
+      deny: if request.method == 'update' && !isAdmin();
+      deny: if request.method == 'update' && 
+              isAdmin() && 
+              !isValidConfiguracion(request.resource.data);
+      deny: if request.method == 'delete' && !isAdmin();
+      
+      // Reglas allow positivas
       allow read: if isAuthenticated();
       allow create, update: if isAdmin() && isValidConfiguracion(request.resource.data);
       allow delete: if isAdmin();

@@ -215,6 +215,17 @@
   <script src="js/utils/realtime-validation.js" type="text/javascript"></script>
   <script src="js/utils/data-export.js" type="text/javascript"></script>
   <script src="js/utils/bulk-operations.js" type="text/javascript"></script>
+  <script src="js/utils/crypto-utils.js" type="text/javascript"></script>
+  <script src="js/utils/ai-logger.js" type="text/javascript"></script>
+  <script src="js/utils/hardware-diagnostics.js" type="text/javascript"></script>
+  <script src="js/utils/auto-healing.js" type="text/javascript"></script>
+  <script src="js/utils/ai-engine.js" type="text/javascript"></script>
+  <script src="js/utils/ai-predictor.js" type="text/javascript"></script>
+  <script src="js/utils/ai-learning.js" type="text/javascript"></script>
+  <script src="js/utils/mobile-camera-optimizer.js" type="text/javascript"></script>
+  <script src="js/utils/mobile-qr-scanner.js" type="text/javascript"></script>
+  <script src="js/utils/carnet-generator.js" type="text/javascript"></script>
+  <script src="js/utils/carnet-validator.js" type="text/javascript"></script>
   <script src="js/utils/theme-manager.js" type="text/javascript"></script>
   <script src="js/utils/keyboard-shortcuts.js" type="text/javascript"></script>
   <script src="js/utils/performance-optimizer.js" type="text/javascript"></script>
@@ -455,7 +466,7 @@
             <h2>Panel de Control</h2>
             <div class="section-actions">
               <input type="date" id="dashboard-date" class="input-glass" aria-label="Seleccionar fecha" />
-              <button type="button" id="btn-refresh-dashboard" class="btn btn-secondary btn-sm">
+              <button type="button" id="btn-refresh-dashboard" class="btn btn-secondary btn-sm" aria-label="Actualizar dashboard">
                 <i data-lucide="refresh-cw" aria-hidden="true"></i> Actualizar
               </button>
             </div>
@@ -735,7 +746,7 @@
                 <!-- Resultado del escaneo -->
                 <div id="scan-result" class="scan-result glass-card" hidden aria-live="polite">
                   <div class="scan-result-photo">
-                    <img id="scan-worker-photo" src="" alt="Foto del trabajador escaneado" />
+                    <img id="scan-worker-photo" src="" alt="Foto del trabajador escaneado" loading="lazy" />
                   </div>
                   <div class="scan-result-info">
                     <h3 id="scan-worker-name">--</h3>
@@ -773,7 +784,7 @@
 
                 <!-- Trabajador seleccionado -->
                 <div id="manual-worker-selected" class="worker-selected glass-card" hidden>
-                  <img id="manual-worker-photo" src="" alt="Foto del trabajador" />
+                  <img id="manual-worker-photo" src="" alt="Foto del trabajador" loading="lazy" />
                   <div class="worker-info">
                     <h3 id="manual-worker-name">--</h3>
                     <p id="manual-worker-id" class="text-muted">--</p>
@@ -804,7 +815,7 @@
               <h3><i data-lucide="table-2" aria-hidden="true"></i> Marcaciones del Día</h3>
               <div class="section-actions">
                 <input type="date" id="asistencia-filter-date" class="input-glass" aria-label="Filtrar por fecha" />
-                <button type="button" id="btn-view-map" class="btn btn-secondary btn-sm" title="Ver mapa de ubicaciones">
+                <button type="button" id="btn-view-map" class="btn btn-secondary btn-sm" aria-label="Ver mapa de ubicaciones" title="Ver mapa de ubicaciones">
                   <i data-lucide="map" aria-hidden="true"></i> Mapa
                 </button>
               </div>
@@ -873,7 +884,7 @@
 
             <!-- Tarjeta del trabajador escaneado -->
             <div id="campo-worker" class="campo-worker-card" hidden aria-live="polite">
-              <img id="campo-worker-photo" class="campo-worker-photo" src="" alt="Foto del trabajador" />
+              <img id="campo-worker-photo" class="campo-worker-photo" src="" alt="Foto del trabajador" loading="lazy" />
               <span id="campo-worker-avatar" class="campo-worker-avatar" aria-hidden="true">?</span>
               <div class="campo-worker-info">
                 <h3 id="campo-worker-name">--</h3>
@@ -1193,7 +1204,7 @@
                 <h3><i data-lucide="image" aria-hidden="true"></i> Logo de la Empresa</h3>
               </div>
               <div class="logo-upload-area" id="logo-drop-area" role="button" tabindex="0" aria-label="Área para subir logo">
-                <img id="logo-preview" src="" alt="Logo de la empresa" class="logo-preview" hidden />
+                <img id="logo-preview" src="" alt="Logo de la empresa" class="logo-preview" hidden loading="lazy" />
                 <div id="logo-placeholder" class="logo-placeholder">
                   <i data-lucide="upload-cloud" aria-hidden="true"></i>
                   <p>Arrastra tu logo aquí o haz click</p>
@@ -1359,7 +1370,7 @@
           <!-- Foto -->
           <div class="photo-upload-section">
             <div class="photo-preview-wrapper" id="photo-preview-wrapper">
-              <img id="foto-preview" src="" alt="Vista previa de fotografía" class="foto-preview" hidden />
+              <img id="foto-preview" src="" alt="Vista previa de fotografía" class="foto-preview" hidden loading="lazy" />
               <div id="foto-placeholder" class="foto-placeholder">
                 <i data-lucide="user-circle-2" aria-hidden="true"></i>
               </div>
@@ -1461,7 +1472,7 @@
         <!-- Carné imprimible -->
         <div id="carne-print-area" class="carne-card">
           <div class="carne-header">
-            <img id="carne-logo" src="" alt="Logo empresa" class="carne-logo" hidden />
+            <img id="carne-logo" src="" alt="Logo empresa" class="carne-logo" hidden loading="lazy" />
             <div class="carne-empresa-info">
               <h4 id="carne-empresa-nombre">CONTROL PERSONAL CAMPO</h4>
               <p id="carne-obra-nombre" class="text-muted">Obra Principal</p>
@@ -1469,7 +1480,7 @@
           </div>
           <div class="carne-body-content">
             <div class="carne-foto-wrapper">
-              <img id="carne-foto" src="" alt="Foto del trabajador" class="carne-foto" />
+              <img id="carne-foto" src="" alt="Foto del trabajador" class="carne-foto" loading="lazy" />
               <div id="carne-foto-placeholder" class="carne-foto-placeholder" hidden>
                 <span id="carne-foto-iniciales"></span>
               </div>
@@ -1870,7 +1881,7 @@
 
         <!-- Preview de foto capturada -->
         <div id="camera-preview-section" class="camera-preview-section" hidden>
-          <img id="camera-captured-img" src="" alt="Foto capturada" class="camera-captured-img" />
+          <img id="camera-captured-img" src="" alt="Foto capturada" class="camera-captured-img" loading="lazy" />
         </div>
 
         <!-- Mensaje de error de cámara -->

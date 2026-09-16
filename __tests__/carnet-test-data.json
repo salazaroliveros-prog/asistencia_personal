@@ -1,0 +1,103 @@
+{
+  "workers": [
+    {
+      "ID_Trabajador": "TRAB-0001",
+      "Nombre_Completo": "Miguel Romero",
+      "DPI_CUI": "75000712539",
+      "Puesto": "Ingeniero",
+      "Fotografia_URL": null,
+      "Estado": "Activo",
+      "Fecha_Ingreso": "2026-09-16"
+    },
+    {
+      "ID_Trabajador": "TRAB-0002",
+      "Nombre_Completo": "Sofía López",
+      "DPI_CUI": "83248942486",
+      "Puesto": "Ingeniero",
+      "Fotografia_URL": null,
+      "Estado": "Activo",
+      "Fecha_Ingreso": "2026-09-16"
+    },
+    {
+      "ID_Trabajador": "TRAB-0003",
+      "Nombre_Completo": "Carlos Martínez",
+      "DPI_CUI": "43707174158",
+      "Puesto": "Maestro de Obra",
+      "Fotografia_URL": null,
+      "Estado": "Activo",
+      "Fecha_Ingreso": "2026-09-16"
+    },
+    {
+      "ID_Trabajador": "TRAB-0004",
+      "Nombre_Completo": "María Pérez",
+      "DPI_CUI": "10380346940",
+      "Puesto": "Ayudante",
+      "Fotografia_URL": null,
+      "Estado": "Activo",
+      "Fecha_Ingreso": "2026-09-16"
+    },
+    {
+      "ID_Trabajador": "TRAB-0005",
+      "Nombre_Completo": "Miguel García",
+      "DPI_CUI": "71932325496",
+      "Puesto": "Electricista",
+      "Fotografia_URL": null,
+      "Estado": "Activo",
+      "Fecha_Ingreso": "2026-09-16"
+    }
+  ],
+  "qrData": [
+    {
+      "id": "TRAB-0001",
+      "dpi": "75000712539",
+      "nombre": "Miguel Romero",
+      "puesto": "Ingeniero"
+    },
+    {
+      "id": "TRAB-0002",
+      "dpi": "83248942486",
+      "nombre": "Sofía López",
+      "puesto": "Ingeniero"
+    },
+    {
+      "id": "TRAB-0003",
+      "dpi": "43707174158",
+      "nombre": "Carlos Martínez",
+      "puesto": "Maestro de Obra"
+    },
+    {
+      "id": "TRAB-0004",
+      "dpi": "10380346940",
+      "nombre": "María Pérez",
+      "puesto": "Ayudante"
+    },
+    {
+      "id": "TRAB-0005",
+      "dpi": "71932325496",
+      "nombre": "Miguel García",
+      "puesto": "Electricista"
+    }
+  ],
+  "report": {
+    "timestamp": "2026-09-16T19:01:41.694Z",
+    "testType": "Carnet and QR Scan Tests",
+    "workers": {
+      "generated": 5,
+      "valid": 5,
+      "invalid": 0,
+      "errors": []
+    },
+    "qrData": {
+      "generated": 5,
+      "valid": 5,
+      "invalid": 0,
+      "warnings": []
+    },
+    "summary": {
+      "totalTests": 10,
+      "passed": 10,
+      "failed": 0,
+      "warnings": 0
+    }
+  }
+}

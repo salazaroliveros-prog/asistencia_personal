@@ -5,8 +5,12 @@
 # ── Variables de entorno (NUNCA al repositorio) ──────────────────
 .env
 .env.local
+.env.production.local
 .env.*.local
 credencialesgoogle.txt
+
+# ── EXCEPCIÓN: plantillas de ejemplo ───────────────────────────────
+!.env.example
 
 # ── Dependencias ─────────────────────────────────────────────────
 node_modules/

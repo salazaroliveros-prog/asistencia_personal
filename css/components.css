@@ -168,6 +168,18 @@
   }
 }
 
+/* Extra small devices map optimization */
+@media (max-width: 379px) {
+  .map-container {
+    height: 250px;
+  }
+  
+  .map-legend {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}
+
 /* ─────────────────────────────────────────────────────────────────────────────
    BOTONES
    ───────────────────────────────────────────────────────────────────────────── */

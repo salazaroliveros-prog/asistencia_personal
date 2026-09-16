@@ -153,3 +153,6 @@ const GPS = (() => {
     },
   };
 })();
+
+// Exponer el módulo globalmente
+window.GPS = GPS;

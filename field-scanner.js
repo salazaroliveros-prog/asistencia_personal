@@ -206,18 +206,26 @@
     return window.CPC?.CameraSession;
   }
 
+  function _mobileSession() {
+    return window.MobileQRScanner;
+  }
+
+  function _useMobileScanner() {
+    return window.MobileCameraOptimizer?.isMobile() && window.MobileQRScanner;
+  }
+
   function _setCameraStatus(msg) {
     const el = document.getElementById('campo-camera-status');
     if (el) el.textContent = msg;
   }
 
   async function _loadCameraChoices() {
-    const session   = _session();
-    const select    = document.getElementById('campo-camera-select');
+    const session = _useMobileScanner() ? _mobileSession() : _session();
+    const select = document.getElementById('campo-camera-select');
     const switchBtn = document.getElementById('campo-btn-switch-camera');
     if (!session || !select) return;
     try {
-      const devices = await session.listDevices();
+      const devices = await session.listCameras();
       select.innerHTML = devices.map(d =>
         `<option value="${_esc(d.id)}">${_esc(d.label)}</option>`
       ).join('');
@@ -228,8 +236,10 @@
   }
 
   async function _startScanner(options = {}) {
-    const session = _session();
-    if (typeof Html5Qrcode === 'undefined' || !session) {
+    const useMobile = _useMobileScanner();
+    const session = useMobile ? _mobileSession() : _session();
+    
+    if (useMobile && typeof Html5Qrcode === 'undefined') {
       _showStatusMessage('Escáner QR no disponible', 'error');
       return;
     }
@@ -238,32 +248,64 @@
     const btnStop  = document.getElementById('campo-btn-stop');
 
     try {
-      if (!_qrController) {
-        _qrController = session.createQrController({
-          Scanner: Html5Qrcode,
+      if (useMobile) {
+        // Usar escáner móvil optimizado
+        if (!_qrController) {
+          _qrController = session;
+        }
+        _setCameraStatus('Iniciando cámara móvil optimizada…');
+        const result = await session.start({
           elementId: 'campo-qr-reader',
           onSuccess: _onQRSuccess,
+          onError: (error) => console.warn('[MobileQRScanner] Error:', error),
+          cameraOptions: { facingMode: _facingMode, ...options }
         });
-      }
-      _setCameraStatus('Iniciando cámara…');
-      const result = await _qrController.start({ facingMode: _facingMode, ...options });
-      if (!result) return;
+        if (!result) return;
 
-      _scannerActive = true;
-      if (btnStart) btnStart.hidden = true;
-      if (btnStop)  btnStop.hidden  = false;
-      _setCameraStatus('Cámara activa');
-      await _loadCameraChoices();
-      _injectTorchButton();
+        _scannerActive = true;
+        if (btnStart) btnStart.hidden = true;
+        if (btnStop)  btnStop.hidden  = false;
+        _setCameraStatus('Cámara móvil activa');
+        await _loadCameraChoices();
+        _injectTorchButton();
+      } else {
+        // Usar escáner legacy
+        if (!_qrController) {
+          _qrController = session.createQrController({
+            Scanner: Html5Qrcode,
+            elementId: 'campo-qr-reader',
+            onSuccess: _onQRSuccess,
+          });
+        }
+        _setCameraStatus('Iniciando cámara…');
+        const result = await _qrController.start({ facingMode: _facingMode, ...options });
+        if (!result) return;
+
+        _scannerActive = true;
+        if (btnStart) btnStart.hidden = true;
+        if (btnStop)  btnStop.hidden  = false;
+        _setCameraStatus('Cámara activa');
+        await _loadCameraChoices();
+        _injectTorchButton();
+      }
     } catch (err) {
       _saveErrorLog(err, 'scannerStart');
       _setCameraStatus('Cámara no disponible');
-      _showStatusMessage(session.describeError(err), 'error');
+      const sessionDescribe = useMobile ? 'Verifica permisos de cámara en configuración del dispositivo' : session?.describeError?.(err);
+      _showStatusMessage(sessionDescribe || 'Error al iniciar cámara', 'error');
     }
   }
 
   async function _stopScanner() {
-    if (_qrController) await _qrController.stop();
+    const useMobile = _useMobileScanner();
+    const session = useMobile ? _mobileSession() : _session();
+    
+    if (useMobile && _qrController) {
+      await _qrController.stop();
+    } else if (_qrController) {
+      await _qrController.stop();
+    }
+    
     _scannerActive = false;
     const btnStart = document.getElementById('campo-btn-scan');
     const btnStop  = document.getElementById('campo-btn-stop');
@@ -274,8 +316,20 @@
   }
 
   async function _switchCamera() {
-    _facingMode = _facingMode === 'environment' ? 'user' : 'environment';
-    await _startScanner();
+    const useMobile = _useMobileScanner();
+    const session = useMobile ? _mobileSession() : _session();
+    
+    if (useMobile && session) {
+      try {
+        await session.switchCamera();
+        _facingMode = _facingMode === 'environment' ? 'user' : 'environment';
+      } catch (error) {
+        _showStatusMessage('Error al cambiar cámara', 'error');
+      }
+    } else {
+      _facingMode = _facingMode === 'environment' ? 'user' : 'environment';
+      await _startScanner();
+    }
   }
 
   // ─── Torch/Flash ─────────────────────────────────────────────────────────
@@ -284,24 +338,44 @@
                       document.querySelector('.campo-scan-btns');
     if (!container || document.getElementById('campo-btn-torch')) return;
 
+    const useMobile = _useMobileScanner();
+    const session = useMobile ? _mobileSession() : _session();
+    const supportsTorch = useMobile ? session?.supportsTorch?.() : session?.supportsTorch?.();
+
     const btn = document.createElement('button');
     btn.type = 'button';
     btn.id   = 'campo-btn-torch';
     btn.className = 'campo-btn ghost';
     btn.setAttribute('aria-label', 'Activar/desactivar flash');
     btn.innerHTML = '<i data-lucide="flashlight" aria-hidden="true"></i> Flash';
-    btn.hidden = !(_qrController && _qrController.supportsTorch());
+    btn.hidden = !supportsTorch;
     btn.addEventListener('click', async () => {
-      if (!_qrController || !_qrController.supportsTorch()) {
+      if (useMobile && session) {
+        if (!session.supportsTorch()) {
+          _showStatusMessage('Flash no disponible', 'error');
+          return;
+        }
+        try {
+          const on = await session.toggleTorch();
+          btn.innerHTML = `<i data-lucide="${on ? 'flashlight-off' : 'flashlight'}" aria-hidden="true"></i> ${on ? 'Apagar flash' : 'Flash'}`;
+          if (window.lucide) lucide.createIcons({ nodes: [btn] });
+        } catch (err) {
+          _showStatusMessage('Error al cambiar flash', 'error');
+        }
+      } else if (session && session.supportsTorch && session.supportsTorch()) {
+        if (!session.supportsTorch()) {
+          _showStatusMessage('Flash no disponible', 'error');
+          return;
+        }
+        try {
+          const on = await session.toggleTorch();
+          btn.innerHTML = `<i data-lucide="${on ? 'flashlight-off' : 'flashlight'}" aria-hidden="true"></i> ${on ? 'Apagar flash' : 'Flash'}`;
+          if (window.lucide) lucide.createIcons({ nodes: [btn] });
+        } catch (err) {
+          _showStatusMessage('Error al cambiar flash', 'error');
+        }
+      } else {
         _showStatusMessage('Flash no disponible', 'error');
-        return;
-      }
-      try {
-        const on = await _qrController.toggleTorch();
-        btn.innerHTML = `<i data-lucide="${on ? 'flashlight-off' : 'flashlight'}" aria-hidden="true"></i> ${on ? 'Apagar flash' : 'Flash'}`;
-        if (window.lucide) lucide.createIcons({ nodes: [btn] });
-      } catch (err) {
-        _showStatusMessage('Error al cambiar flash', 'error');
       }
     });
     container.appendChild(btn);

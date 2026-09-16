@@ -48,3 +48,121 @@ input.valid + .validation-feedback::before {
   content: "✓ ";
   margin-right: 4px;
 }
+
+/* Mobile accessibility improvements */
+@media (max-width: 767px) {
+  /* Mejorar contraste de texto en móvil */
+  .kpi-value {
+    font-size: 1.5rem;
+    font-weight: 700;
+  }
+  
+  /* Aumentar tamaño de targets táctiles */
+  .btn {
+    min-height: 44px;
+    min-width: 44px;
+  }
+  
+  /* Mejorar espaciado en tablas móviles */
+  .data-table td,
+  .data-table th {
+    padding: 12px 8px;
+  }
+  
+  /* Ocultar columnas menos importantes en móvil */
+  .data-table .actions-col {
+    min-width: 80px;
+  }
+}
+
+/* Extra small devices accessibility */
+@media (max-width: 379px) {
+  /* Aumentar aún más targets táctiles */
+  .campo-mark-btn {
+    min-height: 48px;
+    min-width: 48px;
+  }
+  
+  /* Mejorar legibilidad de texto pequeño */
+  .campo-mark-time {
+    font-size: 0.7rem;
+  }
+  
+  /* Aumentar espaciado en cards */
+  .glass-card {
+    padding: var(--space-4);
+  }
+}
+
+/* Focus visible mejorado para mejor accesibilidad */
+:focus-visible {
+  outline: 3px solid var(--color-secondary);
+  outline-offset: 2px;
+}
+
+/* Skip link mejorado */
+.skip-link {
+  position: absolute;
+  top: -40px;
+  left: 0;
+  background: var(--color-primary);
+  color: white;
+  padding: 8px;
+  z-index: 100;
+  transition: top 0.3s;
+}
+
+.skip-link:focus {
+  top: 0;
+}
+
+/* Screen reader only class */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border-width: 0;
+}
+
+/* Mejorar contraste en modo claro */
+html[data-theme="light"] .glass-card {
+  background: rgba(255, 255, 255, 0.9);
+  color: #1a1a1a;
+}
+
+html[data-theme="light"] .glass-sidebar {
+  background: rgba(255, 255, 255, 0.95);
+  color: #1a1a1a;
+}
+
+/* Reduced motion support for users who prefer less animation */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+  
+  .glass-card,
+  .glass-modal,
+  .btn,
+  .nav-link,
+  .campo-worker-card,
+  .campo-feed-item {
+    transition: none !important;
+  }
+  
+  .campo-scanner-wrap,
+  .gps-status,
+  .location-badge {
+    animation: none !important;
+  }
+}

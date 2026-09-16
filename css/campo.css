@@ -32,11 +32,11 @@
   font-weight: 600;
   padding: 4px 10px;
   border-radius: var(--radius-full);
-  background: rgba(var(--color-accent-red-rgb, 230, 57, 70), 0.12);
+  background: rgba(var(--color-accent-red-rgb), 0.12);
   color: var(--color-accent-red);
 }
 .campo-status-pill.connected {
-  background: rgba(var(--color-accent-green-rgb, 42, 157, 143), 0.14);
+  background: rgba(var(--color-accent-green-rgb), 0.14);
   color: var(--color-accent-green);
 }
 .campo-status-pill .dot {
@@ -213,4 +213,69 @@
 
 @media (max-width: 400px) {
   .campo-mark-grid { grid-template-columns: repeat(2, 1fr); }
+}
+
+/* Enhanced mobile optimization */
+@media (max-width: 767px) {
+  #page-campo .page-inner {
+    padding: var(--space-3) var(--space-3);
+  }
+  
+  .campo-topbar {
+    margin-bottom: var(--space-3);
+  }
+  
+  .campo-scanner-card {
+    margin-bottom: var(--space-3);
+  }
+  
+  #campo-qr-reader {
+    min-height: 180px;
+  }
+  
+  .campo-worker-card {
+    padding: var(--space-3);
+    gap: var(--space-2);
+  }
+  
+  .campo-worker-photo {
+    width: 56px;
+    height: 56px;
+  }
+  
+  .campo-scan-btns {
+    gap: var(--space-2);
+    padding: 0 var(--space-2) var(--space-2);
+  }
+  
+  .campo-mark-btn {
+    min-height: 48px; /* Touch target optimization */
+    font-size: var(--text-sm);
+  }
+  
+  .campo-feed-item {
+    padding: var(--space-2);
+  }
+}
+
+/* Extra small devices (< 380px) */
+@media (max-width: 379px) {
+  #page-campo .page-inner {
+    padding: var(--space-2) var(--space-2);
+  }
+  
+  .campo-mark-btn {
+    min-height: 44px;
+    font-size: var(--text-xs);
+  }
+  
+  .campo-worker-card {
+    flex-direction: column;
+    text-align: center;
+  }
+  
+  .campo-worker-photo {
+    width: 48px;
+    height: 48px;
+  }
 }
