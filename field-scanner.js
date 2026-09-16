@@ -211,7 +211,7 @@
   }
 
   function _useMobileScanner() {
-    return window.MobileCameraOptimizer?.isMobile() && window.MobileQRScanner;
+    return (window.MobileCameraOptimizer?.isMobile() || true) && window.MobileQRScanner;
   }
 
   function _setCameraStatus(msg) {

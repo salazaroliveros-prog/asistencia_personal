@@ -52,11 +52,11 @@ function copyLegacyRuntime(mode) {
         'manifest.json',
         'favicon.svg',
         'field-scanner-favicon.svg',
-        'field-scanner.html',
-        'field-scanner.js',
         'field-scanner-manifest.json',
         'field-scanner-sw.js',
         'service-worker.js',
+        'field-scanner.html',
+        'field-scanner.js',
       ];
 
       for (const file of rootFiles) {
@@ -186,7 +186,7 @@ export default defineConfig(({ mode }) => ({
     reportCompressedSize: true,
     chunkSizeWarningLimit: 1000,
     rollupOptions: {
-      input:    resolve(__dirname, 'index.html'),
+      input: resolve(__dirname, 'index.html'),
       external: [/\.ts$/],
     },
   },
