@@ -1,0 +1,15 @@
+fix: eliminar vite.config.js duplicado que causaba conflictos de build
+
+El archivo vite.config.js duplicado estaba causando que el plugin copy-legacy-runtime
+no se ejecutara correctamente, resultando en que los archivos de IA, carnets y
+optimización móvil no se copiaran al directorio dist.
+
+Cambios:
+- Eliminado vite.config.js duplicado
+- Ahora solo usa vite.config.mjs con el plugin copy-legacy-runtime
+- Todos los archivos JS, CSS y vendor se copian correctamente a dist
+- Archivos de IA, carnets y móvil ahora incluidos en el build
+
+Generado con [Devin](https://devin.ai)
+
+Co-Authored-By: Devin <158243242+devin-ai-integration[bot]@users.noreply.github.com>
