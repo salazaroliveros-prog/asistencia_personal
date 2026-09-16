@@ -36,6 +36,7 @@
     style-src 'self' 'unsafe-inline';
     font-src 'self' https://fonts.gstatic.com;
     img-src 'self' data: blob: https:;
+    media-src 'self' blob:;
     connect-src 'self'
       https://www.gstatic.com
       https://*.googleapis.com
@@ -43,7 +44,6 @@
       wss://*.googleapis.com
       wss://*.firebaseio.com;
     worker-src 'self' blob:;
-    frame-ancestors 'none';
   " />
   <style>
     :root { --safe-bottom: env(safe-area-inset-bottom, 0px); --safe-top: env(safe-area-inset-top, 0px); }
