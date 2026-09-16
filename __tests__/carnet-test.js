@@ -258,10 +258,10 @@ const CarnetTest = (() => {
                   ${carnet.carnetHTML}
                 </div>
                 <div class="carnet-actions">
-                  <button class="btn btn-primary" onclick="window.CarnetGenerator?.printCarnet('${carnet.carnetHTML.replace(/'/g, "\\'").replace(/"/g, '\"")}')">
+                  <button class="btn btn-primary" onclick="window.CarnetGenerator?.printCarnet('${carnet.workerId}')">
                     🖨️ Imprimir
                   </button>
-                  <button class="btn btn-secondary" onclick="window.CarnetGenerator?.downloadCarnet('${carnet.carnetImage}', 'carnet-${carnet.workerId}.png')">
+                  <button class="btn btn-secondary" onclick="window.CarnetGenerator?.downloadCarnet('${carnet.workerId}', 'carnet-${carnet.workerId}.png')">
                     💾 Descargar
                   </button>
                 </div>
@@ -290,4 +290,6 @@ const CarnetTest = (() => {
 })();
 
 // Exponer globalmente
-window.CarnetTest = CarnetTest;
+if (typeof window !== 'undefined') {
+  window.CarnetTest = CarnetTest;
+}
