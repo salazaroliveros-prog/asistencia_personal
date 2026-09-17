@@ -679,36 +679,53 @@ input[type="month"].input-glass {
   .data-table thead { display: table-header-group; }
   .data-table tbody, .data-table tbody tr { display: table-row-group; }
   .data-table tbody tr { display: table-row; border: 0; padding: 0; }
-  .data-table tbody td { display: table-cell; padding: 10px 6px; font-size: 0.8125rem; vertical-align: middle; }
+  .data-table tbody td { display: table-cell; padding: 10px 6px; font-size: 0.8125rem; vertical-align: middle; overflow-wrap: anywhere; word-break: break-word; }
   .data-table tbody td::before { display: none; }
   .data-table thead th { padding: 10px 6px; font-size: 0.6875rem; }
 
   .data-table tbody td.actions-col { display: table-cell; padding: 4px 2px; }
-  .data-table .table-actions { gap: 0; flex-wrap: nowrap; }
-  .data-table .table-action-btn:not(.historial) { display: none; }
-  .data-table .table-action-btn.historial { width: 44px; height: 44px; }
+  .data-table .table-actions {
+    gap: 4px;
+    flex-wrap: nowrap;
+    justify-content: flex-end;
+  }
+  .data-table .table-action-btn {
+    width: 44px;
+    height: 44px;
+    min-width: 44px;
+    min-height: 44px;
+  }
+  .data-table .table-action-btn.qr,
+  .data-table .table-action-btn.historial {
+    display: inline-flex;
+  }
+  .data-table .table-action-btn.edit,
+  .data-table .table-action-btn.delete {
+    display: none;
+  }
 
-  /* Personal: Foto · Nombre · Puesto · Estado · Acciones */
+  /* Personal: Foto · Nombre · Puesto · Estado · QR/Historial */
   #personal-table thead th:nth-child(2), #personal-table tbody td:nth-child(2),
   #personal-table thead th:nth-child(4), #personal-table tbody td:nth-child(4),
   #personal-table thead th:nth-child(6), #personal-table tbody td:nth-child(6) { display: none; }
   #personal-table thead th:nth-child(1) { width: 44px; }
-  #personal-table thead th:nth-child(3) { width: 42%; }
-  #personal-table thead th:nth-child(5) { width: 25%; }
-  #personal-table thead th:nth-child(7) { width: 20%; }
-  #personal-table thead th:nth-child(8) { width: 52px; }
+  #personal-table thead th:nth-child(3) { width: 38%; }
+  #personal-table thead th:nth-child(5) { width: 24%; }
+  #personal-table thead th:nth-child(7) { width: 18%; }
+  #personal-table thead th:nth-child(8) { width: 84px; }
 
-  /* Marcaciones: Trabajador · H. Programada · Estado · Acciones */
+  /* Marcaciones: Trabajador · Estado · Acción principal */
   #asistencia-table thead th:nth-child(2), #asistencia-table tbody td:nth-child(2),
   #asistencia-table thead th:nth-child(4), #asistencia-table tbody td:nth-child(4),
   #asistencia-table thead th:nth-child(6), #asistencia-table tbody td:nth-child(6),
   #asistencia-table thead th:nth-child(7), #asistencia-table tbody td:nth-child(7),
   #asistencia-table thead th:nth-child(8), #asistencia-table tbody td:nth-child(8) { display: none; }
-    #asistencia-table thead th:nth-child(1) { width: 48%; }  /* Trabajador */
+  #asistencia-table thead th:nth-child(1) { width: 52%; }
   #asistencia-table thead th:nth-child(3) { width: 68px; }
-  #asistencia-table thead th:nth-child(5) { width: 84px; }
-    #asistencia-table thead th:nth-child(9) { width: 52px; }
+  #asistencia-table thead th:nth-child(5) { width: 90px; }
+  #asistencia-table thead th:nth-child(9) { width: 84px; }
 }
+
 
 /* Modal historial en móvil: hoja inferior */
 #modal-historial .modal { width: 100%; max-width: none; max-height: 100dvh; border-radius: 16px 16px 0 0; align-self: end; }
