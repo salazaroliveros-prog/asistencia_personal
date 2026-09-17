@@ -12,6 +12,17 @@ por **QR** o **código en campo**, validación por **GPS/geocerca**, generación
 - **Empaquetado móvil:** Capacitor (Android/iOS)
 - **Despliegue web:** Vercel (`vercel.json`) y Firebase Hosting (`firebase.json`)
 
+## Manual operativo del usuario
+
+Consulta el manual completo en [docs/MANUAL_USUARIO_INTERNO.md](docs/MANUAL_USUARIO_INTERNO.md). Incluye:
+
+- alta de trabajadores activos
+- impresión de carnets QR
+- escaneo de asistencia desde campo
+- revisión del dashboard y reportes
+- modo offline y sincronización
+- checklist de operación diaria
+
 ---
 
 ## 1. Propósito funcional
