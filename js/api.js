@@ -471,7 +471,10 @@
   async function marcarAlertaRevisada(alertId) {
     try {
       if (connected()) {
-        await FirebaseClient.save('alertas', alertId, { Revisada: true });
+        // merge=true es obligatorio: sin él `set()` reemplaza el documento
+        // completo, la regla `hasOnly(['Revisada'])` deniega la operación y,
+        // de colarse, se perderían Tipo/Mensaje/Timestamp de la alerta.
+        await FirebaseClient.save('alertas', alertId, { Revisada: true }, true);
       }
       const alertas = AppState.get('alertas') || [];
       const updated = alertas.map((a) =>

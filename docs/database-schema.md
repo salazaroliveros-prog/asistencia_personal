@@ -103,7 +103,9 @@ interface Worker {
   Direccion: string;               // Dirección residencial
   Fotografia_URL?: string;         // URL de foto del trabajador
   Codigo_QR_Data: string;          // JSON string con datos para QR
-  Fecha_Registro: number;          // Timestamp de registro
+  Fecha_Registro: string;          // ISO-8601 (p. ej. 2026-09-17T14:05:22.123Z)
+                                   // firestore.rules acepta string ISO, timestamp
+                                   // o número > 0 (isValidDateValue)
   Fecha_Baja?: number;             // Timestamp de baja (si aplica)
   Motivo_Baja?: string;            // Motivo de baja
   Estado: 'Activo' | 'Inactivo' | 'Eliminado' | 'Suspendido';

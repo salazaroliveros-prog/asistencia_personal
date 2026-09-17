@@ -1,6 +1,13 @@
-export type WorkerStatus = 'Activo' | 'Inactivo' | 'Eliminado';
+/**
+ * Estados de trabajador aceptados por firestore.rules (isValidWorkerData).
+ */
+export type WorkerStatus = 'Activo' | 'Inactivo' | 'Eliminado' | 'Suspendido';
+
+/** Estados de marcación aceptados por firestore.rules (isValidAttendanceData). */
 export type AttendanceStatus = 'A Tiempo' | 'Puntual' | 'Tolerancia' | 'Atraso' | 'Ausencia';
-export type AttendanceType = 'Entrada' | 'Salida_Receso' | 'Regreso_Receso' | 'Salida_Obra';
+
+/** Tipos de marcación aceptados por firestore.rules (isValidAttendanceData). */
+export type AttendanceType = 'Entrada' | 'Salida_Receso' | 'Regreso_Receso' | 'Salida_Obra' | 'Entrada_Extra';
 
 export interface Worker {
   ID_Trabajador: string;
@@ -36,6 +43,7 @@ export interface AttendanceRecord {
   GPS_Accuracy?: number | null;
   Geofence_Inside?: boolean | null;
   Geofence_Distance?: number | null;
+  Timestamp: number;
 }
 
 export interface AttendanceSummary {

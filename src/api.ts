@@ -1,3 +1,19 @@
+/**
+ * DEPRECADO — implementación TypeScript histórica de la capa de datos.
+ *
+ * El runtime real de la aplicación es `js/api.js` (script clásico que define
+ * `window.API` y se carga desde index.html). Este archivo se conserva sólo como
+ * referencia tipada y NO debe cargarse en el navegador:
+ *
+ *  - Un `<script src=".../src/api.ts">` no se ejecuta (el navegador no compila TS).
+ *  - Este módulo asignaba `window.API = API`, lo que habría sobrescrito la API real
+ *    (con colas offline incompatibles: 'personal' vs 'personal-create').
+ *  - Duplicaba actualizaciones de UI (badge de conexión) ya centralizadas en app.js.
+ *
+ * Si se necesita volver a esta capa, primero hay que unificar el contrato con
+ * js/api.js y `src/domain/types.ts`.
+ */
+
 import { normalizeAttendance } from './domain/attendance';
 import type { AttendancePayload, AttendanceRecord, AttendanceStatus, Worker } from './domain/types';
 
@@ -124,11 +140,9 @@ function localSaveAttendance(payload: AttendancePayload): Result<AttendanceRecor
   return result([record], { offline: true, estadoMarcacion: record.Estado_Marcacion, horaReal: record.Hora_Real });
 }
 function updateConnection(value: boolean): void {
+  // La UI del badge de conexión la gobierna app.js escuchando AppState
+  // (una sola fuente de verdad); aquí sólo se actualiza el store.
   state().set('connected', value);
-  document.querySelector('.connection-dot')?.classList.toggle('connected', value);
-  document.querySelector('.connection-dot')?.classList.toggle('disconnected', !value);
-  const label = document.getElementById('connection-text');
-  if (label) label.textContent = value ? 'Firestore en línea' : 'Modo local';
 }
 
 function markRemoteFailure(error: unknown): void {
@@ -151,7 +165,7 @@ function bindConnectivity(): void {
   window.addEventListener('online', async () => {
     console.log('[API] Network online, checking Firebase connection...');
     
-    if (firebase().isReady() && firebase().getConnectionState() === 'failed') {
+    if (firebase().isReady() && firebase().getConnectionState() === 'error') {
       console.log('[API] Attempting to reconnect to Firebase...');
       const connection = await firebase().initialize();
       if (connection.success) {
@@ -508,4 +522,6 @@ const API: Api = {
   },
 };
 
-window.API = API;
+// NOTA: este módulo NO publica `window.API` de forma intencionada. El runtime
+// que se carga en index.html es `js/api.js`; sobrescribir el global desde aquí
+// mezclaría dos formatos de cola offline distintos.

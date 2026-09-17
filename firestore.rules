@@ -22,10 +22,6 @@ service cloud.firestore {
       return isAuthenticated() && request.auth.token.supervisor == true;
     }
     
-    function isEmployee() {
-      return isAuthenticated() && request.auth.token.employee == true;
-    }
-    
     function isAuthorizedOperator() {
       return isAuthenticated() &&
                request.auth.token.email_verified == true &&
@@ -139,12 +135,29 @@ service cloud.firestore {
         data.activo is bool;
     }
     
+    /**
+     * Valida una alerta.
+     *
+     * El esquema real (y documentado en docs/database-schema.md) usa claves en
+     * PascalCase: ID_Alerta, Tipo, Mensaje, Timestamp, Revisada. La validación
+     * anterior sólo aceptaba claves en minúsculas, de modo que cualquier alerta
+     * creada desde la app era rechazada por `allow create`. Se aceptan ambas
+     * formas para no invalidar alertas históricas.
+     */
     function isValidAlerta(data) {
-      return data.keys().hasAll(['tipo', 'mensaje', 'timestamp', 'revisada']) &&
+      return (
+        data.keys().hasAll(['Tipo', 'Mensaje', 'Timestamp', 'Revisada']) &&
+        isValidString(data.Tipo, 1, 50) &&
+        isValidString(data.Mensaje, 1, 500) &&
+        isValidTimestamp(data.Timestamp) &&
+        data.Revisada is bool
+      ) || (
+        data.keys().hasAll(['tipo', 'mensaje', 'timestamp', 'revisada']) &&
         isValidString(data.tipo, 1, 50) &&
         isValidString(data.mensaje, 1, 500) &&
         isValidTimestamp(data.timestamp) &&
-        data.revisada is bool;
+        data.revisada is bool
+      );
     }
     
     function isValidLog(data) {
@@ -162,25 +175,6 @@ service cloud.firestore {
     // COLECCIÓN: USUARIOS (Perfiles vinculados a Firebase Auth)
     // ─────────────────────────────────────────────────────────────────────────
     match /users/{userId} {
-      // Reglas deny explícitas para seguridad
-      deny: if !isAuthenticated();
-      deny: if request.method == 'read' && 
-              userId != getUserId() && 
-              !isAdmin() && 
-              !isManager();
-      deny: if request.method == 'create' && !isAdmin();
-      deny: if request.method == 'create' && 
-              isAdmin() && 
-              request.resource.data.uid != getUserId();
-      deny: if request.method == 'update' && 
-              !isAdmin() && 
-              userId != getUserId();
-      deny: if request.method == 'update' && 
-              userId == getUserId() && 
-              !request.resource.data.diff(resource.data).affectedKeys()
-                .hasOnly(['telefono', 'whatsapp', 'direccion', 'fotografiaUrl']);
-      deny: if request.method == 'delete' && !isAdmin();
-      
       // Reglas allow positivas
       allow read: if isAuthenticated() && 
         (userId == getUserId() || isAdmin() || isManager());
@@ -229,26 +223,6 @@ service cloud.firestore {
     // COLECCIÓN: PERSONAL (Trabajadores)
     // ─────────────────────────────────────────────────────────────────────────
     match /personal/{workerId} {
-      // Reglas deny explícitas para seguridad
-      deny: if !isAuthenticated();
-      deny: if request.method == 'create' && !canManageWorkers();
-      deny: if request.method == 'create' && 
-              canManageWorkers() && 
-              !isValidWorkerData(request.resource.data);
-      deny: if request.method == 'update' && !canManageWorkers();
-      deny: if request.method == 'update' && 
-              canManageWorkers() && 
-              !isValidWorkerData(request.resource.data);
-      deny: if request.method == 'update' && 
-              canManageWorkers() && 
-              !request.resource.data.diff(resource.data).affectedKeys()
-                .hasOnly([
-                  'Nombre_Completo', 'DPI_CUI', 'Puesto', 'Jefe_Inmediato',
-                  'Telefono', 'WhatsApp', 'Direccion', 'Fotografia_URL', 
-                  'Estado', 'departamentoId', 'proyectoId', 'fechaBaja', 'motivoBaja'
-                ]);
-      deny: if request.method == 'delete' && !isAdmin();
-      
       // Reglas allow positivas
       allow read: if isAuthenticated();
       
@@ -273,22 +247,6 @@ service cloud.firestore {
     // COLECCIÓN: ASISTENCIAS (Registros de marcación)
     // ─────────────────────────────────────────────────────────────────────────
     match /asistencias/{attendanceId} {
-      // Reglas deny explícitas para seguridad
-      deny: if !isAuthenticated();
-      deny: if request.method == 'create' && !canMarkAttendance();
-      deny: if request.method == 'create' && 
-              canMarkAttendance() && 
-              !isValidAttendanceData(request.resource.data);
-      deny: if request.method == 'update' && !canManageWorkers();
-      deny: if request.method == 'update' && 
-              canManageWorkers() && 
-              !isValidAttendanceData(request.resource.data);
-      deny: if request.method == 'update' && 
-              canManageWorkers() && 
-              !request.resource.data.diff(resource.data).affectedKeys()
-                .hasOnly(['Hora_Real', 'Estado_Marcacion', 'Horas_Extra', 'observaciones', 'corregidoPor', 'corregidoEn']);
-      deny: if request.method == 'delete' && !isAdmin();
-      
       // Reglas allow positivas
       allow read: if isAuthenticated();
       
@@ -309,18 +267,6 @@ service cloud.firestore {
     // COLECCIÓN: CONFIGURACIÓN (Configuración global del sistema)
     // ─────────────────────────────────────────────────────────────────────────
     match /configuracion/{configId} {
-      // Reglas deny explícitas para seguridad
-      deny: if !isAuthenticated();
-      deny: if request.method == 'create' && !isAdmin();
-      deny: if request.method == 'create' && 
-              isAdmin() && 
-              !isValidConfiguracion(request.resource.data);
-      deny: if request.method == 'update' && !isAdmin();
-      deny: if request.method == 'update' && 
-              isAdmin() && 
-              !isValidConfiguracion(request.resource.data);
-      deny: if request.method == 'delete' && !isAdmin();
-      
       // Reglas allow positivas
       allow read: if isAuthenticated();
       allow create, update: if isAdmin() && isValidConfiguracion(request.resource.data);

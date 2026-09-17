@@ -15,7 +15,7 @@ const Logger = (() => {
     FATAL: 4,
   };
   
-  const CURRENT_LEVEL = LOG_LEVELS.DEBUG; // Cambiar a INFO en producción
+  let CURRENT_LEVEL = LOG_LEVELS.DEBUG; // Cambiar a INFO en producción
   const MAX_LOG_ENTRIES = 1000; // Máximo de logs en memoria
   const LOG_STORAGE_KEY = 'cpc_app_logs';
   

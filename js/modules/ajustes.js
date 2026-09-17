@@ -197,13 +197,19 @@ const ModuloAjustes = (() => {
     try {
       const result = await FirebaseClient.configure(config);
       if (result.success) {
-        AppState.set('backendMode', 'firestore');
-        AppState.set('connected', true);
+        // El estado de conexión no se fuerza: lo dicta FirebaseClient
+        // (onAuthStateChanged + health check). Forzarlo aquí mostraba
+        // "Firestore en línea" sin sesión, cuando las reglas deniegan escrituras.
+        _sincronizarEstadoConexion();
         _actualizarEstadoConexion();
-        Alerts.success('Firestore conectado y sincronización en tiempo real activa.');
-        // Cargar datos iniciales desde Firestore en background
-        API.obtenerPersonal().catch((err) => console.warn('[Ajustes] Error cargando personal tras conexión:', err.message));
-        API.obtenerConfiguracion().catch((err) => console.warn('[Ajustes] Error cargando config tras conexión:', err.message));
+        if (AppState.get('connected')) {
+          Alerts.success('Firestore conectado y sincronización en tiempo real activa.');
+          // Cargar datos iniciales desde Firestore en background
+          API.obtenerPersonal().catch((err) => console.warn('[Ajustes] Error cargando personal tras conexión:', err.message));
+          API.obtenerConfiguracion().catch((err) => console.warn('[Ajustes] Error cargando config tras conexión:', err.message));
+        } else {
+          Alerts.info('Configuración aceptada. Inicia sesión para escribir en Firestore; mientras tanto la app trabaja en modo local.');
+        }
       } else {
         AppState.set('backendMode', 'local');
         AppState.set('connected', false);
@@ -285,9 +291,11 @@ const ModuloAjustes = (() => {
       // Fix #8: usar _actualizarEstadoAuth Y _actualizarEstadoConexion centralizado
       _actualizarEstadoAuth();
       _actualizarEstadoConexion();
-
       // Verificar conexión y cargar datos
       await API.ping();
+      // API.ping() → checkHealth() confirma el estado real; se refleja en el store.
+      _sincronizarEstadoConexion();
+      _actualizarEstadoConexion();
       await Promise.all([API.obtenerPersonal(), API.obtenerConfiguracion()]);
 
       Alerts.success('Sesión persistente de Firestore iniciada.');
@@ -330,14 +338,28 @@ const ModuloAjustes = (() => {
     return 'No se pudo iniciar sesión. Verifica tus credenciales e inténtalo de nuevo.';
   }
 
+  /**
+   * Sincroniza el store (AppState) con el estado real del cliente Firebase.
+   *
+   * Única fuente de verdad: FirebaseClient.getConnectionState(). Evita que la UI
+   * muestre "Firestore en línea" mientras las reglas siguen denegando escrituras
+   * (p. ej. tras conectar sin haber iniciado sesión).
+   * @returns {void}
+   */
+  function _sincronizarEstadoConexion() {
+    const state  = FirebaseClient.getConnectionState ? FirebaseClient.getConnectionState() : 'idle';
+    const online = state === 'connected' || state === 'degraded';
+    AppState.set('backendMode', online ? 'firestore' : 'local');
+    AppState.set('connected', online);
+  }
+
   async function _cerrarSesionFirebase() {
     const btnLogout = document.getElementById('btn-logout-firebase');
     if (btnLogout) btnLogout.disabled = true;
 
     try {
       await FirebaseClient.signOut();
-      AppState.set('connected', false);
-      AppState.set('backendMode', 'local');
+      _sincronizarEstadoConexion();
       _actualizarEstadoAuth();
       const statusEl = document.getElementById('connection-status-detail');
       if (statusEl) {

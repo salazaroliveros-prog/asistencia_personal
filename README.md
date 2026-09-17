@@ -7,7 +7,7 @@ por **QR** o **código en campo**, validación por **GPS/geocerca**, generación
 - **Versión:** 1.5.0
 - **Frontend:** JavaScript vanilla (IIFE + `window.*`), sin framework
 - **Build:** Vite (solo empaqueta/copia; no hay bundling de módulos ES)
-- **Backend:** Firebase (Auth + Firestore + Cloud Functions), SDK *compat* 10.12.2
+- **Backend:** Firebase (Auth + Firestore + Cloud Functions), SDK *compat* 12.19.0
 - **Datos en el dispositivo:** `localStorage` + cola de sincronización offline
 - **Empaquetado móvil:** Capacitor (Android/iOS)
 - **Despliegue web:** Vercel (`vercel.json`) y Firebase Hosting (`firebase.json`)
@@ -95,11 +95,36 @@ Colecciones usadas por la aplicación (esquema ampliado, índices y costos en
 
 | Colección | Contenido | Campos principales |
 |-----------|-----------|--------------------|
-| `personal` | Trabajadores | `ID_Trabajador`, `Nombre_Trabajador`, `Cedula`, `Cargo`, `Obra`, `Estado`, `foto`, `QR_Code` |
-| `asistencias` | Marcaciones | `ID_Marcacion`, `ID_Trabajador`, `Nombre_Trabajador`, `Fecha` (`YYYY-MM-DD`), `Hora_Entrada`, `Hora_Salida`, `Latitud`, `Longitud`, `Dentro_Geocerca`, `Metodo` (`QR`/`MANUAL`/`CAMPO`) |
-| `alertas` | Avisos del sistema | `ID_Alerta`, `Tipo`, `Mensaje`, `Fecha`, `Revisada` |
-| `configuracion` | Config global (doc `general`) | `Latitud_Centro`, `Longitud_Centro`, `Radio_Geocerca`, `Hora_Entrada`, `Hora_Salida`, `Obras` |
+| `personal` | Trabajadores | `ID_Trabajador`, `Nombre_Completo`, `DPI_CUI`, `Puesto`, `Jefe_Inmediato`, `Telefono`, `WhatsApp`, `Direccion`, `Fotografia_URL`, `Codigo_QR_Data`, `Fecha_Registro` (ISO-8601), `Estado` (`Activo`/`Inactivo`/`Eliminado`/`Suspendido`) |
+| `asistencias` | Marcaciones | `ID_Marcacion`, `ID_Registro`, `ID_Trabajador`, `Nombre_Trabajador`, `Fecha` (`YYYY-MM-DD`), `Tipo_Marcacion` (`Entrada`/`Salida_Receso`/`Regreso_Receso`/`Salida_Obra`/`Entrada_Extra`), `Hora_Programada`, `Hora_Real` (`HH:MM`), `Estado_Marcacion` (`A Tiempo`/`Puntual`/`Tolerancia`/`Atraso`/`Ausencia`), `Metodo_Registro`, `Horas_Extra`, `Ubicacion_Obra`, `GPS_Latitud`, `GPS_Longitud`, `GPS_Accuracy`, `Geofence_Inside`, `Geofence_Distance`, `Timestamp` (ms) |
+| `alertas` | Avisos del sistema | `ID_Alerta`, `Tipo`, `Mensaje`, `Timestamp`, `Revisada` |
+| `configuracion` | Config global (doc `general`) | `Nombre_Obra`, `Encargado`, `Tolerancia_Minutos`, `Hora_Entrada`, `Hora_Salida_Receso`, `Hora_Regreso_Receso`, `Hora_Salida_Obra`, `GPS_*`, `Logo_Base64`, `Webhook_URL` |
 | `users`, `roles`, `logs`, `departamentos`, `proyectos`, `notificaciones` | Definidas en el esquema y las reglas; uso parcial | ver `docs/database-schema.md` |
+
+Los campos obligatorios y sus rangos son los que valida `firestore.rules`
+(`isValidWorkerData`, `isValidAttendanceData`, `isValidConfiguracion`,
+`isValidAlerta`): si un documento no los cumple, la escritura se rechaza con
+`permission-denied`.
+
+### 4.1 Autenticación y permisos de escritura
+
+`firestore.rules` exige **operador verificado o claims de rol** para escribir:
+
+- `canMarkAttendance()` → `request.auth.token.email_verified == true` con el
+  correo autorizado, o *custom claims* `admin`/`manager`/`supervisor`.
+- `canManageWorkers()` → `admin` o `manager`.
+
+Consecuencia práctica: **una sesión anónima sólo puede leer**. Por eso el
+auto-login anónimo del cliente está desactivado por defecto
+(`window.FIREBASE_ALLOW_ANONYMOUS` no se define). Mientras no haya sesión, la app
+trabaja en modo local (caché + cola offline) y el badge del sidebar muestra
+"Modo local" de forma honesta; al iniciar sesión desde **Ajustes → Iniciar sesión
+segura**, la cola se sincroniza.
+
+Si en algún despliegue se decide permitir contenido anónimo, debe hacerse en dos
+sitios a la vez: habilitar el proveedor Anonymous en Firebase Auth, relajar
+`firestore.rules` y definir `window.FIREBASE_ALLOW_ANONYMOUS = true` antes de
+cargar `js/firebase-client.js`.
 
 Convenciones:
 
@@ -254,6 +279,30 @@ notoria y las tareas en segundo plano se bloquean.
 `dist/`, `playwright-report/`, `.playwright-browsers/`, `.playwright-mcp/`,
 `.qa-deps/`, `functions/node_modules/` y `__e2e__/` están en `.gitignore`:
 son artefactos locales y se pueden borrar sin afectar al código.
+
+### 8.5 Lint, formato y finales de línea
+
+`.prettierrc` y `.eslintrc.js` deben ser compatibles entre sí y con cualquier
+checkout. La regla `linebreak-style` de ESLint está **desactivada a propósito**:
+
+- El repositorio tiene finales mixtos (los archivos reescritos por herramientas
+  quedan en LF; `core.autocrlf=true` en Windows convierte a CRLF al hacer
+  checkout, y en Linux/CI nunca hay CRLF).
+- Si ESLint exige `windows` mientras Prettier escribe `lf`, se crea un círculo
+  vicioso: `npm run format` rompe `npm run lint` (~1100 errores).
+
+Por eso `linebreak-style` queda en `off` y `endOfLine` en `auto`. Si se quiere
+normalizar de verdad, hay que añadir un `.gitattributes` con `* text=auto eol=lf`
+y volver a clonar, no cambiar la regla de ESLint.
+
+### 8.6 Alcance del typecheck
+
+`tsconfig.json` sólo incluye `src/**/*.ts`. La capa legacy `js/**/*.js` **no**
+entra en `tsc`: son scripts clásicos (IIFE y globals implícitos) y con
+`checkJs` + `noImplicitAny` generan cientos de `TS7006`/`TS2339`, lo que hace
+fallar la tarea "TypeScript Check" de CI. Esa capa se valida con ESLint, Jest
+(`__tests__/unit`) y Playwright (`__e2e__`), y sus contratos están declarados en
+`src/types/*.d.ts`.
 
 ---
 

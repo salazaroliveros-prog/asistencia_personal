@@ -108,8 +108,10 @@ const Validators = (() => {
       errors.push({ campo: 'idTrabajador', error: 'El ID del trabajador es requerido' });
     }
 
-    // Validar tipo de marcación
-    const tiposValidos = ['Entrada', 'Salida_Receso', 'Regreso_Receso', 'Salida_Obra'];
+    // Validar tipo de marcación.
+    // 'Entrada_Extra' es aceptada por firestore.rules (isValidAttendanceData) y
+    // por el flujo de marcaciones extraordinarias; antes se rechazaba aquí.
+    const tiposValidos = ['Entrada', 'Salida_Receso', 'Regreso_Receso', 'Salida_Obra', 'Entrada_Extra'];
     const tipo = marcacion.tipo || marcacion.Tipo_Marcacion;
     if (!tipo || !tiposValidos.includes(tipo)) {
       errors.push({ campo: 'tipo', error: `Tipo de marcación inválido. Debe ser: ${tiposValidos.join(', ')}` });
@@ -414,12 +416,18 @@ const Validators = (() => {
    * @returns {object} { valid: boolean, error: string | null }
    */
   function validateOrdenHorarios(horarios) {
-    const { entrada, salidaReceso, regresoReceso, salidaObra } = horarios;
+    const { entrada, salidaReceso, regresoReceso, salidaObra } = horarios || {};
 
     const min1 = _horaToMinutos(entrada);
     const min2 = _horaToMinutos(salidaReceso);
     const min3 = _horaToMinutos(regresoReceso);
     const min4 = _horaToMinutos(salidaObra);
+
+    // Antes, con horarios vacíos o mal formados los cuatro valores eran NaN y
+    // la función devolvía valid:true (todas las comparaciones NaN son falsas).
+    if ([min1, min2, min3, min4].some((m) => m === null)) {
+      return { valid: false, error: 'Los cuatro horarios son obligatorios y deben tener formato HH:MM' };
+    }
 
     if (min2 <= min1) {
       return { valid: false, error: 'La salida a receso debe ser después de la entrada' };
@@ -482,38 +490,56 @@ const Validators = (() => {
 
   // ─── Helpers ───────────────────────────────────────────────────────────────
 
+  /** Minutos de gracia tras la hora de salida antes de contar horas extra. */
+  const HORAS_EXTRA_GRACIA_MIN = 15;
+  /** Bloque de redondeo de horas extra (30 min → 0,5 h). */
+  const HORAS_EXTRA_BLOQUE_MIN = 30;
+
+  /**
+   * Convierte 'HH:MM' a minutos desde medianoche.
+   * @param {string} hora - Hora en formato HH:MM
+   * @returns {number|null} Minutos transcurridos, o null si el formato es inválido
+   */
   function _horaToMinutos(hora) {
-    const [h, m] = hora.split(':').map(Number);
+    if (typeof hora !== 'string' || !/^([01]?\d|2[0-3]):([0-5]\d)$/.test(hora.trim())) return null;
+    const [h, m] = hora.trim().split(':').map(Number);
     return h * 60 + m;
   }
 
   function calcularEstado(horaOficial, horaReal, tolerancia) {
-    if (!horaOficial || !horaReal) return 'A Tiempo';
+    const minOficial = _horaToMinutos(horaOficial);
+    const minReal    = _horaToMinutos(horaReal);
 
-    const [hO, mO] = horaOficial.split(':').map(Number);
-    const [hR, mR] = horaReal.split(':').map(Number);
+    // Sin horas comparables se asume puntual (comportamiento histórico).
+    if (minOficial === null || minReal === null) return 'A Tiempo';
 
-    const minOficial = hO * 60 + mO;
-    const minReal    = hR * 60 + mR;
-    const diferencia = minReal - minOficial;
+    const toleranciaMin = Number.isFinite(Number(tolerancia)) ? Number(tolerancia) : 0;
+    const diferencia    = minReal - minOficial;
 
-    if (diferencia <= 0)          return 'A Tiempo';
-    if (diferencia <= tolerancia) return 'Tolerancia';
+    if (diferencia <= 0)             return 'A Tiempo';
+    if (diferencia <= toleranciaMin) return 'Tolerancia';
     return 'Atraso';
   }
 
+  /**
+   * Calcula las horas extra de una salida.
+   *
+   * Regla: se ignoran los primeros HORAS_EXTRA_GRACIA_MIN minutos posteriores a
+   * la salida programada y el exceso se redondea al bloque de 30 min más cercano
+   * (0,5 h). Con datos inválidos devuelve 0 en vez de NaN.
+   * @param {string} horaReal - Hora real de la marcación (HH:MM)
+   * @param {string} horaSalida - Hora programada de salida (HH:MM)
+   * @returns {number} Horas extra calculadas
+   */
   function calcularHorasExtra(horaReal, horaSalida) {
-    if (!horaReal || !horaSalida) return 0;
+    const minReal   = _horaToMinutos(horaReal);
+    const minSalida = _horaToMinutos(horaSalida);
 
-    const [hS, mS] = horaSalida.split(':').map(Number);
-    const [hR, mR] = horaReal.split(':').map(Number);
+    if (minReal === null || minSalida === null) return 0;
 
-    const minSalida = hS * 60 + mS + 15;
-    const minReal   = hR * 60 + mR;
-    const exceso    = minReal - minSalida;
-
+    const exceso = minReal - (minSalida + HORAS_EXTRA_GRACIA_MIN);
     if (exceso <= 0) return 0;
-    return Math.round(exceso / 30) * 0.5;
+    return Math.round(exceso / HORAS_EXTRA_BLOQUE_MIN) * (HORAS_EXTRA_BLOQUE_MIN / 60);
   }
 
   // ─── API Pública ───────────────────────────────────────────────────────────

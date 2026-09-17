@@ -21,12 +21,15 @@ export function normalizeAttendance(payload: AttendancePayload, previous: Partia
     Fecha: payload.Fecha || payload.fecha || today(),
     Tipo_Marcacion: payload.Tipo_Marcacion || payload.tipoMarcacion || 'Entrada',
     Hora_Programada: payload.Hora_Programada || payload.horaProgramada || '',
-    Hora_Real: payload.Hora_Real || payload.horaReal || new Date().toLocaleTimeString('es-GT', { hour12: false }),
+    Hora_Real: payload.Hora_Real || payload.horaReal || new Date().toLocaleTimeString('es-GT', { hour12: false }).slice(0, 5),
     Estado_Marcacion: payload.Estado_Marcacion || payload.estadoMarcacion || payload.estado || 'A Tiempo',
-    Metodo_Registro: payload.Metodo_Registro || payload.metodo || 'Manual_Fisica',
+    Metodo_Registro: payload.Metodo_Registro || payload.metodo || 'Manual',
     Horas_Extra: Number(payload.Horas_Extra ?? payload.horasExtra ?? 0) || 0,
     Ubicacion_Obra: payload.Ubicacion_Obra || payload.obra || '',
     Fecha_Registro: payload.Fecha_Registro || nowIso(),
+    // Timestamp es obligatorio en firestore.rules (isValidTimestamp): sin él la
+    // escritura se deniega con permission-denied.
+    Timestamp: payload.Timestamp || previous.Timestamp || Date.now(),
     GPS_Latitud: payload.GPS_Latitud ?? null,
     GPS_Longitud: payload.GPS_Longitud ?? null,
     GPS_Accuracy: payload.GPS_Accuracy ?? null,

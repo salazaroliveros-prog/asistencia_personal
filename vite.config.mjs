@@ -1,6 +1,5 @@
 import { defineConfig, createLogger, loadEnv } from 'vite';
 import { VitePWA } from 'vite-plugin-pwa';
-import viteCompression from 'vite-plugin-compression';
 import { cpSync, existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -173,19 +172,6 @@ export default defineConfig(({ mode }) => ({
           }
         ]
       }
-    }),
-    // Plugin de compresión para producción
-    viteCompression({
-      algorithm: 'gzip',
-      ext: '.gz',
-      threshold: 10240, // Solo comprimir archivos mayores a 10KB
-      deleteOriginFile: false
-    }),
-    viteCompression({
-      algorithm: 'brotliCompress',
-      ext: '.br',
-      threshold: 10240,
-      deleteOriginFile: false
     })
   ],
 

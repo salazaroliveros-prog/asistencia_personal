@@ -100,7 +100,6 @@ const PRECACHE_ASSETS = [
   '/field-scanner.js',
   '/field-scanner-manifest.json',
   '/pwa/scanner.html',
-  '/pwa/scanner.js',
   '/pwa/manifest.json',
 ];
 

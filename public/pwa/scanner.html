@@ -3,7 +3,12 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <title>Control de Asistencia - Escáner</title>
+  <title>Escáner de Campo</title>
+  <meta http-equiv="refresh" content="0;url=/field-scanner.html" />
+  <script>
+    // Ruta histórica: el scanner oficial usa autenticación y el contrato vigente.
+    window.location.replace('/field-scanner.html');
+  </script>
   <meta name="theme-color" content="#1e40af" />
   <link rel="manifest" href="/pwa/manifest.json" />
   <link rel="stylesheet" href="/pwa/scanner.css" />
@@ -55,9 +60,6 @@
     <div class="toast-container" id="toast-container"></div>
   </div>
 
-  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js" type="text/javascript"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js" type="text/javascript"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js" type="text/javascript"></script>
-  <script src="/pwa/scanner.js" type="module"></script>
+  <noscript><p>Redirigiendo al escáner oficial… <a href="/field-scanner.html">Abrir escáner</a></p></noscript>
 </body>
 </html>

@@ -106,7 +106,13 @@ module.exports = {
     
     // Stylistic
     'indent': ['error', 2, { SwitchCase: 1 }],
-    'linebreak-style': ['error', 'windows'],
+    // linebreak-style DESACTIVADO a propósito: el repositorio tiene finales de
+    // línea mixtos (LF en los archivos escritos por herramientas y CRLF en los
+    // que git convierte con core.autocrlf=true en Windows). Fijarlo a 'windows'
+    // generaba ~1100 errores en cualquier checkout con LF y contradecía a
+    // .prettierrc (endOfLine). La regla se delega a git/prettier para que
+    // `npm run lint` no dependa del sistema operativo del desarrollador.
+    'linebreak-style': 'off',
     'quotes': ['error', 'single', { avoidEscape: true }],
     'semi': ['error', 'always'],
     'comma-dangle': ['warn', 'always-multiline'],

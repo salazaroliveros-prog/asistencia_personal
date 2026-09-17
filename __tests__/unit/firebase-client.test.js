@@ -20,6 +20,9 @@ const wrappedClientCode = firebaseClientCode + '\nwindow.__FirebaseClient = type
 const wrappedConfigCode = firebaseConfigCode + '\nwindow.__FirebaseConfigLoaded = true;';
 
 function createMockContext(overrides = {}) {
+  // Permite simular 'sin sesión' (authUser: null) además del usuario por defecto.
+  const authUser = overrides.authUser === undefined ? { uid: 'test' } : overrides.authUser;
+
   const mockFirebase = {
     apps: [],
     initializeApp: (config) => {
@@ -46,11 +49,12 @@ function createMockContext(overrides = {}) {
     }),
     auth: () => ({
       signInAnonymously: () => Promise.resolve({ user: { uid: 'test' } }),
-      currentUser: { uid: 'test' },
+      currentUser: authUser,
       onAuthStateChanged: (cb) => {
-        cb({ uid: 'test' });
+        cb(authUser);
         return () => {};
       },
+      setPersistence: () => Promise.resolve(),
     }),
   };
 
@@ -94,7 +98,17 @@ function createMockContext(overrides = {}) {
     },
     setInterval: () => 1,
     clearInterval: () => {},
+    // El cliente programa el health check con setTimeout (antes usaba setInterval).
+    // Se mockean sin ejecutar para no dejar temporizadores abiertos en Jest.
+    setTimeout: () => 1,
+    clearTimeout: () => {},
+    // window.addEventListener es opcional en el cliente (guardado con typeof).
+    addEventListener: () => {},
+    removeEventListener: () => {},
   };
+  // Permite probar el auto-login anónimo opt-in antes de cargar el módulo
+  // (el cliente se auto-inicializa al evaluarse).
+  if (overrides.allowAnonymous) sandbox.FIREBASE_ALLOW_ANONYMOUS = true;
   sandbox.window = sandbox;
   sandbox.globalThis = sandbox;
 
@@ -109,7 +123,7 @@ function runFirebaseClient(overrides = {}) {
   const { context, mockLocalStorage } = createMockContext(overrides);
   vm.runInContext(wrappedConfigCode, context);
   vm.runInContext(wrappedClientCode, context);
-  return { window: context.globalThis || context, mockLocalStorage };
+  return { window: context.globalThis || context, mockLocalStorage, context };
 }
 
 describe('FirebaseClient', () => {
@@ -237,5 +251,30 @@ describe('FirebaseClient', () => {
     expect(health).toHaveProperty('lastCheck');
     expect(health).toHaveProperty('consecutiveFailures');
     expect(health).toHaveProperty('latencyMs');
+  });
+
+  test('sin sesión NO se hace login anónimo automático y el cliente queda en local', async () => {
+    // Una sesión anónima no puede escribir en Firestore (firestore.rules exige
+    // operador verificado o claims de rol), así que el cliente no debe
+    // auto-conectarse y reportar "conectado" en falso.
+    const { window } = runFirebaseClient({ authUser: null });
+    window.FirebaseClient.initialize();
+    expect(window.FirebaseClient.getConnectionState()).toBe('disconnected');
+    expect(window.FirebaseClient.isReady()).toBe(false);
+  });
+
+  test('con FIREBASE_ALLOW_ANONYMOUS=true sí se hace login anónimo', async () => {
+    const { window } = runFirebaseClient({ authUser: null, allowAnonymous: true });
+    // El auto-init del módulo ya disparó el login anónimo; se resuelve en microtareas.
+    for (let i = 0; i < 3; i += 1) await Promise.resolve();
+    expect(window.FirebaseClient.getConnectionState()).toBe('connected');
+  });
+
+  test('initialize no revierte a connecting un estado ya confirmado por el SDK', async () => {
+    const { window } = runFirebaseClient();
+    window.FirebaseClient.initialize();
+    // onAuthStateChanged responde de forma síncrona con usuario → 'connected'
+    expect(window.FirebaseClient.getConnectionState()).toBe('connected');
+    expect(window.FirebaseClient.isReady()).toBe(true);
   });
 });

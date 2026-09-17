@@ -7,7 +7,15 @@
     "noEmit": true,
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
-    "types": ["vite/client"]
+    "types": ["vite/client"],
+    "allowJs": false,
+    "checkJs": false
   },
+  // NOTA: la capa legacy (js/**/*.js) NO se incluye. Son scripts clásicos con
+  // IIFE y globals implícitos escritos antes de checkJs: incluirla con
+  // noImplicitAny produce cientos de TS7006/TS2339 y rompe la tarea
+  // "TypeScript Check" de CI. Esa capa se valida con ESLint, Jest
+  // (__tests__/unit) y Playwright (__e2e__). Los contratos de sus globals están
+  // declarados en src/types/*.d.ts.
   "include": ["src/**/*.ts"]
 }
