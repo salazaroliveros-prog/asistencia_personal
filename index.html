@@ -288,8 +288,14 @@
 
   <!-- ═══════════════════════════════════════════════════════════════
        TOAST NOTIFICATIONS CONTAINER
+       El contenedor NO es una región viva a propósito: cada toast creado por
+       js/utils/alerts.js declara su propio role="status"/"alert" con la
+       política que corresponde a su tipo. Antes el contenedor tenía
+       role="alert" (implícitamente assertive) junto a aria-live="polite" y
+       aria-atomic="true", que anunciaba el contenedor COMPLETO en cada cambio
+       y duplicaba el aviso de cada toast.
   ═══════════════════════════════════════════════════════════════ -->
-  <div id="toast-container" role="alert" aria-live="polite" aria-atomic="true"></div>
+  <div id="toast-container"></div>
 
   <!-- ═══════════════════════════════════════════════════════════════
        PANTALLA DE CARGA INICIAL

@@ -101,16 +101,22 @@ input, button, textarea, select {
   padding: 2px 8px;
   border-radius: 4px;
   font-size: 12px;
+  /* Reservado en la base para que .admin y .user midan igual */
+  border: 1px solid transparent;
 }
 
 #current-user-role.admin {
   background: var(--color-accent-green);
-  color: white;
+  /* Blanco sobre #2A9D8F sólo alcanzaba 3.3:1 */
+  color: var(--color-on-accent-ink);
 }
 
 #current-user-role.user {
-  background: var(--color-text-muted);
-  color: white;
+  /* Antes: background var(--color-text-muted) (blanco translúcido) con texto
+     blanco → ~1.2:1 en tema oscuro, es decir texto invisible. */
+  background: rgba(var(--color-surface-rgb), 0.18);
+  border: 1px solid var(--glass-border-light);
+  color: var(--color-text-primary);
 }
 
 .admin-actions {
@@ -437,6 +443,23 @@ table {
   --color-accent-green:   #2A9D8F;
   --color-accent-green-light: #40C9BB;
 
+  /* ─ Contraste WCAG AA — acentos como TEXTO sobre superficie oscura ───────
+     #E63946 sólo alcanza 3.7:1 sobre el navy del fondo (toasts, modales y
+     fondo del tema oscuro), por lo que el rojo se aclara para uso textual.
+     El verde se aclara igualmente (5.7:1 → 7.6:1) y el ámbar ya cumple. */
+  --color-on-dark-success: #40C9BB;
+  --color-on-dark-warning: #FFB703;
+  --color-on-dark-danger:  #FF8A94;
+
+  /* ── Contraste WCAG AA — texto SOBRE los acentos ──────────────────────────
+     Los acentos de la paleta son claros en luminancia: con blanco encima
+     quedan en 2.0:1 (ámbar), 3.3:1 (verde) y 4.2:1 (rojo), insuficientes
+     para texto AA (4.5:1). Sobre ellos se usa siempre tinta oscura (10.9:1,
+     5.7:1 y 4.6:1 respectivamente) y el blanco se reserva para los azules
+     primario/secundario, donde sí supera 4.5:1. */
+  --color-on-accent-ink: #00131F;
+  --color-on-accent:     #FFFFFF;
+
   /* RGB equivalents for rgba() usage */
   --color-primary-rgb:       0, 126, 167;
   --color-primary-dark-rgb:  0, 95, 122;
@@ -461,6 +484,14 @@ table {
   --color-text-secondary: rgba(var(--color-surface-rgb), 0.82);
   --color-text-muted:     rgba(var(--color-surface-rgb), 0.68);
   --color-text-disabled:  rgba(var(--color-surface-rgb), 0.45);
+
+  /* Acentos legibles como texto. En el tema oscuro coinciden con las
+     variantes aclaradas para fondo oscuro; el tema claro los re-mapea a
+     variantes oscurecidas (ver bloque [data-theme="light"] más abajo). */
+  --color-text-success: var(--color-on-dark-success);
+  --color-text-warning: var(--color-on-dark-warning);
+  --color-text-danger:  var(--color-on-dark-danger);
+
   /* Texto principal */
   --color-text: var(--color-text-primary);
 
@@ -573,8 +604,18 @@ table {
 
   --color-text-primary:   #0f2b47;
   --color-text-secondary: rgba(15, 43, 71, 0.78);
-  --color-text-muted:     rgba(15, 43, 71, 0.62);
+  /* 0.62 daba 4.16:1 sobre el degradado claro (por debajo de AA). Con 0.70
+     el peor caso sube a 5.27:1 sin cambiar la jerarquía visual. */
+  --color-text-muted:     rgba(15, 43, 71, 0.70);
   --color-text-disabled:  rgba(15, 43, 71, 0.40);
+
+  /* Acentos como texto en tema claro: los acentos base quedaban en 1.6:1
+     (ámbar), 3.0:1 (verde) y 3.8:1 (rojo) sobre el fondo claro. Estas
+     variantes oscurecidas garantizan ≥4.5:1 incluso sobre el stop más
+     oscuro del degradado (#cfe3f4): 6.1:1, 5.4:1 y 5.1:1 respectivamente. */
+  --color-text-success: #14655C;
+  --color-text-warning: #7A4F00;
+  --color-text-danger:  #B02330;
 
   --glass-bg:           rgba(255, 255, 255, 0.72);
   --glass-bg-hover:     rgba(255, 255, 255, 0.92);

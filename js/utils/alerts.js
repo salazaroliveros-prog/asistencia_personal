@@ -60,11 +60,16 @@ const Alerts = (() => {
       _removeToast(existing[0]);
     }
 
-    // Crear elemento
+    // Crear elemento.
+    // Una sola región viva por aviso: el contenedor ya no lo es (ver el
+    // comentario en index.html), así que el tipo decide el rol y la política
+    // de anuncio. Los errores se anuncian de inmediato (assertive); el resto
+    // espera (polite) a que el lector termine la frase en curso.
     const el = document.createElement('div');
     el.className = `toast ${opts.type}`;
-    el.setAttribute('role', 'status');
-    el.setAttribute('aria-live', 'polite');
+    const vital = opts.type === 'error';
+    el.setAttribute('role', vital ? 'alert' : 'status');
+    el.setAttribute('aria-live', vital ? 'assertive' : 'polite');
 
     el.innerHTML = `
       <span class="toast-icon" aria-hidden="true">${ICONS[opts.type] || ICONS.info}</span>
@@ -85,9 +90,7 @@ const Alerts = (() => {
     container.appendChild(el);
 
     // Renderizar íconos Lucide dentro del toast
-    if (window.lucide) {
-      lucide.createIcons({ nodes: [el] });
-    }
+    _renderIconsIn(el);
 
     // Auto-cerrar
     if (opts.duration > 0) {
@@ -95,6 +98,48 @@ const Alerts = (() => {
     }
 
     return el;
+  }
+
+  /**
+   * Renderiza los íconos Lucide de un subárbol concreto.
+   *
+   * El bundle de Lucide incluido en el proyecto expone
+   * createIcons({ icons, nameAttr, attrs }) y NO soporta la opción `nodes`:
+   * pasar { nodes: [el] } se ignora en silencio y el escaneo recorre TODO el
+   * documento. Como el <svg> generado conserva el atributo de nombre, cada
+   * toast (y cada confirmación) recreaba los íconos de la aplicación entera,
+   * lo que produce parpadeo y es costoso en tablas grandes.
+   *
+   * Para limitar el trabajo al subárbol pedido se renombra temporalmente el
+   * atributo de nombre de esos íconos y se usa `nameAttr` como selector.
+   *
+   * @param {Element} root - Contenedor cuyos íconos se quieren renderizar
+   */
+  function _renderIconsIn(root) {
+    if (!window.lucide || !root) return;
+
+    const pending = root.querySelectorAll('[data-lucide]');
+    if (!pending.length) return;
+
+    pending.forEach((node) => {
+      node.setAttribute('data-lucide-pending', node.getAttribute('data-lucide'));
+      node.removeAttribute('data-lucide');
+    });
+
+    try {
+      lucide.createIcons({ nameAttr: 'data-lucide-pending' });
+    } catch (err) {
+      // Un fallo de renderizado no debe romper la notificación: el aviso ya
+      // está en el DOM y el ícono se reintenta en el siguiente escaneo global.
+      console.warn('[Alerts] No se pudieron renderizar los íconos:', err);
+    } finally {
+      // El <svg> resultante puede conservar el atributo temporal: se restaura
+      // el nombre estándar para no dejar atributos huérfanos en el DOM.
+      root.querySelectorAll('[data-lucide-pending]').forEach((node) => {
+        node.setAttribute('data-lucide', node.getAttribute('data-lucide-pending'));
+        node.removeAttribute('data-lucide-pending');
+      });
+    }
   }
 
   function _removeToast(el) {
@@ -260,6 +305,10 @@ const Alerts = (() => {
           : 'btn btn-danger';
       }
 
+      // Elemento que abrió el diálogo: el foco se devuelve ahí al cerrar
+      // (WCAG 2.4.3 Orden del foco).
+      const opener = document.activeElement;
+
       // Mostrar modal
       modal.hidden = false;
 
@@ -270,25 +319,36 @@ const Alerts = (() => {
       btnCancel.parentNode.replaceChild(newCancel, btnCancel);
 
       // Renderizar iconos Lucide
-      if (window.lucide) lucide.createIcons({ nodes: [modal] });
+      _renderIconsIn(modal);
+
+      let settled = false;
 
       function _close(result) {
+        // Antes se resolvía en cada cierre y el listener de teclado nunca se
+        // retiraba, por lo que quedaba vivo el resto de la sesión.
+        if (settled) return;
+        settled = true;
+        document.removeEventListener('keydown', _onKey);
         modal.hidden = true;
+        if (opener && typeof opener.focus === 'function') opener.focus();
         resolve(result);
       }
 
       newOk.addEventListener('click',     () => _close(true));
       newCancel.addEventListener('click', () => _close(false));
 
-      // Cerrar con Escape
+      // Sólo se intercepta Escape. Enter NO se captura a nivel de documento:
+      // el foco está en un botón, así que la activación nativa ya confirma o
+      // cancela según cuál esté enfocado. Al capturarlo, Enter sobre
+      // "Cancelar" resolvía true (keydown) antes de que llegara el click
+      // nativo, es decir, ejecutaba la acción destructiva con el botón seguro.
       function _onKey(e) {
-        if (e.key === 'Escape') { document.removeEventListener('keydown', _onKey); _close(false); }
-        if (e.key === 'Enter')  { document.removeEventListener('keydown', _onKey); _close(true); }
+        if (e.key === 'Escape') _close(false);
       }
       document.addEventListener('keydown', _onKey);
 
       // Focus en botón cancelar por defecto (más seguro)
-      setTimeout(() => newCancel.focus(), 80);
+      setTimeout(() => { if (!settled) newCancel.focus(); }, 80);
     });
   }
 

@@ -1576,14 +1576,24 @@ input[type="month"].input-glass {
 }
 
 .toast {
+  /* Tokens propios del toast: la superficie del aviso es SIEMPRE oscura,
+     independientemente del tema. Antes el texto usaba --color-text-* y en
+     tema claro quedaba navy sobre navy (1.07:1, ilegible). */
+  --toast-bg:        rgba(var(--color-navy-dark-rgb), 0.94);
+  --toast-title:     #FFFFFF;                     /* 15:1 sobre el aviso */
+  --toast-text:      rgba(255, 255, 255, 0.86);    /* 10.6:1 */
+  --toast-icon-mute: rgba(255, 255, 255, 0.72);    /* 8.2:1 */
+  --toast-border:    rgba(255, 255, 255, 0.20);
+
   display: flex;
   align-items: flex-start;
   gap: var(--space-3);
   padding: var(--space-4) var(--space-5);
   border-radius: var(--radius-md);
-  background: rgba(var(--color-navy-dark-rgb), 0.92);
+  background: var(--toast-bg);
   backdrop-filter: blur(16px);
-  border: 1px solid var(--glass-border);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid var(--toast-border);
   box-shadow: 0 8px 32px rgba(var(--color-black-rgb), 0.4);
   pointer-events: all;
   animation: toastIn 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
@@ -1609,6 +1619,16 @@ input[type="month"].input-glass {
   height: 20px;
   flex-shrink: 0;
   margin-top: 2px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Lucide genera el <svg> con 24×24 px por defecto, por lo que desbordaba la
+   caja de 20 px del icono y el glifo se salía del aviso. */
+.toast-icon svg {
+  width: 20px;
+  height: 20px;
 }
 
 .toast-body {
@@ -1619,13 +1639,13 @@ input[type="month"].input-glass {
 .toast-title {
   font-size: var(--text-sm);
   font-weight: 700;
-   color: var(--color-text-primary);
+  color: var(--toast-title);
   margin-bottom: 2px;
 }
 
 .toast-message {
   font-size: var(--text-xs);
-  color: var(--color-text-muted);
+  color: var(--toast-text);
 }
 
 .toast-close {
@@ -1637,33 +1657,46 @@ input[type="month"].input-glass {
   display: flex;
   align-items: center;
   justify-content: center;
-  color: var(--color-text-muted);
+  color: var(--toast-icon-mute);
   flex-shrink: 0;
   transition: color var(--transition-fast), background-color var(--transition-fast);
 }
 
 .toast-close:hover {
-  background: var(--glass-bg-hover);
-   color: var(--color-text-primary);
+  /* Antes usaba --glass-bg-hover, que en tema claro es blanco al 92 %: sobre
+     el aviso oscuro el botón se volvía un parche blanco y el icono perdía
+     contraste. */
+  background: rgba(255, 255, 255, 0.16);
+  color: #FFFFFF;
+}
+
+.toast-close:focus-visible {
+  outline: 2px solid #FFFFFF;
+  outline-offset: 2px;
 }
 
 .toast-close svg { width: 14px; height: 14px; }
 
-.toast.success .toast-icon { color: var(--color-accent-green); }
-.toast.error   .toast-icon { color: var(--color-accent-red); }
-.toast.warning .toast-icon { color: var(--color-accent-amber); }
+/* Iconos por tipo. El aviso es oscuro en ambos temas, así que se usan las
+   variantes aclaradas (--color-accent-red daba 3.7:1 sobre el aviso). */
+.toast.success .toast-icon { color: var(--color-on-dark-success); }
+.toast.error   .toast-icon { color: var(--color-on-dark-danger); }
+.toast.warning .toast-icon { color: var(--color-on-dark-warning); }
 .toast.info    .toast-icon { color: var(--color-secondary); }
 
 /* ─────────────────────────────────────────────────────────────────────────────
    ESTADO DE MARCACIÓN (colores)
-   ───────────────────────────────────────────────────────────────────────────── */
-.estado-a-tiempo   { color: var(--color-accent-green); font-weight: 600; }
-.estado-tolerancia { color: var(--color-accent-amber); font-weight: 600; }
-.estado-atraso     { color: var(--color-accent-red); font-weight: 600; }
-.estado-ausencia   { color: var(--color-accent-red); font-weight: 600; opacity: 0.8; }
+   ─────────────────────────────────────────────────────────────────────────────
+   Se usan los tokens --color-text-* (acentos re-mapeados por tema) en lugar de
+   los acentos base: #FFB703 sobre fondo claro daba 1.6:1 y #E63946 3.8:1. */
+.estado-a-tiempo   { color: var(--color-text-success); font-weight: 600; }
+.estado-tolerancia { color: var(--color-text-warning); font-weight: 600; }
+.estado-atraso     { color: var(--color-text-danger); font-weight: 600; }
+/* Sin opacity: 0.8 — bajaba el contraste efectivo a 4.36:1 en tema claro */
+.estado-ausencia   { color: var(--color-text-danger); font-weight: 600; }
 
 /* Estado activo/inactivo personal */
-.estado-activo   { color: var(--color-accent-green); font-weight: 600; }
+.estado-activo   { color: var(--color-text-success); font-weight: 600; }
 .estado-inactivo { color: var(--color-text-muted); font-weight: 600; }
 
 /* ─────────────────────────────────────────────────────────────────────────────

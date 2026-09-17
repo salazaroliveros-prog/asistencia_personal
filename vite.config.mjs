@@ -20,6 +20,48 @@ logger.warn = (msg, options) => {
 };
 
 /**
+ * Construye el objeto de configuración de Firebase a partir de las variables
+ * de entorno de Vite (VITE_FIREBASE_*).
+ * @param {Record<string,string>} env  — resultado de loadEnv()
+ * @returns {Object} firebaseEnv
+ */
+function _buildFirebaseEnv(env) {
+  return {
+    apiKey:            env.VITE_FIREBASE_API_KEY            || '',
+    authDomain:        env.VITE_FIREBASE_AUTH_DOMAIN        || '',
+    projectId:         env.VITE_FIREBASE_PROJECT_ID         || '',
+    storageBucket:     env.VITE_FIREBASE_STORAGE_BUCKET     || '',
+    messagingSenderId: env.VITE_FIREBASE_MESSAGING_SENDER_ID || '',
+    appId:             env.VITE_FIREBASE_APP_ID             || '',
+    measurementId:     env.VITE_FIREBASE_MEASUREMENT_ID     || '',
+  };
+}
+
+/**
+ * Plugin: inyecta window.__FIREBASE_ENV__ en index.html.
+ * - En modo dev: mediante transformIndexHtml (sirve en tiempo real por Vite).
+ * - En modo build: también mediante transformIndexHtml (antes de emitir).
+ * Así, firebase-config.js puede leer las credenciales del .env en AMBOS modos.
+ */
+function injectFirebaseEnv(mode) {
+  return {
+    name: 'inject-firebase-env',
+    // transformIndexHtml se ejecuta tanto en dev como en build.
+    transformIndexHtml(html) {
+      const env = loadEnv(mode, process.cwd(), '');
+      const firebaseEnv = _buildFirebaseEnv(env);
+      const hasAnyValue = Object.values(firebaseEnv).some((v) => v.length > 0);
+      if (!hasAnyValue) {
+        console.warn('[inject-firebase-env] No se encontraron variables VITE_FIREBASE_* en .env');
+      }
+      const script = `<script>window.__FIREBASE_ENV__ = ${JSON.stringify(firebaseEnv)};</script>`;
+      // Insertar justo antes de </head>
+      return html.replace('</head>', `${script}\n</head>`);
+    },
+  };
+}
+
+/**
  * Plugin: copia el runtime legado (JS vanilla, CSS, service workers,
  * manifests, vendor) al directorio dist después del build.
  */
@@ -66,28 +108,6 @@ function copyLegacyRuntime(mode) {
         }
       }
 
-      // Inyectar variables de entorno de Firebase en index.html para que
-      // firebase-config.js las pueda leer como window.__FIREBASE_ENV__.
-      const env = loadEnv(mode, process.cwd(), '');
-      const firebaseEnv = {
-        apiKey: env.VITE_FIREBASE_API_KEY || '',
-        authDomain: env.VITE_FIREBASE_AUTH_DOMAIN || '',
-        projectId: env.VITE_FIREBASE_PROJECT_ID || '',
-        storageBucket: env.VITE_FIREBASE_STORAGE_BUCKET || '',
-        messagingSenderId: env.VITE_FIREBASE_MESSAGING_SENDER_ID || '',
-        appId: env.VITE_FIREBASE_APP_ID || '',
-        measurementId: env.VITE_FIREBASE_MEASUREMENT_ID || '',
-      };
-      const script = `<script>window.__FIREBASE_ENV__ = ${JSON.stringify(firebaseEnv)};</script>`;
-
-      // Inyectar en index.html después de copiar runtime
-      const indexHtmlPath = resolve(distDir, 'index.html');
-      if (existsSync(indexHtmlPath)) {
-        let html = readFileSync(indexHtmlPath, 'utf8');
-        html = html.replace('</head>', script + '</head>');
-        writeFileSync(indexHtmlPath, html);
-      }
-
       console.log('[vite] Runtime legado copiado a dist/');
     },
   };
@@ -100,6 +120,7 @@ export default defineConfig(({ mode }) => ({
   publicDir: 'public',
 
   plugins: [
+    injectFirebaseEnv(mode),
     copyLegacyRuntime(mode),
     // PWA Plugin para service worker mejorado
     VitePWA({

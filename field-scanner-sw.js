@@ -1,20 +1,27 @@
 /**
  * ESCÁNER DE CAMPO — field-scanner-sw.js
  * Service Worker para la sub-app de escaneo QR en campo.
- * @version 2.1.0
+ * @version 2.1.1
  */
 
-const CACHE_NAME    = 'field-scanner-v2.1.0';
-const CACHE_DYNAMIC = 'field-scanner-dynamic-v2.1.0';
+const CACHE_NAME    = 'field-scanner-v2.1.1';
+const CACHE_DYNAMIC = 'field-scanner-dynamic-v2.1.1';
 
-// Assets locales del escáner de campo
+// Assets locales del escáner de campo.
+// La estrategia es Cache-First, así que todo lo que la página necesita debe
+// estar aquí: si falta, la primera carga sin conexión se queda sin estilos.
+// Se añadieron las hojas que field-scanner.html ya cargaba
+// (glassmorphism.css y campo-login.css) y la UI post-login (campo-scanner.css).
 const STATIC_ASSETS = [
   '/',
   '/field-scanner.html',
   '/field-scanner.js',
   '/field-scanner-manifest.json',
-  '/css/campo.css',
   '/css/main.css',
+  '/css/glassmorphism.css',
+  '/css/campo.css',
+  '/css/campo-login.css',
+  '/css/campo-scanner.css',
   // Vendor local (html5-qrcode se sirve desde /vendor/)
   '/vendor/html5-qrcode.min.js',
   '/vendor/lucide.min.js',
@@ -22,7 +29,7 @@ const STATIC_ASSETS = [
 
 // ─── INSTALL ─────────────────────────────────────────────────────────────────
 self.addEventListener('install', (event) => {
-  console.log('[FieldSW] Instalando v2.1.0...');
+  console.log('[FieldSW] Instalando v2.1.1...');
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) =>
       Promise.all(
@@ -40,7 +47,7 @@ self.addEventListener('install', (event) => {
 
 // ─── ACTIVATE ────────────────────────────────────────────────────────────────
 self.addEventListener('activate', (event) => {
-  console.log('[FieldSW] Activando v2.1.0...');
+  console.log('[FieldSW] Activando v2.1.1...');
   const VALID = [CACHE_NAME, CACHE_DYNAMIC];
   event.waitUntil(
     caches.keys().then((keys) =>
