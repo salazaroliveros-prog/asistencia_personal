@@ -53,6 +53,12 @@ module.exports = {
     DataValidator: 'readonly',
     DataExport: 'readonly',
     BulkOperations: 'readonly',
+    AutoHealing: 'readonly',
+    HardwareDiagnostics: 'readonly',
+    MobileQRScanner: 'readonly',
+    ErrorHandler: 'readonly',
+    AILogger: 'readonly',
+    DashboardEnhancer: 'readonly',
     
     // Library globals
     lucide: 'readonly',
@@ -68,6 +74,10 @@ module.exports = {
     DEFAULT_CONFIG: 'readonly',
     APP_VERSION: 'readonly',
     APP_NAME: 'readonly',
+    TIPOS_MARCACION: 'readonly',
+    PUESTOS: 'readonly',
+    PUESTO_COLORES: 'readonly',
+    DEPARTAMENTOS_GT: 'readonly',
     
     // Helper globals
     CPC: 'readonly',
@@ -81,6 +91,7 @@ module.exports = {
     inicialesDeNombre: 'readonly',
     colorPorPuesto: 'readonly',
     htmlToImage: 'readonly',
+    Constants: 'readonly',
   },
   rules: {
     // Possible errors

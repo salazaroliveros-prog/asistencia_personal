@@ -222,7 +222,7 @@ const Validators = (() => {
    * @param {string} dpi - DPI limpio (solo dígitos)
    * @returns {object} { valid: boolean }
    */
-  function calculateDPIChecksum(dpi) {
+  function _calculateDPIChecksum(dpi) {
     // Algoritmo simplificado de validación de DPI guatemalteco
     // Para producción, implementar el algoritmo oficial del RENAP
     const digits = dpi.split('').map(Number);

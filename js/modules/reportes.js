@@ -4,7 +4,7 @@
  * @version 1.5.0
  */
 
-const ModuloReportes = (() => {
+const _ModuloReportes = (() => {
 
   // ─── Helpers globales ─────────────────────────────────────────────────────
   const isoDate = (date) => (window.CPC?.DateHelpers?.toISODate?.(date) ?? window.CPC?.StringHelpers?.dateToStr?.(date) ??
@@ -214,7 +214,6 @@ const ModuloReportes = (() => {
     try {
       const asistencias = await _obtenerDatos(params.fechaInicio, params.fechaFin);
       const orientation = document.getElementById('preview-orientation')?.value || 'portrait';
-      const periodo     = _formatPeriodo(params);
 
       let doc;
       if (params.tipo === 'diario') {
@@ -301,3 +300,6 @@ const ModuloReportes = (() => {
 
   return { init, cargar, cleanup };
 })();
+
+// Exponer el módulo globalmente
+window.ModuloReportes = _ModuloReportes;

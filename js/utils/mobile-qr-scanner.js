@@ -5,7 +5,7 @@
  * @version 1.5.0
  */
 
-const MobileQRScanner = (() => {
+const _MobileQRScanner = (() => {
   let scanner = null;
   let active = false;
   let selectedCamera = null;
@@ -144,7 +144,9 @@ const MobileQRScanner = (() => {
       if (scanner) {
         try {
           await scanner.stop();
-        } catch (_) {}
+        } catch (_) {
+          // El escáner nunca llegó a iniciarse, ignorar error
+        }
         scanner = null;
       }
       throw error;
@@ -191,7 +193,7 @@ const MobileQRScanner = (() => {
     await stop();
 
     try {
-      const result = await start({
+      await start({
         elementId: scanner?._elementId,
         onSuccess: () => {},
         cameraOptions: { facingMode: newFacingMode },
@@ -210,7 +212,9 @@ const MobileQRScanner = (() => {
           onSuccess: () => {},
           cameraOptions: { facingMode: currentFacingMode },
         });
-      } catch (_) {}
+      } catch (_) {
+        // Revertir falló, continuar con el error original
+      }
       throw error;
     }
   }
@@ -290,7 +294,9 @@ const MobileQRScanner = (() => {
             onSuccess: () => {},
             cameraOptions: { facingMode: selectedCamera },
           });
-        } catch (_) {}
+        } catch (_) {
+          // Revertir falló, continuar con el error original
+        }
         throw error;
       }
     }
@@ -339,21 +345,17 @@ const MobileQRScanner = (() => {
     const elementId = scanner?._elementId;
     await stop();
 
-    try {
-      const result = await start({
-        elementId,
-        onSuccess: () => {},
-        cameraOptions: { deviceId },
-      });
+    await start({
+      elementId,
+      onSuccess: () => {},
+      cameraOptions: { deviceId },
+    });
 
-      selectedCamera = deviceId;
-      return {
-        success: true,
-        camera: deviceId,
-      };
-    } catch (error) {
-      throw error;
-    }
+    selectedCamera = deviceId;
+    return {
+      success: true,
+      camera: deviceId,
+    };
   }
 
   /**
@@ -423,4 +425,4 @@ const MobileQRScanner = (() => {
 })();
 
 // Exponer el módulo globalmente
-window.MobileQRScanner = MobileQRScanner;
+window.MobileQRScanner = _MobileQRScanner;

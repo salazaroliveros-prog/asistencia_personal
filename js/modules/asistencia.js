@@ -5,7 +5,7 @@
  * @version 1.5.0
  */
 
-const ModuloAsistencia = (() => {
+const _ModuloAsistencia = (() => {
 
   // ─── Estado del módulo ────────────────────────────────────────────────────
   let _scanner           = null;
@@ -213,7 +213,6 @@ const ModuloAsistencia = (() => {
 
     const btnStart  = document.getElementById('btn-start-scan');
     const btnStop   = document.getElementById('btn-stop-scan');
-    const switchBtn = document.getElementById('btn-switch-scan-camera');
 
     try {
       if (!_qrController) {
@@ -571,7 +570,6 @@ const ModuloAsistencia = (() => {
     }
 
     const loader = Alerts.loading('Registrando marcación...');
-    const tipoLabel = { 'Entrada': 'Entrada', 'Salida_Receso': 'Salida Receso', 'Regreso_Receso': 'Regreso Receso', 'Salida_Obra': 'Salida de Obra' };
 
     try {
       const result = await API.registrarMarcacion(payload);
@@ -989,3 +987,6 @@ const ModuloAsistencia = (() => {
 
   return { init, cargar, cleanup };
 })();
+
+// Exponer el módulo globalmente
+window.ModuloAsistencia = _ModuloAsistencia;

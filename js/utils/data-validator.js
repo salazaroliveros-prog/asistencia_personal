@@ -4,7 +4,7 @@
  * @version 1.5.0
  */
 
-const DataValidator = (() => {
+const _DataValidator = (() => {
   
   const validators = {
     attendance: (data) => {
@@ -53,7 +53,7 @@ const DataValidator = (() => {
       
       // Validate phone number format
       if (data.Telefono) {
-        const cleanPhone = data.Telefono.replace(/[\s\-\(\)]/g, '');
+        const cleanPhone = data.Telefono.replace(/[\s-()]/g, '');
         if (!/^\+?\d{8,15}$/.test(cleanPhone)) {
           errors.push('Formato de teléfono inválido');
         }
@@ -180,3 +180,6 @@ const DataValidator = (() => {
     formatErrors, 
   };
 })();
+
+// Exponer el módulo globalmente
+window.DataValidator = _DataValidator;

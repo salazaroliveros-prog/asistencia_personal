@@ -139,13 +139,9 @@ const AutoHealing = (() => {
       description: 'Optimizar imágenes almacenadas',
       priority: 'low',
       execute: async () => {
-        try {
-          // Implementar optimización de imágenes
-          // Este es un placeholder para la implementación real
-          return { success: true, message: 'Imágenes optimizadas' };
-        } catch (error) {
-          return { success: false, message: 'Error al optimizar imágenes', error: error.message };
-        }
+        // Implementar optimización de imágenes
+        // Este es un placeholder para la implementación real
+        return { success: true, message: 'Imágenes optimizadas' };
       },
     },
 
@@ -154,13 +150,9 @@ const AutoHealing = (() => {
       description: 'Recuperar datos corruptos',
       priority: 'high',
       execute: async () => {
-        try {
-          // Implementar recuperación de datos
-          // Este es un placeholder para la implementación real
-          return { success: true, message: 'Datos recuperados' };
-        } catch (error) {
-          return { success: false, message: 'Error al recuperar datos', error: error.message };
-        }
+        // Implementar recuperación de datos
+        // Este es un placeholder para la implementación real
+        return { success: true, message: 'Datos recuperados' };
       },
     },
   };

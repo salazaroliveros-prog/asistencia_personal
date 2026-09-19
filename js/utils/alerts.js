@@ -4,6 +4,7 @@
  * @version 1.5.0
  */
 
+// eslint-disable-next-line no-unused-vars
 const Alerts = (() => {
   const DEFAULTS = {
     duration: 4500,   // ms antes de auto-cerrar
@@ -355,6 +356,3 @@ const Alerts = (() => {
   // API pública
   return { toast, success, error, warning, info, marcacion, loading, confirm };
 })();
-
-// Alias global corto
-const Toast = Alerts;

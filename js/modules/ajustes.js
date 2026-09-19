@@ -14,7 +14,7 @@
  *  #8 _iniciarSesionFirebase — llama a _actualizarEstadoConexion tras login
  */
 
-const ModuloAjustes = (() => {
+const _ModuloAjustes = (() => {
 
   // ─── Inicialización ───────────────────────────────────────────────────────
   function init() {
@@ -997,3 +997,6 @@ const ModuloAjustes = (() => {
 
   return { init, cargar, cleanup };
 })();
+
+// Exponer el módulo globalmente
+window.ModuloAjustes = _ModuloAjustes;

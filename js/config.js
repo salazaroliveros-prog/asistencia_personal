@@ -9,7 +9,7 @@
 // ─────────────────────────────────────────────────────────────────────────────
 const APP_VERSION  = '1.5.0';
 const APP_NAME     = 'CONTROL PERSONAL CAMPO';
-const TIMEZONE     = 'America/Guatemala'; // GMT-6
+const _TIMEZONE    = 'America/Guatemala'; // GMT-6
 
 // ─────────────────────────────────────────────────────────────────────────────
 // CLAVES localStorage
@@ -50,7 +50,7 @@ const DEFAULT_CONFIG = {
 // ─────────────────────────────────────────────────────────────────────────────
 // HORARIOS DE MARCACIÓN (se sobreescribe con config)
 // ─────────────────────────────────────────────────────────────────────────────
-const TIPOS_MARCACION = [
+const _TIPOS_MARCACION = [
   {
     tipo:    'Entrada',
     label:   'Entrada a Obra',
@@ -88,7 +88,7 @@ const TIPOS_MARCACION = [
 // ─────────────────────────────────────────────────────────────────────────────
 // PUESTOS DISPONIBLES
 // ─────────────────────────────────────────────────────────────────────────────
-const PUESTOS = [
+const _PUESTOS = [
   'Albañil',
   'Maestro de Obra',
   'Armador',
@@ -120,10 +120,10 @@ const PUESTO_COLORES = {
  * @param {string} puesto - Nombre del puesto del trabajador
  * @returns {string} Color CSS (puede ser valor hex o variable CSS)
  * @example
- * colorPorPuesto('Maestro de Obra') // returns 'var(--color-primary)'
- * colorPorPuesto('Electricista')    // returns '#6A0DAD'
+ * _colorPorPuesto('Maestro de Obra') // returns 'var(--color-primary)'
+ * _colorPorPuesto('Electricista')    // returns '#6A0DAD'
  */
-function colorPorPuesto(puesto) {
+function _colorPorPuesto(puesto) {
   return PUESTO_COLORES[puesto] || 'var(--color-primary)';
 }
 
@@ -132,11 +132,11 @@ function colorPorPuesto(puesto) {
  * @param {string} nombre - Nombre completo del trabajador
  * @returns {string} Iniciales en mayúsculas (máximo 2 caracteres)
  * @example
- * inicialesDeNombre('Juan Pérez')       // returns 'JP'
- * inicialesDeNombre('María')           // returns 'M'
- * inicialesDeNombre('')                // returns '??'
+ * _inicialesDeNombre('Juan Pérez')       // returns 'JP'
+ * _inicialesDeNombre('María')           // returns 'M'
+ * _inicialesDeNombre('')                // returns '??'
  */
-function inicialesDeNombre(nombre) {
+function _inicialesDeNombre(nombre) {
   if (!nombre) return '??';
   return nombre.split(' ').slice(0, 2).map((n) => n[0]).join('').toUpperCase();
 }
@@ -144,7 +144,7 @@ function inicialesDeNombre(nombre) {
 // ─────────────────────────────────────────────────────────────────────────────
 // DEPARTAMENTOS Y MUNICIPIOS DE GUATEMALA
 // ─────────────────────────────────────────────────────────────────────────────
-const DEPARTAMENTOS_GT = [
+const _DEPARTAMENTOS_GT = [
   'Alta Verapaz', 'Baja Verapaz', 'Chimaltenango', 'Chiquimula',
   'El Progreso', 'Escuintla', 'Guatemala', 'Huehuetenango',
   'Izabal', 'Jalapa', 'Jutiapa', 'Petén',
@@ -315,6 +315,12 @@ const AppState = (() => {
 window.LS_KEYS = LS_KEYS;
 window.DEFAULT_CONFIG = DEFAULT_CONFIG;
 window.AppState = AppState;
+window.TIPOS_MARCACION = _TIPOS_MARCACION;
+window.PUESTOS = _PUESTOS;
+window.PUESTO_COLORES = PUESTO_COLORES;
+window.colorPorPuesto = _colorPorPuesto;
+window.inicialesDeNombre = _inicialesDeNombre;
+window.DEPARTAMENTOS_GT = _DEPARTAMENTOS_GT;
 
 // ─────────────────────────────────────────────────────────────────────────────
 // INICIALIZAR ESTADO DESDE localStorage
@@ -323,7 +329,6 @@ window.AppState = AppState;
   try {
     // ── Limpieza de datos demo ─────────────────────────────────────────────
     // Limpiar datos de prueba/demo si quedaron residuales en localStorage
-    const URL_DEMO = 'demo.control-personal-campo.local';
     const tieneDatosDemo = localStorage.getItem('cpc_demo_loaded') === '1';
 
     if (tieneDatosDemo) {

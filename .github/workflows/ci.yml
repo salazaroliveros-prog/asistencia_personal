@@ -105,14 +105,15 @@ jobs:
         run: |
           echo "── Verificando salida del build ──"
           test -f dist/index.html          && echo "✓ index.html"          || (echo "✗ Falta index.html"          && exit 1)
-          test -f dist/manifest.json       && echo "✓ manifest.json"       || (echo "✗ Falta manifest.json"       && exit 1)
-          test -f dist/service-worker.js   && echo "✓ service-worker.js"   || (echo "✗ Falta service-worker.js"   && exit 1)
+          test -f dist/manifest.webmanifest && echo "✓ manifest.webmanifest" || (echo "✗ Falta manifest.webmanifest" && exit 1)
+          test -f dist/sw.js               && echo "✓ sw.js (service worker)" || (echo "✗ Falta sw.js" && exit 1)
           test -f dist/field-scanner.html  && echo "✓ field-scanner.html"  || (echo "✗ Falta field-scanner.html"  && exit 1)
           test -f dist/field-scanner-sw.js && echo "✓ field-scanner-sw.js" || (echo "✗ Falta field-scanner-sw.js" && exit 1)
           test -d dist/pwa                 && echo "✓ dir pwa/"            || (echo "✗ Falta directorio pwa/"     && exit 1)
           test -d dist/vendor              && echo "✓ dir vendor/"         || (echo "✗ Falta directorio vendor/"  && exit 1)
           test -d dist/js                  && echo "✓ dir js/"             || (echo "✗ Falta directorio js/"      && exit 1)
           test -d dist/css                 && echo "✓ dir css/"            || (echo "✗ Falta directorio css/"     && exit 1)
+          test -d dist/assets              && echo "✓ dir assets/"         || (echo "✗ Falta directorio assets/"   && exit 1)
           echo "── Build verificado correctamente ──"
 
       - name: Upload build artifact
@@ -143,6 +144,9 @@ jobs:
 
       - name: Validate field-scanner-manifest.json
         run: node -e "JSON.parse(require('fs').readFileSync('field-scanner-manifest.json','utf8')); console.log('✓ field-scanner-manifest.json válido');"
+
+      - name: Validate vite.config.mjs
+        run: node -e "console.log('✓ vite.config.mjs existe'); require('fs').existsSync('vite.config.mjs') || process.exit(1);"
 
       - name: Validate public/pwa/manifest.json
         run: node -e "JSON.parse(require('fs').readFileSync('public/pwa/manifest.json','utf8')); console.log('✓ public/pwa/manifest.json válido');"

@@ -4,7 +4,7 @@
  * @version 1.5.0
  */
 
-const AILogger = (() => {
+const _AILogger = (() => {
   // Almacenamiento de errores para análisis de patrones
   const errorHistory = [];
   const MAX_ERROR_HISTORY = 100;
@@ -218,7 +218,7 @@ const AILogger = (() => {
    * @returns {Array} Alertas generadas
    */
   function checkRecurrentErrors() {
-    const { recurrentPatterns, recentErrors } = analyzePatterns();
+    const { recurrentPatterns } = analyzePatterns();
     const alerts = [];
 
     Object.entries(recurrentPatterns).forEach(([category, data]) => {
@@ -371,4 +371,4 @@ const AILogger = (() => {
 })();
 
 // Exponer el módulo globalmente
-window.AILogger = AILogger;
+window.AILogger = _AILogger;

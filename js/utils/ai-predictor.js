@@ -4,9 +4,9 @@
  * @version 1.5.0
  */
 
-const AIPredictor = (() => {
+const _AIPredictor = (() => {
   let predictionHistory = [];
-  const patterns = [];
+  const _patterns = [];
   let thresholds = {
     errorRate: 0.1,        // 10% de tasa de error
     memoryUsage: 0.8,     // 80% de uso de memoria
@@ -576,4 +576,4 @@ const AIPredictor = (() => {
 })();
 
 // Exponer el módulo globalmente
-window.AIPredictor = AIPredictor;
+window.AIPredictor = _AIPredictor;

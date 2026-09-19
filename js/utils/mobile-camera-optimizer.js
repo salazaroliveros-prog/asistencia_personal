@@ -245,7 +245,6 @@ const MobileCameraOptimizer = (() => {
     // Escuchar cambios de orientación
     screen.orientation.addEventListener('change', async () => {
       try {
-        const newOrientation = getOrientation();
         const newResolution = getOptimalResolution();
         
         await track.applyConstraints({

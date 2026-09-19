@@ -4,6 +4,7 @@
  * @version 1.5.0
  */
 
+// eslint-disable-next-line no-unused-vars
 const RequestOptimizer = (() => {
   
   const pendingRequests = new Map();

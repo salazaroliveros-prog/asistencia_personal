@@ -4,6 +4,7 @@
  * @version 1.5.0
  */
 
+// eslint-disable-next-line no-unused-vars
 const PDFBuilder = (() => {
 
   // ─── Constantes de estilo ─────────────────────────────────────────────────
@@ -125,7 +126,6 @@ const PDFBuilder = (() => {
       doc.setFont('helvetica', 'bold');
       doc.setFontSize(FONTS.xs);
       doc.setTextColor(...COLORS.textMuted);
-      const labelW = doc.getTextWidth(item.label + ' ');
       doc.text(item.label, metaX - doc.getTextWidth(item.label) - doc.getTextWidth(item.value) - 2, lineY);
       doc.setFont('helvetica', 'normal');
       doc.setTextColor(...COLORS.dark);
@@ -440,7 +440,6 @@ const PDFBuilder = (() => {
     ]);
 
     // Resumen total
-    const totalDias     = Object.values(resumen).reduce((s, r) => s + r.diasTrabajados, 0);
     const totalAusencias = Object.values(resumen).reduce((s, r) => s + r.ausencias, 0);
     const totalHExtra   = Object.values(resumen).reduce((s, r) => s + r.horasExtra, 0);
 

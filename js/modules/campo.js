@@ -6,7 +6,7 @@
  * @version 1.5.0
  */
 
-const ModuloCampo = (() => {
+const _ModuloCampo = (() => {
 
   // ─── Estado del módulo ──────────────────────────────────────────────────
   let _scanner          = null;
@@ -432,3 +432,6 @@ const ModuloCampo = (() => {
 
   return { init, cargar, cleanup };
 })();
+
+// Exponer el módulo globalmente
+window.ModuloCampo = _ModuloCampo;

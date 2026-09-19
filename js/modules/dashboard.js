@@ -5,7 +5,7 @@
  * @version 1.5.0
  */
 
-const ModuloDashboard = (() => {
+const _ModuloDashboard = (() => {
 
   // ─── Helpers globales ─────────────────────────────────────────────────────
   const isoDate = (date) => (window.CPC?.DateHelpers?.toISODate?.(date) ?? window.CPC?.StringHelpers?.dateToStr?.(date) ??
@@ -992,3 +992,6 @@ const ModuloDashboard = (() => {
 
   return { init, cargar, cleanup };
 })();
+
+// Exponer el módulo globalmente
+window.ModuloDashboard = _ModuloDashboard;

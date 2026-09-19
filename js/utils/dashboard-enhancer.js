@@ -4,7 +4,7 @@
  * @version 1.5.0
  */
 
-const DashboardEnhancer = (() => {
+const _DashboardEnhancer = (() => {
   
   function init() {
     if (window.Logger) {
@@ -46,7 +46,7 @@ const DashboardEnhancer = (() => {
     });
   }
 
-  function addTrendIndicator(kpiCard, trend, value) {
+  function addTrendIndicator(kpiCard, trend) {
     if (!kpiCard) return;
     // Evita duplicar el indicador si se refresca el dashboard varias veces
     kpiCard.querySelector('.trend-indicator')?.remove();
@@ -120,6 +120,5 @@ const DashboardEnhancer = (() => {
   };
 })();
 
-if (typeof window !== 'undefined') {
-  window.DashboardEnhancer = DashboardEnhancer;
-}
+// Exponer el módulo globalmente
+window.DashboardEnhancer = _DashboardEnhancer;

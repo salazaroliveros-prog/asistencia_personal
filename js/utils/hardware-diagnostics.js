@@ -247,8 +247,9 @@ const HardwareDiagnostics = (() => {
     try {
       // Verificar localStorage
       let localStorageSize = 0;
-      for (const key in localStorage) {
-        if (localStorage.hasOwnProperty(key)) {
+      for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        if (key) {
           localStorageSize += localStorage[key].length + key.length;
         }
       }

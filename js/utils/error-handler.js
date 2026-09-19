@@ -51,7 +51,7 @@ const ErrorHandler = (() => {
     _logError(error, errorType, context);
     
     // Intentar recuperación automática
-    const recovery = _attemptRecovery(error, errorType, context);
+    const recovery = _attemptRecovery(error, errorType);
     
     // Retornar información estructurada
     return {
@@ -102,7 +102,6 @@ const ErrorHandler = (() => {
   // ─── Obtener mensaje amigable para usuario ───────────────────────────────
   function _getUserMessage(error, errorType) {
     const errorCode = error.code || '';
-    const errorMessage = error.message || String(error);
     
     // Buscar mensaje específico primero
     if (ERROR_MESSAGES[errorCode]) {
@@ -143,7 +142,7 @@ const ErrorHandler = (() => {
   }
   
   // ─── Intentar recuperación automática ─────────────────────────────────────
-  function _attemptRecovery(error, errorType, context) {
+  function _attemptRecovery(error, errorType) {
     switch (errorType) {
       case ERROR_TYPES.NETWORK:
       case ERROR_TYPES.OFFLINE:

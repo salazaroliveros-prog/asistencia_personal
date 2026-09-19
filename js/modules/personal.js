@@ -4,6 +4,7 @@
  * @version 1.5.0
  */
 
+// eslint-disable-next-line no-unused-vars
 const ModuloPersonal = (() => {
 
   // ─── Estado local del módulo ──────────────────────────────────────────────
@@ -13,28 +14,10 @@ const ModuloPersonal = (() => {
   let _personalUnsubscribe = null; // Unsubscribe de AppState.on('personal')
 
   // ─── Helpers globales ─────────────────────────────────────────────────────
-  const $ = (id) => document.getElementById(id);
   const CPC = window.CPC || {};
-  const esc = (str) => CPC.StringHelpers?.escHtml?.(str) ?? window.CPC.StringHelpers.escHtml(str);
   const fmtTel = (tel) => CPC.StringHelpers?.formatTelefono?.(tel) ?? _formatTelefono(tel);
   const compress = (img, maxW = 600, maxH = 600, quality = 0.75) =>
     CPC.PhotoHelpers?.compressImage?.(img, maxW, maxH, quality) ?? _comprimirFotoCanvas(img, maxW, maxH, quality);
-  const updatePreview = (src) => {
-    if (CPC.PhotoHelpers?.updatePhotoPreview) {
-      return CPC.PhotoHelpers.updatePhotoPreview(src);
-    }
-    // Implementación directa para evitar recursión
-    const preview = document.getElementById('foto-preview');
-    if (preview) {
-      if (src) {
-        preview.src = src;
-        preview.style.display = 'block';
-      } else {
-        preview.src = '';
-        preview.style.display = 'none';
-      }
-    }
-  };
   const genId = () => CPC.StringHelpers?.generateLocalId?.() ?? _generarIdLocal();
 
   // ─── Inicialización ───────────────────────────────────────────────────────
@@ -627,7 +610,11 @@ const ModuloPersonal = (() => {
         p.ID_Trabajador === id ? { ...p, Estado: 'Inactivo' } : p,
       );
       AppState.set('personal', lista);
-      try { localStorage.setItem(LS_KEYS.PERSONAL_CACHE, JSON.stringify(lista)); } catch (e) {}
+      try {
+        localStorage.setItem(LS_KEYS.PERSONAL_CACHE, JSON.stringify(lista));
+      } catch (e) {
+        // Ignorar error de localStorage (cuando está lleno)
+      }
       Alerts.success(`${t.Nombre_Completo} dado de baja localmente`);
       _filtrarTabla();
       return;
@@ -1230,7 +1217,6 @@ const ModuloPersonal = (() => {
       const misMarcaciones = asistencias.filter((a) => a.ID_Trabajador === workerId);
 
       // ── Calcular estadísticas ──────────────────────────────────────────
-      const personal  = (AppState.get('personal') || []);
       const diasRango = _diasEnRango(fechaIni, fechaFin);
 
       // Días con al menos una marcación de Entrada

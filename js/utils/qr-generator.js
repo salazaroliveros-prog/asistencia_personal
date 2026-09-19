@@ -4,6 +4,7 @@
  * @version 1.5.0
  */
 
+// eslint-disable-next-line no-unused-vars
 const QRGenerator = (() => {
 
   /**
@@ -73,7 +74,7 @@ const QRGenerator = (() => {
       document.body.appendChild(tmpDiv);
 
       try {
-        const qr = new QRCode(tmpDiv, {
+        new QRCode(tmpDiv, {
           text:         qrData,
           width:        size,
           height:       size,

@@ -4,7 +4,7 @@
  * @version 1.5.0
  */
 
-const MapViewer = (() => {
+const _MapViewer = (() => {
   
   let _map = null;
   let _markers = [];
@@ -203,3 +203,6 @@ const MapViewer = (() => {
     closeMap,
   };
 })();
+
+// Exponer el módulo globalmente
+window.MapViewer = _MapViewer;
