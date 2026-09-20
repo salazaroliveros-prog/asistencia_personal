@@ -555,6 +555,7 @@ input[type="month"].input-glass {
 .table-card {
   padding: 0;
   overflow: hidden;
+  min-width: 0;
 }
 
 .table-toolbar {
@@ -641,7 +642,6 @@ input[type="month"].input-glass {
    (.data-table th:nth-child(n)), lo que aplicaba las medidas de la tabla de
    personal (8 columnas) a la de marcaciones (9 columnas) y dejaba la columna
    "Trabajador" en 44-58 px, ilegible en móvil. */
-.table-card { min-width: 0; }
 .table-responsive { max-width: 100%; overflow-x: auto; overscroll-behavior-x: contain; }
 .data-table { table-layout: fixed; }
 .data-table tbody tr { cursor: pointer; transition: background-color var(--transition-fast), box-shadow var(--transition-fast); }
