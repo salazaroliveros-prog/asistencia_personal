@@ -34,10 +34,10 @@ const UpdateManager = (() => {
       .then((registration) => {
         _registration = registration;
 
-        // Verificar actualizaciones periódicamente
+        // Verificar actualizaciones periódicamente (reducido de 5 a 15 minutos)
         _checkIntervalId = setInterval(() => {
           checkForUpdates();
-        }, 5 * 60 * 1000); // Cada 5 minutos
+        }, 15 * 60 * 1000); // Cada 15 minutos en lugar de 5
 
         // Escuchar cambios de servicio worker
         registration.addEventListener('updatefound', handleUpdateFound);
@@ -72,8 +72,11 @@ const UpdateManager = (() => {
     newWorker.addEventListener('statechange', () => {
       if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
         // El nuevo service worker está instalado pero esperando
-        _updateAvailable = true;
-        showUpdateBanner();
+        // Solo mostrar si no se ha mostrado antes o se ha actualizado el dismissed
+        if (!_updateAvailable) {
+          _updateAvailable = true;
+          showUpdateBanner();
+        }
       }
     });
   }
@@ -138,6 +141,10 @@ const UpdateManager = (() => {
    * Aplicar la actualización (recargar página)
    */
   function applyUpdate() {
+    // Resetear estado para evitar mostrar banner nuevamente después de recargar
+    _updateAvailable = false;
+    hideUpdateBanner();
+    
     // Enviar mensaje al service worker para que active la nueva versión
     if (_registration && _registration.waiting) {
       _registration.waiting.postMessage({ type: 'SKIP_WAITING' });
