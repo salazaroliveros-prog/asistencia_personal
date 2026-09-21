@@ -119,11 +119,34 @@ Los campos obligatorios y sus rangos son los que valida `firestore.rules`
 
 ### 4.1 Autenticación y permisos de escritura
 
-`firestore.rules` exige **operador verificado o claims de rol** para escribir:
+`firestore.rules` exige **sesión autenticada** para escribir:
 
-- `canMarkAttendance()` → `request.auth.token.email_verified == true` con el
-  correo autorizado, o *custom claims* `admin`/`manager`/`supervisor`.
-- `canManageWorkers()` → `admin` o `manager`.
+- `canMarkAttendance()` → `isAuthenticated()`. Cualquier cuenta real de Firebase
+  Auth (correo + contraseña) puede marcar; el operador debe **existir** en
+  Authentication.
+- `canManageWorkers()` → *custom claims* `admin` o `manager`, necesarios para dar
+  de alta/editar trabajadores, guardar `configuracion` y leer `logs`.
+
+Para dar de alta la cuenta y los permisos del propietario:
+
+```bash
+node scripts/setup-operator-account.js    # crea la cuenta desde .env.local
+node scripts/grant-admin-claim.js         # asigna admin/manager/supervisor
+node scripts/verify-firestore-access.js   # verifica el acceso de punta a punta
+```
+
+> **Modo opcional estricto.** Por defecto el correo **no** necesita estar
+> verificado: las cuentas creadas a mano en la consola nunca llegan verificadas y
+> exigirlo provocaba un falso "no me deja entrar". Para exigirlo, poner
+> `REQUIRE_VERIFIED_EMAIL = true` en `field-scanner.js` y descomentar
+> `email_verified` en `isAuthorizedOperator()` de `firestore.rules`.
+
+> **⚠️ `.size()`, no `.length`.** En el lenguaje de reglas un string se mide con
+> `.size()`. `.length` no existe: la regla compila igual, pero en tiempo de
+> ejecución produce un error que Firestore devuelve como `permission-denied`,
+> bloqueando silenciosamente **todas** las escrituras validadas con
+> `isValidString` (`personal`, `asistencias`, `logs`…). Está cubierto por
+> `__tests__/unit/firestore-rules.test.js`.
 
 Consecuencia práctica: **una sesión anónima sólo puede leer**. Por eso el
 auto-login anónimo del cliente está desactivado por defecto

@@ -2,8 +2,6 @@ const fs = require('fs');
 const path = require('path');
 const vm = require('vm');
 
-const OPERADOR = 'sistemadecontrol090@gmail.com';
-
 /**
  * Carga field-scanner.js en un contexto aislado.
  *
@@ -44,41 +42,40 @@ function loadFieldScanner() {
 }
 
 describe('FieldScanner — validación de la sesión del operador', () => {
-  it('acepta la cuenta autorizada con el correo verificado', () => {
+  it('acepta cualquier usuario con email verificado (modo abierto)', () => {
     const FieldScanner = loadFieldScanner();
 
-    expect(FieldScanner.__validateSession({ email: OPERADOR, emailVerified: true }))
+    expect(FieldScanner.__validateSession({ email: 'cualquiera@gmail.com', emailVerified: true }))
       .toEqual({ ok: true });
   });
 
-  it('rechaza la cuenta autorizada si el correo no está verificado', () => {
+  it('permite operar una cuenta válida sin verificar (modo abierto)', () => {
     const FieldScanner = loadFieldScanner();
 
-    // firestore.rules exige email_verified == true; sin este control el login
-    // parecía correcto y toda marcación fallaba con permission-denied.
-    expect(FieldScanner.__validateSession({ email: OPERADOR, emailVerified: false }))
+    // Las cuentas creadas a mano en Firebase Console nunca llegan verificadas.
+    // Si el modo abierto las rechazara, el login daría "no me deja entrar".
+    expect(FieldScanner.__validateSession({ email: 'cualquiera@gmail.com', emailVerified: false }))
+      .toEqual({ ok: true });
+  });
+
+  it('en modo estricto exige el correo verificado', () => {
+    const FieldScanner = loadFieldScanner();
+    FieldScanner.__setRequireVerifiedEmail(true);
+
+    expect(FieldScanner.__validateSession({ email: 'cualquiera@gmail.com', emailVerified: false }))
       .toEqual({ ok: false, reason: 'unverified' });
-  });
-
-  it('rechaza cualquier correo distinto al del operador autorizado', () => {
-    const FieldScanner = loadFieldScanner();
-
-    expect(FieldScanner.__validateSession({ email: 'otro@empresa.com', emailVerified: true }))
-      .toEqual({ ok: false, reason: 'unauthorized' });
-  });
-
-  it('ignora mayúsculas y espacios en el correo del operador', () => {
-    const FieldScanner = loadFieldScanner();
-
-    expect(FieldScanner.__validateSession({ email: '  SISTEMADECONTROL090@GMAIL.COM ', emailVerified: true }))
+    expect(FieldScanner.__validateSession({ email: 'cualquiera@gmail.com', emailVerified: true }))
       .toEqual({ ok: true });
   });
 
-  it('marca como no autorizada una sesión sin usuario', () => {
+  it('rechaza una sesión sin usuario', () => {
     const FieldScanner = loadFieldScanner();
 
     expect(FieldScanner.__validateSession(null)).toEqual({ ok: false, reason: 'unauthorized' });
     expect(FieldScanner.__validateSession(undefined)).toEqual({ ok: false, reason: 'unauthorized' });
+    // Sin email no hay cuenta que autorizar, ni siquiera en modo abierto.
+    expect(FieldScanner.__validateSession({ uid: 'x' })).toEqual({ ok: false, reason: 'unauthorized' });
+    expect(FieldScanner.__validateSession({ email: '' })).toEqual({ ok: false, reason: 'unauthorized' });
   });
 
   it('el usuario simulado de los tests e2e pasa la validación completa', async () => {

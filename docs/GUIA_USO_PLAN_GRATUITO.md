@@ -103,30 +103,75 @@ La aplicación estará disponible en: `http://127.0.0.1:3803`
 ### Credenciales del operador de campo
 
 El escáner **no usa PIN**: se accede con **correo y contraseña de Firebase
-Auth**. Para que una cuenta pueda operar deben cumplirse **dos condiciones**:
+Auth**. Cualquier cuenta que exista en Firebase Authentication puede operar; el
+administrador es quien crea las cuentas.
+
+> **Modo abierto (por defecto):** basta con estar autenticado. El correo **no**
+> necesita estar verificado — las cuentas creadas a mano en la consola nunca
+> llegan verificadas y exigirlo provocaba el falso "no me deja entrar".
 
 | # | Condición | Dónde se define |
 |---|-----------|-----------------|
-| 1 | El correo debe ser el del operador autorizado | `field-scanner.js` → `AUTHORIZED_OPERATOR_EMAIL` **y** `firestore.rules` → `isAuthorizedOperator()` |
-| 2 | El correo debe estar **verificado** (`emailVerified`) | Firebase Authentication → Users |
-
-**Correo autorizado actual:** `sistemadecontrol090@gmail.com`
-
-> ⚠️ Las dos definiciones del punto 1 deben coincidir. Si se cambia el correo
-> hay que editar los dos archivos y volver a publicar `firestore.rules`.
+| 1 | La cuenta debe **existir** en Firebase Authentication | Firebase Console → Authentication → Users |
+| 2 | El correo **debe estar verificado** *(opcional)* | `field-scanner.js` → `REQUIRE_VERIFIED_EMAIL` + `firestore.rules` → `isAuthorizedOperator()` |
+| 3 | Correo en **lista blanca** *(opcional)* | `field-scanner.js` → `AUTHORIZED_OPERATOR_EMAILS` + `firestore.rules` → `isAuthorizedOperator()` |
 
 **La contraseña no está en el código.** Vive únicamente en Firebase
 Authentication (Google) y se gestiona desde la consola:
 
 1. Entra a [Firebase Console](https://console.firebase.google.com/) → proyecto
-   `sistema-de-control-aee89` → **Authentication → Users**.
-2. Si la cuenta no existe: **Add user** con el correo autorizado y una
-   contraseña (mínimo 6 caracteres).
-3. **Verifica el correo**: abre el enlace de verificación recibido, o pulsa
-   *Mark as verified* en la consola. Sin esto el login parece funcionar y
-   después **toda marcación falla** con `permission-denied`, porque
-   `firestore.rules` exige `request.auth.token.email_verified == true`.
+   `sistema-de-control-aee89` → **Authentication → Sign-in method** → habilita
+   **Email/Password**.
+2. **Crea la cuenta**: pestaña **Users** → **Add user** → correo y contraseña
+   (mínimo 6 caracteres). Repite por cada operador de campo.
+3. **Listo**: ya puede iniciar sesión en `/field-scanner.html` con ese correo y
+   contraseña. La verificación por correo es **opcional**: si la quieres, pulsa
+   *Mark as verified* o abre el enlace que llega al buzón, y activa
+   `REQUIRE_VERIFIED_EMAIL = true` (más `email_verified` en `firestore.rules`)
+   para que sea obligatoria.
 4. Si se olvidó la contraseña: **Reset password** en la misma pantalla.
+
+#### Crear la cuenta desde la terminal
+
+Si el CLI de Firebase está autenticado, la cuenta se puede crear sin abrir la
+consola (lee las credenciales de `.env.local`):
+
+```bash
+node scripts/setup-operator-account.js
+```
+
+#### Dar permisos de administración
+
+`firestore.rules` exige los claims `admin`/`manager` para dar de alta
+trabajadores (`personal`), guardar configuración (`configuracion`) y leer
+`logs`. Sin ellos se puede marcar asistencia pero **no** gestionar personal:
+
+```bash
+node scripts/grant-admin-claim.js
+```
+
+Tras asignar los claims hay que **volver a iniciar sesión** para que el nuevo
+token los incluya.
+
+#### Desplegar las reglas de Firestore
+
+```bash
+firebase deploy --only firestore:rules --project sistema-de-control-aee89
+```
+
+#### Verificar el acceso de extremo a extremo
+
+Comprueba login, lectura, marcación, alta de trabajador y limpieza automática:
+
+```bash
+node scripts/verify-firestore-access.js
+```
+
+> **Aviso sobre `isValidString`:** en el lenguaje de reglas los strings se miden
+> con `.size()`, **no** con `.length`. Usar `.length` no rompe la compilación
+> pero provoca un error de evaluación que Firestore devuelve como
+> `permission-denied`, bloqueando **todas** las escrituras. Hay una guarda de
+> regresión en `__tests__/unit/firestore-rules.test.js`.
 
 Si los datos de conexión de Firebase se cambian desde **Ajustes**, se guardan
 en `localStorage` bajo la clave `cpc_firebase_config` y tienen prioridad sobre

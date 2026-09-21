@@ -22,10 +22,31 @@ service cloud.firestore {
       return isAuthenticated() && request.auth.token.supervisor == true;
     }
     
+    // ─────────────────────────────────────────────────────────────────────────
+    // OPERADOR DE CAMPO — QUIÉN PUEDE MARCAR ASISTENCIA
+    //
+    // La puerta de entrada es una SESIÓN AUTENTICADA de Firebase Auth
+    // (correo + contraseña). El administrador crea las cuentas y quien no tenga
+    // una no puede marcar.
+    //
+    // MODO ABIERTO (por defecto): cualquier cuenta autenticada puede marcar.
+    //
+    // MODO ESTRICTO (opcional): descomenta `email_verified` para exigir que el
+    //   operador haya abierto el enlace de verificación antes de marcar.
+    //
+    // LISTA DE OPERADORES (opcional): descomenta el bloque `in [...]` y añade
+    //   los correos autorizados.
+    //
+    // OJO: NUNCA dejes activa una comprobación `request.auth.token.email in []`
+    // con la lista vacía — sería SIEMPRE falsa y bloquearía TODAS las
+    // marcaciones con `permission-denied`, incluso para cuentas válidas.
+    // ─────────────────────────────────────────────────────────────────────────
     function isAuthorizedOperator() {
-      return isAuthenticated() &&
-               request.auth.token.email_verified == true &&
-               request.auth.token.email == 'sistemadecontrol090@gmail.com';
+      return isAuthenticated();
+      // && request.auth.token.email_verified == true;      // modo estricto
+      // && request.auth.token.email in [                   // lista de operadores
+      //      'sistemadecontrol090@gmail.com'
+      //    ];
     }
     
     function canManageWorkers() {
@@ -47,7 +68,11 @@ service cloud.firestore {
     // ─────────────────────────────────────────────────────────────────────────
     
     function isValidString(value, min, max) {
-      return value is string && value.length >= min && value.length <= max;
+      // `.size()` es el método del lenguaje de reglas para strings. `.length`
+      // no existe: su acceso provoca un error de evaluación que Firestore
+      // traduce en `permission-denied`, bloqueando silenciosamente TODAS las
+      // escrituras que validan strings (personal, asistencias, logs…).
+      return value is string && value.size() >= min && value.size() <= max;
     }
     
     function isValidNumber(value, min, max) {
@@ -61,7 +86,7 @@ service cloud.firestore {
     function isValidDateValue(value) {
       return value is timestamp ||
         (value is number && value > 0) ||
-        (value is string && value.length >= 20 && value.length <= 30);
+        (value is string && value.size() >= 20 && value.size() <= 30);
     }
     
     function isValidArray(value, minLength) {

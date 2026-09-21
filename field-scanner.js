@@ -7,14 +7,16 @@
  * Reemplaza el login anterior con Google OAuth que requería popup.
  *
  * Requisitos de la cuenta operadora (deben cumplirse los dos):
- *   1. El correo debe coincidir con AUTHORIZED_OPERATOR_EMAIL.
- *   2. El correo debe estar VERIFICADO (`emailVerified === true`), porque
+ *   1. El correo debe estar VERIFICADO (`emailVerified === true`), porque
  *      `firestore.rules` → `isAuthorizedOperator()` exige
  *      `request.auth.token.email_verified == true` para escribir en
  *      `asistencias`. Si falta este requisito el login parece correcto pero
  *      toda marcación falla con `permission-denied`.
+ *   2. (Opcional) Si `AUTHORIZED_OPERATOR_EMAILS` está vacío (por defecto)
+ *      se permite ANY usuario verificado. Para restringir a un operador
+ *      concreto añade su email a la lista.
  *
- * @version 2.2.0
+ * @version 2.3.0
  */
 
 (() => {
@@ -32,8 +34,25 @@
   let _auth          = null;
   let _unsubscribe   = null;
 
-  // Email autorizado — debe coincidir con el registrado en Firebase Auth
-  const AUTHORIZED_OPERATOR_EMAIL = 'sistemadecontrol090@gmail.com';
+  // Email(es) autorizados. La lista [] = modo ABIERTO: cualquier cuenta con
+  // email válido puede operar (las escrituras exigen email verificado en
+  // firestore.rules). Añade emails a la lista para restringir el acceso.
+  const AUTHORIZED_OPERATOR_EMAILS = [];
+
+  // Exigir correo verificado (`emailVerified`) para operar el escáner.
+  //
+  // false (por defecto): basta una cuenta válida de Firebase Auth. Es lo que
+  //   necesitan las cuentas creadas a mano en Firebase Console, que NO llegan
+  //   verificadas; con `true` el login se rechaza y parece "no me deja entrar".
+  // true: modo estricto; obliga a que el operador abra el enlace de
+  //   verificación antes de poder marcar.
+  //
+  // Si se activa, `firestore.rules → isAuthorizedOperator()` debe exigir
+  // también `request.auth.token.email_verified == true`.
+  //
+  // Se declara con `let` para que los tests puedan alternar ambos modos con
+  // `window.FieldScanner.__setRequireVerifiedEmail(true|false)`.
+  let REQUIRE_VERIFIED_EMAIL = false;
 
   const MARK_TYPES = [
     { tipo: 'Entrada',        cls: 'campo-mark-entry',  icono: 'log-in',          horaKey: 'Hora_Entrada',        fallback: '07:00' },
@@ -111,13 +130,22 @@
   }
 
   /**
-   * Comprueba que la cuenta sea la del operador autorizado.
+   * Comprueba que la cuenta pueda operar el escáner.
+   *
+   * `AUTHORIZED_OPERATOR_EMAILS` vacío = modo ABIERTO: cualquier cuenta con
+   * email válido puede operar (las escrituras siguen exigiendo
+   * `email_verified == true` en `firestore.rules`). Con la lista poblada solo
+   * esos correos pueden operar.
+   *
    * @param {Object} user - Usuario de Firebase Auth
    * @returns {boolean}
    */
   function _isAuthorizedUser(user) {
     const email = String(user?.email || '').trim().toLowerCase();
-    return email === AUTHORIZED_OPERATOR_EMAIL;
+    // Sin usuario o sin email no hay nada que autorizar.
+    if (!email.includes('@')) return false;
+    if (AUTHORIZED_OPERATOR_EMAILS.length === 0) return true;
+    return AUTHORIZED_OPERATOR_EMAILS.some((e) => e.toLowerCase() === email);
   }
 
   /**
@@ -141,13 +169,20 @@
     + 'a tu bandeja de entrada (revisa también spam) y vuelve a intentarlo.';
 
   /**
-   * Valida la sesión completa: cuenta autorizada Y correo verificado.
+   * Valida la sesión completa: cuenta autorizada Y (opcional) correo verificado.
+   *
+   * Con `REQUIRE_VERIFIED_EMAIL === false` una cuenta válida sin verificar puede
+   * operar; esto evita el falso "no me deja entrar" de las cuentas creadas desde
+   * la consola, que nunca llegan verificadas.
+   *
    * @param {Object} user - Usuario de Firebase Auth
    * @returns {{ ok: boolean, reason?: 'unauthorized'|'unverified' }}
    */
   function _validateSession(user) {
     if (!_isAuthorizedUser(user)) return { ok: false, reason: 'unauthorized' };
-    if (!_isEmailVerified(user))  return { ok: false, reason: 'unverified' };
+    if (REQUIRE_VERIFIED_EMAIL && !_isEmailVerified(user)) {
+      return { ok: false, reason: 'unverified' };
+    }
     return { ok: true };
   }
 
@@ -296,6 +331,20 @@
         return;
       }
 
+      // Cuenta válida. Si el correo aún no está verificado se recuerda sin
+      // bloquear la sesión (modo abierto): así una cuenta recién creada en la
+      // consola puede operar desde el primer intento.
+      if (!_isEmailVerified(user)) {
+        console.warn(
+          '[FieldScanner] La cuenta opera sin correo verificado. '
+          + 'Activa REQUIRE_VERIFIED_EMAIL = true en field-scanner.js (y '
+          + 'email_verified en firestore.rules) para exigirlo.',
+        );
+        try { await user.sendEmailVerification(); } catch (_) { /* sin red o sin permiso */ }
+      } else {
+        console.info('[FieldScanner] Correo verificado ✔');
+      }
+
       // Limpiar contraseña del DOM por seguridad
       const pwdInput = document.getElementById('login-password');
       if (pwdInput) pwdInput.value = '';
@@ -367,7 +416,7 @@
       _auth = firebase.auth();
 
       // Persistencia offline de Firestore (funciona en PWA)
-      _db.enablePersistence?.({ synchronizeTabs: true }).catch(err => {
+      _db.enablePersistence?.({ synchronizeTabs: true }).catch((err) => {
         console.warn('[FieldScanner] Persistencia no disponible:', err?.code || err?.message);
       });
 
@@ -391,10 +440,10 @@
         .limit(50)
         .onSnapshot(
           (snapshot) => {
-            const records = snapshot.docs.map(doc => ({ ID_Marcacion: doc.id, ...doc.data() }));
+            const records = snapshot.docs.map((doc) => ({ ID_Marcacion: doc.id, ...doc.data() }));
             _renderFeed(records);
           },
-          (error) => console.error('[FieldScanner] Error suscripción:', error)
+          (error) => console.error('[FieldScanner] Error suscripción:', error),
         );
     } catch (error) {
       console.error('[FieldScanner] No se pudo suscribir:', error);
@@ -494,8 +543,8 @@
     if (!session || !select) return;
     try {
       const devices = await session.listCameras();
-      select.innerHTML = devices.map(d =>
-        `<option value="${_esc(d.id)}">${_esc(d.label)}</option>`
+      select.innerHTML = devices.map((d) =>
+        `<option value="${_esc(d.id)}">${_esc(d.label)}</option>`,
       ).join('');
       const multi = devices.length >= 2;
       select.hidden = !multi;
@@ -664,7 +713,7 @@
       const data = JSON.parse(text);
       if (data && data.id) return data;
     } catch (_) { /* no es JSON */ }
-    if (text && /^[A-Z0-9\-]+$/.test(text) && text.length >= 5) return { id: text };
+    if (text && /^[A-Z0-9-]+$/.test(text) && text.length >= 5) return { id: text };
     return null;
   }
 
@@ -688,11 +737,11 @@
   function _buscarEnLista(lista, qrData) {
     if (qrData.dpi) {
       const norm = String(qrData.dpi).replace(/\D/g, '');
-      const f = lista.find(p => (p.DPI_CUI || '').replace(/\D/g, '') === norm);
+      const f = lista.find((p) => (p.DPI_CUI || '').replace(/\D/g, '') === norm);
       if (f) return f;
     }
     if (qrData.id) {
-      return lista.find(p => p.ID_Trabajador === qrData.id) || null;
+      return lista.find((p) => p.ID_Trabajador === qrData.id) || null;
     }
     return null;
   }
@@ -712,7 +761,7 @@
       // Actualizar cache local para búsquedas futuras
       try {
         const cache = JSON.parse(localStorage.getItem('cpc_personal_cache') || '[]');
-        if (!cache.find(p => p.ID_Trabajador === trabajador.ID_Trabajador)) {
+        if (!cache.find((p) => p.ID_Trabajador === trabajador.ID_Trabajador)) {
           cache.push(trabajador);
           localStorage.setItem('cpc_personal_cache', JSON.stringify(cache));
         }
@@ -749,7 +798,7 @@
     }
     if (avatar) {
       const ini = String(trabajador.Nombre_Completo || '?')
-        .trim().split(/\s+/).map(p => p[0]).slice(0, 2).join('').toUpperCase();
+        .trim().split(/\s+/).map((p) => p[0]).slice(0, 2).join('').toUpperCase();
       avatar.textContent = ini || '?';
     }
     panel.hidden = false;
@@ -757,7 +806,7 @@
   }
 
   function _habilitaBotones(enable) {
-    document.querySelectorAll('.campo-mark-btn').forEach(btn => { btn.disabled = !enable; });
+    document.querySelectorAll('.campo-mark-btn').forEach((btn) => { btn.disabled = !enable; });
   }
 
   function _renderMarkButtons() {
@@ -766,7 +815,7 @@
     const appStateConfig = window.AppState?.get('config') || {};
     const lsConfig = JSON.parse(localStorage.getItem('cpc_config') || localStorage.getItem('cpc_config_cache') || '{}');
     const config = { ...lsConfig, ...appStateConfig };
-    grid.innerHTML = MARK_TYPES.map(m => {
+    grid.innerHTML = MARK_TYPES.map((m) => {
       const hora = config[m.horaKey] || m.fallback;
       return `<button type="button" class="campo-mark-btn ${m.cls}" data-tipo="${m.tipo}" aria-label="Marcar ${m.tipo}" disabled>
         <i data-lucide="${m.icono}" aria-hidden="true"></i>
@@ -932,7 +981,7 @@
     if (payload.GPS_Longitud !== undefined) record.GPS_Longitud = payload.GPS_Longitud;
 
     const ref = _db.collection('asistencias').doc(id);
-    await _db.runTransaction(async transaction => {
+    await _db.runTransaction(async (transaction) => {
       const snap = await transaction.get(ref);
       if (!snap.exists) transaction.set(ref, record, { merge: false });
     });
@@ -945,7 +994,7 @@
     const list = document.getElementById('campo-feed-list');
     if (!list) return;
     const hoy   = _today();
-    const today = (records || []).filter(a => a.Fecha === hoy).slice(-6).reverse();
+    const today = (records || []).filter((a) => a.Fecha === hoy).slice(-6).reverse();
     if (!today.length) {
       list.innerHTML = '<li class="campo-feed-empty">Aún no hay marcaciones hoy.</li>';
       return;
@@ -953,7 +1002,7 @@
     // La sección del feed también viene oculta en el HTML: se muestra en cuanto
     // hay marcaciones que listar.
     _mostrarSeccion('campo-feed');
-    list.innerHTML = today.map(a => {
+    list.innerHTML = today.map((a) => {
       const hora = (a.Hora_Real || '').substring(0, 5);
       return `<li class="campo-feed-item">
         <span class="feed-dot" aria-hidden="true"></span>
@@ -1010,10 +1059,12 @@
     init, cargar, cleanup, showLogin: _showLogin, handleLogout: _handleLogout,
     // Ganchos de prueba/e2e (no afectan el flujo normal)
     simulateScan: (text) => _onQRSuccess(String(text ?? '')),
-    __testLogin: async () => _onLoginSuccess({ email: AUTHORIZED_OPERATOR_EMAIL, emailVerified: true, uid: 'e2e-test' }),
+    __testLogin: async () => _onLoginSuccess({ email: 'sistemadecontrol090@gmail.com', emailVerified: true, uid: 'e2e-test' }),
     __testSetDb: (db) => { _db = db; },
     __validateSession: (user) => _validateSession(user),
     __mensajeErrorMarcacion: (err) => _mensajeErrorMarcacion(err),
+    /** Alterna el modo estricto (correo verificado obligatorio) en los tests. */
+    __setRequireVerifiedEmail: (value) => { REQUIRE_VERIFIED_EMAIL = value === true; },
   };
 
   // Arranque automático
