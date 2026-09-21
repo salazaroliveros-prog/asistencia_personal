@@ -172,6 +172,28 @@ Convenciones:
 asistencias, cola de operaciones offline, tema (`cpc_theme`), configuración de
 Firebase (`cpc_firebase_config`) y marca del último sync.
 
+### Puestos de trabajo personalizados
+
+El catálogo base vive en `window.PUESTOS` (`js/config.js`) y alimenta el select
+`#p-puesto` del formulario de Personal y el filtro `#filter-puesto` de la tabla.
+Como una obra puede necesitar oficios que no están en la lista, el formulario
+ofrece la opción **“Otro (personalizado)…”**:
+
+1. El select muestra además el input `#p-puesto-custom`.
+2. Al escribir y pulsar **Enter** (o al salir del campo) el puesto se normaliza
+   y se guarda en `localStorage` bajo la clave `cpc_puestos_custom`.
+3. `js/modules/personal.js` reinyecta la lista guardada en el select del
+   formulario (antes de la opción “Otro…”) y en el filtro de la tabla, así que
+   el puesto queda disponible también tras recargar la aplicación.
+4. Al editar un trabajador cuyo puesto no está en el catálogo, la opción
+   “Otro…” se activa con el valor precargado para no perder el dato.
+
+Los puestos personalizados son por dispositivo (no se sincronizan), son
+idempotentes (nunca duplican entradas) y toleran un `localStorage` corrupto.
+Cubierto por `__tests__/unit/personal-puestos.test.js` (unit) y
+`__e2e__/puesto-personalizado.spec.ts` (E2E).
+
+
 ---
 
 ## 5. Estilos y temas

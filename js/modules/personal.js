@@ -361,7 +361,7 @@ const ModuloPersonal = (() => {
     setVal('personal-id', t.ID_Trabajador);
     setVal('p-nombre',    t.Nombre_Completo);
     setVal('p-dpi',       t.DPI_CUI);
-    setVal('p-puesto',    t.Puesto);
+    _setPuestoSelect(t.Puesto);
     setVal('p-jefe',      t.Jefe_Inmediato);
     setVal('p-telefono',  t.Telefono);
     setVal('p-whatsapp',  t.WhatsApp);
@@ -471,7 +471,7 @@ const ModuloPersonal = (() => {
       id:         _editingId,
       nombre:     document.getElementById('p-nombre').value.trim(),
       dpi:        document.getElementById('p-dpi').value.replace(/\D/g, ''),
-      puesto:     document.getElementById('p-puesto').value,
+      puesto:     _resolverPuesto(),
       jefe:       document.getElementById('p-jefe').value.trim(),
       telefono:   _formatTelefono(document.getElementById('p-telefono').value.trim()),
       whatsapp:   document.getElementById('p-whatsapp').value.trim(),
@@ -1060,9 +1060,12 @@ const ModuloPersonal = (() => {
     }
 
     // Puesto
-    const puesto = document.getElementById('p-puesto')?.value;
+    const puesto = _resolverPuesto();
     if (!puesto) {
-      _showError('p-puesto-error', 'Selecciona un puesto de trabajo');
+      const esCustom = document.getElementById('p-puesto')?.value === '__custom__';
+      _showError('p-puesto-error', esCustom
+        ? 'Escribe el nombre del nuevo puesto personalizado'
+        : 'Selecciona un puesto de trabajo');
       valid = false;
     } else {
       _clearError('p-puesto-error');
@@ -1356,11 +1359,270 @@ const ModuloPersonal = (() => {
     }
   }
 
+  // ─── Puestos de trabajo personalizados ────────────────────────────────────
+  // El catálogo base (`window.PUESTOS`) no cubre todos los oficios de obra, así
+  // que el usuario puede registrar puestos propios desde el formulario (opción
+  // "Otro (personalizado)…"). Se persisten en localStorage y se reinyectan en
+  // el select del formulario (#p-puesto) y en el filtro de la tabla
+  // (#filter-puesto) para no perderlos al recargar la aplicación.
+  const CPC_PUESTOS_CUSTOM_KEY = 'cpc_puestos_custom';
+  const CPC_PUESTO_CUSTOM_VALUE = '__custom__';
+  let _puestosCustomWired = false;
+
+  /**
+   * Lee la lista de puestos personalizados guardados.
+   * @returns {Array<string>} Puestos personalizados (sin vacíos ni duplicados)
+   */
+  function _leerPuestosCustom() {
+    try {
+      const raw = localStorage.getItem(CPC_PUESTOS_CUSTOM_KEY);
+      const lista = raw ? JSON.parse(raw) : [];
+      if (!Array.isArray(lista)) return [];
+      return lista.filter((puesto, index, all) =>
+        typeof puesto === 'string' && puesto.trim() && all.indexOf(puesto) === index);
+    } catch (_) {
+      // localStorage bloqueado o JSON corrupto: se degrada a lista vacía.
+      return [];
+    }
+  }
+
+  /**
+   * Persiste la lista de puestos personalizados.
+   * @param {Array<string>} lista - Puestos a guardar
+   * @returns {boolean} true si se pudo escribir
+   */
+  function _guardarPuestosCustom(lista) {
+    try {
+      localStorage.setItem(CPC_PUESTOS_CUSTOM_KEY, JSON.stringify(lista));
+      return true;
+    } catch (_) {
+      return false;
+    }
+  }
+
+  /**
+   * Indica si el puesto pertenece al catálogo base del sistema.
+   * @param {string} puesto - Nombre del puesto
+   * @returns {boolean} true si está en `window.PUESTOS`
+   */
+  function _esPuestoBase(puesto) {
+    return Array.isArray(window.PUESTOS) && window.PUESTOS.includes(puesto);
+  }
+
+  /**
+   * Añade las opciones personalizadas que falten dentro de un select.
+   * @param {HTMLSelectElement|null} select - Select a completar
+   * @param {Array<string>} lista - Puestos personalizados
+   * @param {boolean} antesDeCustom - true para insertar antes de "Otro…"
+   * @returns {void}
+   */
+  function _inyectarOpciones(select, lista, antesDeCustom) {
+    if (!select) return;
+    const opciones = Array.from(select.options || []);
+    const ancla = antesDeCustom
+      ? opciones.find((opt) => opt.value === CPC_PUESTO_CUSTOM_VALUE)
+      : null;
+    lista.forEach((puesto) => {
+      const existe = opciones.some((opt) => opt.value === puesto);
+      if (existe) return;
+      const option = document.createElement('option');
+      option.value = puesto;
+      option.textContent = puesto;
+      if (ancla) select.insertBefore(option, ancla);
+      else select.appendChild(option);
+      opciones.push(option);
+    });
+  }
+
+  /**
+   * Registra (sin duplicar) un puesto personalizado nuevo.
+   * @param {string} valor - Texto escrito por el usuario
+   * @returns {string} Nombre normalizado del puesto; '' si está vacío
+   */
+  function _registrarPuestoCustom(valor) {
+    const puesto = String(valor || '').trim().replace(/\s+/g, ' ');
+    if (!puesto) return '';
+    if (_esPuestoBase(puesto)) return puesto;
+    const lista = _leerPuestosCustom();
+    if (!lista.includes(puesto)) {
+      lista.push(puesto);
+      _guardarPuestosCustom(lista);
+      _sincronizarOpcionesPuesto();
+    }
+    return puesto;
+  }
+
+  /**
+   * Resuelve el puesto elegido en el formulario: combina el select con el campo
+   * de texto cuando el usuario eligió "Otro (personalizado)…".
+   * @returns {string} Puesto definitivo a guardar en el trabajador
+   */
+  function _resolverPuesto() {
+    const select = document.getElementById('p-puesto');
+    if (!select) return '';
+    if (select.value === CPC_PUESTO_CUSTOM_VALUE) {
+      const custom = document.getElementById('p-puesto-custom');
+      return _registrarPuestoCustom(custom ? custom.value : '');
+    }
+    return select.value.trim();
+  }
+
+  /**
+   * Sincroniza las opciones personalizadas en el formulario y en el filtro.
+   * @returns {void}
+   */
+  function _sincronizarOpcionesPuesto() {
+    const custom = _leerPuestosCustom();
+    const base = Array.isArray(window.PUESTOS) ? window.PUESTOS : [];
+    // El filtro cubre todo el catálogo (algunos puestos base no están
+    // declarados en el HTML) más los puestos personalizados del usuario.
+    _inyectarOpciones(document.getElementById('filter-puesto'), base.concat(custom), false);
+    _inyectarOpciones(document.getElementById('p-puesto'), custom, true);
+  }
+
+  /**
+   * Muestra u oculta el input de puesto personalizado según el select.
+   * @returns {void}
+   */
+  function _togglePuestoCustom() {
+    const select = document.getElementById('p-puesto');
+    const custom = document.getElementById('p-puesto-custom');
+    if (!select || !custom) return;
+    const activo = select.value === CPC_PUESTO_CUSTOM_VALUE;
+    custom.hidden = !activo;
+    if (activo) {
+      custom.focus();
+      const error = document.getElementById('p-puesto-error');
+      if (error) { error.hidden = true; error.textContent = ''; }
+    } else {
+      custom.value = '';
+    }
+  }
+
+  /**
+   * Preselecciona un puesto en el select del formulario.
+   *
+   * Si el puesto no está en el catálogo base (por ejemplo, un registro
+   * importado o creado con una versión anterior) se usa la opción
+   * "Otro (personalizado)…" para no perder el dato al editar.
+   *
+   * @param {string} puesto - Puesto a preseleccionar
+   * @returns {void}
+   */
+  function _setPuestoSelect(puesto) {
+    const select = document.getElementById('p-puesto');
+    const custom = document.getElementById('p-puesto-custom');
+    if (!select) return;
+    _sincronizarOpcionesPuesto();
+    const valor = String(puesto || '').trim();
+
+    if (!valor) {
+      select.value = '';
+      if (custom) { custom.value = ''; custom.hidden = true; }
+      return;
+    }
+
+    const existe = Array.from(select.options).some((opt) => opt.value === valor);
+    if (existe) {
+      select.value = valor;
+      if (custom) { custom.value = ''; custom.hidden = true; }
+      return;
+    }
+
+    // Puesto fuera de catálogo: se ofrece como texto personalizado editable.
+    select.value = CPC_PUESTO_CUSTOM_VALUE;
+    if (custom) {
+      custom.value = valor;
+      custom.hidden = false;
+    }
+  }
+
+  /**
+   * Enlaza los eventos del puesto personalizado (una sola vez).
+   * @returns {void}
+   */
+  function _initPuestosCustom() {
+    if (_puestosCustomWired) return;
+    if (typeof document === 'undefined' || typeof document.getElementById !== 'function') return;
+    const select = document.getElementById('p-puesto');
+    const custom = document.getElementById('p-puesto-custom');
+    if (!select) return;
+    _puestosCustomWired = true;
+
+    _sincronizarOpcionesPuesto();
+    if (typeof select.addEventListener === 'function') {
+      select.addEventListener('change', _togglePuestoCustom);
+    }
+
+    if (custom && typeof custom.addEventListener === 'function') {
+      // Enter guarda el puesto en el acto; Escape cancela la opción "Otro…".
+      custom.addEventListener('keydown', (event) => {
+        if (event.key === 'Enter') {
+          event.preventDefault();
+          const registrado = _registrarPuestoCustom(custom.value);
+          if (!registrado) return;
+          custom.value = registrado;
+          const aviso = document.getElementById('p-puesto-error');
+          if (aviso) {
+            aviso.hidden = false;
+            aviso.textContent = `Puesto "${registrado}" guardado`;
+          }
+        } else if (event.key === 'Escape') {
+          custom.value = '';
+          select.value = '';
+          _togglePuestoCustom();
+        }
+      });
+      // Al salir del campo se normaliza y se persiste lo escrito.
+      custom.addEventListener('blur', () => {
+        const registrado = _registrarPuestoCustom(custom.value);
+        if (registrado) custom.value = registrado;
+      });
+    }
+
+    // "Nuevo Trabajador" reinicia el formulario: se reevalúa el campo extra.
+    const btnNuevo = document.getElementById('btn-nuevo-personal');
+    if (btnNuevo && typeof btnNuevo.addEventListener === 'function') {
+      btnNuevo.addEventListener('click', () => {
+        window.setTimeout(() => {
+          const input = document.getElementById('p-puesto-custom');
+          if (input) { input.value = ''; input.hidden = true; }
+        }, 0);
+      });
+    }
+
+    // Cualquier `form.reset()` (o el botón de limpiar) devuelve el select al
+    // estado inicial: el campo personalizado debe ocultarse de nuevo.
+    if (typeof document.addEventListener === 'function') {
+      document.addEventListener('reset', () => {
+        window.setTimeout(_togglePuestoCustom, 0);
+      }, true);
+    }
+  }
+
+  // El módulo se carga al final del documento: se inicializa en cuanto el DOM
+  // está listo (o de inmediato si ya lo está) sin depender de `init()`.
+  if (typeof document !== 'undefined' && document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', _initPuestosCustom);
+  } else {
+    _initPuestosCustom();
+  }
+
   // ─── API Pública del Módulo ───────────────────────────────────────────────
   return {
     init,
     cargar,
     cleanup,
     abrirModalCarne: _abrirModalCarne,
+
+    // Ganchos de prueba (no afectan el flujo normal de la UI)
+    __testPuestos: {
+      leer: _leerPuestosCustom,
+      registrar: _registrarPuestoCustom,
+      resolver: _resolverPuesto,
+      sincronizar: _sincronizarOpcionesPuesto,
+      hidratar: _setPuestoSelect,
+      init: _initPuestosCustom,
+    },
   };
 })();
