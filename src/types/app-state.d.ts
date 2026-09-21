@@ -172,6 +172,195 @@ export interface RequestOptimizerContract {
   dedupe(key: string, fn: () => Promise<unknown>): () => Promise<unknown>;
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+// ESCÁNER QR Y CÁMARA
+// ─────────────────────────────────────────────────────────────────────────────
+
+/** Dimensiones del recorte del escáner (guía visual y región de decodificación). */
+export interface QrDimensions {
+  width: number;
+  height: number;
+}
+
+/** `qrbox` calculado a partir de las dimensiones reales del `<video>`. */
+export type QrboxFn = (videoWidth: number, videoHeight: number) => QrDimensions;
+
+/**
+ * Valores que acepta `config.qrbox` de html5-qrcode:
+ * `toQrdimensions()` devuelve el número tal cual, invoca la función con las
+ * dimensiones del `<video>` o usa el objeto recibido.
+ */
+export type Qrbox = QrDimensions | number | QrboxFn;
+
+/** Parámetros con los que se construye el recorte del escáner. */
+export interface QrboxOptions {
+  /** Fracción del lado menor del frame que ocupa el recorte (0 < ratio ≤ 1). */
+  ratio?: number;
+  /** Lado de respaldo mientras el vídeo no tiene dimensiones. */
+  width?: number;
+  height?: number;
+}
+
+/** Opciones de cámara aceptadas por los candidatos de `getUserMedia`. */
+export interface CameraOptions {
+  deviceId?: string;
+  facingMode?: string;
+  width?: number;
+  height?: number;
+}
+
+/** Cámara enumerada por `enumerateDevices()`. */
+export interface CameraDevice {
+  id: string;
+  label: string;
+}
+
+/** Instancia mínima de `Html5Qrcode` que consume el controlador de QR. */
+export interface ScannerLike {
+  start(camera: unknown, config: unknown, onSuccess: unknown, onError?: unknown): Promise<void>;
+  stop(): Promise<void>;
+  clear?(): void;
+}
+
+/**
+ * Contrato de `window.CPC.CameraSession` (js/utils/camera-session.js).
+ *
+ * Centraliza el acceso físico a la cámara y expone un controlador de escáner
+ * que ya construye el `qrbox` proporcional al frame real.
+ */
+export interface CameraSessionContract {
+  getSupport(): { supported: boolean; secure: boolean };
+  stopTracks(stream: { getTracks(): Array<{ stop(): void }> } | null): void;
+  stopStream(videoElement: { srcObject: unknown } | null): void;
+  buildCandidates(options?: CameraOptions): MediaStreamConstraints[];
+  startStream(options?: CameraOptions): Promise<{ stream: MediaStream; constraints: MediaStreamConstraints }>;
+  listDevices(): Promise<CameraDevice[]>;
+  nextDevice(devices: CameraDevice[], currentId: string | null): CameraDevice | null;
+  describeError(error: { name?: string } | null): string;
+  createController(videoElement: HTMLVideoElement | null): {
+    start(options?: CameraOptions): Promise<{ stream: MediaStream; constraints: MediaStreamConstraints } | null>;
+    stop(): void;
+    getStream(): MediaStream | null;
+  };
+  createQrController(options: {
+    Scanner: new (elementId: string) => ScannerLike;
+    elementId: string;
+    onSuccess: (decodedText: string, decodedResult?: unknown) => void;
+    onError?: (message: string) => void;
+    config?: Record<string, unknown> & { qrbox?: Qrbox };
+  }): {
+    start(options?: { deviceId?: string; facingMode?: string }): Promise<{ scanner: ScannerLike; camera: unknown } | null>;
+    stop(): Promise<void>;
+    supportsTorch(): boolean;
+    toggleTorch(): Promise<boolean>;
+    isActive(): boolean;
+    getSelectedCamera(): string | null;
+  };
+  /**
+   * Construye el `qrbox` como **función**: html5-qrcode la invoca con las
+   * dimensiones del `<video>` y usa el resultado como recorte del frame.
+   */
+  buildQrboxFn(base?: QrboxOptions | number): QrboxFn;
+  /** @deprecated Usar `buildQrboxFn`; devuelve un recorte estático. */
+  safeQrBox(element: HTMLElement | null, base?: QrboxOptions | number): QrDimensions;
+}
+
+/** Contrato de `window.CPC.MobileCameraOptimizer` (utils/mobile-camera-optimizer.js). */
+export interface MobileCameraOptimizerContract {
+  /** true si el UA/viewport indica un dispositivo móvil real. */
+  isMobile(): boolean;
+  getDeviceType(): 'ios' | 'android' | 'other';
+  getOrientation(): 'portrait' | 'landscape';
+  getOptimalResolution(): { width: number; height: number };
+  getCameraCapabilities(track: MediaStreamTrack): Promise<MediaTrackCapabilities | null>;
+  applyOptimalSettings(track: MediaStreamTrack): Promise<boolean>;
+  requestCameraPermissions(): Promise<{ granted: boolean; error?: Error }>;
+  getMobileOptimizedConstraints(options?: Record<string, unknown>): MediaStreamConstraints;
+  /** Aplica `playsInline`/`muted`/`objectFit` y arranca la reproducción. */
+  optimizeVideoElement(videoElement: HTMLVideoElement): void;
+  handleDeviceRotation(videoElement: HTMLVideoElement, track: MediaStreamTrack | null): void;
+  getDeviceInfo(): { isMobile: boolean; deviceType: string; pixelRatio: number; memory?: number; [key: string]: unknown };
+  getSupportedFeatures(): Record<string, boolean>;
+  getOptimizationSuggestions(): string[];
+}
+
+/**
+ * Contrato de `window.MobileQRScanner` (utils/mobile-qr-scanner.js).
+ *
+ * Envuelve html5-qrcode con presets de rendimiento por dispositivo. El recorte
+ * del decodificador se expresa como fracción del frame (`qrboxRatio`) y se
+ * materializa con `buildQrboxFn`.
+ */
+export interface MobileQRScannerContract {
+  start(params: {
+    elementId: string;
+    onSuccess: (decodedText: string, decodedResult?: unknown) => void;
+    onError?: (message: string) => void;
+    cameraOptions?: { facingMode?: string; deviceId?: string };
+  }): Promise<{ success: boolean; scanner: ScannerLike; camera: string; config: Record<string, unknown> }>;
+  stop(): Promise<void>;
+  switchCamera(): Promise<{ success: boolean; camera: string; previousCamera: string | null }>;
+  supportsTorch(): boolean;
+  /** Devuelve el estado del flash tras el cambio (no un objeto). */
+  toggleTorch(): Promise<boolean>;
+  setPerformanceMode(mode: 'low' | 'balanced' | 'high'): Promise<{ success: boolean; previousMode: string; currentMode: string }>;
+  listCameras(): Promise<Array<{ id: string; label: string; groupId: string }>>;
+  selectCamera(deviceId: string): Promise<{ success: boolean; camera: string }>;
+  getStatus(): { active: boolean; selectedCamera: string | null; torchEnabled: boolean; performanceMode: string; supportsTorch: boolean };
+  getOptimizationSuggestions(): string[];
+  /** Igual que `CameraSession.buildQrboxFn`. */
+  buildQrboxFn(base?: QrboxOptions | number): QrboxFn;
+  getPerformanceConfig(mode?: string): { fps: number; qrboxRatio: number; aspectRatio: number; disableFlip: boolean; maxScansPerSecond: number };
+  getMobileOptimizedConfig(options?: Record<string, unknown>): { fps: number; qrboxRatio: number; aspectRatio: number; disableFlip: boolean; maxScansPerSecond: number };
+}
+
+/**
+ * Namespace de utilidades compartidas montado en `window.CPC` por
+ * `js/utils/{string,date,photo}-helpers.js`, `validation-rules.js` y
+ * `camera-session.js`.
+ */
+export interface CpcNamespace {
+  CameraSession: CameraSessionContract;
+  StringHelpers: {
+    /** Escapa `& < > "` para insertar de forma segura en HTML. */
+    escHtml(value: unknown): string;
+    formatTelefono(tel: string): string;
+    debounce<T extends (...args: never[]) => void>(fn: T, wait: number): (...args: Parameters<T>) => void;
+    generateLocalId(prefix?: string, length?: number): string;
+    dateToStr(date: Date): string;
+  };
+  DateHelpers: {
+    toISODate(date: Date): string;
+    addDays(date: Date | number | string, days: number): Date;
+    startOfWeek(date: Date | number | string): Date;
+    isSameDay(a: Date | number | string, b: Date | number | string): boolean;
+  };
+  PhotoHelpers: {
+    fileToDataUrl(file: File): Promise<string>;
+    /** Comprime manteniendo la relación de aspecto y devuelve un Data URL JPEG. */
+    compressImage(img: HTMLImageElement, maxW?: number, maxH?: number, quality?: number): string;
+    updatePhotoPreview(src: string | null, previewId?: string, placeholderId?: string): void;
+  };
+  ValidationRules: {
+    DPI_LENGTH: number;
+    DPI_MIN_LENGTH: number;
+    DPI_MAX_LENGTH: number;
+    TOLERANCIA_MIN: number;
+    TOLERANCIA_MAX: number;
+    LATITUDE_MIN: number;
+    LATITUDE_MAX: number;
+    LONGITUDE_MIN: number;
+    LONGITUDE_MAX: number;
+    GPS_RADIUS_MIN: number;
+    GPS_RADIUS_MAX: number;
+    NOMBRE_MIN_LENGTH: number;
+    NOMBRE_MAX_LENGTH: number;
+    TELEFONO_LENGTH: number;
+    IMAGEN_MAX_SIZE: number;
+    IMAGEN_MAX_DIMENSION: number;
+  };
+}
+
 /** Tipado de window.FirebaseConfigShape (inyectado por firebase-config.js). */
 declare global {
   interface Window {
@@ -218,18 +407,21 @@ declare global {
       validateConfig: (data: unknown) => { valid: boolean; errors: string[] };
       formatErrors: (validationResult: { valid: boolean; errors: string[] }) => string;
     };
-    MobileQRScanner: {
-      start: (options?: { elementId?: string; onSuccess?: () => void; cameraOptions?: { facingMode?: string; deviceId?: string } }) => Promise<{ success: boolean; camera: string }>;
-      stop: () => Promise<void>;
-      switchCamera: () => Promise<{ success: boolean; camera: string; previousCamera: string }>;
-      supportsTorch: () => boolean;
-      toggleTorch: () => Promise<{ success: boolean; enabled: boolean }>;
-      setPerformanceMode: (mode: 'low' | 'balanced' | 'high') => Promise<{ success: boolean; previousMode: string; currentMode: string }>;
-      listCameras: () => Promise<Array<{ deviceId: string; label: string }>>;
-      selectCamera: (deviceId: string) => Promise<{ success: boolean; camera: string }>;
-      getStatus: () => { active: boolean; selectedCamera: string | null; torchEnabled: boolean; performanceMode: string; supportsTorch: boolean };
-      getOptimizationSuggestions: () => string[];
-    };
+    /**
+     * utils/mobile-qr-scanner.js — escáner QR optimizado para móviles.
+     *
+     * `start()` recibe el `elementId` del contenedor y los callbacks; el
+     * `<video>` lo monta html5-qrcode dentro de ese contenedor.
+     */
+    MobileQRScanner: MobileQRScannerContract;
+    /** utils/mobile-camera-optimizer.js — ajustes por dispositivo y orientación. */
+    MobileCameraOptimizer: MobileCameraOptimizerContract;
+    /** Namespace de utilidades compartidas montadas en window.CPC.*. */
+    CPC: CpcNamespace;
+    /** Versión de la aplicación (js/config.js). */
+    APP_VERSION: string;
+    /** Nombre de la aplicación (js/config.js). */
+    APP_NAME: string;
     MapViewer: {
       initMap: (containerId: string) => void;
       addMarker: (location: { lat: number; lon: number; type: string; name?: string }) => void;
@@ -315,8 +507,9 @@ declare global {
         CARNE_SIZE: number;
         CORRECTION_LEVEL: string;
         FPS: number;
-        QRBOX_SIZE: number;
         QRBOX_RATIO: number;
+        QRBOX_FALLBACK: number;
+        QRBOX_MIN_SIZE: number;
       };
       CAMERA: {
         FACING_MODE: string;

@@ -3,7 +3,7 @@
  * Cámara compartida para los flujos legacy.
  * Centraliza el acceso físico: una vista nunca debe dejar tracks activos al
  * cambiar de lente, cerrar el modal o abandonar la página.
- * @version 1.5.0
+ * @version 1.6.0
  */
 (() => {
   'use strict';
@@ -191,23 +191,69 @@
   }
 
   /**
-   * Ajusta el qrbox al tamaño real del contenedor para evitar el error
-   * "qrbox cannot be bigger than width/height" de html5-qrcode.
-   * @param {HTMLElement} el - Elemento contenedor del escáner
-   * @param {Object} base - qrbox base solicitado
-   * @returns {Object} qrbox seguro
+   * Fracción por defecto del lado menor del frame que ocupa el recorte.
+   * Un QR que ocupe hasta este porcentaje del encuadre entra completo.
    */
-  function safeQrBox(el, base) {
-    const desired = { width: base?.width || 220, height: base?.height || 220 };
-    if (!el || !el.isConnected) return desired;
-    const box = el.getBoundingClientRect();
-    const availW = Math.floor(box.width);
-    const availH = Math.floor(box.height);
-    if (availW > 0 && availH > 0) {
-      desired.width = Math.min(desired.width, Math.max(120, Math.floor(availW * 0.9)));
-      desired.height = Math.min(desired.height, Math.max(120, Math.floor(availH * 0.9)));
-    }
-    return desired;
+  const DEFAULT_QRBOX_RATIO = 0.7;
+
+  /**
+   * Lado de respaldo cuando todavía no hay dimensiones de vídeo (node/vm o
+   * cámara aún no iniciada).  Sólo aplica a las pruebas con stub.
+   */
+  const DEFAULT_QRBOX_FALLBACK = 320;
+
+  /** Mínimo de lado que exige html5-qrcode (MIN_QR_BOX_SIZE). */
+  const MIN_QR_BOX = 50;
+
+  /**
+   * Construye el qrbox como función para html5-qrcode.
+   *
+   * html5-qrcode admite `qrbox` como función; la invoca con las dimensiones
+   * INTRÍNSECAS del <video> (naturalWidth × naturalHeight, típicamente 640×480
+   * o 1280×720) y usa el valor devuelto como recorte del frame que envía al
+   * decodificador.  Calcular el qrbox a partir del ancho/alto CSS del
+   * contenedor (p. ej. 430×200) produce un recorte demasiado pequeño en el
+   * frame real y el QR nunca se lee (el histórico "220 px" era insuficiente).
+   *
+   * El recorte es cuadrado y ocupa `ratio` del lado menor del frame, de modo que
+   * un QR que ocupe hasta ese porcentaje del encuadre siempre entra completo.
+   *
+   * @param {Object|number} [base] - Opciones del recorte
+   * @param {number} [base.ratio]  - Fracción del lado menor (0 < ratio ≤ 1)
+   * @param {number} [base.width]  - Lado de respaldo si aún no hay vídeo
+   * @param {number} [base.height] - Alto de respaldo si aún no hay vídeo
+   * @returns {Function} qrbox(videoWidth, videoHeight) => {width, height}
+   */
+  function buildQrboxFn(base) {
+    const ratio = base?.ratio > 0 && base.ratio <= 1 ? base.ratio : DEFAULT_QRBOX_RATIO;
+    const respaldo = typeof base === 'number' ? base : base?.width || base?.height || 0;
+
+    return function (surfaceWidth, surfaceHeight) {
+      // Sin dimensiones reales (entorno node/vm o vídeo no cargado todavía).
+      if (!surfaceWidth || !surfaceHeight) {
+        const lado = respaldo || DEFAULT_QRBOX_FALLBACK;
+        return { width: lado, height: lado };
+      }
+
+      // html5-qrcode llama al qrbox con el tamaño CSS del <video> y luego escala
+      // el recorte a píxeles del frame con videoWidth/clientWidth.  Por eso la
+      // fracción se aplica al lado menor de la superficie: equivale a "este
+      // porcentaje del frame visible" y mantiene la escala uniforme.
+      const lado = Math.max(MIN_QR_BOX, Math.round(Math.min(surfaceWidth, surfaceHeight) * ratio));
+      return { width: lado, height: lado };
+    };
+  }
+
+  /**
+   * Compatibilidad: devuelve un qrbox estático (sin dimensiones de vídeo).
+   * @deprecated Usar buildQrboxFn para aprovechar las dimensiones intrínsecas
+   *   del vídeo.  Se mantiene para código que espere un objeto explícito.
+   * @param {HTMLElement} _el - Contenedor del escáner (ya no se usa)
+   * @param {Object|number} [base] - Opciones del recorte
+   * @returns {Object} qrbox(videoWidth, videoHeight) => {width, height}
+   */
+  function safeQrBox(_el, base) {
+    return buildQrboxFn(base)(0, 0);
   }
 
   function createQrController({ Scanner, elementId, onSuccess, onError, config = {} }) {
@@ -229,10 +275,10 @@
       scanner = null;
       active = false;
       const candidates = qrCandidates(options);
-      // document puede no existir en entornos de prueba (node/vm); safeQrBox
-      // maneja el caso null devolviendo el qrbox solicitado sin recortar.
-      const hostElement = typeof document !== 'undefined' ? document.getElementById(elementId) : null;
-      const qrbox = safeQrBox(hostElement, config.qrbox);
+      // El qrbox se pasa como función: html5-qrcode lo evalúa con las dimensiones
+      // intrínsecas del vídeo real, por lo que el recorte siempre es proporcional
+      // al frame y no al ancho/alto CSS del contenedor.
+      const qrbox = buildQrboxFn(config.qrbox);
       const scanConfig = { fps: 10, aspectRatio: 1, disableFlip: false, ...config, qrbox };
       let lastError;
 
@@ -310,5 +356,7 @@
     describeError,
     createController,
     createQrController,
+    buildQrboxFn,
+    safeQrBox,
   };
 })();

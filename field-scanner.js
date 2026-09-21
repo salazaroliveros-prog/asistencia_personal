@@ -115,6 +115,12 @@
     chip.hidden = false;
   }
 
+  /** Muestra una sección que viene oculta en el HTML con el atributo `hidden`. */
+  function _mostrarSeccion(id) {
+    const el = document.getElementById(id);
+    if (el) el.hidden = false;
+  }
+
   /** Actualiza el badge de conexión en la pantalla de login */
   function _updateConnBadge(online) {
     const badge = document.getElementById('login-conn-badge');
@@ -437,6 +443,13 @@
   async function _startScanner(options = {}) {
     const useMobile = _useMobileScanner();
     const session   = useMobile ? _mobileSession() : _session();
+
+    // La sección del escáner llega oculta en el HTML (`hidden`) y hay que
+    // mostrarla ANTES de arrancar la cámara: html5-qrcode dimensiona el <video>
+    // con el tamaño del contenedor y, con la sección oculta, mide 0x0, así que
+    // no puede recortar el qrbox ni decodificar frames (síntoma: "Cámara activa"
+    // pero sin imagen y sin leer ningún QR).
+    _mostrarSeccion('campo-scanner');
 
     if (useMobile && typeof Html5Qrcode === 'undefined') {
       _showStatusMessage('Escáner QR no disponible', 'error');
@@ -854,6 +867,9 @@
       list.innerHTML = '<li class="campo-feed-empty">Aún no hay marcaciones hoy.</li>';
       return;
     }
+    // La sección del feed también viene oculta en el HTML: se muestra en cuanto
+    // hay marcaciones que listar.
+    _mostrarSeccion('campo-feed');
     list.innerHTML = today.map(a => {
       const hora = (a.Hora_Real || '').substring(0, 5);
       return `<li class="campo-feed-item">

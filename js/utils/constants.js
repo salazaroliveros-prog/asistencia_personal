@@ -51,8 +51,13 @@ const Constants = (() => {
     CARNE_SIZE: 130,             // Tamaño QR en carné
     CORRECTION_LEVEL: 'M',       // Nivel corrección QR
     FPS: 10,                     // FPS escáner QR
-    QRBOX_SIZE: 220,             // Tamaño caja escáner
-    QRBOX_RATIO: 1.0,            // Ratio caja escáner
+    // El recorte del decodificador se expresa como fracción del lado menor del
+    // frame de vídeo (no en píxeles CSS): html5-qrcode evalúa el qrbox sobre las
+    // dimensiones intrínsecas del <video>.  Con 0.7 el escáner lee QR que ocupen
+    // hasta el 70 % del encuadre (el caso normal al acercar el carné).
+    QRBOX_RATIO: 0.7,            // Fracción del frame que ocupa el recorte
+    QRBOX_FALLBACK: 320,         // Lado usado si aún no hay dimensiones de vídeo
+    QRBOX_MIN_SIZE: 50,          // Mínimo que exige html5-qrcode (MIN_QR_BOX_SIZE)
   };
 
   // ─── Configuración Cámara ─────────────────────────────────────────────────────

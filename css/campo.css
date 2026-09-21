@@ -57,6 +57,11 @@
   position: relative;
   padding: var(--space-2);
 }
+/* El contenedor sólo envuelve al <video>: html5-qrcode mide el propio <video>
+   (clientWidth/clientHeight) para escalar el qrbox al frame real, así que la
+   altura del contenedor no interviene en el recorte.  El <video> conserva su
+   relación de aspecto con `height: auto`, requisito para que la escala sea
+   uniforme y el QR no salga deformado. */
 #campo-qr-reader {
   width: 100%;
   min-height: 200px;

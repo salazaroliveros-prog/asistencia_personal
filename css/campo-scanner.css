@@ -160,6 +160,9 @@
 #campo-qr-reader {
   background: #04121F;
 }
+/* `height: auto` conserva la relación de aspecto del stream: html5-qrcode
+   escala el qrbox con videoWidth/clientWidth y videoHeight/clientHeight, y una
+   caja CSS con otra proporción deformaría el recorte (QR ilegible). */
 .qr-reader video,
 #campo-qr-reader video {
   display: block;

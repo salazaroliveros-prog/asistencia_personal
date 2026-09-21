@@ -2,7 +2,7 @@
  * CONTROL PERSONAL CAMPO — utils/mobile-qr-scanner.js
  * Sistema de escaneo QR optimizado específicamente para dispositivos móviles
  * Maneja rendimiento, orientación, flash y capacidades específicas de móviles
- * @version 1.5.0
+ * @version 1.6.0
  */
 
 const _MobileQRScanner = (() => {
@@ -17,25 +17,58 @@ const _MobileQRScanner = (() => {
   let activeOnError = null;
 
   /**
-   * Calcula un qrbox seguro según el tamaño real del contenedor.
-   * Evita el error "qrbox cannot be bigger than width/height" de html5-qrcode.
-   * @param {string} elementId - ID del contenedor del escáner
-   * @param {Object} base - qrbox base solicitado
-   * @returns {Object} qrbox ajustado al contenedor
+   * Fracción por defecto del lado menor del frame que ocupa el recorte.
+   * Un QR que ocupe hasta este porcentaje del encuadre entra completo.
    */
-  function getSafeQrBox(elementId, base) {
-    const el = typeof document !== 'undefined' ? document.getElementById(elementId) : null;
-    let width = base?.width || 250;
-    let height = base?.height || 250;
-    if (el) {
-      const box = el.getBoundingClientRect();
-      const availW = Math.floor(box.width || window.innerWidth || width);
-      const availH = Math.floor(box.height || window.innerHeight || height);
-      // Margen de seguridad del 90% del contenedor
-      width = Math.min(width, Math.max(120, Math.floor(availW * 0.9)));
-      height = Math.min(height, Math.max(120, Math.floor(availH * 0.9)));
-    }
-    return { width, height };
+  const DEFAULT_QRBOX_RATIO = 0.7;
+
+  /**
+   * Lado de respaldo cuando todavía no hay dimensiones de vídeo (node/vm o
+   * cámara aún no iniciada).  Sólo aplica a las pruebas con stub.
+   */
+  const DEFAULT_QRBOX_FALLBACK = 320;
+
+  /** Mínimo de lado que exige html5-qrcode (MIN_QR_BOX_SIZE). */
+  const MIN_QR_BOX = 50;
+
+  /**
+   * Construye el qrbox como función para html5-qrcode.
+   *
+   * html5-qrcode admite `qrbox` como función; la invoca con las dimensiones
+   * INTRÍNSECAS del video (naturalWidth x naturalHeight) y usa el valor devuelto
+   * como recorte del frame que envía al decodificador.  Calcular el qrbox a
+   * partir del ancho/alto CSS del contenedor produce un recorte demasiado
+   * pequeño en el frame real y el QR nunca se lee.
+   *
+   * El recorte es cuadrado y ocupa `ratio` del lado menor del frame, de modo que
+   * un QR que ocupe hasta ese porcentaje del encuadre siempre entra completo.
+   *
+   * @param {Object|number} [base] - Opciones del recorte
+   * @param {number} [base.ratio]  - Fracción del lado menor (0 < ratio <= 1)
+   * @param {number} [base.width]  - Lado de respaldo si aún no hay vídeo
+   * @param {number} [base.height] - Alto de respaldo si aún no hay vídeo
+   * @returns {Function} qrbox(videoWidth, videoHeight) => {width, height}
+   */
+
+
+  function buildQrboxFn(base) {
+    const ratio = base?.ratio > 0 && base.ratio <= 1 ? base.ratio : DEFAULT_QRBOX_RATIO;
+    const respaldo = typeof base === 'number' ? base : base?.width || base?.height || 0;
+
+    return function (surfaceWidth, surfaceHeight) {
+      // Sin dimensiones reales (entorno node/vm o vídeo no cargado todavía).
+      if (!surfaceWidth || !surfaceHeight) {
+        const lado = respaldo || DEFAULT_QRBOX_FALLBACK;
+        return { width: lado, height: lado };
+      }
+
+      // html5-qrcode llama al qrbox con el tamaño CSS del <video> y luego escala
+      // el recorte a píxeles del frame con videoWidth/clientWidth.  Por eso la
+      // fracción se aplica al lado menor de la superficie: equivale a "este
+      // porcentaje del frame visible" y mantiene la escala uniforme.
+      const lado = Math.max(MIN_QR_BOX, Math.round(Math.min(surfaceWidth, surfaceHeight) * ratio));
+      return { width: lado, height: lado };
+    };
   }
 
   /**
@@ -108,30 +141,34 @@ const _MobileQRScanner = (() => {
    * @returns {Object} Configuración de escaneo
    */
   function getPerformanceConfig(mode) {
+    // `qrboxRatio` es la fracción del lado menor del frame de vídeo que ocupa el
+    // recorte del decodificador.  Un valor pequeño deja fuera el QR cuando el
+    // operario acerca el carnet (el QR ocupa gran parte del encuadre), por lo que
+    // los tres modos usan recortes amplios y sólo se ajusta el FPS.
     const configs = {
       low: {
         fps: 5,
-        qrbox: { width: 200, height: 200 },
+        qrboxRatio: 0.65,
         aspectRatio: 1,
         disableFlip: false,
         maxScansPerSecond: 1,
       },
       balanced: {
         fps: 10,
-        qrbox: { width: 250, height: 250 },
+        qrboxRatio: 0.7,
         aspectRatio: 1,
         disableFlip: false,
         maxScansPerSecond: 2,
       },
       high: {
         fps: 15,
-        qrbox: { width: 300, height: 300 },
+        qrboxRatio: 0.8,
         aspectRatio: 1,
         disableFlip: false,
         maxScansPerSecond: 5,
       },
     };
-    return configs[mode] || configs.balanced;
+    return { ...(configs[mode] || configs.balanced) };
   }
 
   /**
@@ -142,22 +179,22 @@ const _MobileQRScanner = (() => {
   function getMobileOptimizedConfig(options = {}) {
     const deviceType = window.MobileCameraOptimizer?.getDeviceType() || 'other';
     const orientation = window.MobileCameraOptimizer?.getOrientation() || 'portrait';
-    
+
     const baseConfig = getPerformanceConfig(performanceMode);
-    
+
     // Optimizaciones específicas por dispositivo
     if (deviceType === 'ios') {
       // iOS: Reducir FPS para mejor rendimiento
       baseConfig.fps = Math.min(baseConfig.fps, 10);
-      baseConfig.qrbox = { width: 280, height: 280 };
+      baseConfig.qrboxRatio = Math.max(baseConfig.qrboxRatio, 0.7);
     } else if (deviceType === 'android') {
       // Android: Mayor rango de FPS
       baseConfig.fps = Math.min(baseConfig.fps, 15);
     }
 
-    // Ajustar según orientación
+    // En horizontal el frame es más ancho, así que el recorte puede ser mayor.
     if (orientation === 'landscape') {
-      baseConfig.qrbox = { width: 350, height: 350 };
+      baseConfig.qrboxRatio = Math.max(baseConfig.qrboxRatio, 0.8);
     }
 
     return {
@@ -189,9 +226,11 @@ const _MobileQRScanner = (() => {
     }
 
     const scanConfig = getMobileOptimizedConfig(cameraOptions);
-    // Ajustar qrbox al tamaño real del contenedor (evita error de html5-qrcode
-    // cuando el qrbox solicitado es mayor que el elemento visible)
-    scanConfig.qrbox = getSafeQrBox(elementId, scanConfig.qrbox);
+    // El qrbox se pasa como función: html5-qrcode la invoca con el tamaño CSS
+    // del <video> ya montado y luego escala el recorte a los píxeles del frame
+    // (videoWidth/clientWidth), así que el recorte es siempre proporcional al
+    // encuadre real y no al contenedor medido antes de arrancar la cámara.
+    scanConfig.qrbox = buildQrboxFn({ ratio: scanConfig.qrboxRatio });
 
     // html5-qrcode exige un destino de 1 sola clave; nunca se le pasa el
     // MediaStreamConstraints completo (ver toScannerTarget).
@@ -226,8 +265,12 @@ const _MobileQRScanner = (() => {
         activeOnError = onError || null;
         selectedCamera = target.facingMode || target.deviceId || 'environment';
 
-        // Optimizar elemento de video ya montado por la librería
-        const videoElement = document.getElementById(elementId);
+        // Optimizar el <video> que html5-qrcode montó dentro del contenedor
+        // (antes se le pasaba el contenedor, así que playsInline/objectFit no
+        // llegaban nunca al elemento real).
+        const videoElement = document
+          .getElementById(elementId)
+          ?.querySelector('video');
         if (videoElement) {
           window.MobileCameraOptimizer?.optimizeVideoElement(videoElement);
         }
@@ -556,6 +599,10 @@ const _MobileQRScanner = (() => {
     selectCamera,
     getStatus,
     getOptimizationSuggestions,
+    // Utilidades expuestas para pruebas y para el escáner de escritorio.
+    buildQrboxFn,
+    getPerformanceConfig,
+    getMobileOptimizedConfig,
   };
 })();
 
