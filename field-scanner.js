@@ -22,6 +22,7 @@
 (() => {
   'use strict';
 
+      
   // ─── Estado ─────────────────────────────────────────────────────────────
   let _statusTimer   = null;
   let _qrController  = null;
@@ -61,6 +62,18 @@
     { tipo: 'Salida_Obra',    cls: 'campo-mark-exit',   icono: 'log-out',          horaKey: 'Hora_Salida_Obra',    fallback: '17:00' },
   ];
 
+  // ─── Estado de autenticación ──────────────────────────────────────────────
+  // Recuerda el email del último login para autoguardarlo en el formulario.
+  function _saveCredentials(email) {
+    try { localStorage.setItem('cpc_scanner_email', String(email || '')); } catch (_) {}
+  }
+  function _getSavedEmail() {
+    try { return localStorage.getItem('cpc_scanner_email') || ''; } catch (_) { return ''; }
+  }
+  function _clearCredentials() {
+    try { localStorage.removeItem('cpc_scanner_email'); } catch (_) {}
+  }
+
   // ─── Inicialización ──────────────────────────────────────────────────────
   async function init() {
     _bindEvents();
@@ -74,9 +87,16 @@
     window.addEventListener('online',  () => _updateConnBadge(true));
     window.addEventListener('offline', () => _updateConnBadge(false));
 
+    // Pre-llenar el email del último login para acelerar el acceso
+    const savedEmail = _getSavedEmail();
+    const emailInput = document.getElementById('login-email');
+    if (savedEmail && emailInput) emailInput.value = savedEmail;
+
     await _initFirebase();
 
-    // Si ya hay una sesión activa (cookie de Auth persistida), ir directo al escáner
+    // Si Firebase cargó: observar sesión activa (cookie Auth persistida).
+    // Auth usa localStorage/SameSite cookies por defecto, así que al recargar
+    // la app con el mismo navegador el usuario vuelve sin repetir login.
     if (_auth) {
       _auth.onAuthStateChanged(async (user) => {
         if (!user) { _showLogin(); return; }
@@ -314,6 +334,9 @@
       const credential = await _auth.signInWithEmailAndPassword(emailVal, passVal);
       const user = credential.user;
 
+      // Recordar el email para el próximo login
+      _saveCredentials(emailVal);
+
       // Verificar cuenta autorizada Y correo verificado (requisito de
       // firestore.rules → isAuthorizedOperator()).
       const session = _validateSession(user);
@@ -361,7 +384,8 @@
   }
 
   function _handleLogout() {
-    _auth?.signOut?.();
+    _auth?.signOut?.().catch(() => {});
+    _clearCredentials();
     if (_scannerActive) _stopScanner();
     if (_unsubscribe) { _unsubscribe(); _unsubscribe = null; }
     // Ocultar chip y botón de salir
@@ -372,21 +396,12 @@
     _showLogin();
   }
 
-  // ─── Toggle ver/ocultar contraseña ───────────────────────────────────────
-  function _bindTogglePassword() {
-    const btn     = document.getElementById('btn-toggle-pass');
-    const input   = document.getElementById('login-password');
-    const iconEye = document.getElementById('icon-eye');
-    const iconOff = document.getElementById('icon-eye-off');
-    if (!btn || !input) return;
-
-    btn.addEventListener('click', () => {
-      const isPassword = input.type === 'password';
-      input.type = isPassword ? 'text' : 'password';
-      if (iconEye) iconEye.hidden = isPassword;
-      if (iconOff) iconOff.hidden = !isPassword;
-      btn.setAttribute('aria-label', isPassword ? 'Ocultar contraseña' : 'Mostrar contraseña');
-    });
+  // ─── Bind de eventos de login ──────────────────────────────────────────────
+  function _bindLoginEvents() {
+    // Pre-llenar el email del último login para acelerar el acceso
+    const savedEmail = _getSavedEmail();
+    const emailInput = document.getElementById('login-email');
+    if (savedEmail && emailInput) emailInput.value = savedEmail;
   }
 
   // ─── Firebase ────────────────────────────────────────────────────────────
@@ -456,8 +471,8 @@
     const loginForm = document.getElementById('login-form');
     if (loginForm) loginForm.addEventListener('submit', _handleLogin);
 
-    // Toggle contraseña
-    _bindTogglePassword();
+    // Pre-llenar email del último login
+    _bindLoginEvents();
 
     // Limpiar error de campo al escribir
     ['login-email', 'login-password'].forEach((id) => {

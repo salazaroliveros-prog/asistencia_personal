@@ -147,8 +147,9 @@ module.exports = {
     'dist/',
     'node_modules/',
     'functions/node_modules/',
-    'public/vendor/',
+        'public/vendor/',
     '*.min.js',
+    '*.html', // ESLint no parsea HTML; los archivos .html se lints con plugin propio si existe
     'playwright-report/',
     '.playwright-browsers/',
   ],
@@ -158,6 +159,16 @@ module.exports = {
       // Sin este override cualquier lint sobre __tests__ falla con no-undef.
       files: ['__tests__/**/*.js', '**/*.test.js', '**/*.spec.js'],
       env: { jest: true },
+    },
+    // field-scanner.js usa el IIFE clásico con múltiples globals del scope
+    // del window (CPC, MobileCameraOptimizer, etc.) que eslint no puede
+    // resolver estáticamente. Se deshabilita el análisis de imports/globales.
+    {
+      files: ['field-scanner.js'],
+      rules: {
+        // El archivo declara sus propios globals en window; no requerir import.
+        'import/no-unresolved': 'off',
+      },
     },
   ],
 };
