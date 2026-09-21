@@ -380,6 +380,10 @@
 
   function _subscribeRealtime() {
     if (!_db) return;
+    // _onLoginSuccess lo invocan tanto _handleLogin como onAuthStateChanged para
+    // la misma sesión; sin cancelar el listener previo se acumularía uno por
+    // cada inicio de sesión y sólo el último se liberaría al salir.
+    if (_unsubscribe) { _unsubscribe(); _unsubscribe = null; }
     try {
       const hoy = _today();
       _unsubscribe = _db.collection('asistencias')
