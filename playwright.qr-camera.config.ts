@@ -39,7 +39,8 @@ export default defineConfig({
   testDir: '__e2e__',
   // qr-camera-fix.spec.ts  → cámara + QR (PC y móvil emulado)
   // app-integral.spec.ts   → trabajadores, asistencias, inasistencias, reportes
-  testMatch: ['qr-camera-fix.spec.ts', 'app-integral.spec.ts'],
+  // puesto-personalizado.spec.ts → puesto de trabajo personalizado
+  testMatch: ['qr-camera-fix.spec.ts', 'app-integral.spec.ts', 'puesto-personalizado.spec.ts'],
   testTimeout: 60000,
   fullyParallel: false,
   workers: 1,
@@ -62,8 +63,8 @@ export default defineConfig({
   projects: [
     {
       name: 'desktop-pc',
-      // Escritorio: cámara PC + validación integral de la app
-      grep: /Cámara PC|App integral/,
+      // Escritorio: cámara + QR + app integral + puestos personalizados
+      grep: /Cámara PC|App integral|Personal — puesto/,
       use: {
         browserName: 'chromium',
         viewport: { width: 1280, height: 800 },
