@@ -1,0 +1,57 @@
+/* ═══════════════════════════════════════════════════════════════════════════
+   ANIMACIONES ADICIONALES — usadas dinámicamente desde JS
+   Fix para clases CSS dinámicas que faltaban: .lazy-fade, .status-enhanced
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* Animación de entrada progresiva para KPI cards y elementos lazy-loaded */
+.lazy-fade {
+  opacity: 0;
+  transform: translateY(16px);
+  animation: lazyFadeIn 0.5s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+@keyframes lazyFadeIn {
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Efecto shimmer/brillo para badges de estado mejorados */
+.status-enhanced {
+  position: relative;
+  overflow: hidden;
+}
+
+.status-enhanced::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.2),
+    transparent
+  );
+  animation: statusShine 2s ease-in-out infinite;
+}
+
+@keyframes statusShine {
+  0% { left: -100%; }
+  100% { left: 100%; }
+}
+
+/* Respetar prefers-reduced-motion */
+@media (prefers-reduced-motion: reduce) {
+  .lazy-fade {
+    animation: none !important;
+    opacity: 1 !important;
+    transform: none !important;
+  }
+  .status-enhanced::after {
+    animation: none !important;
+  }
+}
