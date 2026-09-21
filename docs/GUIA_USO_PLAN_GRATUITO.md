@@ -24,13 +24,14 @@ La aplicación estará disponible en: `http://127.0.0.1:3803`
    - **Dominio de autenticación:** `sistema-de-control-aee89.firebaseapp.com`
    - **App ID:** (de Firebase Console)
 4. Click en **Conectar Firestore**
-5. La aplicación autenticará automáticamente (Anonymous Auth)
+5. Inicia sesión en **Ajustes → Iniciar sesión segura** con el correo del
+   operador autorizado (una sesión anónima sólo puede leer)
 
 ### 3. Configuración Firebase (Escáner Móvil)
 1. Abre `field-scanner.html` en el navegador móvil
-2. Inicia sesión con el PIN del operador (default: `1234`)
-3. Configura Firebase si no está configurado
-4. El escáner sincronizará automáticamente con Firestore
+2. Inicia sesión con **correo y contraseña** de Firebase Auth (ver
+   [Credenciales del operador](#credenciales-del-operador-de-campo))
+3. El escáner sincronizará automáticamente con Firestore
 
 ---
 
@@ -60,7 +61,7 @@ La aplicación estará disponible en: `http://127.0.0.1:3803`
 #### Paso 3: Operador de Campo Escanea QR
 1. **Dispositivo:** Mobile/Tablet con cámara
 2. **URL:** `field-scanner.html`
-3. **Login:** Ingresar PIN del operador
+3. **Login:** Correo y contraseña del operador autorizado
 4. **Acción:** Click en "Iniciar escáner"
 5. **Scan:** Apuntar cámara al QR del trabajador
 6. **Resultado:** Trabajador identificado automáticamente
@@ -92,16 +93,44 @@ La aplicación estará disponible en: `http://127.0.0.1:3803`
 - ✅ Offline-first (cola de marcaciones)
 - ✅ Sincronización automática con Firestore
 - ✅ Feed de marcaciones recientes
-- ✅ Login con PIN del operador
+- ✅ Login con Firebase Auth (correo y contraseña del operador autorizado)
 - ✅ Feedback visual y auditivo
 
 ### URL de Acceso
 - **Desarrollo:** `http://127.0.0.1:3803/field-scanner.html`
 - **Producción:** Tu dominio + `/field-scanner.html`
 
-### PIN del Operador
-- **Default:** `1234`
-- **Configuración:** Configurable en Ajustes → Configuración General → PIN Escáner de Campo
+### Credenciales del operador de campo
+
+El escáner **no usa PIN**: se accede con **correo y contraseña de Firebase
+Auth**. Para que una cuenta pueda operar deben cumplirse **dos condiciones**:
+
+| # | Condición | Dónde se define |
+|---|-----------|-----------------|
+| 1 | El correo debe ser el del operador autorizado | `field-scanner.js` → `AUTHORIZED_OPERATOR_EMAIL` **y** `firestore.rules` → `isAuthorizedOperator()` |
+| 2 | El correo debe estar **verificado** (`emailVerified`) | Firebase Authentication → Users |
+
+**Correo autorizado actual:** `sistemadecontrol090@gmail.com`
+
+> ⚠️ Las dos definiciones del punto 1 deben coincidir. Si se cambia el correo
+> hay que editar los dos archivos y volver a publicar `firestore.rules`.
+
+**La contraseña no está en el código.** Vive únicamente en Firebase
+Authentication (Google) y se gestiona desde la consola:
+
+1. Entra a [Firebase Console](https://console.firebase.google.com/) → proyecto
+   `sistema-de-control-aee89` → **Authentication → Users**.
+2. Si la cuenta no existe: **Add user** con el correo autorizado y una
+   contraseña (mínimo 6 caracteres).
+3. **Verifica el correo**: abre el enlace de verificación recibido, o pulsa
+   *Mark as verified* en la consola. Sin esto el login parece funcionar y
+   después **toda marcación falla** con `permission-denied`, porque
+   `firestore.rules` exige `request.auth.token.email_verified == true`.
+4. Si se olvidó la contraseña: **Reset password** en la misma pantalla.
+
+Si los datos de conexión de Firebase se cambian desde **Ajustes**, se guardan
+en `localStorage` bajo la clave `cpc_firebase_config` y tienen prioridad sobre
+la configuración compilada.
 
 ### Botones de Marcación
 1. **Entrada** - Registro de llegada al trabajo
@@ -349,7 +378,7 @@ JSON.parse(localStorage.getItem('field_scanner_audit_log'))
 - [ ] Firebase configurado en escáner móvil
 - [ ] Trabajadores registrados en el sistema
 - [ ] QRs generados para los trabajadores
-- [ ] PIN del operador configurado
+- [ ] Credenciales del operador creadas en Firebase Auth (correo autorizado + verificado)
 - [ ] Dispositivo móvil con cámara y GPS
 
 ### Durante el Uso
