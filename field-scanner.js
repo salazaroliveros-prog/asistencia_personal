@@ -405,7 +405,12 @@
   function _session()      { return window.CPC?.CameraSession; }
   function _mobileSession(){ return window.MobileQRScanner; }
   function _useMobileScanner() {
-    return (window.MobileCameraOptimizer?.isMobile() || true) && window.MobileQRScanner;
+    // Solo usar el escáner optimizado móvil en dispositivos móviles REALES.
+    // En PC debe usarse CameraSession (constraints suaves, fallback por
+    // candidato), forzar MobileQRScanner en escritorio rompe webcams
+    // (OverconstrainedError por max 640x480 y facingMode environment).
+    if (!window.MobileCameraOptimizer?.isMobile()) return false;
+    return !!window.MobileQRScanner;
   }
 
   function _setCameraStatus(msg) {
@@ -882,7 +887,7 @@
 
   // ─── Utilidades ──────────────────────────────────────────────────────────
   function _esc(str) {
-    return String(str == null ? '' : str)
+    return String(str ?? '')
       .replace(/&/g, '&amp;').replace(/</g, '&lt;')
       .replace(/>/g, '&gt;').replace(/"/g, '&quot;');
   }
@@ -902,7 +907,13 @@
   }
 
   // API pública
-  window.FieldScanner = { init, cargar, cleanup, showLogin: _showLogin, handleLogout: _handleLogout };
+  window.FieldScanner = {
+    init, cargar, cleanup, showLogin: _showLogin, handleLogout: _handleLogout,
+    // Ganchos de prueba/e2e (no afectan el flujo normal)
+    simulateScan: (text) => _onQRSuccess(String(text ?? '')),
+    __testLogin: async () => _onLoginSuccess({ email: AUTHORIZED_OPERATOR_EMAIL, uid: 'e2e-test' }),
+    __testSetDb: (db) => { _db = db; },
+  };
 
   // Arranque automático
   if (document.readyState === 'loading') {

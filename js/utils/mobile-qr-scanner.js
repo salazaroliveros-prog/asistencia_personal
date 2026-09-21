@@ -11,6 +11,96 @@ const _MobileQRScanner = (() => {
   let selectedCamera = null;
   let torchEnabled = false;
   let performanceMode = 'balanced'; // 'low', 'balanced', 'high'
+  // Persistir contexto de la sesión activa para switchCamera/selectCamera
+  let activeElementId = null;
+  let activeOnSuccess = null;
+  let activeOnError = null;
+
+  /**
+   * Calcula un qrbox seguro según el tamaño real del contenedor.
+   * Evita el error "qrbox cannot be bigger than width/height" de html5-qrcode.
+   * @param {string} elementId - ID del contenedor del escáner
+   * @param {Object} base - qrbox base solicitado
+   * @returns {Object} qrbox ajustado al contenedor
+   */
+  function getSafeQrBox(elementId, base) {
+    const el = typeof document !== 'undefined' ? document.getElementById(elementId) : null;
+    let width = base?.width || 250;
+    let height = base?.height || 250;
+    if (el) {
+      const box = el.getBoundingClientRect();
+      const availW = Math.floor(box.width || window.innerWidth || width);
+      const availH = Math.floor(box.height || window.innerHeight || height);
+      // Margen de seguridad del 90% del contenedor
+      width = Math.min(width, Math.max(120, Math.floor(availW * 0.9)));
+      height = Math.min(height, Math.max(120, Math.floor(availH * 0.9)));
+    }
+    return { width, height };
+  }
+
+  /**
+   * Normaliza las opciones de cámara a un destino válido para html5-qrcode.
+   *
+   * `Html5Qrcode.start()` NO acepta un `MediaStreamConstraints` completo
+   * ({ video, audio }): su `createVideoConstraints()` exige un objeto con
+   * EXACTAMENTE 1 clave (`facingMode` o `deviceId`) o un string con el
+   * deviceId. Al pasarle `{ video: {...}, audio: false }` lanzaba
+   * "'cameraIdOrConfig' object should have exactly 1 key, if passed as an
+   * object, found 2 keys" — un string, no un Error — por lo que la cámara
+   * nunca arrancaba y la UI solo alcanzaba a mostrar "Cámara no disponible".
+   *
+   * @param {Object} cameraOptions - Opciones recibidas ({ facingMode, deviceId })
+   * @returns {Object} Destino válido ({ facingMode } o { deviceId })
+   */
+  function toScannerTarget(cameraOptions = {}) {
+    const { facingMode, deviceId } = cameraOptions || {};
+    if (typeof deviceId === 'string' && deviceId) return { deviceId };
+    if (typeof facingMode === 'string' && facingMode) return { facingMode };
+    return { facingMode: 'environment' };
+  }
+
+  /**
+   * Verifica que un candidato sea aceptable por html5-qrcode
+   * (string con deviceId, o objeto de 1 sola clave facingMode/deviceId).
+   * @param {string|Object} candidate - Candidato a validar
+   * @returns {boolean} true si es un destino válido
+   */
+  function isValidScannerTarget(candidate) {
+    if (typeof candidate === 'string') return candidate.length > 0;
+    if (!candidate || typeof candidate !== 'object') return false;
+    const keys = Object.keys(candidate);
+    return keys.length === 1 && (keys[0] === 'facingMode' || keys[0] === 'deviceId');
+  }
+
+  /**
+   * Construye la lista de cámaras a intentar (principal + respaldo).
+   * Si la cámara trasera no existe/está ocupada, se prueba la frontal y
+   * viceversa, de modo que el escaneo funcione en cualquier dispositivo.
+   * @param {Object} cameraOptions - Opciones de cámara solicitadas
+   * @returns {Array<Object>} Candidatos válidos y sin duplicados
+   */
+  function buildScannerTargets(cameraOptions = {}) {
+    const primary = toScannerTarget(cameraOptions);
+    const alternate = primary.facingMode === 'environment'
+      ? { facingMode: 'user' }
+      : { facingMode: 'environment' };
+    return [primary, alternate].filter((candidate, index, all) =>
+      isValidScannerTarget(candidate)
+      && index === all.findIndex((item) => JSON.stringify(item) === JSON.stringify(candidate)),
+    );
+  }
+
+  /**
+   * Indica si tras un error conviene probar la siguiente cámara candidata.
+   * No se reintenta cuando el usuario denegó el permiso o el contexto no es
+   * seguro: en esos casos el fallo es del entorno y no de la lente elegida.
+   * @param {Error|string} error - Error lanzado por html5-qrcode
+   * @returns {boolean} true si se debe probar otra cámara
+   */
+  function canTryNextCamera(error) {
+    const name = (error && error.name) || '';
+    return !['NotAllowedError', 'PermissionDeniedError', 'SecurityError'].includes(name);
+  }
 
   /**
    * Configuración de rendimiento según modo
@@ -94,63 +184,84 @@ const _MobileQRScanner = (() => {
 
     // Solicitar permisos si no se han otorgado
     const permissions = await window.MobileCameraOptimizer?.requestCameraPermissions();
-    if (!permissions.granted) {
+    if (permissions && !permissions.granted) {
       throw new Error(permissions.error?.message || 'Permisos de cámara no otorgados');
     }
 
-    // Obtener configuración móvil optimizada
-    const mobileConstraints = window.MobileCameraOptimizer?.getMobileOptimizedConstraints(cameraOptions) || {
-      video: { facingMode: 'environment' },
-    };
-
     const scanConfig = getMobileOptimizedConfig(cameraOptions);
+    // Ajustar qrbox al tamaño real del contenedor (evita error de html5-qrcode
+    // cuando el qrbox solicitado es mayor que el elemento visible)
+    scanConfig.qrbox = getSafeQrBox(elementId, scanConfig.qrbox);
 
-    try {
-      // Crear instancia del escáner
-      scanner = new Html5Qrcode(elementId);
+    // html5-qrcode exige un destino de 1 sola clave; nunca se le pasa el
+    // MediaStreamConstraints completo (ver toScannerTarget).
+    const targets = buildScannerTargets(cameraOptions);
+    let lastError = null;
 
-      // Optimizar elemento de video
-      const videoElement = document.getElementById(elementId);
-      if (videoElement) {
-        window.MobileCameraOptimizer?.optimizeVideoElement(videoElement);
-      }
+    for (let index = 0; index < targets.length; index += 1) {
+      const target = targets[index];
+      const instance = new Html5Qrcode(elementId);
 
-      // Iniciar escaneo
-      await scanner.start(
-        mobileConstraints,
-        scanConfig,
-        (decodedText, decodedResult) => {
-          // Vibrate en móvil si está disponible
-          if (navigator.vibrate) {
-            navigator.vibrate(50);
-          }
-          onSuccess(decodedText, decodedResult);
-        },
-        (errorMessage) => {
-          if (onError) onError(errorMessage);
-        },
-      );
+      try {
+        await instance.start(
+          target,
+          scanConfig,
+          (decodedText, decodedResult) => {
+            // Vibrate en móvil si está disponible
+            if (navigator.vibrate) {
+              navigator.vibrate(50);
+            }
+            onSuccess(decodedText, decodedResult);
+          },
+          (errorMessage) => {
+            if (onError) onError(errorMessage);
+          },
+        );
 
-      active = true;
-      selectedCamera = mobileConstraints.video?.facingMode || 'environment';
+        // Registro de la sesión activa (necesario para switchCamera/selectCamera)
+        scanner = instance;
+        active = true;
+        activeElementId = elementId;
+        activeOnSuccess = onSuccess;
+        activeOnError = onError || null;
+        selectedCamera = target.facingMode || target.deviceId || 'environment';
 
-      return {
-        success: true,
-        camera: selectedCamera,
-        config: scanConfig,
-      };
-    } catch (error) {
-      active = false;
-      if (scanner) {
+        // Optimizar elemento de video ya montado por la librería
+        const videoElement = document.getElementById(elementId);
+        if (videoElement) {
+          window.MobileCameraOptimizer?.optimizeVideoElement(videoElement);
+        }
+
+        return {
+          success: true,
+          scanner,
+          camera: selectedCamera,
+          config: scanConfig,
+        };
+      } catch (error) {
+        lastError = error;
+        // Limpiar la instancia fallida antes de probar la siguiente cámara
         try {
-          await scanner.stop();
+          await instance.stop();
         } catch (_) {
           // El escáner nunca llegó a iniciarse, ignorar error
         }
+        try {
+          instance.clear();
+        } catch (_) {
+          // DOM ya limpio, ignorar
+        }
         scanner = null;
+        active = false;
+        activeElementId = null;
+        activeOnSuccess = null;
+        activeOnError = null;
+
+        if (!canTryNextCamera(error) || index === targets.length - 1) throw error;
       }
-      throw error;
     }
+
+    throw lastError || new Error('No se pudo iniciar la cámara');
   }
 
   /**
@@ -176,6 +287,9 @@ const _MobileQRScanner = (() => {
     active = false;
     selectedCamera = null;
     torchEnabled = false;
+    activeElementId = null;
+    activeOnSuccess = null;
+    activeOnError = null;
   }
 
   /**
@@ -190,12 +304,21 @@ const _MobileQRScanner = (() => {
     const currentFacingMode = selectedCamera;
     const newFacingMode = currentFacingMode === 'environment' ? 'user' : 'environment';
 
+    // Conservar el contexto de la sesión activa (elemento y callbacks)
+    const elementId = activeElementId;
+    const onSuccess = activeOnSuccess;
+    const onError = activeOnError;
+    if (!elementId) {
+      throw new Error('No hay elemento de escáner activo');
+    }
+
     await stop();
 
     try {
       await start({
-        elementId: scanner?._elementId,
-        onSuccess: () => {},
+        elementId,
+        onSuccess,
+        onError,
         cameraOptions: { facingMode: newFacingMode },
       });
 
@@ -208,8 +331,9 @@ const _MobileQRScanner = (() => {
       // Intentar revertir si falla
       try {
         await start({
-          elementId: scanner?._elementId,
-          onSuccess: () => {},
+          elementId,
+          onSuccess,
+          onError,
           cameraOptions: { facingMode: currentFacingMode },
         });
       } catch (_) {
@@ -270,13 +394,16 @@ const _MobileQRScanner = (() => {
     performanceMode = mode;
 
     if (active) {
-      const elementId = scanner?._elementId;
+      const elementId = activeElementId;
+      const onSuccess = activeOnSuccess;
+      const onError = activeOnError;
       await stop();
-      
+
       try {
         await start({
           elementId,
-          onSuccess: () => {},
+          onSuccess,
+          onError,
           cameraOptions: { facingMode: selectedCamera },
         });
 
@@ -291,7 +418,8 @@ const _MobileQRScanner = (() => {
         try {
           await start({
             elementId,
-            onSuccess: () => {},
+            onSuccess,
+            onError,
             cameraOptions: { facingMode: selectedCamera },
           });
         } catch (_) {
@@ -342,12 +470,19 @@ const _MobileQRScanner = (() => {
       throw new Error('El escáner no está activo');
     }
 
-    const elementId = scanner?._elementId;
+    const elementId = activeElementId;
+    const onSuccess = activeOnSuccess;
+    const onError = activeOnError;
+    if (!elementId) {
+      throw new Error('No hay elemento de escáner activo');
+    }
+
     await stop();
 
     await start({
       elementId,
-      onSuccess: () => {},
+      onSuccess,
+      onError,
       cameraOptions: { deviceId },
     });
 

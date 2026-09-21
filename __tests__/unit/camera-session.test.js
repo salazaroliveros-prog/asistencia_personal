@@ -82,8 +82,8 @@ describe('CameraSession', () => {
     await scanner.start({ facingMode: 'environment' });
 
     expect(starts.map(item => item.camera)).toEqual([
-      { facingMode: { ideal: 'environment' } },
-      { facingMode: { ideal: 'user' } },
+      { facingMode: 'environment' },
+      { facingMode: 'user' },
     ]);
     expect(mediaDevices.getUserMedia).not.toHaveBeenCalled();
   });

@@ -176,15 +176,38 @@
 
   function qrCandidates({ deviceId, facingMode = 'environment' } = {}) {
     const candidates = [];
+    // html5-qrcode SOLO acepta facingMode como string o { exact: ... };
+    // un objeto { ideal } lanza "'facingMode' should be string or object
+    // with exact as key" y rompe el arranque de la cámara en escritorio.
     if (deviceId) candidates.push(deviceId);
     if (facingMode) {
-      candidates.push({ facingMode: { ideal: facingMode } });
-      candidates.push({ facingMode: { ideal: facingMode === 'environment' ? 'user' : 'environment' } });
+      candidates.push({ facingMode });
+      candidates.push({ facingMode: facingMode === 'environment' ? 'user' : 'environment' });
     }
-    candidates.push({ facingMode: { ideal: 'environment' } });
+    candidates.push({ facingMode: 'environment' });
     return candidates.filter((candidate, index, all) =>
       index === all.findIndex((item) => JSON.stringify(item) === JSON.stringify(candidate)),
     );
+  }
+
+  /**
+   * Ajusta el qrbox al tamaño real del contenedor para evitar el error
+   * "qrbox cannot be bigger than width/height" de html5-qrcode.
+   * @param {HTMLElement} el - Elemento contenedor del escáner
+   * @param {Object} base - qrbox base solicitado
+   * @returns {Object} qrbox seguro
+   */
+  function safeQrBox(el, base) {
+    const desired = { width: base?.width || 220, height: base?.height || 220 };
+    if (!el || !el.isConnected) return desired;
+    const box = el.getBoundingClientRect();
+    const availW = Math.floor(box.width);
+    const availH = Math.floor(box.height);
+    if (availW > 0 && availH > 0) {
+      desired.width = Math.min(desired.width, Math.max(120, Math.floor(availW * 0.9)));
+      desired.height = Math.min(desired.height, Math.max(120, Math.floor(availH * 0.9)));
+    }
+    return desired;
   }
 
   function createQrController({ Scanner, elementId, onSuccess, onError, config = {} }) {
@@ -206,6 +229,11 @@
       scanner = null;
       active = false;
       const candidates = qrCandidates(options);
+      // document puede no existir en entornos de prueba (node/vm); safeQrBox
+      // maneja el caso null devolviendo el qrbox solicitado sin recortar.
+      const hostElement = typeof document !== 'undefined' ? document.getElementById(elementId) : null;
+      const qrbox = safeQrBox(hostElement, config.qrbox);
+      const scanConfig = { fps: 10, aspectRatio: 1, disableFlip: false, ...config, qrbox };
       let lastError;
 
       for (let index = 0; index < candidates.length; index += 1) {
@@ -214,7 +242,7 @@
         try {
           await instance.start(
             candidate,
-            { fps: 10, qrbox: { width: 220, height: 220 }, aspectRatio: 1, disableFlip: false, ...config },
+            scanConfig,
             onSuccess,
             onError || (() => {}),
           );

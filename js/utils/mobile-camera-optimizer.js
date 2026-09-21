@@ -193,11 +193,9 @@ const MobileCameraOptimizer = (() => {
         facingMode: options.facingMode || 'environment',
         width: {
           ideal: resolution.width,
-          max: resolution.width,
         },
         height: {
           ideal: resolution.height,
-          max: resolution.height,
         },
       },
       audio: false,
@@ -212,6 +210,8 @@ const MobileCameraOptimizer = (() => {
       constraints.video.width = { ideal: resolution.width, min: 640 };
       constraints.video.height = { ideal: resolution.height, min: 480 };
     }
+    // NOTA: no se usan `max` duros — en webcams de escritorio (720p+) forzar
+    // max 640x480 provoca OverconstrainedError y la cámara falla al iniciar.
 
     return constraints;
   }

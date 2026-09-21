@@ -68,7 +68,9 @@ window.CPC.StringHelpers = {
    * @returns {string} Fecha en formato ISO date
    */
   dateToStr(date) {
-    if (!(date instanceof Date) || isNaN(date.getTime())) {
+    // Duck-typing en vez de instanceof: los tests cargan este módulo en un
+    // contexto vm donde el Date del realm es distinto y instanceof fallaría.
+    if (!date || typeof date.getTime !== 'function' || isNaN(date.getTime())) {
       console.warn('[StringHelpers] dateToStr recibió fecha inválida, usando fecha actual');
       date = new Date();
     }
