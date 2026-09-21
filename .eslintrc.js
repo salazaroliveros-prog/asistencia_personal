@@ -152,4 +152,12 @@ module.exports = {
     'playwright-report/',
     '.playwright-browsers/',
   ],
+  overrides: [
+    {
+      // Los tests unitarios declaran describe/it/expect como globales de Jest.
+      // Sin este override cualquier lint sobre __tests__ falla con no-undef.
+      files: ['__tests__/**/*.js', '**/*.test.js', '**/*.spec.js'],
+      env: { jest: true },
+    },
+  ],
 };

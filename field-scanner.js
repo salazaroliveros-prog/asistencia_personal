@@ -6,7 +6,15 @@
  * Login: email + password (Firebase Auth signInWithEmailAndPassword)
  * Reemplaza el login anterior con Google OAuth que requería popup.
  *
- * @version 2.1.0
+ * Requisitos de la cuenta operadora (deben cumplirse los dos):
+ *   1. El correo debe coincidir con AUTHORIZED_OPERATOR_EMAIL.
+ *   2. El correo debe estar VERIFICADO (`emailVerified === true`), porque
+ *      `firestore.rules` → `isAuthorizedOperator()` exige
+ *      `request.auth.token.email_verified == true` para escribir en
+ *      `asistencias`. Si falta este requisito el login parece correcto pero
+ *      toda marcación falla con `permission-denied`.
+ *
+ * @version 2.2.0
  */
 
 (() => {
@@ -52,16 +60,20 @@
     // Si ya hay una sesión activa (cookie de Auth persistida), ir directo al escáner
     if (_auth) {
       _auth.onAuthStateChanged(async (user) => {
-        if (user && _isAuthorizedUser(user)) {
-          await _onLoginSuccess(user);
-        } else if (user) {
-          // Usuario autenticado pero no autorizado
-          await _auth.signOut();
-          _showLogin();
-          _showGlobalError('Esta cuenta no está autorizada para operar el escáner.');
-        } else {
-          _showLogin();
-        }
+        if (!user) { _showLogin(); return; }
+
+        const session = _validateSession(user);
+        if (session.ok) { await _onLoginSuccess(user); return; }
+
+        // Sesión no válida: se cierra siempre para no dejar una sesión a medias
+        // que leería datos pero fallaría al escribir.
+        await _auth.signOut();
+        _showLogin();
+        _showGlobalError(
+          session.reason === 'unverified'
+            ? VERIFY_EMAIL_MESSAGE
+            : 'Esta cuenta no está autorizada para operar el escáner.',
+        );
       });
     } else {
       _showLogin();
@@ -98,8 +110,45 @@
     setTimeout(() => { if (!_scannerActive) _startScanner(); }, 350);
   }
 
+  /**
+   * Comprueba que la cuenta sea la del operador autorizado.
+   * @param {Object} user - Usuario de Firebase Auth
+   * @returns {boolean}
+   */
   function _isAuthorizedUser(user) {
-    return String(user?.email || '').toLowerCase() === AUTHORIZED_OPERATOR_EMAIL.toLowerCase();
+    const email = String(user?.email || '').trim().toLowerCase();
+    return email === AUTHORIZED_OPERATOR_EMAIL;
+  }
+
+  /**
+   * Comprueba que el correo esté verificado.
+   *
+   * `firestore.rules` exige `email_verified == true` en `isAuthorizedOperator()`
+   * para permitir escrituras en `asistencias`. Sin este control el login daba
+   * por buena la sesión y luego TODAS las marcaciones fallaban con
+   * `permission-denied`, mostrando un genérico "No se pudo registrar la marca".
+   *
+   * @param {Object} user - Usuario de Firebase Auth
+   * @returns {boolean}
+   */
+  function _isEmailVerified(user) {
+    return user?.emailVerified === true;
+  }
+
+  /** Mensaje mostrado cuando la cuenta existe pero el correo no está verificado. */
+  const VERIFY_EMAIL_MESSAGE =
+    'Tu correo aún no está verificado. Abre el enlace de verificación que enviamos '
+    + 'a tu bandeja de entrada (revisa también spam) y vuelve a intentarlo.';
+
+  /**
+   * Valida la sesión completa: cuenta autorizada Y correo verificado.
+   * @param {Object} user - Usuario de Firebase Auth
+   * @returns {{ ok: boolean, reason?: 'unauthorized'|'unverified' }}
+   */
+  function _validateSession(user) {
+    if (!_isAuthorizedUser(user)) return { ok: false, reason: 'unauthorized' };
+    if (!_isEmailVerified(user))  return { ok: false, reason: 'unverified' };
+    return { ok: true };
   }
 
   /** Muestra el chip de usuario con iniciales y email */
@@ -230,10 +279,20 @@
       const credential = await _auth.signInWithEmailAndPassword(emailVal, passVal);
       const user = credential.user;
 
-      // Verificar que el email esté autorizado
-      if (!_isAuthorizedUser(user)) {
+      // Verificar cuenta autorizada Y correo verificado (requisito de
+      // firestore.rules → isAuthorizedOperator()).
+      const session = _validateSession(user);
+      if (!session.ok) {
+        if (session.reason === 'unverified') {
+          // Reenvío best-effort del correo de verificación.
+          try { await user.sendEmailVerification(); } catch (_) { /* sin permiso o sin red */ }
+        }
         await _auth.signOut();
-        _showGlobalError('Esta cuenta no tiene permiso para operar el escáner de campo.');
+        _showGlobalError(
+          session.reason === 'unverified'
+            ? VERIFY_EMAIL_MESSAGE
+            : 'Esta cuenta no tiene permiso para operar el escáner de campo.',
+        );
         return;
       }
 
@@ -788,6 +847,26 @@
     } catch (_) { /* silenciar */ }
   }
 
+  /**
+   * Traduce el error de escritura en Firestore a un mensaje accionable para el
+   * operador de campo.
+   * @param {Error} err - Error lanzado por Firestore
+   * @returns {string}
+   */
+  function _mensajeErrorMarcacion(err) {
+    const code = String(err?.code || '');
+    if (code.includes('permission-denied')) {
+      return 'Sin permiso para registrar. Verifica que tu correo esté verificado y la sesión activa.';
+    }
+    if (code.includes('unavailable') || code.includes('network')) {
+      return 'Sin conexión: la marcación no se pudo enviar. Inténtalo de nuevo.';
+    }
+    if (code.includes('failed-precondition')) {
+      return 'Base de datos no lista. Recarga la página e inténtalo otra vez.';
+    }
+    return 'No se pudo registrar la marca';
+  }
+
   // ─── Marcación ───────────────────────────────────────────────────────────
   async function _procesarMarcacion(tipo) {
     if (!_currentWorker) { _showStatusMessage('Escanea primero el QR', 'error'); return; }
@@ -816,7 +895,7 @@
     } catch (err) {
       _saveErrorLog(err, 'enviarMarcacion');
       if (_audio) _audio.beepError();
-      _showStatusMessage('No se pudo registrar la marca', 'error');
+      _showStatusMessage(_mensajeErrorMarcacion(err), 'error');
     } finally {
       _marking = false;
       _currentWorker = null;
@@ -910,7 +989,7 @@
 
   // ─── Ciclo de vida público ────────────────────────────────────────────────
   async function cargar() {
-    if (!_auth?.currentUser || !_isAuthorizedUser(_auth.currentUser)) {
+    if (!_auth?.currentUser || !_validateSession(_auth.currentUser).ok) {
       _showLogin();
       return;
     }
@@ -927,8 +1006,10 @@
     init, cargar, cleanup, showLogin: _showLogin, handleLogout: _handleLogout,
     // Ganchos de prueba/e2e (no afectan el flujo normal)
     simulateScan: (text) => _onQRSuccess(String(text ?? '')),
-    __testLogin: async () => _onLoginSuccess({ email: AUTHORIZED_OPERATOR_EMAIL, uid: 'e2e-test' }),
+    __testLogin: async () => _onLoginSuccess({ email: AUTHORIZED_OPERATOR_EMAIL, emailVerified: true, uid: 'e2e-test' }),
     __testSetDb: (db) => { _db = db; },
+    __validateSession: (user) => _validateSession(user),
+    __mensajeErrorMarcacion: (err) => _mensajeErrorMarcacion(err),
   };
 
   // Arranque automático

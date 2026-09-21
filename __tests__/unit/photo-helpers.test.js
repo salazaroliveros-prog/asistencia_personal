@@ -24,7 +24,7 @@ const mockCtx = vm.createContext({
       getContext: () => ({
         drawImage: () => {},
       }),
-      toDataURL: (type, quality) => `data:image/jpeg;base64,test`,
+      toDataURL: (_type, _quality) => 'data:image/jpeg;base64,test',
     }),
     getElementById: (id) => {
       const el = { src: '', style: { display: 'none' } };
