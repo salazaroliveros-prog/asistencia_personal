@@ -60,10 +60,12 @@ const _ModuloAjustes = (() => {
     const btnClearAudit   = document.getElementById('btn-clear-scanner-audit');
     const btnExportAudit  = document.getElementById('btn-export-scanner-audit');
     const btnShareWhatsApp = document.getElementById('btn-share-scanner-whatsapp');
+    const btnQrInstalacion = document.getElementById('btn-qr-scanner-instalacion');
     if (btnLoadAudit)    btnLoadAudit.addEventListener('click', _mostrarAuditoriaScanner);
     if (btnClearAudit)   btnClearAudit.addEventListener('click', _limpiarAuditoriaScanner);
     if (btnExportAudit)  btnExportAudit.addEventListener('click', _exportarAuditoriaScannerCSV);
     if (btnShareWhatsApp) btnShareWhatsApp.addEventListener('click', _compartirScannerWhatsApp);
+    if (btnQrInstalacion) btnQrInstalacion.addEventListener('click', _mostrarQrScannerInstalacion);
 
     // ─── Logo ─────────────────────────────────────────────────────────────
     const logoInput    = document.getElementById('logo-input');
@@ -874,6 +876,57 @@ const _ModuloAjustes = (() => {
       Alerts.success('Se abrió WhatsApp para compartir el link.');
     } catch {
       Alerts.error('No se pudo abrir WhatsApp.');
+    }
+  }
+
+  /**
+   * Alterna un QR de instalación del escáner de campo para enseñarlo a la
+   * cámara del dispositivo en campo (instalación sin escribir el link).
+   */
+  function _mostrarQrScannerInstalacion() {
+    const url     = window.location.origin + '/field-scanner.html';
+    const box     = document.getElementById('scanner-install-qr');
+    const code    = document.getElementById('scanner-install-qr-code');
+    const urlEl   = document.getElementById('scanner-install-url');
+
+    if (!box || !code) {
+      Alerts.error('No se encontró el espacio para el QR.');
+      return;
+    }
+
+    if (!box.hidden) {
+      box.hidden = true;
+      return;
+    }
+
+    if (typeof window.QRCode === 'undefined' && typeof window.QRGenerator === 'undefined') {
+      Alerts.error('El generador de QR aún no está disponible. Intenta de nuevo.');
+      return;
+    }
+
+    try {
+      code.innerHTML = '';
+
+      if (window.QRGenerator && typeof window.QRGenerator.render === 'function') {
+        window.QRGenerator.render(code, url, { size: 200 });
+      } else if (window.QRCode) {
+        new window.QRCode(code, {
+          text:         url,
+          width:        200,
+          height:       200,
+          colorDark:    '#003459',
+          colorLight:   '#FFFFFF',
+          correctLevel: window.QRCode.CorrectLevel.M,
+        });
+      }
+
+      if (urlEl) urlEl.textContent = url;
+      box.hidden = false;
+    } catch (err) {
+      console.error('[Ajustes] Error al generar el QR de instalación:', err);
+      code.innerHTML = '';
+      box.hidden = true;
+      Alerts.error('No se pudo generar el QR de instalación.');
     }
   }
 

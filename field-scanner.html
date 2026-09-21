@@ -72,6 +72,30 @@
 <body>
 
   <!-- ══════════════════════════════════════════════════════
+       BANNER DE INSTALACIÓN PWA (sub-app del escáner)
+       Se muestra cuando el navegador emite beforeinstallprompt.
+       ══════════════════════════════════════════════════════ -->
+  <div id="fs-pwa-install-banner" class="fs-install-banner" hidden role="alert" aria-live="polite">
+    <div class="fs-install-icon" aria-hidden="true">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+        <polyline points="7 10 12 15 17 10"/>
+        <line x1="12" y1="15" x2="12" y2="3"/>
+      </svg>
+    </div>
+    <div class="fs-install-text">
+      <strong>Instalar Escáner de Campo</strong>
+      <span>Agrégala a tu pantalla de inicio para usarla sin conexión</span>
+    </div>
+    <div class="fs-install-actions">
+      <button type="button" id="fs-install-btn" class="campo-btn primary">Instalar</button>
+      <button type="button" id="fs-install-dismiss" class="fs-install-close" aria-label="Cerrar">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════
        PANTALLA DE LOGIN
        Visible solo cuando el usuario no está autenticado.
        ══════════════════════════════════════════════════════ -->

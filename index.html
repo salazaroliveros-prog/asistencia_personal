@@ -1204,6 +1204,17 @@
                 </button>
                 <p class="text-muted text-sm">Se abrirá WhatsApp con el link de instalación del escáner.</p>
               </div>
+              <div class="form-group mt-3">
+                <button type="button" id="btn-qr-scanner-instalacion" class="btn btn-secondary btn-block">
+                  <i data-lucide="qr-code" aria-hidden="true"></i> Ver QR de instalación
+                </button>
+                <p class="text-muted text-sm">Enseña este QR al dispositivo de campo para abrir e instalar el escáner.</p>
+                <div id="scanner-install-qr" class="scanner-install-qr" hidden>
+                  <div id="scanner-install-qr-code" class="scanner-install-qr-code" role="img" aria-label="Código QR de instalación del escáner de campo"></div>
+                  <code class="scanner-install-url" id="scanner-install-url"></code>
+                  <p class="text-muted text-sm">Escanea el código con el dispositivo de campo (cámara o WhatsApp) para abrir e instalar la subaplicación.</p>
+                </div>
+              </div>
             </div>
 
             <!-- Logo personalizado -->

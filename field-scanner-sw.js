@@ -1,11 +1,11 @@
 /**
  * ESCÁNER DE CAMPO — field-scanner-sw.js
  * Service Worker para la sub-app de escaneo QR en campo.
- * @version 2.1.1
+ * @version 2.2.0
  */
 
-const CACHE_NAME    = 'field-scanner-v2.1.1';
-const CACHE_DYNAMIC = 'field-scanner-dynamic-v2.1.1';
+const CACHE_NAME    = 'field-scanner-v2.2.0';
+const CACHE_DYNAMIC = 'field-scanner-dynamic-v2.2.0';
 
 // Assets locales del escáner de campo.
 // La estrategia es Cache-First, así que todo lo que la página necesita debe
@@ -29,7 +29,7 @@ const STATIC_ASSETS = [
 
 // ─── INSTALL ─────────────────────────────────────────────────────────────────
 self.addEventListener('install', (event) => {
-  console.log('[FieldSW] Instalando v2.1.1...');
+  console.log('[FieldSW] Instalando v2.2.0...');
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) =>
       Promise.all(
@@ -47,7 +47,7 @@ self.addEventListener('install', (event) => {
 
 // ─── ACTIVATE ────────────────────────────────────────────────────────────────
 self.addEventListener('activate', (event) => {
-  console.log('[FieldSW] Activando v2.1.1...');
+  console.log('[FieldSW] Activando v2.2.0...');
   const VALID = [CACHE_NAME, CACHE_DYNAMIC];
   event.waitUntil(
     caches.keys().then((keys) =>

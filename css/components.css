@@ -3126,6 +3126,37 @@ input[type="month"].input-glass {
   word-break: break-word;
 }
 
+/* Caja de QR de instalación del escáner de campo */
+.scanner-install-qr {
+  margin-top: var(--space-4);
+  padding: var(--space-5);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-lg);
+  background: rgba(var(--color-surface-rgb), 0.06);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-3);
+  text-align: center;
+}
+
+.scanner-install-qr-code {
+  background: #fff;
+  padding: var(--space-3);
+  border-radius: var(--radius-md);
+  line-height: 0;
+}
+
+.scanner-install-url {
+  font-size: var(--text-xs);
+  word-break: break-all;
+  background: rgba(var(--color-black-rgb), 0.25);
+  border: 1px solid var(--glass-border-light);
+  border-radius: var(--radius-sm);
+  padding: var(--space-2) var(--space-3);
+  max-width: 100%;
+}
+
 /* Modal de carné QR */
 .modal-carne {
   max-width: 480px;

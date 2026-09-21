@@ -34,11 +34,15 @@
   let _db            = null;
   let _auth          = null;
   let _unsubscribe   = null;
+  let _deferredInstallPrompt = null;
 
   // Email(es) autorizados. La lista [] = modo ABIERTO: cualquier cuenta con
   // email válido puede operar (las escrituras exigen email verificado en
   // firestore.rules). Añade emails a la lista para restringir el acceso.
   const AUTHORIZED_OPERATOR_EMAILS = [];
+
+  // Clave de localStorage para no volver a ofrecer instalar la PWA tras el cierre.
+  const FS_PWA_DISMISS_KEY = 'cpc_fs_pwa_install_dismissed';
 
   // Exigir correo verificado (`emailVerified`) para operar el escáner.
   //
@@ -81,6 +85,7 @@
     _renderMarkButtons();
     _updateStatusPill(false);
     _updateConnBadge(navigator.onLine);
+    _initPwaInstall();
     lucide?.createIcons?.();
 
     // Escuchar cambios de conexión para actualizar el badge
@@ -1053,6 +1058,68 @@
     return String(str ?? '')
       .replace(/&/g, '&amp;').replace(/</g, '&lt;')
       .replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+  }
+
+  // ─── Instalación PWA (sub-app) ─────────────────────────────────────────────
+  function _fsPwaIsInstalled() {
+    try {
+      if (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches) return true;
+      if (window.navigator && window.navigator.standalone === true) return true;
+    } catch (_) { /* noop */ }
+    return false;
+  }
+
+  function _fsPwaDismissed() {
+    try { return localStorage.getItem(FS_PWA_DISMISS_KEY) === '1'; } catch (_) { return false; }
+  }
+
+  function _hideFsInstallBanner(banner) {
+    if (banner) banner.hidden = true;
+  }
+
+  /**
+   * Banner "Agregar a pantalla de inicio" propio de la sub-app. Sin su propio
+   * listener, el beforeinstallprompt de esta página se perdería (la app
+   * principal lo captura en index.html, no aquí).
+   */
+  function _initPwaInstall() {
+    const banner = document.getElementById('fs-pwa-install-banner');
+    const btn    = document.getElementById('fs-install-btn');
+    const close  = document.getElementById('fs-install-dismiss');
+
+    if (!banner || _fsPwaIsInstalled()) return;
+
+    window.addEventListener('beforeinstallprompt', (event) => {
+      event.preventDefault();
+      _deferredInstallPrompt = event;
+      if (_fsPwaIsInstalled() || _fsPwaDismissed()) return;
+      banner.hidden = false;
+    });
+
+    window.addEventListener('appinstalled', () => {
+      _deferredInstallPrompt = null;
+      try { localStorage.removeItem(FS_PWA_DISMISS_KEY); } catch (_) { /* noop */ }
+      _hideFsInstallBanner(banner);
+    });
+
+    if (btn) {
+      btn.addEventListener('click', async () => {
+        if (!_deferredInstallPrompt) return;
+        _deferredInstallPrompt.prompt();
+        await _deferredInstallPrompt.userChoice;
+        _deferredInstallPrompt = null;
+        _hideFsInstallBanner(banner);
+      });
+    }
+
+    if (close) {
+      close.addEventListener('click', (event) => {
+        event.preventDefault();
+        event.stopPropagation();
+        try { localStorage.setItem(FS_PWA_DISMISS_KEY, '1'); } catch (_) { /* noop */ }
+        _hideFsInstallBanner(banner);
+      });
+    }
   }
 
   // ─── Ciclo de vida público ────────────────────────────────────────────────

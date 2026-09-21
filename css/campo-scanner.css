@@ -283,3 +283,88 @@
   .campo-scanner-actions .campo-btn { flex: 1 1 100%; }
   .campo-header h1 { font-size: var(--text-md); }
 }
+/* === Banner de instalación PWA (sub-app) === */
+.fs-install-banner {
+  position: fixed;
+  bottom: calc(16px + var(--safe-bottom, 0px));
+  left: 50%;
+  transform: translateX(-50%);
+  width: 90vw;
+  max-width: 420px;
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  background: var(--glass-bg);
+  backdrop-filter: blur(var(--glass-blur));
+  -webkit-backdrop-filter: blur(var(--glass-blur));
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-lg);
+  z-index: var(--z-modal);
+  animation: slideUpFade 0.3s ease;
+}
+.fs-install-banner[hidden] {
+  display: none !important;
+}
+.fs-install-icon {
+  flex-shrink: 0;
+  width: 40px;
+  height: 40px;
+  display: grid;
+  place-items: center;
+  border-radius: var(--radius-md);
+  background: var(--color-primary, #2563eb);
+  color: #fff;
+}
+.fs-install-icon svg {
+  width: 22px;
+  height: 22px;
+}
+.fs-install-text {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.fs-install-text strong {
+  font-size: var(--text-sm);
+  color: var(--color-text-primary);
+}
+.fs-install-text span {
+  font-size: var(--text-xs);
+  color: var(--color-text-muted);
+  line-height: 1.35;
+}
+.fs-install-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  flex-shrink: 0;
+}
+.fs-install-actions .campo-btn {
+  white-space: nowrap;
+}
+.fs-install-close {
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border: none;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--color-text-muted);
+  cursor: pointer;
+}
+.fs-install-close svg {
+  width: 18px;
+  height: 18px;
+}
+.fs-install-close:hover {
+  background: var(--glass-bg-hover);
+  color: var(--color-text-primary);
+}
+@media (max-width: 400px) {
+  .fs-install-icon { display: none; }
+}
