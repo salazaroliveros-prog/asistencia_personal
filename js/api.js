@@ -247,6 +247,46 @@
 
   function enqueue(type, payload) {
     const queue = read(LS_KEYS.OFFLINE_QUEUE, []);
+
+    // Evitar duplicar la misma operación pendiente (doble clic / reintentos)
+    const payloadId = payload && (payload.id || payload.idTrabajador || payload.ID_Trabajador);
+    const payloadTipo = payload && (payload.tipoMarcacion || payload.Tipo_Marcacion || payload.tipo);
+    const payloadFecha = payload && (payload.fecha || payload.Fecha);
+
+    const isDup = queue.some((item) => {
+      if (item.type !== type || !item.payload) return false;
+      if (type === 'personal-create' || type === 'personal-update' || type === 'personal-delete') {
+        const eid = item.payload.id || item.payload.ID_Trabajador;
+        return Boolean(payloadId) && eid === payloadId;
+      }
+      if (type === 'attendance-create') {
+        const iid = item.payload.idTrabajador || item.payload.ID_Trabajador || item.payload.id;
+        const itipo = item.payload.tipoMarcacion || item.payload.Tipo_Marcacion || item.payload.tipo;
+        const ifecha = item.payload.fecha || item.payload.Fecha;
+        return iid === payloadId && itipo === payloadTipo && ifecha === payloadFecha;
+      }
+      return false;
+    });
+    if (isDup) {
+      AppState.set('offlineQueue', queue.length);
+      return;
+    }
+
+    // personal-update: reemplazar create pendiente del mismo id (un solo sync)
+    if (type === 'personal-update' && payloadId) {
+      const idx = queue.findIndex((item) =>
+        item.type === 'personal-create'
+        && item.payload
+        && (item.payload.id || item.payload.ID_Trabajador) === payloadId,
+      );
+      if (idx >= 0) {
+        queue[idx] = { id: queue[idx].id, type: 'personal-create', payload, timestamp: new Date().toISOString() };
+        write(LS_KEYS.OFFLINE_QUEUE, queue);
+        AppState.set('offlineQueue', queue.length);
+        return;
+      }
+    }
+
     queue.push({ id: id('Q'), type, payload, timestamp: new Date().toISOString() });
     write(LS_KEYS.OFFLINE_QUEUE, queue);
     AppState.set('offlineQueue', queue.length);

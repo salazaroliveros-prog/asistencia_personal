@@ -125,39 +125,8 @@ const _ModuloAsistencia = (() => {
   }
 
   function _initAudio() {
-    // Crear beep de confirmación via Web Audio API
-    try {
-      const AudioContext = window.AudioContext || window.webkitAudioContext;
-      if (AudioContext) {
-        const ctx = new AudioContext();
-        _audio = {
-          beepSuccess() {
-            const osc = ctx.createOscillator();
-            const gain = ctx.createGain();
-            osc.connect(gain);
-            gain.connect(ctx.destination);
-            osc.type = 'sine';
-            osc.frequency.value = 880;
-            gain.gain.setValueAtTime(0.3, ctx.currentTime);
-            gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.3);
-            osc.start(ctx.currentTime);
-            osc.stop(ctx.currentTime + 0.3);
-          },
-          beepError() {
-            const osc = ctx.createOscillator();
-            const gain = ctx.createGain();
-            osc.connect(gain);
-            gain.connect(ctx.destination);
-            osc.type = 'square';
-            osc.frequency.value = 220;
-            gain.gain.setValueAtTime(0.2, ctx.currentTime);
-            gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.4);
-            osc.start(ctx.currentTime);
-            osc.stop(ctx.currentTime + 0.4);
-          },
-        };
-      }
-    } catch (e) { /* Audio no disponible */ }
+    const create = window.CPC && window.CPC.FeedbackAudio && window.CPC.FeedbackAudio.create;
+    _audio = typeof create === 'function' ? create() : null;
   }
 
   // ─────────────────────────────────────────────────────────────────────────

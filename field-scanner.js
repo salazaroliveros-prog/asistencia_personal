@@ -516,29 +516,8 @@
 
   // ─── Audio ───────────────────────────────────────────────────────────────
   function _initAudio() {
-    try {
-      const AudioContext = window.AudioContext || window.webkitAudioContext;
-      if (!AudioContext) return;
-      const ctx = new AudioContext();
-      _audio = {
-        beepSuccess() {
-          const osc = ctx.createOscillator(); const gain = ctx.createGain();
-          osc.connect(gain); gain.connect(ctx.destination);
-          osc.type = 'sine'; osc.frequency.value = 880;
-          gain.gain.setValueAtTime(0.27, ctx.currentTime);
-          gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.28);
-          osc.start(ctx.currentTime); osc.stop(ctx.currentTime + 0.28);
-        },
-        beepError() {
-          const osc = ctx.createOscillator(); const gain = ctx.createGain();
-          osc.connect(gain); gain.connect(ctx.destination);
-          osc.type = 'square'; osc.frequency.value = 220;
-          gain.gain.setValueAtTime(0.2, ctx.currentTime);
-          gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.4);
-          osc.start(ctx.currentTime); osc.stop(ctx.currentTime + 0.4);
-        },
-      };
-    } catch (_) { /* Audio no disponible en este dispositivo */ }
+    const create = window.CPC && window.CPC.FeedbackAudio && window.CPC.FeedbackAudio.create;
+    _audio = typeof create === 'function' ? create() : null;
   }
 
   // ─── Escáner QR ──────────────────────────────────────────────────────────
