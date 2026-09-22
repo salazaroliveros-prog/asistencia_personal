@@ -154,22 +154,9 @@
 
     try {
       if (isEdit) {
-        const updateFields = {
-          ID_Trabajador:   worker.ID_Trabajador,
-          Nombre_Completo: worker.Nombre_Completo,
-          DPI_CUI:         worker.DPI_CUI,
-          Puesto:          worker.Puesto,
-          Jefe_Inmediato:  worker.Jefe_Inmediato,
-          Telefono:        worker.Telefono,
-          WhatsApp:        worker.WhatsApp,
-          Direccion:       worker.Direccion,
-          Fotografia_URL:  worker.Fotografia_URL,
-          Estado:          worker.Estado,
-          Fecha_Registro:  worker.Fecha_Registro,
-        };
-        await FirebaseClient.save('personal', worker.ID_Trabajador, updateFields, true);
+        await FirebaseClient.save('personal', worker.ID_Trabajador, toFirestoreWorkerPatch(worker), true);
       } else {
-        await FirebaseClient.save('personal', worker.ID_Trabajador, worker, false);
+        await FirebaseClient.save('personal', worker.ID_Trabajador, toFirestoreWorkerCreate(worker), false);
       }
       // Refrescar caché local alineada con la nube
       persistWorkerLocal(worker, isEdit, payload, false);
@@ -481,8 +468,8 @@
     }
     try {
       if (connected()) {
-        // Firestore: create con merge=false para respetar allow create
-        await FirebaseClient.save('asistencias', marcacion.ID_Marcacion, marcacion, false);
+        // Firestore: create con merge=false; payload sanitizado para rules
+        await FirebaseClient.save('asistencias', marcacion.ID_Marcacion, toFirestoreAttendanceCreate(marcacion), false);
         const asistencias = AppState.get('asistencias') || [];
         const updated = [...asistencias, marcacion];
         AppState.set('asistencias', updated);
@@ -544,15 +531,12 @@
         const horaReal       = payload.horaReal       || existing.Hora_Real;
         const estadoMarcacion = payload.estadoMarcacion || existing.Estado_Marcacion;
         const horasExtra     = payload.horasExtra !== undefined ? payload.horasExtra : existing.Horas_Extra;
-        // Firestore allow update valida isValidAttendanceData sobre el documento completo
-        // → enviamos el documento completo con merge=true (solo los 3 campos cambian)
-        const fullDoc = {
-          ...existing,
-          Hora_Real:        horaReal,
-          Estado_Marcacion: estadoMarcacion,
-          Horas_Extra:      horasExtra,
-        };
-        await FirebaseClient.save('asistencias', marcacionId, fullDoc, true);
+        // Solo campos permitidos en rules (hasOnly); merge conserva el resto del doc
+        await FirebaseClient.save('asistencias', marcacionId, toFirestoreAttendancePatch({
+          horaReal,
+          estadoMarcacion,
+          horasExtra,
+        }, existing), true);
         const updated = { ...existing, Hora_Real: horaReal, Estado_Marcacion: estadoMarcacion, Horas_Extra: horasExtra };
         const newCache = asistencias.map((a) => a.ID_Marcacion === marcacionId ? updated : a);
         AppState.set('asistencias', newCache);
@@ -703,6 +687,95 @@
   }
 
   // ─── Sincronización ───────────────────────────────────────────────────────
+
+  /** Documento personal limpio para create (cumple isValidWorkerData). */
+  function toFirestoreWorkerCreate(worker) {
+    return {
+      ID_Trabajador:   String(worker.ID_Trabajador || ''),
+      Nombre_Completo: String(worker.Nombre_Completo || ''),
+      DPI_CUI:         String(worker.DPI_CUI || ''),
+      Puesto:          String(worker.Puesto || ''),
+      Jefe_Inmediato:  String(worker.Jefe_Inmediato || ''),
+      Telefono:        String(worker.Telefono || ''),
+      WhatsApp:        String(worker.WhatsApp || ''),
+      Direccion:       String(worker.Direccion || ''),
+      Fotografia_URL:  String(worker.Fotografia_URL || ''),
+      Estado:          ['Activo', 'Inactivo', 'Eliminado', 'Suspendido'].includes(worker.Estado)
+        ? worker.Estado : 'Activo',
+      Fecha_Registro:  worker.Fecha_Registro || new Date().toISOString(),
+    };
+  }
+
+  /** Solo campos permitidos en update de personal (hasOnly en rules). */
+  function toFirestoreWorkerPatch(worker) {
+    return {
+      Nombre_Completo: String(worker.Nombre_Completo || ''),
+      DPI_CUI:         String(worker.DPI_CUI || ''),
+      Puesto:          String(worker.Puesto || ''),
+      Jefe_Inmediato:  String(worker.Jefe_Inmediato || ''),
+      Telefono:        String(worker.Telefono || ''),
+      WhatsApp:        String(worker.WhatsApp || ''),
+      Direccion:       String(worker.Direccion || ''),
+      Fotografia_URL:  String(worker.Fotografia_URL || ''),
+      Estado:          ['Activo', 'Inactivo', 'Eliminado', 'Suspendido'].includes(worker.Estado)
+        ? worker.Estado : 'Activo',
+    };
+  }
+
+  function coerceTimestamp(value) {
+    if (typeof value === 'number' && value > 0) return value;
+    if (typeof value === 'string') {
+      const parsed = Date.parse(value);
+      if (!Number.isNaN(parsed) && parsed > 0) return parsed;
+    }
+    return Date.now();
+  }
+
+  /** Marcación limpia para create (isValidAttendanceData + ≤25 keys). */
+  function toFirestoreAttendanceCreate(marcacion) {
+    const allowedEstados = ['A Tiempo', 'Puntual', 'Tolerancia', 'Atraso', 'Ausencia'];
+    const allowedTipos = ['Entrada', 'Salida_Receso', 'Regreso_Receso', 'Salida_Obra', 'Entrada_Extra'];
+    const idMarc = String(marcacion.ID_Marcacion || id('MARC'));
+    let nombre = String(marcacion.Nombre_Trabajador || '').trim();
+    if (nombre.length < 2) nombre = 'Trabajador';
+    let horaReal = String(marcacion.Hora_Real || '').trim();
+    if (horaReal.length > 8) horaReal = horaReal.substring(0, 8);
+    if (horaReal.length < 5) {
+      horaReal = new Date().toLocaleTimeString('es-GT', { hour12: false }).substring(0, 5);
+    }
+    return {
+      ID_Marcacion:     idMarc,
+      ID_Registro:      String(marcacion.ID_Registro || idMarc),
+      ID_Trabajador:    String(marcacion.ID_Trabajador || ''),
+      Nombre_Trabajador: nombre,
+      Fecha:            String(marcacion.Fecha || AppState.today()).substring(0, 10),
+      Tipo_Marcacion:   allowedTipos.includes(marcacion.Tipo_Marcacion)
+        ? marcacion.Tipo_Marcacion : 'Entrada',
+      Hora_Programada:  String(marcacion.Hora_Programada || ''),
+      Hora_Real:        horaReal,
+      Estado_Marcacion: allowedEstados.includes(marcacion.Estado_Marcacion)
+        ? marcacion.Estado_Marcacion : 'A Tiempo',
+      Metodo_Registro:  String(marcacion.Metodo_Registro || 'Manual'),
+      Horas_Extra:      Number(marcacion.Horas_Extra) || 0,
+      Ubicacion_Obra:   String(marcacion.Ubicacion_Obra || ''),
+      Timestamp:        coerceTimestamp(marcacion.Timestamp),
+    };
+  }
+
+  /** Solo campos permitidos en update de asistencias. */
+  function toFirestoreAttendancePatch(patch, existing) {
+    const allowedEstados = ['A Tiempo', 'Puntual', 'Tolerancia', 'Atraso', 'Ausencia'];
+    const horaReal = String(patch.horaReal || existing.Hora_Real || '').trim().substring(0, 8);
+    const estado = patch.estadoMarcacion || existing.Estado_Marcacion || 'A Tiempo';
+    return {
+      Hora_Real:        horaReal.length >= 5 ? horaReal : String(existing.Hora_Real || '00:00'),
+      Estado_Marcacion: allowedEstados.includes(estado) ? estado : 'A Tiempo',
+      Horas_Extra:      patch.horasExtra !== undefined
+        ? (Number(patch.horasExtra) || 0)
+        : (Number(existing.Horas_Extra) || 0),
+    };
+  }
+
   async function syncOfflineQueue() {
     const queue = read(LS_KEYS.OFFLINE_QUEUE, []);
     if (queue.length === 0) return { success: true, enviadas: 0, errores: 0 };
@@ -718,76 +791,81 @@
       };
     }
 
+    const Persist = window.CPC && window.CPC.Persist;
     const failed = [];
     let synced = 0;
+    let stopForAuth = false;
+
     for (const item of queue) {
+      if (stopForAuth) {
+        failed.push(item);
+        continue;
+      }
       try {
         if (item.type === 'personal-create') {
-          const worker = normalizeWorker(item.payload);
+          const worker = toFirestoreWorkerCreate(normalizeWorker(item.payload));
           await FirebaseClient.save('personal', worker.ID_Trabajador, worker, false);
         } else if (item.type === 'personal-update') {
           const existing = (AppState.get('personal') || []).find((w) => w.ID_Trabajador === item.payload.id);
           const worker = normalizeWorker(item.payload, existing);
-          const updateFields = {
-            ID_Trabajador: worker.ID_Trabajador, Nombre_Completo: worker.Nombre_Completo,
-            DPI_CUI: worker.DPI_CUI, Puesto: worker.Puesto, Jefe_Inmediato: worker.Jefe_Inmediato,
-            Telefono: worker.Telefono, WhatsApp: worker.WhatsApp, Direccion: worker.Direccion,
-            Fotografia_URL: worker.Fotografia_URL, Estado: worker.Estado,
-            Fecha_Registro: worker.Fecha_Registro,
-          };
-          await FirebaseClient.save('personal', worker.ID_Trabajador, updateFields, true);
+          await FirebaseClient.save('personal', worker.ID_Trabajador, toFirestoreWorkerPatch(worker), true);
         } else if (item.type === 'personal-delete') {
-          // Igual que eliminarPersonal: necesita documento completo para isValidWorkerData
           const existingW = (AppState.get('personal') || []).find((w) => w.ID_Trabajador === item.payload.id);
-          if (existingW) {
-            const delFields = {
-              ID_Trabajador:   existingW.ID_Trabajador,
-              Nombre_Completo: existingW.Nombre_Completo,
-              DPI_CUI:         existingW.DPI_CUI,
-              Puesto:          existingW.Puesto,
-              Jefe_Inmediato:  existingW.Jefe_Inmediato  || '',
-              Telefono:        existingW.Telefono        || '',
-              WhatsApp:        existingW.WhatsApp        || '',
-              Direccion:       existingW.Direccion       || '',
-              Fotografia_URL:  existingW.Fotografia_URL  || '',
-              Estado:          'Inactivo',
-              Fecha_Registro:  existingW.Fecha_Registro  || new Date().toISOString(),
-            };
-            await FirebaseClient.save('personal', item.payload.id, delFields, true);
-          } else {
+          if (!existingW) {
             failed.push(item);
             continue;
           }
+          // Soft-delete: solo parchear Estado (permitido en hasOnly); el resto ya está en la nube
+          await FirebaseClient.save('personal', item.payload.id, { Estado: 'Inactivo' }, true);
         } else if (item.type === 'attendance-create') {
-          const marcacion = normalizeAttendance(item.payload);
+          const marcacion = toFirestoreAttendanceCreate(normalizeAttendance(item.payload));
           await FirebaseClient.save('asistencias', marcacion.ID_Marcacion, marcacion, false);
         } else if (item.type === 'attendance-update') {
           const existing = (AppState.get('asistencias') || []).find((a) => a.ID_Marcacion === item.payload.id);
           if (!existing) throw new Error('Marcación pendiente no encontrada para actualizar');
-          const patch = item.payload.payload || {};
-          // Documento completo para pasar isValidAttendanceData en Firestore
-          await FirebaseClient.save('asistencias', item.payload.id, {
-            ...existing,
-            Hora_Real:        patch.horaReal        || existing.Hora_Real,
-            Estado_Marcacion: patch.estadoMarcacion || existing.Estado_Marcacion,
-            Horas_Extra:      patch.horasExtra !== undefined ? patch.horasExtra : existing.Horas_Extra,
-          }, true);
+          const patch = toFirestoreAttendancePatch(item.payload.payload || {}, existing);
+          await FirebaseClient.save('asistencias', item.payload.id, patch, true);
         } else if (item.type === 'attendance-delete') {
           await FirebaseClient.remove('asistencias', item.payload.id);
+        } else {
+          // Tipo desconocido: no bloquear la cola
+          console.warn('[API] Sync: tipo de ítem desconocido, se descarta:', item.type);
         }
         synced++;
       } catch (error) {
-        console.error('[API] Error sync item:', error);
+        const classified = Persist && Persist.classifyFirestoreError
+          ? Persist.classifyFirestoreError(error)
+          : { code: error.code || 'unknown', message: error.message || String(error), needsAuth: false };
+
+        if (classified.code === 'permission-denied' || classified.code === 'unauthenticated' || classified.needsAuth) {
+          // No spamear console.error: suele ser sesión insuficiente o datos rechazados por rules
+          console.warn('[API] Sync omitido (permisos/sesión):', item.type, classified.message);
+          failed.push(item);
+          // Si no hay usuario usable, no seguir intentando el resto en este ciclo
+          const user = FirebaseClient.getCurrentUser && FirebaseClient.getCurrentUser();
+          if (!user || classified.code === 'unauthenticated') {
+            stopForAuth = true;
+          }
+          continue;
+        }
+
+        console.warn('[API] Sync ítem falló:', item.type, classified.message || error);
         failed.push(item);
       }
     }
     write(LS_KEYS.OFFLINE_QUEUE, failed);
+    AppState.set('offlineQueue', failed);
     if (synced > 0) {
       write(LS_KEYS.LAST_SYNC, new Date().toISOString());
       AppState.set('lastSync', new Date().toISOString());
-      await obtenerPersonal();
+      try { await obtenerPersonal(); } catch (_e) { /* no bloquear sync */ }
     }
-    return { success: true, enviadas: synced, errores: failed.length };
+    return {
+      success: failed.length === 0,
+      enviadas: synced,
+      errores: failed.length,
+      needsAuth: stopForAuth,
+    };
   }
 
   // ─── Exportar API ───────────────────────────────────────────────────────
