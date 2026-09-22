@@ -385,73 +385,6 @@ const ModuloPersonal = (() => {
     return genId();
   }
 
-  /**
-   * Guarda un trabajador directamente en AppState cuando no hay
-   * Firestore no configurado (modo local / sin conexión).
-   * Replica la estructura de campos que usa el GAS backend.
-   * @param {object} payload
-   * @param {boolean} isEdit
-   * @returns {{ success: boolean, message: string, offline: boolean }}
-   */
-  function _guardarPersonalLocal(payload, isEdit) {
-    const personal = AppState.get('personal') ? [...AppState.get('personal')] : [];
-
-    if (isEdit) {
-      // Edición: actualizar el registro existente
-      const idx = personal.findIndex((p) => p.ID_Trabajador === payload.id);
-      if (idx === -1) {
-        return { success: false, error: 'Trabajador no encontrado en datos locales' };
-      }
-      const anterior = personal[idx];
-      personal[idx] = {
-        ...anterior,
-        Nombre_Completo: payload.nombre,
-        DPI_CUI:         payload.dpi,
-        Puesto:          payload.puesto,
-        Jefe_Inmediato:  payload.jefe     || '',
-        Telefono:        payload.telefono || '',
-        WhatsApp:        payload.whatsapp || '',
-        Direccion:       payload.direccion || '',
-        Fotografia_URL:  payload.fotografia || anterior.Fotografia_URL || '',
-        Codigo_QR_Data:  anterior.Codigo_QR_Data || JSON.stringify({ id: anterior.ID_Trabajador, dpi: payload.dpi, nombre: payload.nombre }),
-      };
-    } else {
-      // Nuevo trabajador
-      const id     = _generarIdLocal();
-      const ahora  = new Date().toISOString().replace('T', ' ').substring(0, 19);
-      const qrData = JSON.stringify({ id, dpi: payload.dpi, nombre: payload.nombre });
-
-      personal.push({
-        ID_Trabajador:   id,
-        Nombre_Completo: payload.nombre,
-        DPI_CUI:         payload.dpi,
-        Puesto:          payload.puesto,
-        Jefe_Inmediato:  payload.jefe      || '',
-        Telefono:        payload.telefono  || '',
-        WhatsApp:        payload.whatsapp  || '',
-        Direccion:       payload.direccion || '',
-        Fotografia_URL:  payload.fotografia || '',
-        Codigo_QR_Data:  qrData,
-        Fecha_Registro:  ahora,
-        Estado:          'Activo',
-      });
-    }
-
-    // Persistir en AppState y localStorage
-    AppState.set('personal', personal);
-    try {
-      localStorage.setItem(LS_KEYS.PERSONAL_CACHE, JSON.stringify(personal));
-    } catch (e) { /* ignorar quota errors */ }
-
-    return {
-      success: true,
-      offline: true,
-      message: isEdit
-        ? 'Trabajador actualizado en modo local.'
-        : 'Trabajador registrado en modo local.',
-    };
-  }
-
   async function _guardarPersonal() {
     if (window.Logger) {
       window.Logger.info('ModuloPersonal', 'Iniciando guardado de trabajador', { 
@@ -514,25 +447,34 @@ const ModuloPersonal = (() => {
       payload.whatsapp = `https://wa.me/502${numWA}`;
     }
 
-    // ── Modo offline: sin URL configurado, guardar localmente ──────────────
+    // ── Modo offline: guardar localmente y encolar para sincronizarse al reconectar ──
     if (AppState.get('backendMode') !== 'firestore' || !AppState.get('connected')) {
-      const result = _guardarPersonalLocal(payload, !!_editingId);
-      if (result.success) {
-        if (window.Logger) {
-          window.Logger.info('ModuloPersonal', 'Trabajador guardado localmente', { 
-            isEdit: !!_editingId, 
-          });
+      try {
+        const result = await API.guardarTrabajador(payload);
+        if (result && result.success) {
+          if (window.Logger) {
+            window.Logger.info('ModuloPersonal', 'Trabajador guardado localmente y colocado en cola de sincronización', {
+              isEdit: !!_editingId,
+            });
+          }
+          Alerts.success(result.message || 'Trabajador guardado localmente');
+          _cerrarModal('modal-personal');
+          _filtrarTabla();
+        } else {
+          if (window.Logger) {
+            window.Logger.error('ModuloPersonal', 'Error al guardar localmente', {
+              error: result && result.error,
+            });
+          }
+          Alerts.error((result && result.error) || 'Error al guardar localmente', 'Error');
         }
-        Alerts.success(result.message);
-        _cerrarModal('modal-personal');
-        _filtrarTabla();
-      } else {
-        if (window.Logger) {
-          window.Logger.error('ModuloPersonal', 'Error al guardar localmente', { 
-            error: result.error, 
-          });
+      } catch (err) {
+        if (window.ErrorHandler) {
+          const handled = window.ErrorHandler.handle(err, { context: 'guardarPersonalOffline' });
+          Alerts.error(handled.message, 'Error de conexión');
+        } else {
+          Alerts.error(err.message, 'Error de conexión');
         }
-        Alerts.error(result.error || 'Error al guardar localmente', 'Error');
       }
       return;
     }
@@ -606,17 +548,17 @@ const ModuloPersonal = (() => {
 
     // ── Modo offline ────────────────────────────────────────────────────────
     if (AppState.get('backendMode') !== 'firestore' || !AppState.get('connected')) {
-      const lista = personal.map((p) =>
-        p.ID_Trabajador === id ? { ...p, Estado: 'Inactivo' } : p,
-      );
-      AppState.set('personal', lista);
       try {
-        localStorage.setItem(LS_KEYS.PERSONAL_CACHE, JSON.stringify(lista));
-      } catch (e) {
-        // Ignorar error de localStorage (cuando está lleno)
+        const result = await API.eliminarPersonal(id);
+        if (result && (result.success || result.offline)) {
+          Alerts.success(`${t.Nombre_Completo} dado de baja localmente`);
+          _filtrarTabla();
+        } else {
+          Alerts.error((result && result.error) || 'Error al dar de baja', 'Error');
+        }
+      } catch (err) {
+        Alerts.error(err.message, 'Error de conexión');
       }
-      Alerts.success(`${t.Nombre_Completo} dado de baja localmente`);
-      _filtrarTabla();
       return;
     }
 
