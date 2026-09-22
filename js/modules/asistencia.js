@@ -240,7 +240,8 @@ const _ModuloAsistencia = (() => {
       _injectScanTorchButton();
     } catch (err) {
       _setScanStatus('Cámara no disponible');
-      Alerts.error(session.describeError(err), 'Error de cámara');
+      // Aviso no bloqueante: en desktop sin cámara o headless es esperado
+      Alerts.warning(session.describeError(err), 'Cámara no disponible');
     }
   }
 
@@ -584,6 +585,12 @@ const _ModuloAsistencia = (() => {
           horaReal: result.horaReal || `${String(new Date().getHours()).padStart(2, '0')}:${String(new Date().getMinutes()).padStart(2, '0')}`,
           estado:   result.estadoMarcacion || estadoMarcacion,
         });
+        if (result.offline || result.needsAuth) {
+          Alerts.warning(
+            result.message || 'Marcación en este dispositivo. Se sincronizará cuando haya sesión y red.',
+            result.needsAuth ? 'Pendiente de nube' : 'Modo local',
+          );
+        }
 
         // Vibrar
         if (navigator.vibrate) navigator.vibrate([100, 50, 100]);

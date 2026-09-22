@@ -411,10 +411,18 @@
         AppState.set('asistencias', updated);
         write(LS_KEYS.ATTENDANCE_CACHE, updated);
         enqueue('attendance-create', payload);
+        const Persist = window.CPC && window.CPC.Persist;
+        const cap = Persist && Persist.getWriteCapability ? Persist.getWriteCapability() : {};
+        const msg = cap.code === 'auth-required'
+          ? 'Marcación guardada en este dispositivo. Inicia sesión en Ajustes para subirla a la nube.'
+          : 'Marcación guardada localmente (se sincronizará al conectar).';
         return {
           success: true,
           data: marcacion,
           offline: true,
+          mode: 'queued',
+          message: msg,
+          needsAuth: !!cap.needsAuth,
           horaReal: marcacion.Hora_Real,
           estadoMarcacion: marcacion.Estado_Marcacion,
         };

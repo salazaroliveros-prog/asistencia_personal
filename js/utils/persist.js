@@ -20,28 +20,39 @@
 
   /**
    * ¿Hay sesión Firebase usable para escribir en Firestore?
-   * @returns {{ ok: boolean, reason?: string, code?: string, user?: object }}
+   * @returns {{ ok: boolean, reason?: string, code?: string, user?: object, needsAuth?: boolean }}
    */
   function getWriteCapability() {
     const client = window.FirebaseClient;
     if (!client || typeof client.isReady !== 'function') {
       return { ok: false, reason: 'Cliente Firebase no disponible.', code: 'no-client' };
     }
-    if (!client.isReady()) {
-      return { ok: false, reason: 'Firebase no está listo.', code: 'not-ready' };
-    }
-    const state = client.getConnectionState ? client.getConnectionState() : '';
-    if (state !== 'connected' && state !== 'degraded') {
-      return { ok: false, reason: 'Sin conexión a Firestore.', code: 'offline' };
-    }
+
     const user = typeof client.getCurrentUser === 'function' ? client.getCurrentUser() : null;
+    const state = typeof client.getConnectionState === 'function' ? client.getConnectionState() : '';
+    const configured = typeof client.isConfigured === 'function'
+      ? client.isConfigured()
+      : Boolean(window.FIREBASE_CONFIG && window.FIREBASE_CONFIG.apiKey);
+
+    // Sin sesión: pedir login (no confundir con "Firebase no listo").
+    // disconnected/idle/connecting sin user = app puede estar OK pero sin operador.
     if (!user) {
+      if (state === 'error' && !configured) {
+        return { ok: false, reason: 'Firebase no está listo.', code: 'not-ready' };
+      }
       return {
         ok: false,
         reason: 'Inicia sesión en Ajustes para guardar en la nube.',
         code: 'auth-required',
         needsAuth: true,
       };
+    }
+
+    if (!client.isReady()) {
+      return { ok: false, reason: 'Firebase no está listo.', code: 'not-ready' };
+    }
+    if (state !== 'connected' && state !== 'degraded') {
+      return { ok: false, reason: 'Sin conexión a Firestore.', code: 'offline' };
     }
     return { ok: true, user };
   }

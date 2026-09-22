@@ -210,22 +210,52 @@ test('LIVE audit — recorrido completo como usuario', async ({ page, context })
   await go(page, 'asistencia');
   const scanStart = page.locator('#btn-start-scan');
   if (await scanStart.count()) {
-    await scanStart.click();
+    await scanStart.click({ force: true });
     await page.waitForTimeout(2000);
     const scanStop = page.locator('#btn-stop-scan');
     const scanning = await scanStop.isVisible().catch(() => false);
-    note(scanning ? 'ok' : 'warn', 'asistencia', `Escáner QR start → stop visible=${scanning}`);
-    if (scanning) await scanStop.click().catch(() => {});
+    const camMsg = ((await page.locator('#page-asistencia').innerText().catch(() => '')) || '');
+    note(scanning ? 'ok' : 'warn', 'asistencia', `Escáner start → stop=${scanning}; msgCam=${/cámara|camera|disponib/i.test(camMsg)}`);
+    if (scanning) await scanStop.click({ force: true }).catch(() => {});
   }
-  const manualSearch = page.locator('#manual-worker-search, #asistencia-search, input[placeholder*="Buscar"]');
-  if (await manualSearch.count()) {
-    await manualSearch.first().fill(nombre.slice(0, 8));
+
+  // Pestaña marcación manual
+  const tabManual = page.locator('[data-tab="manual"], button:has-text("Marcación Manual"), .tab:has-text("Manual")').first();
+  if (await tabManual.count()) {
+    await tabManual.click({ force: true });
     await page.waitForTimeout(500);
+    note('ok', 'asistencia', 'Tab Marcación Manual abierta');
+  }
+  const manualSearch = page.locator('#manual-worker-search');
+  if (await manualSearch.count() && await manualSearch.isVisible().catch(() => false)) {
+    await manualSearch.fill('Carlos');
+    await page.waitForTimeout(800);
+    const suggestion = page.locator('#autocomplete-list li, #autocomplete-list [role="option"]').first();
+    if (await suggestion.count() && await suggestion.isVisible().catch(() => false)) {
+      await suggestion.click({ force: true });
+      await page.waitForTimeout(500);
+      const selected = await page.locator('#manual-worker-selected').isVisible().catch(() => false);
+      note(selected ? 'ok' : 'warn', 'asistencia', `Trabajador seleccionado=${selected}`);
+      if (selected) {
+        const entrada = page.locator('#manual-worker-selected .btn-marcacion[data-tipo="Entrada"]');
+        if (await entrada.count()) {
+          await entrada.click({ force: true });
+          await page.waitForTimeout(1000);
+          const toastM = ((await page.locator('#toast-container .toast').first().textContent().catch(() => '')) || '');
+          note(/entrada|marcaci|registr|guardad|dispositivo|sincroniz/i.test(toastM) ? 'ok' : 'warn',
+            'asistencia', `Marcación Entrada: "${toastM.slice(0, 90)}"`);
+        }
+      }
+    } else {
+      note('warn', 'asistencia', 'Sin sugerencias autocomplete (¿personal vacío en esta sesión?)');
+    }
     note('ok', 'asistencia', 'Búsqueda manual llenada');
+  } else {
+    note('warn', 'asistencia', 'manual-worker-search no visible');
   }
   const mapBtn = page.locator('#btn-view-map');
   if (await mapBtn.count()) {
-    await mapBtn.click().catch(() => {});
+    await mapBtn.click({ force: true }).catch(() => {});
     await page.waitForTimeout(800);
     note('ok', 'asistencia', 'btn-view-map click');
     await page.keyboard.press('Escape').catch(() => {});
@@ -243,7 +273,7 @@ test('LIVE audit — recorrido completo como usuario', async ({ page, context })
   for (const id of ['btn-preview-diario', 'btn-preview-semanal', 'btn-preview-mensual']) {
     const btn = page.locator(`#${id}`);
     if (await btn.count()) {
-      await btn.click();
+      await btn.click({ force: true });
       await page.waitForTimeout(1000);
       note('ok', 'reportes', `${id} click`);
     }
@@ -272,10 +302,10 @@ test('LIVE audit — recorrido completo como usuario', async ({ page, context })
   // Guardar general con valor de prueba
   const obra = page.locator('#cfg-nombre-obra, #nombre-obra, #cfg-obra');
   if (await obra.count()) {
-    await obra.first().fill(`Obra Audit ${suffix}`);
+    await obra.first().fill(`Obra Audit Live`);
     const saveG = page.locator('#btn-save-general');
     if (await saveG.count()) {
-      await saveG.click();
+      await saveG.click({ force: true });
       await page.waitForTimeout(800);
       const t = ((await page.locator('#toast-container .toast').first().textContent().catch(() => '')) || '');
       note(/guardad|actualiz|config/i.test(t) ? 'ok' : 'warn', 'ajustes', `save-general toast="${t.slice(0, 80)}"`);

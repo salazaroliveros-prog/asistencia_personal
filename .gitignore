@@ -67,6 +67,7 @@ test-results/
 !test-results/visual-baseline/
 !test-results/visual-baseline/**
 __e2e__/output/
+__e2e__/output-live/
 __e2e__/capturas/
 __e2e__/snapshots/
 __e2e__/*.log
