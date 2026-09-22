@@ -196,24 +196,20 @@ function testValidators() {
     const hasValidateDPI = validatorsContent.includes('validateDPI');
     const hasValidateNombre = validatorsContent.includes('validateNombre');
     const hasValidateTelefono = validatorsContent.includes('validateTelefono');
-    const hasValidateTolerancia = validatorsContent.includes('validateTolerancia');
     const hasValidateGPS = validatorsContent.includes('validateLatitud') || 
                           validatorsContent.includes('validateLongitud');
     
     logTest('Validadores', 'Validación de DPI', hasValidateDPI);
     logTest('Validadores', 'Validación de nombre', hasValidateNombre);
     logTest('Validadores', 'Validación de teléfono', hasValidateTelefono);
-    logTest('Validadores', 'Validación de tolerancia', hasValidateTolerancia);
     logTest('Validadores', 'Validación de GPS', hasValidateGPS);
     
-    // Verificar validaciones compuestas
+    // Verificar validación compuesta de trabajador
     const hasValidateTrabajador = validatorsContent.includes('validateTrabajadorCompleto');
-    const hasValidateMarcacion = validatorsContent.includes('validateMarcacion');
-    const hasValidateConfig = validatorsContent.includes('validateConfigSistema');
+    const hasValidateConfigGPS = validatorsContent.includes('validateConfigGPS');
     
     logTest('Validadores', 'Validación completa de trabajador', hasValidateTrabajador);
-    logTest('Validadores', 'Validación de marcación', hasValidateMarcacion);
-    logTest('Validadores', 'Validación de configuración', hasValidateConfig);
+    logTest('Validadores', 'Validación de configuración GPS', hasValidateConfigGPS);
     
   } catch (error) {
     logTest('Validadores', 'Carga de validadores', false, error.message);
@@ -240,7 +236,6 @@ function testFileStructure() {
     'js/modules/reportes.js',
     'js/modules/ajustes.js',
     'js/utils/validators.js',
-    'js/utils/constants.js',
     'css/main.css',
     'css/components.css',
     'css/glassmorphism.css',
@@ -524,7 +519,6 @@ function testJavaScriptModules() {
     'js/firebase-client.js',
     'js/api.js',
     'js/app.js',
-    'js/utils/constants.js',
     'js/utils/validators.js',
     'js/utils/alerts.js',
     'js/utils/camera-session.js',
@@ -578,7 +572,6 @@ function testIntegration() {
       'js/firebase-config.js',
       'js/firebase-client.js',
       'js/api.js',
-      'js/utils/constants.js',
       'js/utils/validators.js',
       'js/utils/alerts.js',
       'js/modules/dashboard.js',

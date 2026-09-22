@@ -46,77 +46,8 @@ const _DashboardEnhancer = (() => {
     });
   }
 
-  function addTrendIndicator(kpiCard, trend) {
-    if (!kpiCard) return;
-    // Evita duplicar el indicador si se refresca el dashboard varias veces
-    kpiCard.querySelector('.trend-indicator')?.remove();
-
-    const trendElement = document.createElement('div');
-    trendElement.className = `trend-indicator ${trend > 0 ? 'trend-up' : 'trend-down'}`;
-    trendElement.innerHTML = `
-      <i data-lucide="${trend > 0 ? 'trending-up' : 'trending-down'}" aria-hidden="true"></i>
-      <span>${Math.abs(trend)}%</span>
-    `;
-    
-    kpiCard.appendChild(trendElement);
-    
-    if (window.lucide) {
-      lucide.createIcons();
-    }
-  }
-  
-  function createSparkline(container, data, color) {
-    if (!container || !Array.isArray(data) || data.length < 2) return;
-    // Crear sparkline para mostrar tendencias
-    const canvas = document.createElement('canvas');
-    canvas.width = 100;
-    canvas.height = 30;
-    canvas.className = 'sparkline';
-    
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return;
-    ctx.strokeStyle = color;
-    ctx.lineWidth = 2;
-    
-    const max = Math.max(...data);
-    const min = Math.min(...data);
-    const range = max - min || 1;
-    
-    ctx.beginPath();
-    data.forEach((value, index) => {
-      const x = (index / (data.length - 1)) * canvas.width;
-      const y = canvas.height - ((value - min) / range) * canvas.height;
-      
-      if (index === 0) {
-        ctx.moveTo(x, y);
-      } else {
-        ctx.lineTo(x, y);
-      }
-    });
-    
-    ctx.stroke();
-    container.appendChild(canvas);
-  }
-  
-  function enhanceCalendar() {
-    // Mejorar calendario con indicadores visuales
-    const calendarCells = document.querySelectorAll('.cal-day');
-    calendarCells.forEach((cell) => {
-      const attendanceCount = Number(cell.dataset.attendance) || 0;
-      if (attendanceCount > 0 && !cell.querySelector('.attendance-indicator')) {
-        const indicator = document.createElement('div');
-        indicator.className = 'attendance-indicator';
-        indicator.style.width = `${Math.min(attendanceCount * 10, 100)}%`;
-        cell.appendChild(indicator);
-      }
-    });
-  }
-  
   return {
     init,
-    addTrendIndicator,
-    createSparkline,
-    enhanceCalendar,
   };
 })();
 

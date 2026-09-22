@@ -8,24 +8,6 @@ window.CPC = window.CPC || {};
 
 window.CPC.PhotoHelpers = {
   /**
-   * Convierte un archivo a Data URL (base64).
-   * @param {File} file - Archivo de imagen
-   * @returns {Promise<string>} Data URL de la imagen
-   */
-  fileToDataUrl(file) {
-    return new Promise((resolve, reject) => {
-      if (!file) {
-        reject(new Error('No se proporcionó un archivo válido'));
-        return;
-      }
-      const reader = new FileReader();
-      reader.onload = () => resolve(reader.result);
-      reader.onerror = () => reject(new Error('Error al leer el archivo'));
-      reader.readAsDataURL(file);
-    });
-  },
-
-  /**
    * Comprime una imagen manteniendo aspect ratio.
    * @param {HTMLImageElement} img - Elemento de imagen
    * @param {number} maxW - Ancho máximo en px
@@ -58,30 +40,5 @@ window.CPC.PhotoHelpers = {
     }
     ctx.drawImage(img, 0, 0, width, height);
     return canvas.toDataURL('image/jpeg', quality);
-  },
-
-  /**
-   * Actualiza el preview de foto mostrando u ocultando elementos.
-   * @param {string} src - Data URL de la imagen o null para limpiar
-   * @param {string} previewId - ID del elemento preview
-   * @param {string} placeholderId - ID del elemento placeholder
-   */
-  updatePhotoPreview(src, previewId = 'foto-preview', placeholderId = 'foto-placeholder') {
-    const preview = document.getElementById(previewId);
-    const placeholder = document.getElementById(placeholderId);
-
-    if (src) {
-      if (preview) {
-        preview.src = src;
-        preview.style.display = 'block';
-      }
-      if (placeholder) placeholder.style.display = 'none';
-    } else {
-      if (preview) {
-        preview.src = '';
-        preview.style.display = 'none';
-      }
-      if (placeholder) placeholder.style.display = 'flex';
-    }
   },
 };

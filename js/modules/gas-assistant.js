@@ -360,9 +360,6 @@ function doPost(e) {
       }
 
       // Actualizar configuración de API para usar GAS
-      if (window.API && window.API.setBackendUrl) {
-        API.setBackendUrl(_gasUrl);
-      }
     }
 
     // Ir al paso final

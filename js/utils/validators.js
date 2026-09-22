@@ -89,105 +89,6 @@ const Validators = (() => {
     };
   }
 
-  /**
-   * Valida datos de marcación de asistencia
-   * @param {Object} marcacion - Datos de la marcación a validar
-   * @returns {Object} { valid: boolean, errors: Array<{campo: string, error: string}> }
-   * @example
-   * const result = Validators.validateMarcacion({
-   *   idTrabajador: 'TRAB-123',
-   *   tipo: 'Entrada',
-   *   fecha: '2026-09-15'
-   * });
-   */
-  function validateMarcacion(marcacion) {
-    const errors = [];
-
-    // Validar ID de trabajador
-    if (!marcacion.idTrabajador && !marcacion.ID_Trabajador) {
-      errors.push({ campo: 'idTrabajador', error: 'El ID del trabajador es requerido' });
-    }
-
-    // Validar tipo de marcación.
-    // 'Entrada_Extra' es aceptada por firestore.rules (isValidAttendanceData) y
-    // por el flujo de marcaciones extraordinarias; antes se rechazaba aquí.
-    const tiposValidos = ['Entrada', 'Salida_Receso', 'Regreso_Receso', 'Salida_Obra', 'Entrada_Extra'];
-    const tipo = marcacion.tipo || marcacion.Tipo_Marcacion;
-    if (!tipo || !tiposValidos.includes(tipo)) {
-      errors.push({ campo: 'tipo', error: `Tipo de marcación inválido. Debe ser: ${tiposValidos.join(', ')}` });
-    }
-
-    // Validar fecha
-    const fecha = marcacion.fecha || marcacion.Fecha;
-    if (!fecha) {
-      errors.push({ campo: 'fecha', error: 'La fecha es requerida' });
-    } else {
-      const fechaRegex = /^\d{4}-\d{2}-\d{2}$/;
-      if (!fechaRegex.test(fecha)) {
-        errors.push({ campo: 'fecha', error: 'La fecha debe tener formato YYYY-MM-DD' });
-      }
-    }
-
-    // Validar hora si está presente
-    if (marcacion.horaReal || marcacion.Hora_Real) {
-      const hora = marcacion.horaReal || marcacion.Hora_Real;
-      const horaResult = validateHora(hora);
-      if (!horaResult.valid) {
-        errors.push({ campo: 'horaReal', error: horaResult.error });
-      }
-    }
-
-    return {
-      valid: errors.length === 0,
-      errors,
-    };
-  }
-
-  /**
-   * Valida configuración del sistema
-   * @param {Object} config - Configuración a validar
-   * @returns {Object} { valid: boolean, errors: Array<{campo: string, error: string}> }
-   * @example
-   * const result = Validators.validateConfigSistema({
-   *   Hora_Entrada: '07:00',
-   *   Hora_Salida_Obra: '17:00',
-   *   GPS_Radio_Metros: 200
-   * });
-   */
-  function validateConfigSistema(config) {
-    const errors = [];
-
-    // Validar horarios si están presentes
-    if (config.Hora_Entrada) {
-      const result = validateHora(config.Hora_Entrada);
-      if (!result.valid) errors.push({ campo: 'Hora_Entrada', error: result.error });
-    }
-
-    if (config.Hora_Salida_Obra) {
-      const result = validateHora(config.Hora_Salida_Obra);
-      if (!result.valid) errors.push({ campo: 'Hora_Salida_Obra', error: result.error });
-    }
-
-    // Validar GPS si está presente
-    if (config.GPS_Centro_Lat || config.GPS_Centro_Lon || config.GPS_Radio_Metros) {
-      const gpsResult = validateConfigGPS(config);
-      if (!gpsResult.valid) {
-        errors.push(...gpsResult.errors);
-      }
-    }
-
-    // Validar tolerancia si está presente
-    if (config.Tolerancia_Minutos !== undefined) {
-      const result = validateTolerancia(config.Tolerancia_Minutos);
-      if (!result.valid) errors.push({ campo: 'Tolerancia_Minutos', error: result.error });
-    }
-
-    return {
-      valid: errors.length === 0,
-      errors,
-    };
-  }
-
   // ─── Validaciones de Campos ──────────────────────────────────────────────────
 
   /**
@@ -215,38 +116,6 @@ const Validators = (() => {
     // El DPI de 13 dígitos es válido, sin validación de checksum
     // El algoritmo oficial de RENAP es complejo y puede tener variaciones
     return { valid: true, error: null };
-  }
-
-  /**
-   * Calcula el checksum de un DPI guatemalteco (algoritmo simplificado).
-   * @param {string} dpi - DPI limpio (solo dígitos)
-   * @returns {object} { valid: boolean }
-   */
-  function _calculateDPIChecksum(dpi) {
-    // Algoritmo simplificado de validación de DPI guatemalteco
-    // Para producción, implementar el algoritmo oficial del RENAP
-    const digits = dpi.split('').map(Number);
-    
-    // Verificar que todos sean dígitos
-    if (digits.some((d) => isNaN(d))) {
-      return { valid: false };
-    }
-
-    // Verificar longitud exacta para checksum completo
-    if (digits.length !== VALIDATION_RULES.DPI_LENGTH) {
-      return { valid: true }; // Aceptar si no es longitud exacta
-    }
-
-    // Algoritmo de módulo 11 (simplificado)
-    let sum = 0;
-    for (let i = 0; i < digits.length - 1; i++) {
-      sum += digits[i] * (digits.length - i);
-    }
-
-    const remainder = sum % 11;
-    const expectedCheckDigit = remainder === 0 ? 0 : 11 - remainder;
-
-    return { valid: expectedCheckDigit === digits[digits.length - 1] };
   }
 
   /**
@@ -303,29 +172,6 @@ const Validators = (() => {
       if (firstDigit < 2 || firstDigit > 7) {
         return { valid: false, error: 'El teléfono debe comenzar con 2-7 (código Guatemala)' };
       }
-    }
-
-    return { valid: true, error: null };
-  }
-
-  /**
-   * Valida un valor de tolerancia en minutos.
-   * @param {number|string} tolerancia - Valor de tolerancia
-   * @returns {object} { valid: boolean, error: string | null }
-   */
-  function validateTolerancia(tolerancia) {
-    const value = parseInt(tolerancia, 10);
-
-    if (isNaN(value)) {
-      return { valid: false, error: 'La tolerancia debe ser un número' };
-    }
-
-    if (value < VALIDATION_RULES.TOLERANCIA_MIN) {
-      return { valid: false, error: `La tolerancia debe ser al menos ${VALIDATION_RULES.TOLERANCIA_MIN} minutos` };
-    }
-
-    if (value > VALIDATION_RULES.TOLERANCIA_MAX) {
-      return { valid: false, error: `La tolerancia no puede exceder ${VALIDATION_RULES.TOLERANCIA_MAX} minutos` };
     }
 
     return { valid: true, error: null };
@@ -392,102 +238,6 @@ const Validators = (() => {
     return { valid: true, error: null };
   }
 
-  /**
-   * Valida un formato de hora (HH:MM).
-   * @param {string} hora - Hora a validar
-   * @returns {object} { valid: boolean, error: string | null }
-   */
-  function validateHora(hora) {
-    if (!hora || typeof hora !== 'string') {
-      return { valid: false, error: 'La hora es requerida' };
-    }
-
-    const regex = /^([01]?[0-9]|2[0-3]):([0-5][0-9])$/;
-    if (!regex.test(hora)) {
-      return { valid: false, error: 'La hora debe tener formato HH:MM (24 horas)' };
-    }
-
-    return { valid: true, error: null };
-  }
-
-  /**
-   * Valida el orden lógico de horarios.
-   * @param {object} horarios - Objeto con horarios { entrada, salidaReceso, regresoReceso, salidaObra }
-   * @returns {object} { valid: boolean, error: string | null }
-   */
-  function validateOrdenHorarios(horarios) {
-    const { entrada, salidaReceso, regresoReceso, salidaObra } = horarios || {};
-
-    const min1 = _horaToMinutos(entrada);
-    const min2 = _horaToMinutos(salidaReceso);
-    const min3 = _horaToMinutos(regresoReceso);
-    const min4 = _horaToMinutos(salidaObra);
-
-    // Antes, con horarios vacíos o mal formados los cuatro valores eran NaN y
-    // la función devolvía valid:true (todas las comparaciones NaN son falsas).
-    if ([min1, min2, min3, min4].some((m) => m === null)) {
-      return { valid: false, error: 'Los cuatro horarios son obligatorios y deben tener formato HH:MM' };
-    }
-
-    if (min2 <= min1) {
-      return { valid: false, error: 'La salida a receso debe ser después de la entrada' };
-    }
-
-    if (min3 <= min2) {
-      return { valid: false, error: 'El regreso de receso debe ser después de la salida a receso' };
-    }
-
-    if (min4 <= min3) {
-      return { valid: false, error: 'La salida de obra debe ser después del regreso de receso' };
-    }
-
-    return { valid: true, error: null };
-  }
-
-  /**
-   * Valida una imagen (tamaño y tipo).
-   * @param {File} file - Archivo de imagen
-   * @returns {object} { valid: boolean, error: string | null }
-   */
-  function validateImagen(file) {
-    if (!file) {
-      return { valid: false, error: 'No se proporcionó ninguna imagen' };
-    }
-
-    if (!file.type.startsWith('image/')) {
-      return { valid: false, error: 'El archivo debe ser una imagen (JPG, PNG, etc.)' };
-    }
-
-    if (file.size > VALIDATION_RULES.IMAGEN_MAX_SIZE) {
-      return { valid: false, error: `La imagen excede el tamaño máximo de ${Math.round(VALIDATION_RULES.IMAGEN_MAX_SIZE / 1024)}KB` };
-    }
-
-    return { valid: true, error: null };
-  }
-
-  /**
-   * Valida una URL de Google Apps Script.
-   * @param {string} url - URL a validar
-   * @returns {object} { valid: boolean, error: string | null }
-   */
-  function validateGASUrl(url) {
-    if (!url || typeof url !== 'string') {
-      return { valid: false, error: 'La URL es requerida' };
-    }
-
-    const trimmed = url.trim();
-
-    if (!trimmed.startsWith('https://script.google.com/macros/s/')) {
-      return { valid: false, error: 'La URL debe comenzar con https://script.google.com/macros/s/' };
-    }
-
-    if (!trimmed.includes('/exec')) {
-      return { valid: false, error: 'La URL debe terminar con /exec' };
-    }
-
-    return { valid: true, error: null };
-  }
-
   // ─── Helpers ───────────────────────────────────────────────────────────────
 
   /** Minutos de gracia tras la hora de salida antes de contar horas extra. */
@@ -544,26 +294,16 @@ const Validators = (() => {
 
   // ─── API Pública ───────────────────────────────────────────────────────────
   return {
-    // Reglas de validación
-    RULES: VALIDATION_RULES,
-
-    // Validaciones individuales
+    // Validaciones de campos
     validateDPI,
     validateNombre,
     validateTelefono,
-    validateTolerancia,
     validateLatitud,
     validateLongitud,
     validateGPSRadius,
-    validateHora,
-    validateOrdenHorarios,
-    validateImagen,
-    validateGASUrl,
 
     // Validaciones compuestas (centralizadas)
     validateTrabajadorCompleto,
-    validateMarcacion,
-    validateConfigSistema,
 
     // Validaciones compuestas (legacy - mantenidas por compatibilidad)
     validateTrabajador(trabajador) {

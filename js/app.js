@@ -26,16 +26,6 @@ document.addEventListener('DOMContentLoaded', async () => {
       FirebaseClient.initialize();
     }
 
-    // 1.6 Inicializar motor de IA para autodiagnóstico y autoreparación
-    if (typeof AIEngine !== 'undefined') {
-      AIEngine.initialize({
-        autoHealing: true,
-        learning: true,
-        autoHealingThreshold: 3,
-        healthCheckInterval: 300000, // 5 minutos
-      });
-    }
-
     // 2. Inicializar todos los módulos
     _initModules();
 

@@ -69,13 +69,13 @@
   // ─── Estado de autenticación ──────────────────────────────────────────────
   // Recuerda el email del último login para autoguardarlo en el formulario.
   function _saveCredentials(email) {
-    try { localStorage.setItem('cpc_scanner_email', String(email || '')); } catch (_) {}
+    try { localStorage.setItem('cpc_scanner_email', String(email || '')); } catch (_) { /* modo privado: ignorar fallos de storage */ }
   }
   function _getSavedEmail() {
     try { return localStorage.getItem('cpc_scanner_email') || ''; } catch (_) { return ''; }
   }
   function _clearCredentials() {
-    try { localStorage.removeItem('cpc_scanner_email'); } catch (_) {}
+    try { localStorage.removeItem('cpc_scanner_email'); } catch (_) { /* modo privado: ignorar fallos de storage */ }
   }
 
   // ─── Inicialización ──────────────────────────────────────────────────────

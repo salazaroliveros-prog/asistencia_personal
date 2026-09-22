@@ -34,20 +34,6 @@ window.CPC.StringHelpers = {
   },
 
   /**
-   * Debounce de función para limitar ejecuciones frecuentes.
-   * @param {Function} fn - Función a debouncear
-   * @param {number} wait - Tiempo de espera en ms
-   * @returns {Function} Función debounciada
-   */
-  debounce(fn, wait) {
-    let timer;
-    return (...args) => {
-      clearTimeout(timer);
-      timer = setTimeout(() => fn(...args), wait);
-    };
-  },
-
-  /**
    * Genera un ID local único con prefijo.
    * @param {string} prefix - Prefijo del ID
    * @param {number} length - Longitud del sufijo aleatorio

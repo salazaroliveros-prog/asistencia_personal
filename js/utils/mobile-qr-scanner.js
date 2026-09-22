@@ -10,8 +10,7 @@ const _MobileQRScanner = (() => {
   let active = false;
   let selectedCamera = null;
   let torchEnabled = false;
-  let performanceMode = 'balanced'; // 'low', 'balanced', 'high'
-  // Persistir contexto de la sesión activa para switchCamera/selectCamera
+  // Persistir contexto de la sesión activa para switchCamera
   let activeElementId = null;
   let activeOnSuccess = null;
   let activeOnError = null;
@@ -180,7 +179,7 @@ const _MobileQRScanner = (() => {
     const deviceType = window.MobileCameraOptimizer?.getDeviceType() || 'other';
     const orientation = window.MobileCameraOptimizer?.getOrientation() || 'portrait';
 
-    const baseConfig = getPerformanceConfig(performanceMode);
+    const baseConfig = getPerformanceConfig('balanced');
 
     // Optimizaciones específicas por dispositivo
     if (deviceType === 'ios') {
@@ -424,62 +423,6 @@ const _MobileQRScanner = (() => {
   }
 
   /**
-   * Cambia el modo de rendimiento
-   * @param {string} mode - Nuevo modo de rendimiento
-   * @returns {Promise<Object>} Resultado del cambio
-   */
-  async function setPerformanceMode(mode) {
-    if (!['low', 'balanced', 'high'].includes(mode)) {
-      throw new Error('Modo de rendimiento inválido');
-    }
-
-    const previousMode = performanceMode;
-    performanceMode = mode;
-
-    if (active) {
-      const elementId = activeElementId;
-      const onSuccess = activeOnSuccess;
-      const onError = activeOnError;
-      await stop();
-
-      try {
-        await start({
-          elementId,
-          onSuccess,
-          onError,
-          cameraOptions: { facingMode: selectedCamera },
-        });
-
-        return {
-          success: true,
-          previousMode,
-          currentMode: mode,
-        };
-      } catch (error) {
-        // Revertir si falla
-        performanceMode = previousMode;
-        try {
-          await start({
-            elementId,
-            onSuccess,
-            onError,
-            cameraOptions: { facingMode: selectedCamera },
-          });
-        } catch (_) {
-          // Revertir falló, continuar con el error original
-        }
-        throw error;
-      }
-    }
-
-    return {
-      success: true,
-      previousMode,
-      currentMode: mode,
-    };
-  }
-
-  /**
    * Lista las cámaras disponibles en el dispositivo
    * @returns {Promise<Array>} Lista de cámaras
    */
@@ -503,102 +446,13 @@ const _MobileQRScanner = (() => {
     }
   }
 
-  /**
-   * Selecciona una cámara específica por ID
-   * @param {string} deviceId - ID de la cámara
-   * @returns {Promise<Object>} Resultado de la selección
-   */
-  async function selectCamera(deviceId) {
-    if (!active) {
-      throw new Error('El escáner no está activo');
-    }
-
-    const elementId = activeElementId;
-    const onSuccess = activeOnSuccess;
-    const onError = activeOnError;
-    if (!elementId) {
-      throw new Error('No hay elemento de escáner activo');
-    }
-
-    await stop();
-
-    await start({
-      elementId,
-      onSuccess,
-      onError,
-      cameraOptions: { deviceId },
-    });
-
-    selectedCamera = deviceId;
-    return {
-      success: true,
-      camera: deviceId,
-    };
-  }
-
-  /**
-   * Obtiene el estado actual del escáner
-   * @returns {Object} Estado del escáner
-   */
-  function getStatus() {
-    return {
-      active,
-      selectedCamera,
-      torchEnabled,
-      performanceMode,
-      supportsTorch: supportsTorch(),
-    };
-  }
-
-  /**
-   * Genera sugerencias de optimización para el dispositivo
-   * @returns {Array} Sugerencias de optimización
-   */
-  function getOptimizationSuggestions() {
-    const suggestions = [];
-    const deviceInfo = window.MobileCameraOptimizer?.getDeviceInfo() || {};
-    const status = getStatus();
-
-    if (deviceInfo.isMobile) {
-      if (deviceInfo.pixelRatio > 2) {
-        suggestions.push('Dispositivo con alta densidad de píxeles. Considera usar modo de rendimiento "low" para mejor batería.');
-      }
-
-      if (deviceInfo.memory && deviceInfo.memory < 4) {
-        suggestions.push('Dispositivo con memoria limitada. Usa modo de rendimiento "low" para mejor estabilidad.');
-      }
-
-      if (deviceInfo.deviceType === 'ios') {
-        suggestions.push('iOS: Usa facingMode "environment" para mejor calidad de cámara trasera.');
-      }
-
-      if (deviceInfo.deviceType === 'android') {
-        suggestions.push('Android: Verifica que el permiso de cámara esté otorgado en configuración del sistema.');
-      }
-    }
-
-    if (status.active && !status.supportsTorch) {
-      suggestions.push('El dispositivo no soporta flash. Asegura buena iluminación para escaneo QR.');
-    }
-
-    if (performanceMode === 'high') {
-      suggestions.push('Modo de rendimiento "high" consume más batería. Considera "balanced" para uso prolongado.');
-    }
-
-    return suggestions;
-  }
-
   return {
     start,
     stop,
     switchCamera,
     supportsTorch,
     toggleTorch,
-    setPerformanceMode,
     listCameras,
-    selectCamera,
-    getStatus,
-    getOptimizationSuggestions,
     // Utilidades expuestas para pruebas y para el escáner de escritorio.
     buildQrboxFn,
     getPerformanceConfig,

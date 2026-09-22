@@ -16,7 +16,7 @@ const vm = require('vm');
 
 const alertsCode = fs.readFileSync(
   path.resolve(__dirname, '../../js/utils/alerts.js'),
-  'utf8'
+  'utf8',
 );
 
 // `const` en vm.runInContext no se expone en el sandbox: se reasigna a window.
@@ -230,7 +230,7 @@ describe('Alerts.confirm', () => {
     await p;
 
     const retirado = quitar.mock.calls.some(
-      ([tipo, fn]) => tipo === 'keydown' && typeof fn === 'function'
+      ([tipo, fn]) => tipo === 'keydown' && typeof fn === 'function',
     );
     expect(retirado).toBe(true);
     quitar.mockRestore();

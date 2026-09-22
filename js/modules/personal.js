@@ -1555,7 +1555,6 @@ const ModuloPersonal = (() => {
     init,
     cargar,
     cleanup,
-    abrirModalCarne: _abrirModalCarne,
 
     // Ganchos de prueba (no afectan el flujo normal de la UI)
     __testPuestos: {

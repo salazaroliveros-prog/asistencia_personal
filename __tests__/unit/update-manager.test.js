@@ -14,7 +14,7 @@ const vm = require('vm');
 
 const code = fs.readFileSync(
   path.resolve(__dirname, '../../js/utils/update-manager.js'),
-  'utf8'
+  'utf8',
 );
 
 function makeSandbox(initialWindow = {}) {

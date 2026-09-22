@@ -186,13 +186,8 @@ const KeyboardShortcuts = (() => {
     });
   }
   
-  function getShortcuts() {
-    return shortcuts;
-  }
-  
   return {
     init,
-    getShortcuts,
   };
 })();
 

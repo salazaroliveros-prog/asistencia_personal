@@ -187,53 +187,12 @@ const ErrorHandler = (() => {
       return { success: false, error: handled };
     }
   }
-  
-  // ─── Toast específicos por tipo de error ───────────────────────────────────
-  function showErrorToast(handledError) {
-    if (typeof window !== 'undefined' && window.Alerts) {
-      window.Alerts.error(handledError.message);
-    } else {
-      alert(handledError.message);
-    }
-  }
-  
-  function showWarningToast(handledError) {
-    if (typeof window !== 'undefined' && window.Alerts) {
-      window.Alerts.warning(handledError.message);
-    } else {
-      alert(handledError.message);
-    }
-  }
-  
-  // ─── Recuperación específica por contexto ───────────────────────────────
-  async function recoverFromFirebaseError() {
-    if (typeof window !== 'undefined' && window.FirebaseClient) {
-      try {
-        const result = await window.FirebaseClient.initialize();
-        if (result.success) {
-          if (window.Logger) {
-            window.Logger.info('ErrorHandler', 'Firebase reconnection successful');
-          }
-          return true;
-        }
-      } catch (e) {
-        if (window.Logger) {
-          window.Logger.error('ErrorHandler', 'Firebase reconnection failed', e);
-        }
-      }
-    }
-    return false;
-  }
-  
+
   // ─── Exportar funciones públicas ───────────────────────────────────────────
   return {
     handle,
     wrapAsync,
     wrapSync,
-    showErrorToast,
-    showWarningToast,
-    recoverFromFirebaseError,
-    ERROR_TYPES,
   };
 })();
 

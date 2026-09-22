@@ -368,7 +368,7 @@ const _ModuloCampo = (() => {
       const resp     = await API.registrarMarcacion(payload);
       const estado   = resp.estadoMarcacion || (resp.data && resp.data[0] && resp.data[0].Estado_Marcacion) || 'A Tiempo';
       const horaReal = (resp && resp.horaReal) || new Date().toLocaleTimeString('es-GT', { hour12: false }).substring(0, 5);
-      const offline  = !!(resp.offline) || (typeof API.isOffline === 'function' && API.isOffline());
+      const offline  = !!(resp.offline);
       if (_audio) _audio.beepSuccess();
       Alerts.marcacion({ nombre: _currentWorker.Nombre_Completo || 'Trabajador', tipo, horaReal, estado });
       if (offline) Alerts.warning('Sin conexión: la marca quedó en cola y se sincronizará automáticamente.', 'Modo offline');

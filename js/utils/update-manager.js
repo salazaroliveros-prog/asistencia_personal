@@ -10,7 +10,6 @@ const UpdateManager = (() => {
   const _deferredPrompt = null;
   let _updateAvailable = false;
   let _dismissedUntil = null;
-  let _checkIntervalId = null;
 
   // Clave localStorage donde se guarda la última versión ya vista por el usuario.
   const VERSION_SEEN_KEY = 'cpc_app_version_seen';
@@ -96,7 +95,7 @@ const UpdateManager = (() => {
         _registration = registration;
 
         // Verificar actualizaciones periódicamente (reducido de 5 a 15 minutos)
-        _checkIntervalId = setInterval(() => {
+        setInterval(() => {
           checkForUpdates();
           _checkRemoteVersion();
         }, 15 * 60 * 1000); // Cada 15 minutos en lugar de 5
@@ -116,16 +115,6 @@ const UpdateManager = (() => {
 
     // Bind eventos de UI
     _bindEvents();
-  }
-
-  /**
-   * Detener el gestor de actualizaciones y limpiar recursos
-   */
-  function stop() {
-    if (_checkIntervalId) {
-      clearInterval(_checkIntervalId);
-      _checkIntervalId = null;
-    }
   }
 
   /**
@@ -264,7 +253,6 @@ const UpdateManager = (() => {
    */
   return {
     init,
-    stop,
     checkForUpdates,
     showUpdateBanner,
     hideUpdateBanner,

@@ -12,7 +12,7 @@ const vm = require('vm');
 // Cargar el módulo en un contexto con document simulado (jsdom provee document real)
 const code = fs.readFileSync(
   path.resolve(__dirname, '../../js/utils/photo-helpers.js'),
-  'utf8'
+  'utf8',
 );
 const mockCtx = vm.createContext({
   window: {},
@@ -26,15 +26,10 @@ const mockCtx = vm.createContext({
       }),
       toDataURL: (_type, _quality) => 'data:image/jpeg;base64,test',
     }),
-    getElementById: (id) => {
+    getElementById: (_id) => {
       const el = { src: '', style: { display: 'none' } };
       return el;
     },
-  },
-  FileReader: class MockFileReader {
-    readAsDataURL() {
-      setTimeout(() => this.onload({ target: { result: 'data:image/jpeg;base64,test' } }), 10);
-    }
   },
   setTimeout,
   clearTimeout,
@@ -48,24 +43,6 @@ describe('PhotoHelpers', () => {
       <img id="foto-preview" style="display:none" />
       <div id="foto-placeholder" style="display:none"></div>
     `;
-  });
-
-  describe('fileToDataUrl', () => {
-    it('exports fileToDataUrl function', () => {
-      expect(typeof PhotoHelpers.fileToDataUrl).toBe('function');
-    });
-
-    it('rejects when no file is provided', async () => {
-      await expect(PhotoHelpers.fileToDataUrl(null)).rejects.toThrow('No se proporcionó un archivo válido');
-      await expect(PhotoHelpers.fileToDataUrl(undefined)).rejects.toThrow('No se proporcionó un archivo válido');
-    });
-
-    it('returns a promise for valid file object', () => {
-      const mockFile = { name: 'test.jpg', type: 'image/jpeg', size: 1000 };
-      const result = PhotoHelpers.fileToDataUrl(mockFile);
-      // Verificar que retorna algo que tiene then (comportamiento de Promise)
-      expect(typeof result.then).toBe('function');
-    });
   });
 
   describe('compressImage', () => {
@@ -123,107 +100,6 @@ describe('PhotoHelpers', () => {
       expect(result).toBe('');
       expect(consoleWarnSpy).toHaveBeenCalledWith('[PhotoHelpers] No se pudo obtener contexto 2D del canvas');
       consoleWarnSpy.mockRestore();
-    });
-  });
-
-  describe('updatePhotoPreview', () => {
-    it('exports updatePhotoPreview function', () => {
-      expect(typeof PhotoHelpers.updatePhotoPreview).toBe('function');
-    });
-
-    it('updates photo preview visibility (show)', () => {
-      // Re-run with jsdom's real document
-      const code2 = fs.readFileSync(
-        path.resolve(__dirname, '../../js/utils/photo-helpers.js'),
-        'utf8'
-      );
-      const ctx2 = vm.createContext({
-        window: {},
-        console,
-        document,
-        setTimeout,
-        clearTimeout,
-      });
-      vm.runInContext(code2, ctx2);
-      const PH = ctx2.window?.CPC?.PhotoHelpers || {};
-
-      const preview = document.getElementById('foto-preview');
-      const placeholder = document.getElementById('foto-placeholder');
-
-      PH.updatePhotoPreview('data:image/jpeg;base64,test');
-      expect(preview.style.display).toBe('block');
-      expect(placeholder.style.display).toBe('none');
-    });
-
-    it('hides photo preview when src is empty', () => {
-      const code2 = fs.readFileSync(
-        path.resolve(__dirname, '../../js/utils/photo-helpers.js'),
-        'utf8'
-      );
-      const ctx2 = vm.createContext({
-        window: {},
-        console,
-        document,
-        setTimeout,
-        clearTimeout,
-      });
-      vm.runInContext(code2, ctx2);
-      const PH = ctx2.window?.CPC?.PhotoHelpers || {};
-
-      const preview = document.getElementById('foto-preview');
-      PH.updatePhotoPreview('');
-      expect(preview.style.display).toBe('none');
-    });
-
-    it('uses custom element IDs when provided', () => {
-      document.body.innerHTML = `
-        <img id="custom-preview" style="display:none" />
-        <div id="custom-placeholder" style="display:none"></div>
-      `;
-      
-      const code2 = fs.readFileSync(
-        path.resolve(__dirname, '../../js/utils/photo-helpers.js'),
-        'utf8'
-      );
-      const ctx2 = vm.createContext({
-        window: {},
-        console,
-        document,
-        setTimeout,
-        clearTimeout,
-      });
-      vm.runInContext(code2, ctx2);
-      const PH = ctx2.window?.CPC?.PhotoHelpers || {};
-
-      const preview = document.getElementById('custom-preview');
-      const placeholder = document.getElementById('custom-placeholder');
-
-      PH.updatePhotoPreview('data:image/jpeg;base64,test', 'custom-preview', 'custom-placeholder');
-      expect(preview.style.display).toBe('block');
-      expect(placeholder.style.display).toBe('none');
-    });
-
-    it('handles missing elements gracefully', () => {
-      document.body.innerHTML = ''; // No elementos
-      
-      const code2 = fs.readFileSync(
-        path.resolve(__dirname, '../../js/utils/photo-helpers.js'),
-        'utf8'
-      );
-      const ctx2 = vm.createContext({
-        window: {},
-        console,
-        document,
-        setTimeout,
-        clearTimeout,
-      });
-      vm.runInContext(code2, ctx2);
-      const PH = ctx2.window?.CPC?.PhotoHelpers || {};
-
-      // No debería lanzar error cuando los elementos no existen
-      expect(() => {
-        PH.updatePhotoPreview('data:image/jpeg;base64,test');
-      }).not.toThrow();
     });
   });
 });

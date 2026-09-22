@@ -15,7 +15,7 @@ const Logger = (() => {
     FATAL: 4,
   };
   
-  let CURRENT_LEVEL = LOG_LEVELS.DEBUG; // Cambiar a INFO en producción
+  const CURRENT_LEVEL = LOG_LEVELS.DEBUG; // Cambiar a INFO en producción
   const MAX_LOG_ENTRIES = 1000; // Máximo de logs en memoria
   const LOG_STORAGE_KEY = 'cpc_app_logs';
   
@@ -83,10 +83,6 @@ const Logger = (() => {
   }
   
   // ─── Funciones de logging ───────────────────────────────────────────────
-  function debug(category, message, data) {
-    _log('DEBUG', category, message, data);
-  }
-  
   function info(category, message, data) {
     _log('INFO', category, message, data);
   }
@@ -97,10 +93,6 @@ const Logger = (() => {
   
   function error(category, message, data) {
     _log('ERROR', category, message, data);
-  }
-  
-  function fatal(category, message, data) {
-    _log('FATAL', category, message, data);
   }
   
   // ─── Función interna de logging ───────────────────────────────────────────
@@ -203,29 +195,6 @@ const Logger = (() => {
     return filtered;
   }
   
-  // ─── Limpiar logs ───────────────────────────────────────────────────────
-  function clearLogs() {
-    logEntries = [];
-    try {
-      localStorage.removeItem(LOG_STORAGE_KEY);
-    } catch (e) {
-      console.warn('[Logger] Error clearing logs:', e);
-    }
-    info('Logger', 'Logs limpiados');
-  }
-  
-  // ─── Exportar logs ───────────────────────────────────────────────────────
-  function exportLogs() {
-    const logs = getLogs();
-    const exportData = {
-      exportDate: new Date().toISOString(),
-      totalLogs: logs.length,
-      logs: logs,
-    };
-    
-    return JSON.stringify(exportData, null, 2);
-  }
-  
   // ─── Estadísticas de logs ───────────────────────────────────────────────
   function getStats() {
     const stats = {
@@ -249,27 +218,14 @@ const Logger = (() => {
     return stats;
   }
   
-  // ─── Establecer nivel de logging ───────────────────────────────────────
-  function setLevel(level) {
-    if (LOG_LEVELS[level] !== undefined) {
-      CURRENT_LEVEL = LOG_LEVELS[level];
-      info('Logger', `Nivel de logging cambiado a ${level}`);
-    }
-  }
-  
   // ─── Exportar funciones públicas ───────────────────────────────────────────
   return {
     init,
-    debug,
     info,
     warn,
     error,
-    fatal,
     getLogs,
-    clearLogs,
-    exportLogs,
     getStats,
-    setLevel,
   };
 })();
 

@@ -80,7 +80,7 @@ const BackupManager = (() => {
             }
             // Refresh data
             if (window.ModuloPersonal) {
-              window.ModuloPersonal._filtrarTabla();
+              window.ModuloPersonal.cargar();
             }
             if (window.ModuloDashboard) {
               window.ModuloDashboard.cargar();
@@ -173,17 +173,9 @@ const BackupManager = (() => {
     }
   }
   
-  function cleanup() {
-    // Sin listeners persistentes ni timers en este módulo.
-  }
-
   return {
     init,
-    cleanup,
     _handleExportBackup,
-    _handleImportBackup,
-    _handleExportTrabajadores,
-    _handleExportAsistencias,
   };
 })();
 

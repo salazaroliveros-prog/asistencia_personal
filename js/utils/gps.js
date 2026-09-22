@@ -134,23 +134,6 @@ const GPS = (() => {
     isAvailable() {
       return 'geolocation' in navigator;
     },
-
-    /**
-     * Request high accuracy location permission (for mobile)
-     * @returns {Promise<PermissionState>}
-     */
-    async requestPermission() {
-      if (!navigator.permissions) {
-        return 'prompt';
-      }
-
-      try {
-        const result = await navigator.permissions.query({ name: 'geolocation' });
-        return result.state;
-      } catch (e) {
-        return 'prompt';
-      }
-    },
   };
 })();
 

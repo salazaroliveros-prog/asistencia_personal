@@ -120,12 +120,6 @@
       }));
   }
 
-  function nextDevice(devices, currentId) {
-    if (!Array.isArray(devices) || devices.length < 2) return null;
-    const current = devices.findIndex((device) => device.id === currentId);
-    return devices[(current + 1 + devices.length) % devices.length];
-  }
-
   function describeError(error) {
     switch (error && error.name) {
       case 'NotAllowedError':
@@ -144,34 +138,6 @@
       default:
         return 'No se pudo iniciar la cámara. Selecciona otra cámara o vuelve a intentarlo.';
     }
-  }
-
-  function createController(videoElement) {
-    let operation = 0;
-    let activeStream = null;
-
-    async function start(options) {
-      const token = ++operation;
-      stopTracks(activeStream);
-      activeStream = null;
-      const result = await startStream(options);
-      if (token !== operation) {
-        stopTracks(result.stream);
-        return null;
-      }
-      activeStream = result.stream;
-      if (videoElement) videoElement.srcObject = activeStream;
-      return result;
-    }
-
-    function stop() {
-      operation += 1;
-      stopTracks(activeStream);
-      activeStream = null;
-      if (videoElement) videoElement.srcObject = null;
-    }
-
-    return { start, stop, getStream: () => activeStream };
   }
 
   function qrCandidates({ deviceId, facingMode = 'environment' } = {}) {
@@ -353,9 +319,7 @@
     startStream,
     listDevices,
     listCameras: listDevices,
-    nextDevice,
     describeError,
-    createController,
     createQrController,
     buildQrboxFn,
     safeQrBox,

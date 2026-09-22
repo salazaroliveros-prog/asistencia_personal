@@ -101,7 +101,6 @@ export interface ModuloPersonalContract {
   init(): void;
   cargar(): Promise<void>;
   cleanup(): void;
-  abrirModalCarne: (id: string) => void;
 }
 
 /** Contrato del módulo de asistencia. */
@@ -235,13 +234,7 @@ export interface CameraSessionContract {
   buildCandidates(options?: CameraOptions): MediaStreamConstraints[];
   startStream(options?: CameraOptions): Promise<{ stream: MediaStream; constraints: MediaStreamConstraints }>;
   listDevices(): Promise<CameraDevice[]>;
-  nextDevice(devices: CameraDevice[], currentId: string | null): CameraDevice | null;
   describeError(error: { name?: string } | null): string;
-  createController(videoElement: HTMLVideoElement | null): {
-    start(options?: CameraOptions): Promise<{ stream: MediaStream; constraints: MediaStreamConstraints } | null>;
-    stop(): void;
-    getStream(): MediaStream | null;
-  };
   createQrController(options: {
     Scanner: new (elementId: string) => ScannerLike;
     elementId: string;
@@ -267,21 +260,14 @@ export interface CameraSessionContract {
 
 /** Contrato de `window.CPC.MobileCameraOptimizer` (utils/mobile-camera-optimizer.js). */
 export interface MobileCameraOptimizerContract {
-  /** true si el UA/viewport indica un dispositivo móvil real. */
+  /** true si el UA indica un dispositivo móvil real. */
   isMobile(): boolean;
   getDeviceType(): 'ios' | 'android' | 'other';
   getOrientation(): 'portrait' | 'landscape';
-  getOptimalResolution(): { width: number; height: number };
-  getCameraCapabilities(track: MediaStreamTrack): Promise<MediaTrackCapabilities | null>;
-  applyOptimalSettings(track: MediaStreamTrack): Promise<boolean>;
   requestCameraPermissions(): Promise<{ granted: boolean; error?: Error }>;
-  getMobileOptimizedConstraints(options?: Record<string, unknown>): MediaStreamConstraints;
   /** Aplica `playsInline`/`muted`/`objectFit` y arranca la reproducción. */
   optimizeVideoElement(videoElement: HTMLVideoElement): void;
-  handleDeviceRotation(videoElement: HTMLVideoElement, track: MediaStreamTrack | null): void;
   getDeviceInfo(): { isMobile: boolean; deviceType: string; pixelRatio: number; memory?: number; [key: string]: unknown };
-  getSupportedFeatures(): Record<string, boolean>;
-  getOptimizationSuggestions(): string[];
 }
 
 /**
@@ -303,11 +289,7 @@ export interface MobileQRScannerContract {
   supportsTorch(): boolean;
   /** Devuelve el estado del flash tras el cambio (no un objeto). */
   toggleTorch(): Promise<boolean>;
-  setPerformanceMode(mode: 'low' | 'balanced' | 'high'): Promise<{ success: boolean; previousMode: string; currentMode: string }>;
   listCameras(): Promise<Array<{ id: string; label: string; groupId: string }>>;
-  selectCamera(deviceId: string): Promise<{ success: boolean; camera: string }>;
-  getStatus(): { active: boolean; selectedCamera: string | null; torchEnabled: boolean; performanceMode: string; supportsTorch: boolean };
-  getOptimizationSuggestions(): string[];
   /** Igual que `CameraSession.buildQrboxFn`. */
   buildQrboxFn(base?: QrboxOptions | number): QrboxFn;
   getPerformanceConfig(mode?: string): { fps: number; qrboxRatio: number; aspectRatio: number; disableFlip: boolean; maxScansPerSecond: number };
@@ -325,21 +307,15 @@ export interface CpcNamespace {
     /** Escapa `& < > "` para insertar de forma segura en HTML. */
     escHtml(value: unknown): string;
     formatTelefono(tel: string): string;
-    debounce<T extends (...args: never[]) => void>(fn: T, wait: number): (...args: Parameters<T>) => void;
     generateLocalId(prefix?: string, length?: number): string;
     dateToStr(date: Date): string;
   };
   DateHelpers: {
     toISODate(date: Date): string;
-    addDays(date: Date | number | string, days: number): Date;
-    startOfWeek(date: Date | number | string): Date;
-    isSameDay(a: Date | number | string, b: Date | number | string): boolean;
   };
   PhotoHelpers: {
-    fileToDataUrl(file: File): Promise<string>;
     /** Comprime manteniendo la relación de aspecto y devuelve un Data URL JPEG. */
     compressImage(img: HTMLImageElement, maxW?: number, maxH?: number, quality?: number): string;
-    updatePhotoPreview(src: string | null, previewId?: string, placeholderId?: string): void;
   };
   ValidationRules: {
     DPI_LENGTH: number;
@@ -384,22 +360,6 @@ declare global {
     PDFBuilder: PDFBuilderContract;
     QRGenerator: QRGeneratorContract;
     RequestOptimizer: RequestOptimizerContract;
-    AutoHealing: {
-      determineHealingStrategy: (errorAnalysis: { category: string }) => string[];
-      executeHealingStrategy: (strategyName: string) => Promise<{ success: boolean; message: string }>;
-      autoHeal: (errorAnalysis: { category: string }) => Promise<{ success: boolean; message: string }>;
-      diagnoseAndHeal: () => Promise<{ success: boolean; message: string }>;
-      setupAutoHealing: (threshold?: number) => void;
-      getAvailableStrategies: () => Record<string, { description: string; priority: string }>;
-    };
-    HardwareDiagnostics: {
-      checkCameraAvailability: () => Promise<{ available: boolean; error: string | null; suggestions: string[] }>;
-      checkGPSAvailability: () => Promise<{ available: boolean; error: string | null; suggestions: string[] }>;
-      checkNetworkAvailability: () => { online: boolean; connectionType: string | null; suggestions: string[] };
-      checkMemoryStatus: () => { available: boolean; percentage: string | null; suggestions: string[] };
-      checkStorageStatus: () => Promise<{ localStorage: { percentage: string }; indexedDB: { percentage: string }; suggestions: string[] }>;
-      runFullDiagnostics: () => Promise<{ timestamp: number; camera: unknown; gps: unknown; network: unknown; memory: unknown; storage: unknown; overallHealth: string }>;
-    };
     /**
      * utils/mobile-qr-scanner.js — escáner QR optimizado para móviles.
      *
@@ -426,135 +386,9 @@ declare global {
       handle: (error: Error, context?: string) => { type: string; message: string; recovery?: { type: string; message: string } };
       wrapAsync: (fn: () => Promise<unknown>, context?: string) => (...args: unknown[]) => Promise<unknown>;
       wrapSync: (fn: (...args: unknown[]) => unknown, context?: string) => (...args: unknown[]) => unknown;
-      ERROR_TYPES: { NETWORK: string; FIREBASE: string; VALIDATION: string; PERMISSION: string; OFFLINE: string; TIMEOUT: string; UNKNOWN: string };
-    };
-    AILogger: {
-      log: (level: string, context: string, message: string, error?: Error) => void;
-      analyzeError: (error: Error) => { category: string; severity: string; suggestion: string };
-      analyzePatterns: () => { recurrentPatterns: Record<string, { count: number; severity: string }>; recentErrors: Error[] };
-      checkRecurrentErrors: () => Array<{ type: string; category: string; count: number; severity: string; message: string; suggestion: string }>;
-      generateSuggestion: (errorAnalysis: { category: string; severity: string }) => { type: string; suggestion: string; suggestedCodeFix?: string };
-      analyzePerformance: () => { memoryUsage: number; cpuUsage: number; suggestions: string[] };
-      generateHealthReport: () => { overallHealth: string; issues: string[]; recommendations: string[] };
-      getErrorHistory: () => Error[];
-      getLogs: () => Array<{ level: string; context: string; message: string; timestamp: number }>;
-      clearHistory: () => void;
     };
     DashboardEnhancer: {
       init: () => void;
-      addTrendIndicator: (kpiCard: HTMLElement, trend: number) => void;
-      createSparkline: (container: HTMLElement, data: number[], color: string) => void;
-      enhanceCalendar: () => void;
-    };
-    Constants: {
-      TIME: {
-        TIMEOUT_MS: number;
-        GPS_TIMEOUT_MS: number;
-        GPS_MAX_AGE_MS: number;
-        SPLASH_MIN_DURATION_MS: number;
-        PAGE_TRANSITION_MS: number;
-        TOAST_DURATION_MS: number;
-        TOAST_ERROR_DURATION_MS: number;
-        DEBOUNCE_SEARCH_MS: number;
-        DEBOUNCE_AUTOCOMPLETE_MS: number;
-        CAMERA_CAPTURE_DELAY_MS: number;
-        ICON_RENDER_DELAY_MS: number;
-        AUTO_SYNC_DELAY_MS: number;
-      };
-      LIMIT: {
-        MAX_TOASTS: number;
-        MAX_AUTOCOMPLETE_RESULTS: number;
-        MAX_SIMULTANEOUS_DOWNLOADS: number;
-        API_RETRY_COUNT: number;
-        MAX_LOCAL_STORAGE_MB: number;
-        MAX_IMAGE_SIZE_BYTES: number;
-        MAX_IMAGE_DIMENSION: number;
-        IMAGE_QUALITY: number;
-      };
-      GPS: {
-        DEFAULT_RADIUS_METERS: number;
-        MIN_RADIUS_METERS: number;
-        MAX_RADIUS_METERS: number;
-        ACCURACY_THRESHOLD_M: number;
-        LATITUDE_MIN: number;
-        LATITUDE_MAX: number;
-        LONGITUDE_MIN: number;
-        LONGITUDE_MAX: number;
-      };
-      QR: {
-        DEFAULT_SIZE: number;
-        CARNE_SIZE: number;
-        CORRECTION_LEVEL: string;
-        FPS: number;
-        QRBOX_RATIO: number;
-        QRBOX_FALLBACK: number;
-        QRBOX_MIN_SIZE: number;
-      };
-      CAMERA: {
-        FACING_MODE: string;
-        MAX_RESOLUTION: { width: number; height: number };
-        MIN_RESOLUTION: { width: number; height: number };
-      };
-      FORM: {
-        DPI_LENGTH: number;
-        DPI_MIN_LENGTH: number;
-        NOMBRE_MIN_LENGTH: number;
-        NOMBRE_MAX_LENGTH: number;
-        TELEFONO_LENGTH: number;
-        TOLERANCIA_MIN: number;
-        TOLERANCIA_MAX: number;
-      };
-      UI: {
-        SIDEBAR_BREAKPOINT: number;
-        MOBILE_BREAKPOINT: number;
-        TABLET_BREAKPOINT: number;
-        DESKTOP_BREAKPOINT: number;
-        TOUCH_TARGET_MIN: number;
-        FONT_SIZE_BASE: number;
-        SPACING_UNIT: number;
-      };
-      SW: {
-        CACHE_VERSION: string;
-        CACHE_STATIC: string;
-        CACHE_DYNAMIC: string;
-        STALE_WHILE_REVALIDATE_AGE: number;
-      };
-      STATUS: {
-        SUCCESS: string;
-        ERROR: string;
-        WARNING: string;
-        INFO: string;
-        LOADING: string;
-        OFFLINE: string;
-        CONNECTED: string;
-        DISCONNECTED: string;
-      };
-      ATTENDANCE: {
-        STATUS: {
-          ON_TIME: string;
-          TOLERANCE: string;
-          LATE: string;
-          ABSENT: string;
-        };
-        TYPES: {
-          ENTRY: string;
-          BREAK_START: string;
-          BREAK_END: string;
-          EXIT: string;
-        };
-      };
-      COLORS: {
-        PRIMARY: string;
-        SECONDARY: string;
-        ACCENT_GREEN: string;
-        ACCENT_AMBER: string;
-        ACCENT_RED: string;
-        TEXT_MUTED: string;
-        TEXT_DARK: string;
-        WHITE: string;
-        GRAY_LIGHT: string;
-        GRAY_BORDER: string;
-      };
     };
   }
 }

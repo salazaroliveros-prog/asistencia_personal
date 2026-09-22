@@ -51,11 +51,8 @@ module.exports = {
     PDFBuilder: 'readonly',
     RequestOptimizer: 'readonly',
     DataExport: 'readonly',
-    AutoHealing: 'readonly',
-    HardwareDiagnostics: 'readonly',
     MobileQRScanner: 'readonly',
     ErrorHandler: 'readonly',
-    AILogger: 'readonly',
     DashboardEnhancer: 'readonly',
     
     // Library globals
@@ -79,16 +76,11 @@ module.exports = {
     
     // Helper globals
     CPC: 'readonly',
-    
-    // AI globals
-    AIEngine: 'readonly',
-    validateConfigGPS: 'readonly',
-    
+
     // Helper functions
     inicialesDeNombre: 'readonly',
     colorPorPuesto: 'readonly',
     htmlToImage: 'readonly',
-    Constants: 'readonly',
   },
   rules: {
     // Possible errors

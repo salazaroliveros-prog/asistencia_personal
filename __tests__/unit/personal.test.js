@@ -8,7 +8,7 @@ const vm = require('vm');
 
 const personalCode = fs.readFileSync(
   path.resolve(__dirname, '../../js/modules/personal.js'),
-  'utf8'
+  'utf8',
 );
 
 // `const` declarations in vm.runInContext are NOT exposed on the sandbox.

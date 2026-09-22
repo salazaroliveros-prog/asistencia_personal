@@ -5,7 +5,7 @@ const vm = require('vm');
 function loadCameraSession(mediaDevices) {
   const code = fs.readFileSync(
     path.resolve(__dirname, '../../js/utils/camera-session.js'),
-    'utf8'
+    'utf8',
   );
   const window = { CPC: {} };
   const context = vm.createContext({
@@ -36,7 +36,7 @@ describe('CameraSession', () => {
     const requests = [];
     const stream = { getTracks: () => [] };
     const CameraSession = loadCameraSession({
-      getUserMedia: async constraints => {
+      getUserMedia: async (constraints) => {
         requests.push(constraints);
         if (requests.length === 1) {
           const error = new Error('Selected camera unavailable');
@@ -81,7 +81,7 @@ describe('CameraSession', () => {
     const scanner = CameraSession.createQrController({ Scanner, elementId: 'reader', onSuccess: () => {} });
     await scanner.start({ facingMode: 'environment' });
 
-    expect(starts.map(item => item.camera)).toEqual([
+    expect(starts.map((item) => item.camera)).toEqual([
       { facingMode: 'environment' },
       { facingMode: 'user' },
     ]);

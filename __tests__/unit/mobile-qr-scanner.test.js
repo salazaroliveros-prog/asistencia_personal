@@ -5,7 +5,7 @@ const vm = require('vm');
 function loadMobileScanner() {
   const code = fs.readFileSync(
     path.resolve(__dirname, '../../js/utils/mobile-qr-scanner.js'),
-    'utf8'
+    'utf8',
   );
   const window = {};
   const context = vm.createContext({
@@ -39,7 +39,7 @@ describe('MobileQRScanner', () => {
   it('los modos de rendimiento definen fracciones amplias, no píxeles fijos', () => {
     const MobileQRScanner = loadMobileScanner();
 
-    ['low', 'balanced', 'high'].forEach(mode => {
+    ['low', 'balanced', 'high'].forEach((mode) => {
       const config = MobileQRScanner.getPerformanceConfig(mode);
       expect(config.qrbox).toBeUndefined();
       expect(config.qrboxRatio).toBeGreaterThanOrEqual(0.6);
@@ -62,7 +62,7 @@ describe('MobileQRScanner', () => {
     const MobileQRScanner = loadMobileScanner();
 
     expect(MobileQRScanner.getPerformanceConfig('turbo')).toEqual(
-      MobileQRScanner.getPerformanceConfig('balanced')
+      MobileQRScanner.getPerformanceConfig('balanced'),
     );
   });
 

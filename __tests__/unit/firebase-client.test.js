@@ -8,12 +8,12 @@ const vm = require('vm');
 
 const firebaseClientCode = fs.readFileSync(
   path.resolve(__dirname, '../../js/firebase-client.js'),
-  'utf8'
+  'utf8',
 );
 
 const firebaseConfigCode = fs.readFileSync(
   path.resolve(__dirname, '../../js/firebase-config.js'),
-  'utf8'
+  'utf8',
 );
 
 const wrappedClientCode = firebaseClientCode + '\nwindow.__FirebaseClient = typeof FirebaseClient !== "undefined" ? FirebaseClient : undefined;';

@@ -12,7 +12,7 @@ const vm = require('vm');
 // Cargar el módulo en un contexto con window simulado
 const code = fs.readFileSync(
   path.resolve(__dirname, '../../js/utils/string-helpers.js'),
-  'utf8'
+  'utf8',
 );
 const ctx = vm.createContext({
   window: {},
@@ -61,33 +61,6 @@ describe('StringHelpers', () => {
     it('returns original for non-8-digit numbers', () => {
       expect(StringHelpers.formatTelefono('123456')).toBe('123456');
       expect(StringHelpers.formatTelefono('1234567890')).toBe('1234567890');
-    });
-  });
-
-  describe('debounce', () => {
-    it('creates debounced functions', (done) => {
-      let callCount = 0;
-      const fn = () => callCount++;
-      const debounced = StringHelpers.debounce(fn, 50);
-      debounced();
-      debounced();
-      debounced();
-      expect(callCount).toBe(0);
-      setTimeout(() => {
-        expect(callCount).toBe(1);
-        done();
-      }, 100);
-    });
-
-    it('passes arguments to debounced function', (done) => {
-      let capturedArgs;
-      const fn = (...args) => { capturedArgs = args; };
-      const debounced = StringHelpers.debounce(fn, 50);
-      debounced('arg1', 'arg2');
-      setTimeout(() => {
-        expect(capturedArgs).toEqual(['arg1', 'arg2']);
-        done();
-      }, 100);
     });
   });
 
@@ -141,7 +114,7 @@ describe('StringHelpers', () => {
         new Date(2026, 11, 31), // Diciembre 31
       ];
       
-      dates.forEach(date => {
+      dates.forEach((date) => {
         const result = StringHelpers.dateToStr(date);
         expect(result).toMatch(/^\d{4}-\d{2}-\d{2}$/);
         const parts = result.split('-');

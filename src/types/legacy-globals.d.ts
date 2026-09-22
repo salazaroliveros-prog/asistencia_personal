@@ -129,18 +129,6 @@ export interface AppConfigLike {
 // MÓDULOS DE SOPORTE
 // ─────────────────────────────────────────────────────────────────────────────
 
-/** Contrato de `window.AIEngine` (utils/ai-engine.js). */
-export interface AiEngineContract {
-  initialize(config?: Record<string, unknown>): void;
-  handleGlobalError(error: Error, source?: string): Promise<{ handled: boolean; strategy?: string }>;
-  performHealthCheck(): Promise<Record<string, unknown>>;
-  generateSystemReport(): Promise<{ overallHealth: string; [key: string]: unknown }>;
-  setAutoHealing(enabled: boolean): void;
-  setLearning(enabled: boolean): void;
-  getStatus(): { initialized: boolean; autoHealingEnabled: boolean; learningEnabled: boolean; healthMonitoring: boolean };
-  cleanup(): void;
-}
-
 /** Resultado de una operación en lote. */
 export interface BulkResult {
   success: boolean;

@@ -610,7 +610,6 @@
 
   // ─── Exportar API ───────────────────────────────────────────────────────
   window.API = {
-    initialize: () => FirebaseClient.initialize(),
     ping: async () => {
       if (!FirebaseClient || !FirebaseClient.isReady()) {
         updateConnection(false);
