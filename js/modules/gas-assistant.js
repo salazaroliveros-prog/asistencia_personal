@@ -165,6 +165,8 @@ function doPost(e) {
   })).setMimeType(ContentService.MimeType.JSON);
 }`;
 
+  let _eventsBound = false;
+
   // ─── Inicialización ───────────────────────────────────────────────────────
   function init() {
     _bindEvents();
@@ -174,6 +176,9 @@ function doPost(e) {
 
   // ─── Eventos ─────────────────────────────────────────────────────────────
   function _bindEvents() {
+    if (_eventsBound) return;
+    _eventsBound = true;
+
     // Paso 1 → Paso 2
     document.getElementById('gas-start-step-2')?.addEventListener('click', () => {
       _goToStep(2);

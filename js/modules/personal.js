@@ -10,8 +10,10 @@ const ModuloPersonal = (() => {
   // ─── Estado local del módulo ──────────────────────────────────────────────
   let _filteredPersonal = [];
   let _editingId        = null;
+  let _guardando        = false;
   let _fotoBase64       = '';
   let _personalUnsubscribe = null; // Unsubscribe de AppState.on('personal')
+  let _eventsBound       = false;
 
   // ─── Helpers globales ─────────────────────────────────────────────────────
   const CPC = window.CPC || {};
@@ -41,6 +43,9 @@ const ModuloPersonal = (() => {
    * @returns {void}
    */
   function _bindEvents() {
+    if (_eventsBound) return;
+    _eventsBound = true;
+
     // Abrir modal nuevo trabajador
     const btnNuevo = document.getElementById('btn-nuevo-personal');
     if (btnNuevo) btnNuevo.addEventListener('click', () => _abrirModalNuevo());
@@ -407,6 +412,7 @@ const ModuloPersonal = (() => {
   }
 
   async function _guardarPersonal() {
+    if (_guardando) return;
     if (window.Logger) {
       window.Logger.info('ModuloPersonal', 'Iniciando guardado de trabajador', { 
         isEdit: !!_editingId,
@@ -468,6 +474,7 @@ const ModuloPersonal = (() => {
       payload.whatsapp = String(payload.whatsapp).replace(/\D/g, '');
     }
 
+    _guardando = true;
     const loader  = Alerts.loading(_editingId ? 'Guardando trabajador...' : 'Registrando trabajador...');
     const btnSave = document.getElementById('btn-guardar-personal');
     if (btnSave) btnSave.disabled = true;
@@ -497,6 +504,7 @@ const ModuloPersonal = (() => {
         Alerts.error(err.message, 'Error de conexión');
       }
     } finally {
+      _guardando = false;
       if (btnSave) btnSave.disabled = false;
     }
   }
@@ -1037,12 +1045,20 @@ const ModuloPersonal = (() => {
   }
 
   function _validateDPI(dpi) {
+    if (window.Validators && typeof Validators.validateDPI === 'function') {
+      const result = Validators.validateDPI(dpi);
+      if (!result.valid) {
+        _showError('p-dpi-error', result.error || 'DPI inválido');
+        return false;
+      }
+      _clearError('p-dpi-error');
+      return true;
+    }
     const clean = (dpi || '').replace(/\D/g, '');
     if (clean.length !== 13) {
       _showError('p-dpi-error', `El DPI/CUI debe tener exactamente 13 dígitos (actual: ${clean.length})`);
       return false;
     }
-    // Validación básica de que sea numérico
     if (!/^\d+$/.test(clean)) {
       _showError('p-dpi-error', 'El DPI debe contener solo números');
       return false;

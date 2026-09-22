@@ -221,6 +221,20 @@
     const cached = read(LS_KEYS.ATTENDANCE_CACHE, []);
     const appState = AppState.get('asistencias') || [];
     const combined = [...cached, ...appState.filter((a) => !cached.find((c) => c.ID_Marcacion === a.ID_Marcacion))];
+
+    // También revisar cola offline (doble clic en modo local)
+    const queue = read(LS_KEYS.OFFLINE_QUEUE, []);
+    for (const item of queue) {
+      if (item.type !== 'attendance-create' || !item.payload) continue;
+      const p = item.payload;
+      const qId = p.idTrabajador || p.ID_Trabajador || p.id;
+      const qTipo = p.tipoMarcacion || p.Tipo_Marcacion || p.tipo;
+      const qFecha = p.fecha || p.Fecha;
+      if (qId === record.ID_Trabajador && qTipo === record.Tipo_Marcacion && qFecha === record.Fecha) {
+        return true;
+      }
+    }
+
     const same = combined.find((c) =>
       c.ID_Trabajador === record.ID_Trabajador &&
       c.Tipo_Marcacion === record.Tipo_Marcacion &&

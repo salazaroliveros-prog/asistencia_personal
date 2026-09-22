@@ -1054,7 +1054,11 @@ window.addEventListener('unhandledrejection', (event) => {
     event.preventDefault();
     return;
   }
-  console.error('[App] Promesa rechazada no manejada:', reason);
+  if (window.Logger) {
+    window.Logger.error('App', 'Promesa rechazada no manejada', { message: msg });
+  } else {
+    console.error('[App] Promesa rechazada no manejada:', reason);
+  }
   if (reason && reason.message && !reason.message.includes('fetch')) {
     Alerts.error(reason.message || 'Error inesperado', 'Error');
   }
@@ -1067,5 +1071,13 @@ window.addEventListener('error', (event) => {
     event.preventDefault();
     return;
   }
-  console.error('[App] Error global:', event.message, event.filename, event.lineno);
+  if (window.Logger) {
+    window.Logger.error('App', 'Error global', {
+      message: event.message,
+      filename: event.filename,
+      lineno: event.lineno,
+    });
+  } else {
+    console.error('[App] Error global:', event.message, event.filename, event.lineno);
+  }
 });

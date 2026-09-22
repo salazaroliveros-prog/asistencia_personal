@@ -6,41 +6,18 @@
 
 const BackupManager = (() => {
   
+  /**
+   * UI de backup/export vive en ModuloAjustes (un solo binding).
+   * Este módulo solo expone API programática para no duplicar clics/toasts.
+   */
   function init() {
     if (window.Logger) {
-      window.Logger.info('BackupManager', 'Inicializando módulo de backup');
+      window.Logger.info('BackupManager', 'Listo (API programática; UI en Ajustes)');
     }
-    _bindEvents();
   }
-  
+
   function _bindEvents() {
-    const btnExportBackup = document.getElementById('btn-export-backup');
-    const btnImportBackup = document.getElementById('btn-import-backup');
-    const importInput = document.getElementById('import-backup-input');
-    const btnExportTrabajadores = document.getElementById('btn-export-trabajadores');
-    const btnExportAsistencias = document.getElementById('btn-export-asistencias');
-    
-    if (btnExportBackup) {
-      btnExportBackup.addEventListener('click', _handleExportBackup);
-    }
-    
-    if (btnImportBackup) {
-      btnImportBackup.addEventListener('click', () => {
-        if (importInput) importInput.click();
-      });
-    }
-    
-    if (importInput) {
-      importInput.addEventListener('change', _handleImportBackup);
-    }
-    
-    if (btnExportTrabajadores) {
-      btnExportTrabajadores.addEventListener('click', _handleExportTrabajadores);
-    }
-    
-    if (btnExportAsistencias) {
-      btnExportAsistencias.addEventListener('click', _handleExportAsistencias);
-    }
+    // Intencionalmente vacío: los botones #btn-export-* los maneja ajustes.js
   }
   
   function _handleExportBackup() {

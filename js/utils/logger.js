@@ -61,24 +61,9 @@ const Logger = (() => {
     // Generar ID de sesión
     const sessionId = 'session-' + Date.now() + '-' + Math.random().toString(36).substring(2, 8);
     
-    // Interceptar errores globales
-    if (typeof window !== 'undefined') {
-      window.addEventListener('error', (event) => {
-        error('Global Error', event.message, {
-          filename: event.filename,
-          lineno: event.lineno,
-          colno: event.colno,
-          stack: event.error?.stack,
-        });
-      });
-      
-      window.addEventListener('unhandledrejection', (event) => {
-        error('Unhandled Promise Rejection', event.reason?.message || 'Unknown rejection', {
-          reason: event.reason,
-          stack: event.reason?.stack,
-        });
-      });
-    }
+    // Interceptar errores globales: desactivado aquí.
+    // app.js registra un único handler con filtros (Firebase App / shutting down).
+    // Evita doble console.error y doble toast por el mismo fallo.
     
     initialized = true;
     info('Logger', 'Logger inicializado', { sessionId });

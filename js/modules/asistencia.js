@@ -13,6 +13,8 @@ const _ModuloAsistencia = (() => {
   let _pendingWorker     = null;  // Trabajador scaneado o seleccionado
   let _pendingMarcacion  = null;  // Para el flujo de horas extra
   let _audio             = null;
+  let _marking           = false; // Evita doble clic → marcaciones duplicadas
+  let _eventsBound       = false;
   const DEFAULT_GEOFENCE_RADIUS = 200; // meters
 
   // ─── Inicialización ───────────────────────────────────────────────────────
@@ -24,13 +26,16 @@ const _ModuloAsistencia = (() => {
     if (window.Logger) {
       window.Logger.info('ModuloAsistencia', 'Inicializando módulo de asistencia');
     }
+    const firstInit = !_eventsBound;
     _bindEvents();
     _setFechaHoy();
     _initAudio();
     _actualizarHorariosBotones();
 
     // Cuando cambie la config (ej: se guarden horarios en Ajustes) → actualizar botones
-    AppState.on('config', () => _actualizarHorariosBotones());
+    if (firstInit) {
+      AppState.on('config', () => _actualizarHorariosBotones());
+    }
   }
 
   /**
@@ -38,6 +43,9 @@ const _ModuloAsistencia = (() => {
    * @returns {void}
    */
   function _bindEvents() {
+    if (_eventsBound) return;
+    _eventsBound = true;
+
     // Tabs QR / Manual
     document.querySelectorAll('.tab').forEach((tab) => {
       tab.addEventListener('click', () => _switchTab(tab.dataset.tab));
@@ -500,6 +508,9 @@ const _ModuloAsistencia = (() => {
   }
 
   async function _enviarMarcacion(trabajador, tipo, horaOficial, estadoMarcacion, horasExtra = 0) {
+    if (_marking) return;
+    _marking = true;
+
     const config = AppState.get('config');
     const hoy    = AppState.today();
 
@@ -508,6 +519,7 @@ const _ModuloAsistencia = (() => {
     const gpsEnabled = config.GPS_Habilitado !== false; // Default to true
     let geofenceStatus = null;
 
+    try {
     if (gpsEnabled && GPS.isAvailable()) {
       try {
         const position = await GPS.getCurrentPosition();
@@ -613,6 +625,9 @@ const _ModuloAsistencia = (() => {
     } catch (err) {
       loader.close();
       Alerts.error(err.message, 'Error de conexión');
+    }
+    } finally {
+      _marking = false;
     }
   }
 

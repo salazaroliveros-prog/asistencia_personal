@@ -16,6 +16,8 @@
 
 const _ModuloAjustes = (() => {
 
+  let _eventsBound = false;
+
   // ─── Inicialización ───────────────────────────────────────────────────────
   function init() {
     _bindEvents();
@@ -23,6 +25,8 @@ const _ModuloAjustes = (() => {
   }
 
   function _bindEvents() {
+    if (_eventsBound) return;
+    _eventsBound = true;
     const btnFirebase    = document.getElementById('btn-connect-firebase');
     const btnLocal       = document.getElementById('btn-use-local');
     const btnLogin       = document.getElementById('btn-login-firebase');

@@ -140,7 +140,7 @@ const DataExport = (() => {
       'Puesto': p.Puesto || 'N/A',
       'Jefe Inmediato': p.Jefe_Inmediato || 'N/A',
       'Teléfono': p.Telefono || 'N/A',
-      'WhatsApp': p.Whatsapp || 'N/A',
+      'WhatsApp': p.WhatsApp || p.Whatsapp || 'N/A',
       'Dirección': p.Direccion || 'N/A',
       'Estado': p.Estado || 'Activo',
       'Fecha Registro': p.Fecha_Registro || 'N/A',

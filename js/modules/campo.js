@@ -16,6 +16,7 @@ const _ModuloCampo = (() => {
   let _currentWorker    = null;
   let _audio            = null;
   let _marking          = false;
+  let _eventsBound       = false;
 
   const MARK_TYPES = [
     { tipo: 'Entrada',        cls: 'campo-mark-entry',  icono: 'log-in',           horaKey: 'Hora_Entrada',        fallback: '07:00' },
@@ -25,6 +26,9 @@ const _ModuloCampo = (() => {
   ];
 
   function esc(str) {
+    if (window.CPC && window.CPC.StringHelpers && typeof window.CPC.StringHelpers.escHtml === 'function') {
+      return window.CPC.StringHelpers.escHtml(str);
+    }
     return String(str === null || str === undefined ? '' : str)
       .replace(/&/g, '&amp;').replace(/</g, '&lt;')
       .replace(/>/g, '&gt;').replace(/"/g, '&quot;');
@@ -40,6 +44,8 @@ const _ModuloCampo = (() => {
   }
 
   function _bindEvents() {
+    if (_eventsBound) return;
+    _eventsBound = true;
     const btnStart    = document.getElementById('campo-btn-scan');
     const btnStop     = document.getElementById('campo-btn-stop');
     const btnSwitch   = document.getElementById('campo-btn-switch-camera');

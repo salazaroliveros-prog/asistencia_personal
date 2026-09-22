@@ -241,7 +241,14 @@ const _ModuloDashboard = (() => {
 
     container.innerHTML = presentes.map((p) => {
       const ultima = ultimaMarcacion[p.ID_Trabajador];
-      const whatsappNum = (p.WhatsApp || p.Telefono || '').replace(/\D/g, '');
+      const whatsappNum = (() => {
+        const Persist = window.CPC && window.CPC.Persist;
+        const raw = p.WhatsApp || p.Telefono || '';
+        if (Persist && typeof Persist.normalizeWhatsApp === 'function') {
+          return Persist.normalizeWhatsApp(raw);
+        }
+        return String(raw).replace(/\D/g, '');
+      })();
 
       const iniciales = p.Nombre_Completo
         ? p.Nombre_Completo.split(' ').slice(0, 2).map((n) => n[0]).join('').toUpperCase()
@@ -379,7 +386,14 @@ const _ModuloDashboard = (() => {
 
     lista.innerHTML = grupo.items.map(({ trabajador: p, marcacion }) => {
       const horaStr = marcacion?.Hora_Real ? marcacion.Hora_Real.substring(0, 5) : '--';
-      const whatsappNum = (p.WhatsApp || p.Telefono || '').replace(/\D/g, '');
+      const whatsappNum = (() => {
+        const Persist = window.CPC && window.CPC.Persist;
+        const raw = p.WhatsApp || p.Telefono || '';
+        if (Persist && typeof Persist.normalizeWhatsApp === 'function') {
+          return Persist.normalizeWhatsApp(raw);
+        }
+        return String(raw).replace(/\D/g, '');
+      })();
 
       // Iniciales para el placeholder
       const iniciales = p.Nombre_Completo
@@ -804,7 +818,14 @@ const _ModuloDashboard = (() => {
             </h4>
             <div style="display:flex;flex-direction:column;gap:var(--space-2);margin-bottom:var(--space-5)">
               ${ausentes.map((p) => {
-    const wa  = (p.WhatsApp || p.Telefono || '').replace(/\D/g, '');
+    const wa = (() => {
+      const Persist = window.CPC && window.CPC.Persist;
+      const raw = p.WhatsApp || p.Telefono || '';
+      if (Persist && typeof Persist.normalizeWhatsApp === 'function') {
+        return Persist.normalizeWhatsApp(raw);
+      }
+      return String(raw).replace(/\D/g, '');
+    })();
     const ini = p.Nombre_Completo ? p.Nombre_Completo.split(' ').slice(0,2).map((n) => n[0]).join('').toUpperCase() : '??';
     const col = 'var(--color-accent-red)';
     return `
