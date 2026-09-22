@@ -674,7 +674,7 @@ input[type="month"].input-glass {
 #modal-historial .modal-body { overflow-y: auto; min-height: 0; }
 
 @media (max-width: 767px) {
-  .table-responsive { overflow-x: hidden; }
+  .table-responsive { overflow-x: auto; overscroll-behavior-x: contain; }
   .data-table { display: table; width: 100%; table-layout: fixed; }
   .data-table thead { display: table-header-group; }
   .data-table tbody, .data-table tbody tr { display: table-row-group; }
@@ -704,14 +704,17 @@ input[type="month"].input-glass {
     display: none;
   }
 
-  /* Personal: Foto · Nombre · Puesto · Estado · QR/Historial */
-  #personal-table thead th:nth-child(2), #personal-table tbody td:nth-child(2),
-  #personal-table thead th:nth-child(4), #personal-table tbody td:nth-child(4),
-  #personal-table thead th:nth-child(6), #personal-table tbody td:nth-child(6) { display: none; }
-  #personal-table thead th:nth-child(1) { width: 44px; }
-  #personal-table thead th:nth-child(3) { width: 38%; }
-  #personal-table thead th:nth-child(5) { width: 24%; }
-  #personal-table thead th:nth-child(7) { width: 18%; }
+  /* Personal: las 8 columnas se mantienen visibles y se recorren con scroll
+     horizontal, de modo que todo trabajador registrado sea consultable desde
+     la versión móvil (ID, DPI y Teléfono ya no quedan ocultos). */
+  #personal-table { min-width: 700px; }
+  #personal-table thead th:nth-child(1) { width: 40px; }
+  #personal-table thead th:nth-child(2) { width: 66px; }
+  #personal-table thead th:nth-child(3) { width: 170px; }
+  #personal-table thead th:nth-child(4) { width: 100px; }
+  #personal-table thead th:nth-child(5) { width: 126px; }
+  #personal-table thead th:nth-child(6) { width: 96px; }
+  #personal-table thead th:nth-child(7) { width: 82px; }
   #personal-table thead th:nth-child(8) { width: 84px; }
 
   /* Marcaciones: Trabajador · Estado · Acción principal */

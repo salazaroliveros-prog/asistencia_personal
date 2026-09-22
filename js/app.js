@@ -863,6 +863,7 @@ async function _initialConnection() {
     }));
 
     if (connection.success) {
+      _initPersonalRealtime();
       API.obtenerPersonal().catch((err) => console.warn('[App] Error obteniendo personal:', err.message));
       API.obtenerConfiguracion().catch((err) => console.warn('[App] Error obteniendo configuración:', err.message));
     }
@@ -874,6 +875,41 @@ async function _initialConnection() {
 // Helper delay function
 function delay(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+// Suscripción en tiempo real a la colección "personal". Complementa a
+// API.obtenerPersonal() (lectura puntual): si otro dispositivo registra o
+// edita un trabajador, esta pestaña actualiza AppState y la caché al instante
+// y la tabla de Personal se re-renderiza sola (ModuloPersonal escucha
+// AppState.on('personal')). Sin esto, el escritorio solo veía los cambios al
+// navegar, pulsar Refresh o recargar la página.
+let _personalRealtimeUnsub = null;
+let _personalRealtimeLast  = '';
+
+function _initPersonalRealtime() {
+  if (_personalRealtimeUnsub) return;
+  const client = typeof FirebaseClient !== 'undefined' ? FirebaseClient : (window.FirebaseClient || null);
+  if (!client || typeof client.subscribe !== 'function') return;
+
+  const onSnapshot = (records) => {
+    const snapshot = JSON.stringify(records ?? []);
+    if (!snapshot || snapshot === _personalRealtimeLast) return;
+    const current = JSON.stringify(AppState.get('personal') ?? []);
+    _personalRealtimeLast = snapshot;
+    if (snapshot === current) return;
+
+    AppState.set('personal', records);
+    try {
+      localStorage.setItem(LS_KEYS.PERSONAL_CACHE, JSON.stringify(records));
+    } catch (e) { /* ignorar quota errors */ }
+  };
+
+  try {
+    _personalRealtimeUnsub = client.subscribe('personal', onSnapshot);
+  } catch (err) {
+    console.warn('[App] Realtime de personal no disponible:', err.message);
+    _personalRealtimeUnsub = null;
+  }
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
