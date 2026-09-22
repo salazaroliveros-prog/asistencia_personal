@@ -299,6 +299,63 @@
 
     obtenerPersonal,
     obtenerAsistencias,
-    // ... resto de funciones con las mismas mejoras
+    // Agregar funciones CRUD faltantes para compatibilidad con ModuloPersonal
+    guardarTrabajador: async (payload) => {
+      try {
+        ensureGlobals();
+        const Persist = window.CPC && window.CPC.Persist;
+        const isEdit = !!(payload.id && (AppState.get('personal') || []).find((w) => w.ID_Trabajador === payload.id));
+        const existing = isEdit ? (AppState.get('personal') || []).find((w) => w.ID_Trabajador === payload.id) : null;
+
+        // Generar ID si no existe
+        if (!payload.id) {
+          payload.id = 'TRAB-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9);
+        }
+
+        const worker = {
+          ID_Trabajador: payload.id,
+          Nombre_Completo: payload.nombre,
+          DPI_CUI: payload.dpi,
+          Puesto: payload.puesto,
+          Jefe_Inmediato: payload.jefe,
+          Telefono: payload.telefono,
+          WhatsApp: payload.whatsapp,
+          Direccion: payload.direccion,
+          Fotografia: payload.fotografia || '',
+          Estado: 'Activo',
+          Fecha_Creacion: existing?.Fecha_Creacion || new Date().toISOString(),
+          Fecha_Actualizacion: new Date().toISOString()
+        };
+
+        const capability = Persist && Persist.getWriteCapability
+          ? Persist.getWriteCapability()
+          : { ok: connected(), reason: 'Sin capacidad de escritura en nube.', code: 'offline' };
+
+        // Guardar localmente
+        const personal = AppState.get('personal') || [];
+        const idx = personal.findIndex(p => p.ID_Trabajador === worker.ID_Trabajador);
+        if (idx >= 0) {
+          personal[idx] = worker;
+        } else {
+          personal.push(worker);
+        }
+        AppState.set('personal', personal);
+
+        if (!capability.ok) {
+          const msg = capability.code === 'auth-required'
+            ? (isEdit ? 'Guardado en este dispositivo. Inicia sesión en Ajustes para subirlo a la nube.' : 'Registrado en este dispositivo. Inicia sesión en Ajustes para subirlo a la nube.')
+            : (isEdit ? 'Trabajador actualizado localmente (se sincronizará al conectar).' : 'Trabajador registrado localmente (se sincronizará al conectar).');
+          return { success: true, data: worker, offline: true, message: msg, mode: 'queued', needsAuth: capability.needsAuth };
+        }
+
+        return { success: true, data: worker, message: isEdit ? 'Trabajador actualizado' : 'Trabajador registrado', mode: 'cloud' };
+      } catch (error) {
+        console.error('[API] Error guardarTrabajador:', error);
+        return { success: false, error: error.message, mode: 'error' };
+      }
+    },
+    // Aliases para compatibilidad
+    registrarPersonal: async (payload) => window.API.guardarTrabajador(payload),
+    actualizarPersonal: async (payload) => window.API.guardarTrabajador(payload),
   };
 })();
