@@ -690,7 +690,7 @@ async function _initialConnection() {
     }));
 
     if (connection.success) {
-      _initPersonalRealtime();
+      _initRealtimeSubscriptions();
       API.obtenerPersonal().catch((err) => console.warn('[App] Error obteniendo personal:', err.message));
       API.obtenerConfiguracion().catch((err) => console.warn('[App] Error obteniendo configuración:', err.message));
     }
@@ -737,6 +737,58 @@ function _initPersonalRealtime() {
     console.warn('[App] Realtime de personal no disponible:', err.message);
     _personalRealtimeUnsub = null;
   }
+}
+
+// Suscripción en tiempo real a la colección "asistencias". Complementa a
+// API.obtenerAsistencias() (lectura puntual por fecha): si otro dispositivo
+// registra una marcación, esta pestaña la recibe al instante, la fusiona en
+// la caché de asistencias (ATTENDANCE_CACHE) y actualiza AppState para que el
+// dashboard, la pantalla de asistencia y los reportes se re-rendericen solos.
+// La fusión es bilateral: los documentos remotos se combinan con la caché
+// local por ID_Marcacion, conservando marcaciones offline aún no sincronizadas.
+let _asistenciasRealtimeUnsub = null;
+let _asistenciasRealtimeLast  = '';
+
+function _initAsistenciasRealtime() {
+  if (_asistenciasRealtimeUnsub) return;
+  const client = typeof FirebaseClient !== 'undefined' ? FirebaseClient : (window.FirebaseClient || null);
+  if (!client || typeof client.subscribe !== 'function') return;
+
+  const onSnapshot = (records) => {
+    const snapshot = JSON.stringify(records ?? []);
+    if (!snapshot || snapshot === _asistenciasRealtimeLast) return;
+    _asistenciasRealtimeLast = snapshot;
+
+    const cached = (() => {
+      try { return JSON.parse(localStorage.getItem(LS_KEYS.ATTENDANCE_CACHE) || '[]'); } catch { return []; }
+    })();
+    const byId = new Map();
+    cached.forEach((a) => { if (a && a.ID_Marcacion) byId.set(a.ID_Marcacion, a); });
+    (records || []).forEach((a) => { if (a && a.ID_Marcacion) byId.set(a.ID_Marcacion, a); });
+    const merged = Array.from(byId.values());
+
+    try {
+      localStorage.setItem(LS_KEYS.ATTENDANCE_CACHE, JSON.stringify(merged));
+    } catch (e) { /* ignorar quota errors */ }
+
+    const current = JSON.stringify(AppState.get('asistencias') ?? []);
+    if (JSON.stringify(merged) !== current) AppState.set('asistencias', merged);
+  };
+
+  try {
+    _asistenciasRealtimeUnsub = client.subscribe('asistencias', onSnapshot);
+  } catch (err) {
+    console.warn('[App] Realtime de asistencias no disponible:', err.message);
+    _asistenciasRealtimeUnsub = null;
+  }
+}
+
+// Inicia todas las suscripciones real-time activas. Se llama al conectar en
+// el arranque y de nuevo cuando la sesión se vuelve activa (login tardío o
+// reconexión tras offline); cada init es idempotente por subscription.
+function _initRealtimeSubscriptions() {
+  _initPersonalRealtime();
+  _initAsistenciasRealtime();
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -842,6 +894,10 @@ function _initSyncIndicator() {
       const queue = API.getOfflineQueue();
       if (queue.length > 0) {
         _autoSync();
+      }
+      // Reiniciar suscripciones real-time (cubre login tardío / reconexión)
+      if (typeof _initRealtimeSubscriptions === 'function') {
+        _initRealtimeSubscriptions();
       }
     }
     _updateSyncUI();
