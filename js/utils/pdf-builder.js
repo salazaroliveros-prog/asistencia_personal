@@ -265,16 +265,20 @@ const PDFBuilder = (() => {
   function reporteDiario(fecha, asistencias, orientation = 'portrait') {
     const doc      = _newDoc(orientation);
     const personal = AppState.get('personal') || [];
+    const personalActivo = personal.filter((p) => p.Estado === 'Activo');
     const personalMap = new Map(personal.map((p) => [p.ID_Trabajador, p]));
+    const activosIds = new Set(personalActivo.map((p) => p.ID_Trabajador));
 
-    // Resumen
-    const presentes = new Set(asistencias.map((a) => a.ID_Trabajador)).size;
-    const total     = personal.length;
+    // Resumen (solo personal activo)
+    const presentesIds = new Set(
+      asistencias.filter((a) => activosIds.has(a.ID_Trabajador)).map((a) => a.ID_Trabajador),
+    );
+    const presentes = presentesIds.size;
+    const total = personalActivo.length;
     const porcentaje = total > 0 ? Math.round((presentes / total) * 100) : 0;
     const tardanzas = asistencias.filter((a) => a.Estado_Marcacion === 'Atraso').length;
-    const presentesIds = new Set(asistencias.map((a) => a.ID_Trabajador));
-    const ausentes = personal
-      .filter((p) => p.Estado === 'Activo' && !presentesIds.has(p.ID_Trabajador))
+    const ausentes = personalActivo
+      .filter((p) => !presentesIds.has(p.ID_Trabajador))
       .map((worker) => ({ __absence: true, worker }));
     const reporteRows = [...asistencias, ...ausentes];
 
@@ -378,15 +382,16 @@ const PDFBuilder = (() => {
   function reporteConsolidado(fechaInicio, fechaFin, asistencias, orientation = 'landscape') {
     const doc      = _newDoc(orientation);
     const personal = AppState.get('personal') || [];
+    const personalActivo = personal.filter((p) => p.Estado === 'Activo');
 
     const periodo = `${_formatDate(new Date(fechaInicio + 'T12:00:00'))} al ${_formatDate(new Date(fechaFin + 'T12:00:00'))}`;
 
-    let y = _drawHeader(doc, 'REPORTE CONSOLIDADO DE ASISTENCIA', periodo, personal.length);
+    let y = _drawHeader(doc, 'REPORTE CONSOLIDADO DE ASISTENCIA', periodo, personalActivo.length);
 
-    // ─── Consolidar datos por trabajador ─────────────────────────────────
+    // ─── Consolidar datos por trabajador (solo activos) ───────────────────
     const resumen = {};
 
-    personal.forEach((p) => {
+    personalActivo.forEach((p) => {
       resumen[p.ID_Trabajador] = {
         id:         p.ID_Trabajador,
         nombre:     p.Nombre_Completo,
@@ -444,7 +449,7 @@ const PDFBuilder = (() => {
     const totalHExtra   = Object.values(resumen).reduce((s, r) => s + r.horasExtra, 0);
 
     _drawSummaryRow(doc, [
-      ['Trabajadores',    String(personal.length)],
+      ['Trabajadores',    String(personalActivo.length)],
       ['Días Hábiles',    String(diasHabiles)],
       ['Total Ausencias', String(totalAusencias)],
       ['Total H. Extra',  totalHExtra.toFixed(1) + 'h'],
@@ -610,7 +615,13 @@ const PDFBuilder = (() => {
   function generarHTMLPreview(tipo, asistencias, periodo, orientation = 'portrait') {
     const config   = _getConfig();
     const personal = AppState.get('personal') || [];
-    const presentes = new Set(asistencias.map((a) => a.ID_Trabajador)).size;
+    const personalActivo = personal.filter((p) => p.Estado === 'Activo');
+    const activosIds = new Set(personalActivo.map((p) => p.ID_Trabajador));
+    const presentes = new Set(
+      asistencias.filter((a) => activosIds.has(a.ID_Trabajador)).map((a) => a.ID_Trabajador),
+    ).size;
+    const total = personalActivo.length;
+    const ausentes = Math.max(0, total - presentes);
 
     const filas = asistencias.map((a, idx) => `
       <tr>
@@ -640,9 +651,9 @@ const PDFBuilder = (() => {
           </div>
         </div>
         <div class="print-summary">
-          <div class="print-summary-item"><span class="print-summary-label">Total Personal</span><span class="print-summary-value">${personal.length}</span></div>
+          <div class="print-summary-item"><span class="print-summary-label">Total Personal</span><span class="print-summary-value">${total}</span></div>
           <div class="print-summary-item"><span class="print-summary-label">Presentes</span><span class="print-summary-value">${presentes}</span></div>
-          <div class="print-summary-item"><span class="print-summary-label">Ausentes</span><span class="print-summary-value">${personal.length - presentes}</span></div>
+          <div class="print-summary-item"><span class="print-summary-label">Ausentes</span><span class="print-summary-value">${ausentes}</span></div>
           <div class="print-summary-item"><span class="print-summary-label">Marcaciones</span><span class="print-summary-value">${asistencias.length}</span></div>
         </div>
         <table class="print-table">

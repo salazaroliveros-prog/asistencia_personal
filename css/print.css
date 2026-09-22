@@ -294,7 +294,47 @@
    CARNÉ DE IDENTIFICACIÓN PARA IMPRESIÓN
    ───────────────────────────────────────────────────────────────────────────── */
 @media print {
-  /* Cuando se imprime el carné */
+  /* El modal se oculta con display:none en reglas generales; hay que reactivarlo */
+  body.print-carne #modal-carne.modal-overlay {
+    display: flex !important;
+    position: fixed !important;
+    inset: 0 !important;
+    background: transparent !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    overflow: visible !important;
+    align-items: center;
+    justify-content: center;
+    z-index: 1 !important;
+  }
+
+  body.print-carne #modal-carne .modal.modal-carne {
+    display: block !important;
+    box-shadow: none !important;
+    background: transparent !important;
+    border: none !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    max-width: none !important;
+    width: auto !important;
+    overflow: visible !important;
+  }
+
+  body.print-carne #modal-carne .modal-header,
+  body.print-carne #modal-carne .modal-footer {
+    display: none !important;
+  }
+
+  body.print-carne #modal-carne .modal-body.carne-body {
+    display: flex !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    justify-content: center;
+    align-items: center;
+  }
+
   body.print-carne * {
     visibility: hidden;
   }
@@ -305,18 +345,58 @@
   }
 
   body.print-carne #carne-print-area {
-    position: fixed;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    width: 85.6mm;  /* Tamaño estándar carné */
+    page: carne;
+    position: relative;
+    width: 85.6mm;
+    max-width: 85.6mm;
     min-height: 54mm;
+    margin: 0 auto;
     border-radius: 8pt;
+    overflow: hidden;
+    box-shadow: none;
     print-color-adjust: exact;
     -webkit-print-color-adjust: exact;
   }
 
-  @page print-carne {
+  body.print-carne .carne-header,
+  body.print-carne .carne-body-content,
+  body.print-carne .carne-qr,
+  body.print-carne .carne-footer {
+    padding: 2.5mm 3mm !important;
+  }
+
+  body.print-carne .carne-foto,
+  body.print-carne .carne-foto-placeholder,
+  body.print-carne .carne-foto-wrapper {
+    width: 16mm !important;
+    height: 16mm !important;
+  }
+
+  body.print-carne .carne-foto-placeholder span {
+    font-size: 5mm !important;
+  }
+
+  body.print-carne .carne-datos h3,
+  body.print-carne .carne-empresa-info h4,
+  body.print-carne .carne-id,
+  body.print-carne #carne-dpi {
+    overflow-wrap: anywhere;
+    word-break: break-word;
+  }
+
+  body.print-carne .carne-qr {
+    min-height: 0 !important;
+  }
+
+  body.print-carne .carne-qr canvas,
+  body.print-carne .carne-qr img {
+    width: 26mm !important;
+    height: 26mm !important;
+    max-width: 26mm !important;
+  }
+
+  /* Named page: no sobrescribe el A4 de reportes */
+  @page carne {
     size: 90mm 60mm;
     margin: 0;
   }
@@ -334,7 +414,7 @@
 
 .print-preview-sheet {
   background: #fff;
-  color: var(--color-text-primary);
+  color: #1a1a2e;
   padding: 20mm 15mm;
   margin: 0 auto;
   max-width: 210mm;
@@ -344,8 +424,60 @@
   font-family: 'Arial', 'Helvetica', sans-serif;
 }
 
+.print-preview-sheet .print-table thead th {
+  color: #fff;
+}
+
+.print-preview-sheet .print-table tbody td {
+  color: #1a1a2e;
+}
+
+.print-preview-sheet .print-report-name,
+.print-preview-sheet .print-summary-value {
+  color: #003459;
+}
+
 .print-preview-sheet.landscape {
   max-width: 297mm;
   min-height: 210mm;
   padding: 15mm 12mm;
+}
+
+/* Impresión de la vista previa de reportes (no carnés) */
+@media print {
+  body.print-reporte #page-reportes {
+    display: block !important;
+  }
+
+  body.print-reporte #page-reportes > *:not(#reporte-preview-card) {
+    display: none !important;
+  }
+
+  body.print-reporte #reporte-preview-card {
+    display: block !important;
+    box-shadow: none !important;
+    background: #fff !important;
+    border: none !important;
+    padding: 0 !important;
+    margin: 0 !important;
+  }
+
+  body.print-reporte #reporte-preview-card .card-header,
+  body.print-reporte .preview-controls {
+    display: none !important;
+  }
+
+  body.print-reporte .reporte-preview-content {
+    background: #fff !important;
+    padding: 0 !important;
+    overflow: visible !important;
+  }
+
+  body.print-reporte .print-preview-sheet {
+    box-shadow: none !important;
+    max-width: none !important;
+    min-height: 0 !important;
+    padding: 0 !important;
+    margin: 0 !important;
+  }
 }

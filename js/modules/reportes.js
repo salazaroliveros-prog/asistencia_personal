@@ -81,14 +81,12 @@ const _ModuloReportes = (() => {
     const orientationSel = document.getElementById('preview-orientation');
     if (orientationSel) {
       orientationSel.addEventListener('change', () => {
-        // Re-render preview si hay uno activo
+        const isLandscape = orientationSel.value === 'landscape';
+        document.body.classList.toggle('print-landscape', isLandscape);
         const previewCard = document.getElementById('reporte-preview-card');
         if (previewCard && !previewCard.hidden) {
           const sheet = previewCard.querySelector('.print-preview-sheet');
-          if (sheet) {
-            const isLandscape = orientationSel.value === 'landscape';
-            sheet.classList.toggle('landscape', isLandscape);
-          }
+          if (sheet) sheet.classList.toggle('landscape', isLandscape);
         }
       });
     }
@@ -143,20 +141,44 @@ const _ModuloReportes = (() => {
   // ─────────────────────────────────────────────────────────────────────────
   // OBTENER DATOS
   // ─────────────────────────────────────────────────────────────────────────
+  let _avisoLocalMostrado = false;
+
   async function _obtenerDatos(fechaInicio, fechaFin) {
+    const filterRange = (list) => (list || []).filter((a) => {
+      const f = a.Fecha || '';
+      return f >= fechaInicio && f <= fechaFin;
+    });
+
+    // Modo local / sin sesión: usar caché completa (no solo el día en AppState)
     if (AppState.get('backendMode') !== 'firestore' || !AppState.get('connected')) {
-      Alerts.warning('Modo local activo. Los datos corresponden a este dispositivo.');
-      return AppState.get('asistencias') || [];
+      if (!_avisoLocalMostrado) {
+        Alerts.warning('Modo local activo. Los datos corresponden a este dispositivo.');
+        _avisoLocalMostrado = true;
+      }
+      let cached = [];
+      try {
+        cached = JSON.parse(localStorage.getItem(window.LS_KEYS?.ATTENDANCE_CACHE || 'cpc_attendance_cache') || '[]');
+      } catch (_e) {
+        cached = [];
+      }
+      const fromState = AppState.get('asistencias') || [];
+      const byId = new Map();
+      [...cached, ...fromState].forEach((a, idx) => {
+        if (!a) return;
+        const key = a.ID_Marcacion || a.ID_Registro || a.ID_Asistencia
+          || `${a.ID_Trabajador || 'x'}_${a.Fecha || ''}_${a.Tipo_Marcacion || ''}_${a.Hora_Real || idx}`;
+        byId.set(key, a);
+      });
+      return filterRange([...byId.values()]);
     }
 
     try {
       if (fechaInicio === fechaFin) {
         const result = await API.obtenerAsistencias(fechaInicio);
-        return result.success ? result.data : [];
-      } else {
-        const result = await API.obtenerAsistenciaRango(fechaInicio, fechaFin);
-        return result.success ? result.data : [];
+        return result.success ? (result.data || []) : [];
       }
+      const result = await API.obtenerAsistenciaRango(fechaInicio, fechaFin);
+      return result.success ? (result.data || []) : [];
     } catch (err) {
       Alerts.error(err.message, 'Error al cargar datos');
       return [];
@@ -191,6 +213,8 @@ const _ModuloReportes = (() => {
         previewCard.scrollIntoView({ behavior: 'smooth' });
       }
 
+      document.body.classList.toggle('print-landscape', orientation === 'landscape');
+
       if (window.lucide) lucide.createIcons({ nodes: [previewCard] });
 
     } catch (err) {
@@ -200,6 +224,15 @@ const _ModuloReportes = (() => {
   }
 
   function _imprimirPreview() {
+    const orientation = document.getElementById('preview-orientation')?.value || 'portrait';
+    const cleanup = () => {
+      document.body.classList.remove('print-reporte');
+      window.removeEventListener('afterprint', cleanup);
+    };
+    document.body.classList.toggle('print-landscape', orientation === 'landscape');
+    document.body.classList.add('print-reporte');
+    window.addEventListener('afterprint', cleanup);
+    setTimeout(cleanup, 2000);
     window.print();
   }
 

@@ -614,50 +614,86 @@ const ModuloPersonal = (() => {
       return;
     }
 
-    const config = AppState.get('config');
+    const config = AppState.get('config') || {};
 
-    // Llenar datos del carné
-    document.getElementById('carne-nombre').textContent    = t.Nombre_Completo || '--';
-    document.getElementById('carne-puesto').textContent    = t.Puesto || '--';
-    document.getElementById('carne-id').textContent        = t.ID_Trabajador || '--';
-    document.getElementById('carne-dpi').textContent       = t.DPI_CUI || '--';
-    document.getElementById('carne-empresa-nombre').textContent = config.Nombre_App || APP_NAME;
-    document.getElementById('carne-obra-nombre').textContent    = config.Nombre_Obra || 'Obra Principal';
+    document.getElementById('carne-nombre').textContent = t.Nombre_Completo || '--';
+    document.getElementById('carne-puesto').textContent = t.Puesto || '--';
+    document.getElementById('carne-id').textContent = t.ID_Trabajador || '--';
+    document.getElementById('carne-dpi').textContent = t.DPI_CUI || '--';
+    document.getElementById('carne-empresa-nombre').textContent = config.Nombre_App || (typeof APP_NAME !== 'undefined' ? APP_NAME : 'CONTROL PERSONAL CAMPO');
+    document.getElementById('carne-obra-nombre').textContent = config.Nombre_Obra || 'Obra Principal';
 
-    // Foto del trabajador en carné
     const carneFoto = document.getElementById('carne-foto');
+    const placeholder = document.getElementById('carne-foto-placeholder');
+    const inicialesEl = document.getElementById('carne-foto-iniciales');
+    const iniciales = (typeof inicialesDeNombre === 'function')
+      ? inicialesDeNombre(t.Nombre_Completo || '')
+      : String(t.Nombre_Completo || '?').split(/\s+/).slice(0, 2).map((w) => w[0] || '').join('').toUpperCase();
+
     if (t.Fotografia_URL) {
-      carneFoto.src = t.Fotografia_URL;
-      carneFoto.style.display = 'block';
+      if (carneFoto) {
+        carneFoto.onerror = () => {
+          carneFoto.removeAttribute('src');
+          carneFoto.hidden = true;
+          carneFoto.style.display = 'none';
+          if (inicialesEl) inicialesEl.textContent = iniciales || '??';
+          if (placeholder) placeholder.hidden = false;
+        };
+        carneFoto.src = t.Fotografia_URL;
+        carneFoto.hidden = false;
+        carneFoto.style.display = 'block';
+      }
+      if (placeholder) placeholder.hidden = true;
     } else {
-      carneFoto.src = '';
-      carneFoto.style.display = 'none';
+      if (carneFoto) {
+        carneFoto.onerror = null;
+        carneFoto.removeAttribute('src');
+        carneFoto.hidden = true;
+        carneFoto.style.display = 'none';
+      }
+      if (inicialesEl) inicialesEl.textContent = iniciales || '??';
+      if (placeholder) placeholder.hidden = false;
     }
 
-    // Logo en carné
     const carneLogo = document.getElementById('carne-logo');
-    if (config.Logo_Base64) {
-      carneLogo.src = config.Logo_Base64;
-      carneLogo.hidden = false;
-    } else {
-      carneLogo.hidden = true;
+    if (carneLogo) {
+      if (config.Logo_Base64) {
+        carneLogo.src = config.Logo_Base64;
+        carneLogo.hidden = false;
+      } else {
+        carneLogo.removeAttribute('src');
+        carneLogo.hidden = true;
+      }
     }
 
-    // Abrir modal PRIMERO para que el contenedor tenga layout real en el DOM
     _abrirModal('modal-carne');
 
-    // Limpiar QR previo
     const qrContainer = document.getElementById('carne-qr-container');
     if (qrContainer) qrContainer.innerHTML = '';
 
-    // renderCarneQR maneja su propio timing con rAF interno
-    QRGenerator.renderCarneQR(t);
+    requestAnimationFrame(() => {
+      QRGenerator.renderCarneQR(t);
+    });
   }
 
   function _imprimirCarne() {
+    const cleanup = () => {
+      document.body.classList.remove('print-carne');
+      const injected = document.getElementById('print-carne-page-style');
+      if (injected) injected.remove();
+      window.removeEventListener('afterprint', cleanup);
+    };
+    // Fallback @page para navegadores sin soporte de page named
+    if (!document.getElementById('print-carne-page-style')) {
+      const style = document.createElement('style');
+      style.id = 'print-carne-page-style';
+      style.textContent = '@media print{@page{size:90mm 60mm;margin:0}}';
+      document.head.appendChild(style);
+    }
     document.body.classList.add('print-carne');
+    window.addEventListener('afterprint', cleanup);
+    setTimeout(cleanup, 2000);
     window.print();
-    document.body.classList.remove('print-carne');
   }
 
   async function _descargarCarnePNG() {
@@ -677,29 +713,47 @@ const ModuloPersonal = (() => {
     }
 
     try {
-      const canvas = await html2canvas(carneEl, {
-        scale:           3,          // Alta resolución para impresión
-        useCORS:         true,       // Para imágenes externas (fotos)
-        allowTaint:      true,
-        backgroundColor: '#003459',  // Fondo del carné
-        logging:         false,
+      await new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
+
+      // Esperar a que el QR tenga canvas (evita PNG sin código)
+      await new Promise((resolve) => {
+        const start = Date.now();
+        const tick = () => {
+          if (carneEl.querySelector('canvas') || Date.now() - start > 1500) resolve();
+          else requestAnimationFrame(tick);
+        };
+        tick();
       });
 
-      // Obtener nombre del trabajador desde el carné para el filename
-      const nombre = document.getElementById('carne-nombre')?.textContent?.trim() || 'trabajador';
-      const id     = document.getElementById('carne-id')?.textContent?.trim()     || '';
-      const slug   = (nombre + '-' + id).toLowerCase().replace(/[^a-z0-9]/g, '-');
+      const canvas = await html2canvas(carneEl, {
+        scale: 3,
+        useCORS: true,
+        allowTaint: true,
+        backgroundColor: '#003459',
+        logging: false,
+        width: carneEl.offsetWidth,
+        height: carneEl.scrollHeight,
+        onclone: (_doc, cloned) => {
+          cloned.style.width = '320px';
+          cloned.style.maxWidth = '320px';
+          cloned.style.margin = '0';
+          cloned.style.transform = 'none';
+          cloned.style.overflow = 'hidden';
+        },
+      });
 
-      // Descargar
-      const link     = document.createElement('a');
-      link.download  = `carne-${slug}.png`;
-      link.href      = canvas.toDataURL('image/png');
+      const nombre = document.getElementById('carne-nombre')?.textContent?.trim() || 'trabajador';
+      const id = document.getElementById('carne-id')?.textContent?.trim() || '';
+      const slug = (nombre + '-' + id).toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+
+      const link = document.createElement('a');
+      link.download = `carne-${slug || 'trabajador'}.png`;
+      link.href = canvas.toDataURL('image/png');
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
 
       Alerts.success(`Carné de ${nombre} descargado como imagen PNG`);
-
     } catch (err) {
       Alerts.error('Error al generar la imagen: ' + err.message);
     } finally {
