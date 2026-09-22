@@ -452,7 +452,44 @@
       return { success: true, user: credential.user };
     } catch (error) {
       _setState('disconnected');
-      return { success: false, error: error.message };
+      return { success: false, error: error.message, code: error.code };
+    }
+  }
+
+  /**
+   * Inicio de sesión con una cuenta de Google real (OAuth popup).
+   *
+   * Google valida el correo/contraseña del usuario, así NO es necesario que la
+   * cuenta exista como usuario email/password en Firebase Auth: basta habilitar
+   * el proveedor "Google" en Firebase Console → Authentication → Sign-in method.
+   * Firestore rules ya tratan como operador a cualquier usuario autenticado
+   * (isAuthorizedOperator), por lo que el usuario Google puede leer y marcar.
+   *
+   * Errores devueltos con `code` para que la UI traduzca: popup-closed-by-user,
+   * cancelled-popup-request, popup-blocked, account-exists-with-different-credential.
+   * @returns {Promise<{success: boolean, user?: Object, error?: string, code?: string}>}
+   */
+  async function signInWithGoogle() {
+    if (!auth) return { success: false, error: 'Auth no inicializado', code: 'auth/internal-error' };
+    try {
+      if (typeof auth.signInWithPopup !== 'function') {
+        return { success: false, error: 'El SDK de Auth no soporta signInWithPopup.', code: 'auth/operation-not-supported' };
+      }
+      if (!authPersistenceReady) await _configureAuthPersistence();
+
+      const GoogleAuthProvider =
+        (firebase && firebase.auth && firebase.auth.GoogleAuthProvider) ||
+        (firebase && firebase.auth && firebase.auth() && firebase.auth().GoogleAuthProvider);
+      if (!GoogleAuthProvider) {
+        return { success: false, error: 'Proveedor Google no disponible en el SDK.', code: 'auth/provider-unavailable' };
+      }
+
+      const credential = await auth.signInWithPopup(new GoogleAuthProvider());
+      _setState('connected');
+      return { success: true, user: credential.user };
+    } catch (error) {
+      _setState('disconnected');
+      return { success: false, error: error.message, code: error.code };
     }
   }
 
@@ -500,6 +537,7 @@
     configure,
     signInAnonymously,
     signInWithEmail,
+    signInWithGoogle,
     signOut,
     getCurrentUser,
     onAuthStateChanged,

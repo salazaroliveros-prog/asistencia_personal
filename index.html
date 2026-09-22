@@ -1058,6 +1058,9 @@
               <button type="button" id="btn-login-firebase" class="btn btn-primary btn-block">
                 <i data-lucide="log-in" aria-hidden="true"></i> Iniciar sesión segura
               </button>
+              <button type="button" id="btn-login-google" class="btn btn-outline btn-block">
+                <i data-lucide="chrome" aria-hidden="true"></i> Ingresar con Google (Gmail)
+              </button>
               <button type="button" id="btn-logout-firebase" class="btn btn-secondary btn-block" hidden>
                 <i data-lucide="log-out" aria-hidden="true"></i> Cerrar sesión Firebase
               </button>
@@ -1077,8 +1080,8 @@
                 <h3><i data-lucide="circle-help" aria-hidden="true"></i> Configuración inicial</h3>
               </div>
               <div class="assistant-intro">
-                <p class="text-muted">En Firebase habilita Firestore Database y Authentication → Email/Password. Luego copia los datos de tu aplicación web.</p>
-                <p class="text-muted">Las reglas incluidas en <code>firestore.rules</code> deben publicarse en tu proyecto. No se solicita ninguna contraseña de Google.</p>
+                <p class="text-muted">En Firebase habilita Firestore Database y Authentication → Email/Password (y "Google" si quieres que los operadores entren con su cuenta Gmail). Luego copia los datos de tu aplicación web.</p>
+                <p class="text-muted">Las reglas incluidas en <code>firestore.rules</code> deben publicarse en tu proyecto. No se solicita ninguna contraseña de Google fuera de la cuenta del operador.</p>
               </div>
             </div>
 

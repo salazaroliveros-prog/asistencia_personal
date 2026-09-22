@@ -23,6 +23,23 @@ function createMockContext(overrides = {}) {
   // Permite simular 'sin sesión' (authUser: null) además del usuario por defecto.
   const authUser = overrides.authUser === undefined ? { uid: 'test' } : overrides.authUser;
 
+  const mockGoogleProvider = function GoogleAuthProvider() {};
+  mockGoogleProvider.credential = () => null;
+
+  const authInstance = {
+    signInAnonymously: () => Promise.resolve({ user: { uid: 'test' } }),
+    signInWithPopup: () => Promise.resolve({
+      user: { uid: 'google-uid', email: 'worker@google.com' },
+    }),
+    GoogleAuthProvider: mockGoogleProvider,
+    currentUser: authUser,
+    onAuthStateChanged: (cb) => {
+      cb(authUser);
+      return () => {};
+    },
+    setPersistence: () => Promise.resolve(),
+  };
+
   const mockFirebase = {
     apps: [],
     initializeApp: (config) => {
@@ -47,16 +64,9 @@ function createMockContext(overrides = {}) {
         get: () => Promise.resolve({ docs: [] }),
       }),
     }),
-    auth: () => ({
-      signInAnonymously: () => Promise.resolve({ user: { uid: 'test' } }),
-      currentUser: authUser,
-      onAuthStateChanged: (cb) => {
-        cb(authUser);
-        return () => {};
-      },
-      setPersistence: () => Promise.resolve(),
-    }),
+    auth: () => authInstance,
   };
+  mockFirebase.auth.GoogleAuthProvider = mockGoogleProvider;
 
   const mockLocalStorage = {};
   const mockAppState = {
@@ -276,5 +286,23 @@ describe('FirebaseClient', () => {
     // onAuthStateChanged responde de forma síncrona con usuario → 'connected'
     expect(window.FirebaseClient.getConnectionState()).toBe('connected');
     expect(window.FirebaseClient.isReady()).toBe(true);
+  });
+
+  test('signInWithGoogle inicia sesión con una cuenta de Google', async () => {
+    const { window } = runFirebaseClient();
+    const result = await window.FirebaseClient.signInWithGoogle();
+    expect(result.success).toBe(true);
+    expect(result.user.email).toBe('worker@google.com');
+    expect(window.FirebaseClient.getConnectionState()).toBe('connected');
+  });
+
+  test('signInWithGoogle devuelve error con code cuando el popup se cancela', async () => {
+    const { window, context } = runFirebaseClient();
+    context.globalThis.firebase.auth().signInWithPopup = () =>
+      Promise.reject({ code: 'auth/popup-closed-by-user', message: 'Firebase: Auth/popup-closed-by-user.' });
+    const result = await window.FirebaseClient.signInWithGoogle();
+    expect(result.success).toBe(false);
+    expect(result.code).toBe('auth/popup-closed-by-user');
+    expect(window.FirebaseClient.getConnectionState()).toBe('disconnected');
   });
 });

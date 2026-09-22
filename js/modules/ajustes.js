@@ -26,10 +26,12 @@ const _ModuloAjustes = (() => {
     const btnFirebase    = document.getElementById('btn-connect-firebase');
     const btnLocal       = document.getElementById('btn-use-local');
     const btnLogin       = document.getElementById('btn-login-firebase');
+    const btnLoginGoogle = document.getElementById('btn-login-google');
     const btnLogout      = document.getElementById('btn-logout-firebase');
     const btnGasAssistant = document.getElementById('btn-open-gas-assistant');
 
     if (btnLogin)        btnLogin.addEventListener('click', _iniciarSesionFirebase);
+    if (btnLoginGoogle)  btnLoginGoogle.addEventListener('click', _iniciarSesionGoogle);
     if (btnLogout)       btnLogout.addEventListener('click', _cerrarSesionFirebase);
     if (btnFirebase)     btnFirebase.addEventListener('click', _conectarFirebase);
     if (btnLocal)        btnLocal.addEventListener('click', _usarModoLocal);
@@ -322,10 +324,21 @@ const _ModuloAjustes = (() => {
    */
   function _traducirErrorAuth(msg) {
     const lower = msg.toLowerCase();
-    if (lower.includes('user-not-found') || lower.includes('no user record'))
-      return 'No existe una cuenta con ese correo electrónico.';
-    if (lower.includes('wrong-password') || lower.includes('invalid-credential') || lower.includes('invalid credential'))
+    if (lower.includes('popup-closed-by-user') || lower.includes('popup closed') || lower.includes('cancelled-popup')) {
+      return 'Autenticación cancelada.';
+    }
+    if (lower.includes('popup-blocked')) {
+      return 'El navegador bloqueó la ventana de Google. Permite ventanas emergentes e inténtalo de nuevo.';
+    }
+    if (lower.includes('account-exists-with-different-credential') || lower.includes('account exists with different')) {
+      return 'Ya existe una cuenta con ese correo. Inicia sesión con "Iniciar sesión segura" (correo y contraseña) o vincula la cuenta en Firebase Console.';
+    }
+    if (lower.includes('user-not-found') || lower.includes('no user record') || lower.includes('email not found'))
+      return 'No existe una cuenta con ese correo electrónico en Firebase Auth.';
+    if (lower.includes('wrong-password') || lower.includes('invalid-password'))
       return 'Contraseña incorrecta. Verifica tus credenciales.';
+    if (lower.includes('invalid-credential') || lower.includes('invalid credential'))
+      return 'Correo o contraseña no válidos. La cuenta debe existir como operador en Firebase Auth (crea la del administrador con scripts/setup-operator-account.js) o usa "Ingresar con Google".';
     if (lower.includes('too-many-requests') || lower.includes('too many'))
       return 'Demasiados intentos fallidos. Espera unos minutos antes de intentarlo de nuevo.';
     if (lower.includes('user-disabled'))
@@ -338,6 +351,59 @@ const _ModuloAjustes = (() => {
       return 'Ya existe una cuenta con este correo electrónico.';
     // Mensaje genérico si no se reconoce el error
     return 'No se pudo iniciar sesión. Verifica tus credenciales e inténtalo de nuevo.';
+  }
+
+  /**
+   * Inicio de sesión con cuenta de Google (OAuth popup). Google valida el
+   * correo/contraseña real del usuario, por lo que NO necesita estar registrado
+   * como usuario email/password en Firebase Auth (solo el proveedor "Google"
+   * habilitado en Firebase Console → Authentication → Sign-in method).
+   */
+  async function _iniciarSesionGoogle() {
+    const statusEl = document.getElementById('connection-status-detail');
+    const btnGoogle = document.getElementById('btn-login-google');
+
+    if (btnGoogle) btnGoogle.disabled = true;
+    if (statusEl) statusEl.textContent = '⏳ Esperando autenticación de Google…';
+
+    try {
+      const result = await FirebaseClient.signInWithGoogle();
+      if (!result.success) {
+        const code = (result.code || '').toLowerCase();
+        if (code.includes('cancelled')) {
+          if (statusEl) statusEl.textContent = '⏸ Autenticación con Google cancelada.';
+          return;
+        }
+        AppState.set('connected', false);
+        const msg = _traducirErrorAuth(result.code || result.error || '');
+        if (statusEl) {
+          statusEl.className = 'connection-status-detail error';
+          statusEl.textContent = `❌ ${msg}`;
+        }
+        Alerts.error(msg, 'Error de autenticación');
+        return;
+      }
+
+      AppState.set('connected', true);
+      AppState.set('backendMode', 'firestore');
+      _actualizarEstadoAuth();
+      _actualizarEstadoConexion();
+      await API.ping();
+      _sincronizarEstadoConexion();
+      _actualizarEstadoConexion();
+      await Promise.all([API.obtenerPersonal(), API.obtenerConfiguracion()]);
+      Alerts.success('Sesión de Google iniciada.');
+    } catch (error) {
+      AppState.set('connected', false);
+      const msg = _traducirErrorAuth(error.message || error.code || '');
+      if (statusEl) {
+        statusEl.className = 'connection-status-detail error';
+        statusEl.textContent = `❌ ${msg}`;
+      }
+      Alerts.error(msg, 'Error de autenticación');
+    } finally {
+      if (btnGoogle) btnGoogle.disabled = false;
+    }
   }
 
   /**
@@ -379,10 +445,12 @@ const _ModuloAjustes = (() => {
   function _actualizarEstadoAuth() {
     const user   = FirebaseClient.getCurrentUser?.();
     const login  = document.getElementById('btn-login-firebase');
+    const loginGoogle = document.getElementById('btn-login-google');
     const logout = document.getElementById('btn-logout-firebase');
     const email  = document.getElementById('firebase-auth-email');
-    if (login)  login.hidden  = Boolean(user);
-    if (logout) logout.hidden = !user;
+    if (login)        login.hidden        = Boolean(user);
+    if (loginGoogle)  loginGoogle.hidden  = Boolean(user);
+    if (logout)       logout.hidden       = !user;
     if (email && user?.email) email.value = user.email;
   }
 
