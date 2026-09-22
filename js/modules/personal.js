@@ -1568,3 +1568,7 @@ const ModuloPersonal = (() => {
     },
   };
 })();
+
+if (typeof window !== 'undefined') {
+  window.ModuloPersonal = ModuloPersonal;
+}

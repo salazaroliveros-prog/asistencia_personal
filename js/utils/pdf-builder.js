@@ -675,3 +675,7 @@ const PDFBuilder = (() => {
     generarHTMLPreview,
   };
 })();
+
+if (typeof window !== 'undefined') {
+  window.PDFBuilder = PDFBuilder;
+}

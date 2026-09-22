@@ -284,11 +284,6 @@ const _ModuloReportes = (() => {
     return d;
   }
 
-  function _formatDiaLabel(fechaStr) {
-    const d = new Date(fechaStr + 'T12:00:00');
-    return d.toLocaleDateString('es-GT', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
-  }
-
   // Cargar al entrar al módulo
   async function cargar() {
     _setFechasDefault();

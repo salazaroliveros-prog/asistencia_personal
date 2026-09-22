@@ -622,7 +622,6 @@
       }
       const healthy = await FirebaseClient.checkHealth();
       updateConnection(healthy);
-      if (healthy) AppState.set('backendMode', 'firestore');
       return healthy ? { success: true, mode: 'firestore' } : { success: false, mode: 'local' };
     },
     obtenerPersonal,

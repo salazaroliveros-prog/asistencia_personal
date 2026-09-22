@@ -220,6 +220,7 @@ const _ModuloAsistencia = (() => {
           Scanner: Html5Qrcode,
           elementId: 'qr-reader',
           onSuccess: _onQRSuccess,
+          onError: _onQRError,
         });
       }
       _setScanStatus('Iniciando cámara…');

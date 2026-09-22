@@ -356,3 +356,7 @@ const Alerts = (() => {
   // API pública
   return { toast, success, error, warning, info, marcacion, loading, confirm };
 })();
+
+if (typeof window !== 'undefined') {
+  window.Alerts = Alerts;
+}

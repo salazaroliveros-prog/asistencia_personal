@@ -36,23 +36,6 @@ document.addEventListener('DOMContentLoaded', async () => {
       });
     }
 
-    // 1.7 Inicializar sistema de predicción de IA
-    if (typeof AIPredictor !== 'undefined') {
-      AIPredictor.setThresholds({
-        errorRate: 0.1,
-        memoryUsage: 0.8,
-        networkLatency: 5000,
-        storageUsage: 0.9,
-        batteryLevel: 0.2,
-      });
-      console.log('[App] Sistema de predicción de IA inicializado');
-    }
-
-    // 1.8 Inicializar sistema de aprendizaje de IA
-    if (typeof AILearning !== 'undefined') {
-      console.log('[App] Sistema de aprendizaje de IA inicializado');
-    }
-
     // 2. Inicializar todos los módulos
     _initModules();
 
@@ -634,7 +617,6 @@ function _initAlertsButton() {
 // ─────────────────────────────────────────────────────────────────────────────
 // RELOJ EN TIEMPO REAL
 // ─────────────────────────────────────────────────────────────────────────────
-let _clockIntervalId = null;
 function _startClock() {
   const clockEl = document.getElementById('live-clock');
   const dateEl  = document.getElementById('current-date-display');
@@ -649,14 +631,7 @@ function _startClock() {
   }
 
   update();
-  _clockIntervalId = setInterval(update, 1000);
-}
-
-function _stopClock() {
-  if (_clockIntervalId) {
-    clearInterval(_clockIntervalId);
-    _clockIntervalId = null;
-  }
+  setInterval(update, 1000);
 }
 
 function _getFormattedDate(date) {

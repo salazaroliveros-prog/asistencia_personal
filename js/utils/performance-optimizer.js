@@ -8,10 +8,7 @@ const PerformanceOptimizer = (() => {
   
   const performanceMetrics = {
     pageLoad: 0,
-    firstPaint: 0,
-    firstContentfulPaint: 0,
     domContentLoaded: 0,
-    loadComplete: 0,
   };
   
   function init() {
@@ -73,104 +70,15 @@ const PerformanceOptimizer = (() => {
           }
         });
       });
-      
+
       document.querySelectorAll('img[data-src]').forEach((img) => {
         imageObserver.observe(img);
       });
     }
   }
-  
-  function debounce(func, wait) {
-    let timeout;
-    return function executedFunction(...args) {
-      const later = () => {
-        clearTimeout(timeout);
-        func(...args);
-      };
-      clearTimeout(timeout);
-      timeout = setTimeout(later, wait);
-    };
-  }
-  
-  function throttle(func, limit) {
-    let inThrottle;
-    return function (...args) {
-      if (!inThrottle) {
-        func.apply(this, args);
-        inThrottle = true;
-        setTimeout(() => inThrottle = false, limit);
-      }
-    };
-  }
-  
-  function measureFunction(name, fn) {
-    return async function (...args) {
-      const start = performance.now();
-      try {
-        const result = await fn(...args);
-        const end = performance.now();
-        const duration = end - start;
-        
-        if (window.Logger) {
-          window.Logger.debug('PerformanceOptimizer', `${name} ejecutado`, { 
-            duration: duration.toFixed(2) + 'ms', 
-          });
-        }
-        
-        return result;
-      } catch (error) {
-        const end = performance.now();
-        const duration = end - start;
-        
-        if (window.Logger) {
-          window.Logger.error('PerformanceOptimizer', `${name} falló`, { 
-            duration: duration.toFixed(2) + 'ms',
-            error: error.message,
-          });
-        }
-        
-        throw error;
-      }
-    };
-  }
-  
-  function getMetrics() {
-    return performanceMetrics;
-  }
-  
-  function clearCache() {
-    // Limpiar cache de localStorage si está grande
-    const cacheKeys = ['cpc_personal_cache', 'cpc_asistencias_cache', 'cpc_config_cache'];
-    let totalSize = 0;
-    
-    cacheKeys.forEach((key) => {
-      const value = localStorage.getItem(key);
-      if (value) {
-        totalSize += value.length;
-      }
-    });
-    
-    // Si el cache es > 5MB, limpiar
-    if (totalSize > 5 * 1024 * 1024) {
-      cacheKeys.forEach((key) => {
-        localStorage.removeItem(key);
-      });
-      
-      if (window.Logger) {
-        window.Logger.info('PerformanceOptimizer', 'Cache limpiado', { 
-          previousSize: totalSize, 
-        });
-      }
-    }
-  }
-  
+
   return {
     init,
-    debounce,
-    throttle,
-    measureFunction,
-    getMetrics,
-    clearCache,
   };
 })();
 

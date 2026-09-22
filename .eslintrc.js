@@ -50,9 +50,7 @@ module.exports = {
     MapViewer: 'readonly',
     PDFBuilder: 'readonly',
     RequestOptimizer: 'readonly',
-    DataValidator: 'readonly',
     DataExport: 'readonly',
-    BulkOperations: 'readonly',
     AutoHealing: 'readonly',
     HardwareDiagnostics: 'readonly',
     MobileQRScanner: 'readonly',
@@ -84,7 +82,6 @@ module.exports = {
     
     // AI globals
     AIEngine: 'readonly',
-    AIPredictor: 'readonly',
     validateConfigGPS: 'readonly',
     
     // Helper functions

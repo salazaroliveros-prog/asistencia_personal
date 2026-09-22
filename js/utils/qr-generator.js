@@ -51,63 +51,6 @@ const QRGenerator = (() => {
   }
 
   /**
-   * Genera un QR para un trabajador y retorna la imagen en Base64.
-   * @param {object} trabajador - Datos del trabajador
-   * @param {number} size - Tamaño en px
-   * @returns {Promise<string>} DataURL de la imagen PNG
-   */
-  function generarQRParaTrabajador(trabajador, size = 160) {
-    return new Promise((resolve, reject) => {
-      if (typeof window.QRCode === 'undefined') {
-        reject(new Error('QRCode.js no está disponible'));
-        return;
-      }
-
-      const qrData = JSON.stringify({
-        id:  trabajador.ID_Trabajador || trabajador.id,
-        dpi: trabajador.DPI_CUI || trabajador.dpi,
-      });
-
-      // Crear contenedor temporal fuera del DOM
-      const tmpDiv = document.createElement('div');
-      tmpDiv.style.cssText = 'position:absolute;left:-9999px;top:-9999px;width:' + size + 'px;height:' + size + 'px;';
-      document.body.appendChild(tmpDiv);
-
-      try {
-        new QRCode(tmpDiv, {
-          text:         qrData,
-          width:        size,
-          height:       size,
-          colorDark:    '#003459',
-          colorLight:   '#FFFFFF',
-          correctLevel: QRCode.CorrectLevel.M,
-        });
-
-        // QRCode.js genera el canvas de forma síncrona
-        setTimeout(() => {
-          const canvas = tmpDiv.querySelector('canvas');
-          if (canvas) {
-            resolve(canvas.toDataURL('image/png'));
-          } else {
-            // Fallback: usar img tag
-            const img = tmpDiv.querySelector('img');
-            if (img && img.src) {
-              resolve(img.src);
-            } else {
-              reject(new Error('No se pudo obtener el canvas del QR'));
-            }
-          }
-          document.body.removeChild(tmpDiv);
-        }, 150);
-
-      } catch (err) {
-        document.body.removeChild(tmpDiv);
-        reject(err);
-      }
-    });
-  }
-
-  /**
    * Renderiza el QR del carné en el modal.
    * @param {object} trabajador - Datos del trabajador
    */
@@ -195,9 +138,12 @@ const QRGenerator = (() => {
 
   return {
     render,
-    generarQRParaTrabajador,
     renderCarneQR,
     parseQRData,
     buscarTrabajadorPorQR,
   };
 })();
+
+if (typeof window !== 'undefined') {
+  window.QRGenerator = QRGenerator;
+}

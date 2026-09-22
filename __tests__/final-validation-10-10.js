@@ -156,7 +156,6 @@ const FinalValidation = (() => {
     console.log('───────────────────────────────────────────────────────────────────────');
     
     assert(typeof window.DataExport !== 'undefined', 'Data Export', 'Data export system loaded');
-    assert(typeof window.BulkOperations !== 'undefined', 'Bulk Operations', 'Bulk operations loaded');
     assert(typeof window.ThemeManager !== 'undefined', 'Theme Manager', 'Theme manager loaded');
     assert(typeof window.KeyboardShortcuts !== 'undefined', 'Keyboard Shortcuts', 'Keyboard shortcuts loaded');
     assert(typeof window.DashboardEnhancer !== 'undefined', 'Dashboard Enhancer', 'Dashboard enhancer loaded');

@@ -141,37 +141,11 @@ export interface AiEngineContract {
   cleanup(): void;
 }
 
-/** Contrato de `window.AILearning` (utils/ai-learning.js). */
-export interface AiLearningContract {
-  learnFromErrorPatterns(errorPatterns: unknown[]): unknown[];
-  learnFromUserBehavior(behavior: unknown): unknown[];
-  adaptSystemBehavior(context: unknown): Record<string, unknown>;
-  evaluateRuleEffectiveness(): unknown[];
-  trainModel(): { accuracy: number; confidence: number; samples: number };
-  generateLearnedRecommendations(): string[];
-  optimizeHyperparameters(): Record<string, number>;
-  analyzeFeatureImportance(): unknown[];
-  generateSystemInsights(): string[];
-  resetModel(): void;
-  exportLearningData(): { learningData: Record<string, unknown>; modelState: Record<string, unknown>; exportedAt: number };
-  importLearningData(data: unknown): void;
-  getModelState(): { accuracy: number; confidence: number; adaptationRate: number; lastTraining: number | null };
-  getLearningData(): { patterns: unknown[]; rules: unknown[]; adaptations: unknown[]; performance: unknown[]; userBehaviors: unknown[] };
-}
-
 /** Resultado de una operación en lote. */
 export interface BulkResult {
   success: boolean;
   results: string[];
   errors: Array<Record<string, unknown>>;
   message: string;
-}
-
-/** Contrato de `window.BulkOperations` (utils/bulk-operations.js). */
-export interface BulkOperationsContract {
-  bulkDeleteWorkers(workerIds: string[]): Promise<BulkResult>;
-  bulkUpdateWorkers(updates: Array<{ id: string; [key: string]: unknown }>): Promise<BulkResult>;
-  bulkDeleteAttendances(attendanceIds: string[]): Promise<BulkResult>;
-  showBulkProgress(current: number, total: number, operation: string): void;
 }
 

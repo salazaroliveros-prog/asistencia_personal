@@ -600,6 +600,10 @@ const Validators = (() => {
   };
 })();
 
+if (typeof window !== 'undefined') {
+  window.Validators = Validators;
+}
+
 if (typeof module !== 'undefined' && module.exports) {
   module.exports = Validators;
 }

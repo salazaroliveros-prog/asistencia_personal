@@ -352,6 +352,7 @@
     buildCandidates,
     startStream,
     listDevices,
+    listCameras: listDevices,
     nextDevice,
     describeError,
     createController,

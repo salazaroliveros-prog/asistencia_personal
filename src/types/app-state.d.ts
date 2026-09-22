@@ -400,13 +400,6 @@ declare global {
       checkStorageStatus: () => Promise<{ localStorage: { percentage: string }; indexedDB: { percentage: string }; suggestions: string[] }>;
       runFullDiagnostics: () => Promise<{ timestamp: number; camera: unknown; gps: unknown; network: unknown; memory: unknown; storage: unknown; overallHealth: string }>;
     };
-    DataValidator: {
-      validate: (type: string, data: unknown) => { valid: boolean; errors: string[] };
-      validateAttendance: (data: unknown) => { valid: boolean; errors: string[] };
-      validateWorker: (data: unknown) => { valid: boolean; errors: string[] };
-      validateConfig: (data: unknown) => { valid: boolean; errors: string[] };
-      formatErrors: (validationResult: { valid: boolean; errors: string[] }) => string;
-    };
     /**
      * utils/mobile-qr-scanner.js — escáner QR optimizado para móviles.
      *
@@ -446,20 +439,6 @@ declare global {
       getErrorHistory: () => Error[];
       getLogs: () => Array<{ level: string; context: string; message: string; timestamp: number }>;
       clearHistory: () => void;
-    };
-    AIPredictor: {
-      predictErrors: (errorHistory: Error[]) => { likelihood: number; predictedErrors: string[]; timeFrame: string; confidence: number; recommendations: string[] };
-      analyzeUsagePatterns: (usageData: unknown) => { patterns: string[]; anomalies: string[] };
-      detectAnomalies: (metrics: unknown) => { anomalies: string[]; severity: string };
-      generateSmartRecommendations: (context: unknown) => string[];
-      analyzeRealTimePerformance: () => { cpu: number; memory: number; network: number; status: string };
-      autoConfigureParameters: (performanceData: unknown) => { parameters: Record<string, unknown>; reason: string };
-      analyzeTrends: (data: unknown) => { trends: string[]; forecast: string };
-      generatePredictiveAlerts: (prediction: unknown) => Array<{ type: string; message: string; severity: string }>;
-      runPredictiveAnalysis: () => { health: string; riskLevel: string; recommendations: string[] };
-      getPredictionHistory: () => unknown[];
-      setThresholds: (thresholds: Record<string, number>) => void;
-      getThresholds: () => Record<string, number>;
     };
     DashboardEnhancer: {
       init: () => void;
