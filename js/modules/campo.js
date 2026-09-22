@@ -142,9 +142,10 @@ const _ModuloCampo = (() => {
   }
 
   async function _iniciarScanner(options = {}) {
+    const silent = !!(options && options.silent);
     const session = _cameraSession();
     if (typeof Html5Qrcode === 'undefined' || !session) {
-      Alerts.error('El escáner QR no está disponible. Verifica los recursos.', 'Error');
+      if (!silent) Alerts.error('El escáner QR no está disponible. Verifica los recursos.', 'Error');
       return;
     }
     _setScannerBusy(true);
@@ -157,7 +158,8 @@ const _ModuloCampo = (() => {
           onSuccess: _onQRSuccess,
         });
       }
-      const result = await _qrController.start({ facingMode: _cameraFacingMode, ...options });
+      const { silent: _omit, ...startOpts } = options;
+      const result = await _qrController.start({ facingMode: _cameraFacingMode, ...startOpts });
       if (!result) return;
       _scanner = result.scanner;
       _scannerActive = true;
@@ -169,8 +171,12 @@ const _ModuloCampo = (() => {
       await _loadCameraChoices();
       _injectTorchButton();
     } catch (error) {
-      _setCameraStatus('Cámara no disponible');
-      Alerts.error(session.describeError(error), 'Error de cámara');
+      _setCameraStatus('Cámara no disponible — pulsa Iniciar escáner');
+      // Autoarranque al entrar a la página: fallo silencioso (p. ej. sin cámara
+      // en escritorio/CI). El botón manual sí muestra el toast de error.
+      if (!silent) {
+        Alerts.error(session.describeError(error), 'Error de cámara');
+      }
     } finally {
       _setScannerBusy(false);
     }
@@ -380,7 +386,7 @@ const _ModuloCampo = (() => {
       _marking = false;
       _currentWorker = null;
       _habilitaBotones(false);
-      setTimeout(() => { if (!_scannerActive) _iniciarScanner(); }, 450);
+      setTimeout(() => { if (!_scannerActive) _iniciarScanner({ silent: true }); }, 450);
     }
   }
 
@@ -423,7 +429,9 @@ const _ModuloCampo = (() => {
     _renderMarkButtons();
     _updateStatus();
     _renderFeed();
-    setTimeout(() => { if (!_scannerActive) _iniciarScanner(); }, 350);
+    // Autoarranque silencioso: en móvil con cámara funciona; en desktop/CI
+    // no ensucia la UI con toasts de "Error de cámara" duplicados.
+    setTimeout(() => { if (!_scannerActive) _iniciarScanner({ silent: true }); }, 350);
   }
 
   function cleanup() {

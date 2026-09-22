@@ -626,6 +626,18 @@ function _startClock() {
 
 function _getFormattedDate(date) {
   const d = date || new Date();
+  // En móvil angosto la fecha larga se truncaba en el topbar ("martes, 22 de…").
+  const narrow = typeof window !== 'undefined'
+    && typeof window.matchMedia === 'function'
+    && window.matchMedia('(max-width: 479px)').matches;
+  if (narrow) {
+    return d.toLocaleDateString('es-GT', {
+      weekday: 'short',
+      day:     'numeric',
+      month:   'short',
+      year:    'numeric',
+    });
+  }
   return d.toLocaleDateString('es-GT', {
     weekday: 'long',
     year:    'numeric',

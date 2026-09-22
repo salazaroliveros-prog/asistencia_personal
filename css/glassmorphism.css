@@ -613,6 +613,37 @@
      media pantalla antes de llegar al calendario y a las gráficas. */
   .kpi-grid {
     grid-template-columns: repeat(2, 1fr);
+    gap: var(--space-3);
+  }
+
+  /* Evitar "PERSON…" / "ASISTEN…" truncados: permitir wrap del label. */
+  .kpi-card {
+    align-items: flex-start;
+    gap: var(--space-3);
+    padding: var(--space-3);
+  }
+
+  .kpi-icon {
+    width: 44px;
+    height: 44px;
+  }
+
+  .kpi-icon svg {
+    width: 22px;
+    height: 22px;
+  }
+
+  .kpi-label {
+    white-space: normal;
+    overflow: visible;
+    text-overflow: unset;
+    letter-spacing: 0.03em;
+    line-height: 1.25;
+    hyphens: auto;
+  }
+
+  .kpi-value {
+    font-size: var(--text-xl);
   }
 
   .glass-modal {

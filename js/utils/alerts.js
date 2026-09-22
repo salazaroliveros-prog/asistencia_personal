@@ -28,6 +28,9 @@ const Alerts = (() => {
   };
 
   let _container = null;
+  /** @type {{ key: string, at: number } | null} */
+  let _lastToast = null;
+  const DEDUPE_MS = 2500;
 
   function _getContainer() {
     if (!_container) {
@@ -54,6 +57,14 @@ const Alerts = (() => {
     opts.type     = opts.type     || type;
     opts.duration = opts.duration !== undefined ? opts.duration : DEFAULTS.duration;
     opts.title    = opts.title    || DEFAULT_TITLES[opts.type] || '';
+
+    // Evitar spam: mismo título+mensaje en < 2.5 s no crea otro toast
+    const dedupeKey = `${opts.type}|${opts.title}|${opts.message || ''}`;
+    const now = Date.now();
+    if (_lastToast && _lastToast.key === dedupeKey && (now - _lastToast.at) < DEDUPE_MS) {
+      return null;
+    }
+    _lastToast = { key: dedupeKey, at: now };
 
     // Limitar cantidad de toasts
     const existing = container.querySelectorAll('.toast');
