@@ -95,8 +95,10 @@ function _initModules() {
   ModuloCampo.init();
   ModuloDashboard.init();
   ModuloReportes.init();
+  if (window.ConnectionHub) window.ConnectionHub.init();
   ModuloAjustes.init();
   UserManagement.init();
+  if (window.ModuloAuth) window.ModuloAuth.init();
   BackupManager.init();
   ThemeManager.init();
   KeyboardShortcuts.init();

@@ -3,66 +3,15 @@ service cloud.firestore {
   match /databases/{database}/documents {
 
     // ─────────────────────────────────────────────────────────────────────────
-    // FUNCIONES DE AYUDA - AUTENTICACIÓN Y ROLES
+    // FUNCIONES DE AYUDA - MODELO SAAS MULTI-TENANT
     // ─────────────────────────────────────────────────────────────────────────
     
     function isAuthenticated() {
       return request.auth != null;
     }
     
-    function isAdmin() {
-      return isAuthenticated() && request.auth.token.admin == true;
-    }
-    
-    function isManager() {
-      return isAuthenticated() && request.auth.token.manager == true;
-    }
-    
-    function isSupervisor() {
-      return isAuthenticated() && request.auth.token.supervisor == true;
-    }
-    
-    // ─────────────────────────────────────────────────────────────────────────
-    // OPERADOR DE CAMPO — QUIÉN PUEDE MARCAR ASISTENCIA
-    //
-    // La puerta de entrada es una SESIÓN AUTENTICADA de Firebase Auth
-    // (correo + contraseña). El administrador crea las cuentas y quien no tenga
-    // una no puede marcar.
-    //
-    // MODO ABIERTO (por defecto): cualquier cuenta autenticada puede marcar.
-    //
-    // MODO ESTRICTO (opcional): descomenta `email_verified` para exigir que el
-    //   operador haya abierto el enlace de verificación antes de marcar.
-    //
-    // LISTA DE OPERADORES (opcional): descomenta el bloque `in [...]` y añade
-    //   los correos autorizados.
-    //
-    // OJO: NUNCA dejes activa una comprobación `request.auth.token.email in []`
-    // con la lista vacía — sería SIEMPRE falsa y bloquearía TODAS las
-    // marcaciones con `permission-denied`, incluso para cuentas válidas.
-    // ─────────────────────────────────────────────────────────────────────────
-    function isAuthorizedOperator() {
-      return isAuthenticated();
-      // && request.auth.token.email_verified == true;      // modo estricto
-      // && request.auth.token.email in [                   // lista de operadores
-      //      'sistemadecontrol090@gmail.com'
-      //    ];
-    }
-    
-    function canManageWorkers() {
-      // Cualquier sesión autenticada (operador de campo / correo / Google)
-      // puede registrar y editar personal. El borrado físico sigue siendo admin.
-      return isAuthorizedOperator() || isAdmin() || isManager();
-    }
-    
-    function canMarkAttendance() {
-      // Las marcaciones son una operación privilegiada. Una sesión anónima o
-      // cualquier usuario autenticado no debe poder suplantar al operador.
-      return isAuthorizedOperator() || isAdmin() || isManager() || isSupervisor();
-    }
-    
-    function getUserId() {
-      return request.auth.uid;
+    function isOwner(userId) {
+      return request.auth != null && request.auth.uid == userId;
     }
     
     // ─────────────────────────────────────────────────────────────────────────
@@ -70,10 +19,6 @@ service cloud.firestore {
     // ─────────────────────────────────────────────────────────────────────────
     
     function isValidString(value, min, max) {
-      // `.size()` es el método del lenguaje de reglas para strings. `.length`
-      // no existe: su acceso provoca un error de evaluación que Firestore
-      // traduce en `permission-denied`, bloqueando silenciosamente TODAS las
-      // escrituras que validan strings (personal, asistencias, logs…).
       return value is string && value.size() >= min && value.size() <= max;
     }
     
@@ -86,18 +31,9 @@ service cloud.firestore {
     }
 
     function isValidDateValue(value) {
-      // Acepta Timestamp nativo, epoch ms, o ISO-8601 (20–40 chars: con/sin ms/Z)
       return value is timestamp ||
         (value is number && value > 0) ||
         (value is string && value.size() >= 10 && value.size() <= 40);
-    }
-    
-    function isValidArray(value, minLength) {
-      return value is list && value.size() >= minLength;
-    }
-    
-    function isValidMap(value, requiredKeys) {
-      return value is map && value.keys().hasAll(requiredKeys);
     }
     
     function isValidWorkerData(data) {
@@ -110,7 +46,6 @@ service cloud.firestore {
         isValidString(data.DPI_CUI, 10, 20) &&
         isValidString(data.Puesto, 2, 50) &&
         isValidString(data.Telefono, 0, 20) &&
-        // WhatsApp puede ser teléfono (+502…) o URL wa.me (hasta ~40 chars)
         isValidString(data.WhatsApp, 0, 80) &&
         isValidString(data.Direccion, 0, 200) &&
         data.Estado in ['Activo', 'Inactivo', 'Eliminado', 'Suspendido'] &&
@@ -140,39 +75,6 @@ service cloud.firestore {
         isValidNumber(data.Tolerancia_Minutos, 0, 120);
     }
     
-    function isValidDepartamento(data) {
-      return data.keys().hasAll(['nombre', 'descripcion', 'activo']) &&
-        isValidString(data.nombre, 2, 50) &&
-        isValidString(data.descripcion, 0, 200) &&
-        data.activo is bool;
-    }
-    
-    function isValidProyecto(data) {
-      return data.keys().hasAll(['nombre', 'descripcion', 'direccion', 'activo', 'fechaInicio']) &&
-        isValidString(data.nombre, 2, 100) &&
-        isValidString(data.descripcion, 0, 500) &&
-        isValidString(data.direccion, 5, 200) &&
-        data.activo is bool &&
-        isValidTimestamp(data.fechaInicio);
-    }
-    
-    function isValidRol(data) {
-      return data.keys().hasAll(['nombre', 'descripcion', 'permisos', 'activo']) &&
-        isValidString(data.nombre, 2, 50) &&
-        isValidString(data.descripcion, 0, 200) &&
-        isValidArray(data.permisos, 1) &&
-        data.activo is bool;
-    }
-    
-    /**
-     * Valida una alerta.
-     *
-     * El esquema real (y documentado en docs/database-schema.md) usa claves en
-     * PascalCase: ID_Alerta, Tipo, Mensaje, Timestamp, Revisada. La validación
-     * anterior sólo aceptaba claves en minúsculas, de modo que cualquier alerta
-     * creada desde la app era rechazada por `allow create`. Se aceptan ambas
-     * formas para no invalidar alertas históricas.
-     */
     function isValidAlerta(data) {
       return (
         data.keys().hasAll(['Tipo', 'Mensaje', 'Timestamp', 'Revisada']) &&
@@ -189,169 +91,88 @@ service cloud.firestore {
       );
     }
     
-    function isValidLog(data) {
-      return data.keys().hasAll(['accion', 'coleccion', 'documentoId', 'usuarioId', 'email', 'timestamp', 'detalles']) &&
-        isValidString(data.accion, 1, 50) &&
-        isValidString(data.coleccion, 1, 50) &&
-        isValidString(data.documentoId, 1, 100) &&
-        isValidString(data.usuarioId, 1, 128) &&
-        isValidString(data.email, 3, 254) &&
-        isValidTimestamp(data.timestamp) &&
-        isValidMap(data.detalles, []);
-    }
+    // ─────────────────────────────────────────────────────────────────────────
+    // MODELO SAAS: DATOS AISLADOS POR USUARIO
+    // Estructura: users/{userId}/personal/{workerId}
+    // ─────────────────────────────────────────────────────────────────────────
     
-    // ─────────────────────────────────────────────────────────────────────────
-    // COLECCIÓN: USUARIOS (Perfiles vinculados a Firebase Auth)
-    // ─────────────────────────────────────────────────────────────────────────
+    // COLECCIÓN: users (Espacio de trabajo de cada usuario)
     match /users/{userId} {
-      // Reglas allow positivas
-      allow read: if isAuthenticated() && 
-        (userId == getUserId() || isAdmin() || isManager());
+      // Solo el dueño puede leer su propio espacio
+      allow read: if isOwner(userId);
       
-      allow create: if isAdmin() && 
-        request.resource.data.keys().hasAll(['uid', 'email', 'rol', 'activo']) &&
-        request.resource.data.uid == getUserId() &&
-        isValidString(request.resource.data.email, 3, 254);
+      // Solo el dueño puede escribir en su espacio
+      allow write: if isOwner(userId);
       
-      allow update: if isAdmin() ||
-        (userId == getUserId() && 
-         request.resource.data.diff(resource.data).affectedKeys()
-           .hasOnly(['telefono', 'whatsapp', 'direccion', 'fotografiaUrl']) &&
-         request.resource.data.keys().size() <= 10);
+      // ─────────────────────────────────────────────────────────────────────
+      // SUBCOLECCIÓN: personal (Trabajadores del usuario)
+      // ─────────────────────────────────────────────────────────────────────
+      match /personal/{workerId} {
+        allow read: if isOwner(userId);
+        allow create: if isOwner(userId) && isValidWorkerData(request.resource.data);
+        allow update: if isOwner(userId) && isValidWorkerData(request.resource.data);
+        allow delete: if isOwner(userId);
+      }
       
-      allow delete: if isAdmin();
+      // ─────────────────────────────────────────────────────────────────────
+      // SUBCOLECCIÓN: asistencias (Marcaciones del usuario)
+      // ─────────────────────────────────────────────────────────────────────
+      match /asistencias/{attendanceId} {
+        allow read: if isOwner(userId);
+        allow create: if isOwner(userId) && isValidAttendanceData(request.resource.data);
+        allow update: if isOwner(userId) && isValidAttendanceData(request.resource.data);
+        allow delete: if isOwner(userId);
+      }
+      
+      // ─────────────────────────────────────────────────────────────────────
+      // SUBCOLECCIÓN: configuracion (Configuración del usuario)
+      // ─────────────────────────────────────────────────────────────────────
+      match /configuracion/{configId} {
+        allow read: if isOwner(userId);
+        allow create, update: if isOwner(userId) && isValidConfiguracion(request.resource.data);
+        allow delete: if isOwner(userId);
+      }
+      
+      // ─────────────────────────────────────────────────────────────────────
+      // SUBCOLECCIÓN: alertas (Alertas del usuario)
+      // ─────────────────────────────────────────────────────────────────────
+      match /alertas/{alertId} {
+        allow read: if isOwner(userId);
+        allow create: if isOwner(userId) && 
+          request.resource.data.keys().size() <= 15 &&
+          isValidAlerta(request.resource.data);
+        allow update: if isOwner(userId) &&
+          request.resource.data.diff(resource.data).affectedKeys()
+            .hasOnly(['Revisada', 'revisada']) &&
+          (request.resource.data.Revisada == true || request.resource.data.revisada == true);
+        allow delete: if isOwner(userId);
+      }
+      
+      // ─────────────────────────────────────────────────────────────────────
+      // SUBCOLECCIÓN: logs (Logs del usuario - auditoría)
+      // ─────────────────────────────────────────────────────────────────────
+      match /logs/{logId} {
+        allow read: if isOwner(userId);
+        allow create: if isOwner(userId);
+        allow update, delete: if false;
+      }
     }
     
     // ─────────────────────────────────────────────────────────────────────────
-    // COLECCIÓN: ROLES (Definiciones de roles y permisos)
+    // COLECCIÓN: user_profiles (Perfiles públicos - opcional para sharing)
     // ─────────────────────────────────────────────────────────────────────────
-    match /roles/{roleId} {
+    match /user_profiles/{profileId} {
       allow read: if isAuthenticated();
-      allow create, update, delete: if isAdmin() && isValidRol(request.resource.data);
+      allow create, update: if isOwner(profileId);
+      allow delete: if isOwner(profileId);
     }
     
     // ─────────────────────────────────────────────────────────────────────────
-    // COLECCIÓN: DEPARTAMENTOS
-    // ─────────────────────────────────────────────────────────────────────────
-    match /departamentos/{deptId} {
-      allow read: if isAuthenticated();
-      allow create, update: if canManageWorkers() && isValidDepartamento(request.resource.data);
-      allow delete: if isAdmin();
-    }
-    
-    // ─────────────────────────────────────────────────────────────────────────
-    // COLECCIÓN: PROYECTOS/OBRAS
-    // ─────────────────────────────────────────────────────────────────────────
-    match /proyectos/{proyectoId} {
-      allow read: if isAuthenticated();
-      allow create, update: if canManageWorkers() && isValidProyecto(request.resource.data);
-      allow delete: if isAdmin();
-    }
-    
-    // ─────────────────────────────────────────────────────────────────────────
-    // COLECCIÓN: PERSONAL (Trabajadores)
-    // ─────────────────────────────────────────────────────────────────────────
-    match /personal/{workerId} {
-      // Reglas allow positivas
-      allow read: if isAuthenticated();
-      
-      allow create: if canManageWorkers() && 
-        isValidWorkerData(request.resource.data) &&
-        request.resource.data.keys().size() <= 20;
-      
-      allow update: if canManageWorkers() &&
-        isValidWorkerData(request.resource.data) &&
-        request.resource.data.keys().size() <= 20 &&
-        request.resource.data.diff(resource.data).affectedKeys()
-          .hasOnly([
-            'Nombre_Completo', 'DPI_CUI', 'Puesto', 'Jefe_Inmediato',
-            'Telefono', 'WhatsApp', 'Direccion', 'Fotografia_URL', 
-            'Estado', 'departamentoId', 'proyectoId', 'fechaBaja', 'motivoBaja'
-          ]);
-      
-      allow delete: if isAdmin();
-    }
-    
-    // ─────────────────────────────────────────────────────────────────────────
-    // COLECCIÓN: ASISTENCIAS (Registros de marcación)
-    // ─────────────────────────────────────────────────────────────────────────
-    match /asistencias/{attendanceId} {
-      // Reglas allow positivas
-      allow read: if isAuthenticated();
-      
-      allow create: if canMarkAttendance() &&
-        isValidAttendanceData(request.resource.data) &&
-        request.resource.data.keys().size() <= 25;
-      
-      allow update: if canManageWorkers() &&
-        isValidAttendanceData(request.resource.data) &&
-        request.resource.data.keys().size() <= 25 &&
-        request.resource.data.diff(resource.data).affectedKeys()
-          .hasOnly(['Hora_Real', 'Estado_Marcacion', 'Horas_Extra', 'observaciones', 'corregidoPor', 'corregidoEn']);
-      
-      allow delete: if isAdmin();
-    }
-    
-    // ─────────────────────────────────────────────────────────────────────────
-    // COLECCIÓN: CONFIGURACIÓN (Configuración global del sistema)
-    // ─────────────────────────────────────────────────────────────────────────
-    match /configuracion/{configId} {
-      // Reglas allow positivas
-      allow read: if isAuthenticated();
-      allow create, update: if isAdmin() && isValidConfiguracion(request.resource.data);
-      allow delete: if isAdmin();
-    }
-    
-    // ─────────────────────────────────────────────────────────────────────────
-    // COLECCIÓN: ALERTAS (Notificaciones y alertas del sistema)
-    // ─────────────────────────────────────────────────────────────────────────
-    match /alertas/{alertId} {
-      allow read: if isAuthenticated();
-      allow create: if canManageWorkers() && 
-        request.resource.data.keys().size() <= 15 &&
-        isValidAlerta(request.resource.data);
-      allow update: if isAuthenticated() &&
-        request.resource.data.diff(resource.data).affectedKeys()
-          .hasOnly(['Revisada']) &&
-        request.resource.data.Revisada == true;
-      allow delete: if isAdmin();
-    }
-    
-    // ─────────────────────────────────────────────────────────────────────────
-    // COLECCIÓN: NOTIFICACIONES (Notificaciones push/email por usuario)
-    // ─────────────────────────────────────────────────────────────────────────
-    match /notificaciones/{notifId} {
-      allow read: if isAuthenticated() && 
-        (resource.data.usuarioId == getUserId() || isAdmin());
-      allow create: if canManageWorkers() &&
-        request.resource.data.usuarioId != null &&
-        isValidString(request.resource.data.titulo, 1, 100) &&
-        isValidString(request.resource.data.mensaje, 1, 500);
-      allow update: if isAuthenticated() &&
-        resource.data.usuarioId == getUserId() &&
-        request.resource.data.diff(resource.data).affectedKeys()
-          .hasOnly(['leida', 'fechaLectura']) &&
-        request.resource.data.leida == true;
-      allow delete: if isAdmin();
-    }
-    
-    // ─────────────────────────────────────────────────────────────────────────
-    // COLECCIÓN: LOGS (Registro de auditoría inmutable)
-    // ─────────────────────────────────────────────────────────────────────────
-    match /logs/{logId} {
-      allow read: if isAdmin();
-      allow create: if isAuthenticated() && 
-        request.resource.data.usuarioId == getUserId() &&
-        isValidLog(request.resource.data);
-      allow update, delete: if false;
-    }
-    
-    // ─────────────────────────────────────────────────────────────────────────
-    // COLECCIÓN: HEALTH (Para health checks)
+    // COLECCIÓN: health (Health checks del sistema)
     // ─────────────────────────────────────────────────────────────────────────
     match /health/{healthId} {
       allow read: if isAuthenticated();
-      allow write: if isAdmin() && request.resource.data.keys().size() <= 10;
+      allow write: if isAuthenticated() && request.resource.data.keys().size() <= 10;
     }
   }
 }

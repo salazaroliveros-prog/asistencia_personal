@@ -108,6 +108,39 @@
     }
   </script>
 
+  <!-- ═══════════════════ FIREBASE AUTH (Modular para SaaS) ═══════════════════ -->
+  <script type="module">
+    import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
+    import { getAuth, GoogleAuthProvider, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
+    
+    // Configuración Firebase
+    const firebaseConfig = {
+      apiKey: "AIzaSyDriDh1SC5_8T1rx5EmgFi0pUEKUGQU5xg",
+      authDomain: "sistema-de-control-aee89.firebaseapp.com",
+      projectId: "sistema-de-control-aee89",
+      storageBucket: "sistema-de-control-aee89.firebasestorage.app",
+      messagingSenderId: "265655332442",
+      appId: "1:265655332442:web:c4e8617741e3b916987263"
+    };
+    
+    // Inicializar Firebase solo una vez
+    if (!window.firebaseApp) {
+      window.firebaseApp = initializeApp(firebaseConfig);
+    }
+    
+    // Inicializar Auth
+    window.firebaseAuth = getAuth(window.firebaseApp);
+    window.firebaseGoogleAuthProvider = GoogleAuthProvider;
+    window.firebaseAuthMethods = {
+      createUserWithEmailAndPassword,
+      signInWithEmailAndPassword,
+      signOut,
+      onAuthStateChanged
+    };
+    
+    console.log('[Firebase Auth] SDK modular inicializado correctamente');
+  </script>
+
   <!-- ═══════════════════ PDF - Exportación ═══════════════════ -->
   <!-- jsPDF + jsPDF AutoTable para reportes PDF (local + CDN fallback) -->
   <script src="vendor/jspdf.umd.min.js" type="text/javascript"></script>
@@ -131,6 +164,7 @@
   <link rel="stylesheet" href="css/components.css" />
   <link rel="stylesheet" href="css/campo.css" />
   <link rel="stylesheet" href="css/animations-fix.css" />
+  <link rel="stylesheet" href="css/auth.css" />
   <link rel="stylesheet" media="print" href="css/print.css" />
 
   <!-- ═══════════════════ CSP PARA SEGURIDAD ═══════════════════ -->
@@ -161,9 +195,16 @@
       wss://*.googleapis.com
       wss://*.firebaseio.com
       wss://ws-us3.pusher.com;
-    frame-src 'self' https://vercel.live;
+    frame-src 'self'
+      https://vercel.live
+      https://*.firebaseapp.com
+      https://accounts.google.com
+      https://*.google.com;
     base-uri 'self';
-    form-action 'self';
+    form-action 'self'
+      https://accounts.google.com
+      https://*.firebaseapp.com
+      https://*.google.com;
     worker-src 'self' blob:;
   " />
 
@@ -216,6 +257,7 @@
   <script src="js/utils/photo-helpers.js" type="text/javascript"></script>
   <script src="js/utils/date-helpers.js" type="text/javascript"></script>
   <script src="js/utils/logger.js" type="text/javascript"></script>
+  <script src="js/utils/logger-centralized.js" type="text/javascript"></script>
   <script src="js/utils/error-handler.js" type="text/javascript"></script>
   <script src="js/utils/data-export.js" type="text/javascript"></script>
   <script src="js/utils/mobile-camera-optimizer.js" type="text/javascript"></script>
@@ -225,11 +267,15 @@
   <script src="js/utils/performance-optimizer.js" type="text/javascript"></script>
   <script src="js/utils/dashboard-enhancer.js" type="text/javascript"></script>
   <script src="js/utils/update-manager.js" type="text/javascript"></script>
+  <script src="js/utils/module-cleanup.js" type="text/javascript"></script>
+  <script src="js/utils/firebase-auth-validator.js" type="text/javascript"></script>
+  <script src="js/utils/advanced-validators.js" type="text/javascript"></script>
   <script src="js/modules/dashboard.js" type="text/javascript"></script>
   <script src="js/modules/personal.js" type="text/javascript"></script>
   <script src="js/modules/asistencia.js" type="text/javascript"></script>
   <script src="js/modules/campo.js" type="text/javascript"></script>
   <script src="js/modules/reportes.js" type="text/javascript"></script>
+  <script src="js/modules/connection-hub.js" type="text/javascript"></script>
   <script src="js/modules/ajustes.js" type="text/javascript"></script>
   <script src="js/modules/user-management.js" type="text/javascript"></script>
   <script src="js/modules/backup-manager.js" type="text/javascript"></script>
@@ -1021,59 +1067,89 @@
           </div>
 
           <div class="ajustes-grid">
-            <!-- Conexión Firestore -->
-            <div class="glass-card ajuste-card">
+            <!-- Connection Hub — sesión y nube -->
+            <div id="connection-hub-card" class="glass-card ajuste-card hub-card hub-card--span">
               <div class="card-header">
-                <h3><i data-lucide="cloud" aria-hidden="true"></i> Datos y sincronización</h3>
+                <h3><i data-lucide="shield-check" aria-hidden="true"></i> Conexión y sesión</h3>
+                <span id="hub-status-chip" class="hub-chip hub-chip--local" data-mode="local">Local</span>
               </div>
-              <div class="form-group">
-                <p class="text-muted">La aplicación funciona localmente sin internet y sincroniza automáticamente con Firestore cuando está configurado.</p>
-                <label for="firebase-project-id" class="form-label">ID del proyecto Firebase</label>
-                <div class="input-with-action">
-                  <input type="text" id="firebase-project-id" class="input-glass" placeholder="mi-proyecto-firebase" aria-label="ID del proyecto Firebase" />
-                </div>
-                <label for="firebase-api-key" class="form-label">API Key de la aplicación web</label>
-                <input type="text" id="firebase-api-key" class="input-glass" autocomplete="off" aria-label="API Key de la aplicación web" />
-                <label for="firebase-auth-domain" class="form-label">Dominio de autenticación</label>
-                <input type="text" id="firebase-auth-domain" class="input-glass" placeholder="mi-proyecto.firebaseapp.com" aria-label="Dominio de autenticación" />
-                <label for="firebase-app-id" class="form-label">App ID</label>
-                <input type="text" id="firebase-app-id" class="input-glass" placeholder="1:123:web:abc" aria-label="App ID" />
-                <div id="connection-status-detail" class="connection-status-detail" role="status" aria-live="polite">Modo local disponible</div>
-              </div>
-              <form id="form-firebase-auth" class="form-group" autocomplete="on" aria-label="Inicio de sesión Firebase">
-                <label for="firebase-auth-email" class="form-label">Correo de acceso Firebase</label>
-                <input type="email" id="firebase-auth-email" class="input-glass" autocomplete="username" placeholder="usuario autorizado" aria-label="Correo de acceso Firebase" />
-                <label for="firebase-auth-password" class="form-label">Contraseña</label>
-                <input type="password" id="firebase-auth-password" class="input-glass" autocomplete="current-password" aria-label="Contraseña de Firebase" />
-                <p class="form-hint">La contraseña se envía directamente a Firebase Auth y nunca se guarda ni se muestra.</p>
-                <button type="button" id="btn-login-firebase" class="btn btn-primary btn-block">
-                  <i data-lucide="log-in" aria-hidden="true"></i> Iniciar sesión segura
-                </button>
-                <button type="button" id="btn-login-google" class="btn btn-outline btn-block">
-                  <i data-lucide="chrome" aria-hidden="true"></i> Ingresar con Google (Gmail)
-                </button>
-                <button type="button" id="btn-logout-firebase" class="btn btn-secondary btn-block" hidden>
-                  <i data-lucide="log-out" aria-hidden="true"></i> Cerrar sesión Firebase
-                </button>
-              </form>
-              <button type="button" id="btn-connect-firebase" class="btn btn-primary btn-block">
-                <i data-lucide="plug" aria-hidden="true"></i> Conectar Firestore
-              </button>
-              <button type="button" id="btn-use-local" class="btn btn-secondary btn-block">
-                <i data-lucide="hard-drive" aria-hidden="true"></i> Usar solo este dispositivo
-              </button>
-              <button type="button" id="btn-open-gas-assistant" class="btn btn-success btn-block">
-                <i data-lucide="zap" aria-hidden="true"></i> Configurar Google Sheets
-              </button>
-            </div>
+              <p id="hub-status-detail" class="hub-status-detail" role="status" aria-live="polite">
+                Modo local — datos en este dispositivo
+              </p>
+              <p id="hub-user-line" class="hub-user-line text-muted" hidden></p>
 
-            <div class="glass-card ajuste-card assistant-card">
-              <div class="card-header">
-                <h3><i data-lucide="circle-help" aria-hidden="true"></i> Configuración inicial</h3>
+              <form id="hub-form-auth" class="form-group hub-auth-form" autocomplete="on" aria-label="Inicio de sesión">
+                <!-- Botones de autenticación SaaS -->
+                <div id="auth-buttons" class="auth-buttons-saas">
+                  <button type="button" id="hub-btn-login-google" class="btn btn-outline btn-block btn-google-login">
+                    <i data-lucide="chrome" aria-hidden="true"></i> Continuar con Google
+                  </button>
+                  <button type="button" id="hub-btn-register-email" class="btn btn-primary btn-block">
+                    <i data-lucide="mail" aria-hidden="true"></i> Crear cuenta con Email
+                  </button>
+                  <p class="auth-hint text-muted text-sm text-center">
+                    O inicia sesión si ya tienes cuenta
+                  </p>
+                  <label for="hub-auth-email" class="form-label">Correo</label>
+                  <input type="email" id="hub-auth-email" class="input-glass" autocomplete="username" placeholder="tu@email.com" aria-label="Correo de acceso" />
+                  <label for="hub-auth-password" class="form-label">Contraseña</label>
+                  <input type="password" id="hub-auth-password" class="input-glass" autocomplete="current-password" aria-label="Contraseña" />
+                  <button type="submit" id="hub-btn-login-email" class="btn btn-secondary btn-block">
+                    <i data-lucide="log-in" aria-hidden="true"></i> Iniciar sesión
+                  </button>
+                </div>
+
+                <!-- Estado de usuario autenticado -->
+                <div id="auth-status" class="auth-user-status hidden">
+                  <div class="user-info-display">
+                    <div class="user-avatar">
+                      <i data-lucide="user" aria-hidden="true"></i>
+                    </div>
+                    <div class="user-details">
+                      <p id="user-display-name" class="user-name"></p>
+                      <p id="user-email" class="user-email text-muted"></p>
+                    </div>
+                  </div>
+                  <div class="auth-info-box">
+                    <p><i data-lucide="lock" aria-hidden="true"></i> Tus datos están aislados y seguros</p>
+                    <p><i data-lucide="cloud" aria-hidden="true"></i> Sincronización automática en la nube</p>
+                  </div>
+                  <button type="button" id="hub-btn-logout" class="btn btn-secondary btn-block">
+                    <i data-lucide="log-out" aria-hidden="true"></i> Cerrar sesión
+                  </button>
+                </div>
+              </form>
+
+              <div class="hub-quick-actions">
+                <button type="button" id="hub-btn-sync" class="btn btn-success" hidden>
+                  <i data-lucide="refresh-cw" aria-hidden="true"></i> Sincronizar cola (<span id="hub-sync-count">0</span>)
+                </button>
+                <button type="button" id="hub-btn-local" class="btn btn-ghost">
+                  <i data-lucide="hard-drive" aria-hidden="true"></i> Solo este dispositivo
+                </button>
+                <button type="button" id="hub-btn-gas" class="btn btn-ghost">
+                  <i data-lucide="zap" aria-hidden="true"></i> Google Sheets
+                </button>
               </div>
-              <div class="assistant-intro">
-                <p class="text-muted">En Firebase habilita Firestore Database y Authentication → Email/Password (y "Google" si quieres que los operadores entren con su cuenta Gmail). Luego copia los datos de tu aplicación web.</p>
-                <p class="text-muted">Las reglas incluidas en <code>firestore.rules</code> deben publicarse en tu proyecto. No se solicita ninguna contraseña de Google fuera de la cuenta del operador.</p>
+
+              <button type="button" id="hub-advanced-toggle" class="btn btn-ghost btn-sm hub-advanced-toggle" aria-expanded="false" aria-controls="hub-advanced-panel">
+                <i data-lucide="settings-2" aria-hidden="true"></i>
+                <span class="hub-advanced-label">Configuración avanzada de Firebase</span>
+              </button>
+              <div id="hub-advanced-panel" class="hub-advanced-panel" hidden>
+                <p class="text-muted text-sm">Por defecto se usa la configuración del despliegue. Solo cambia esto si usas otro proyecto Firebase.</p>
+                <label for="hub-firebase-project-id" class="form-label">Project ID</label>
+                <input type="text" id="hub-firebase-project-id" class="input-glass" placeholder="mi-proyecto" aria-label="ID del proyecto Firebase" />
+                <label for="hub-firebase-api-key" class="form-label">API Key</label>
+                <input type="text" id="hub-firebase-api-key" class="input-glass" autocomplete="off" aria-label="API Key" />
+                <label for="hub-firebase-auth-domain" class="form-label">Auth Domain</label>
+                <input type="text" id="hub-firebase-auth-domain" class="input-glass" placeholder="proyecto.firebaseapp.com" aria-label="Dominio de autenticación" />
+                <label for="hub-firebase-app-id" class="form-label">App ID</label>
+                <input type="text" id="hub-firebase-app-id" class="input-glass" placeholder="1:123:web:abc" aria-label="App ID" />
+                <button type="button" id="hub-btn-connect" class="btn btn-primary btn-block">
+                  <i data-lucide="plug" aria-hidden="true"></i> Aplicar y conectar Firestore
+                </button>
+                <p class="text-muted text-sm mt-2">Habilita Email/Password y Google en Firebase Console. Añade este dominio en Authorized domains.</p>
               </div>
             </div>
 
@@ -1988,6 +2064,51 @@
   </div>
 
   <!-- ═══════════════════════════════════════════════════════════════
+       MODAL: REGISTRO USUARIO (SaaS)
+  ═══════════════════════════════════════════════════════════════ -->
+  <div id="modal-register" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="modal-register-title" hidden>
+    <div class="modal glass-modal modal-md">
+      <div class="modal-header">
+        <h2 id="modal-register-title">Crear Cuenta</h2>
+        <button type="button" class="modal-close" aria-label="Cerrar modal">&times;</button>
+      </div>
+      <div class="modal-body">
+        <form id="form-register" class="auth-form">
+          <div class="form-group">
+            <label for="reg-nombre">Nombre Completo</label>
+            <input type="text" id="reg-nombre" name="nombre" placeholder="Tu nombre completo" required autocomplete="name">
+            <small class="form-text">Este nombre se mostrará en la aplicación</small>
+          </div>
+          <div class="form-group">
+            <label for="reg-email">Correo Electrónico</label>
+            <input type="email" id="reg-email" name="email" placeholder="tu@email.com" required autocomplete="email">
+            <small class="form-text">Usa tu correo real para recuperar tu cuenta</small>
+          </div>
+          <div class="form-group">
+            <label for="reg-password">Contraseña</label>
+            <input type="password" id="reg-password" name="password" placeholder="Mínimo 6 caracteres" required autocomplete="new-password">
+            <small class="form-text">Mínimo 6 caracteres</small>
+          </div>
+          <div class="form-group">
+            <label for="reg-password-confirm">Confirmar Contraseña</label>
+            <input type="password" id="reg-password-confirm" name="password-confirm" placeholder="Repite la contraseña" required autocomplete="new-password">
+          </div>
+          <div class="auth-info-box">
+            <p><i data-lucide="lock" aria-hidden="true"></i> Tus datos estarán aislados y seguros</p>
+            <p><i data-lucide="cloud" aria-hidden="true"></i> Sincronización automática en la nube</p>
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button type="button" id="btn-cancel-register" class="btn btn-ghost">Cancelar</button>
+        <button type="button" id="btn-submit-register" class="btn btn-primary">
+          <i data-lucide="user-plus" aria-hidden="true"></i> Registrarse
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════════════════
        SERVICE WORKER (PWA)
   ═══════════════════════════════════════════════════════════════ -->
 
@@ -2001,5 +2122,8 @@
       });
     }
   </script>
+
+  <!-- ═══════════════════ MÓDULO DE AUTENTICACIÓN SAAS ═══════════════════ -->
+  <script src="js/modules/auth.js" type="text/javascript"></script>
 </body>
 </html>

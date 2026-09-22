@@ -251,7 +251,17 @@
   async function list(collection, orderField, lim, filters) {
     if (!db) throw new Error('Firebase no inicializado');
 
-    let query = db.collection(collection);
+    // MODELO SAAS: Usar rutas multi-tenant
+    const user = auth?.currentUser;
+    let query;
+    
+    if (user && ['personal', 'asistencias', 'configuracion', 'alertas', 'logs'].includes(collection)) {
+      // Ruta multi-tenant: users/{userId}/{collection}
+      query = db.collection('users').doc(user.uid).collection(collection);
+    } else {
+      // Ruta tradicional para compatibilidad
+      query = db.collection(collection);
+    }
 
     if (Array.isArray(filters)) {
       filters.forEach((f) => {
@@ -273,20 +283,56 @@
 
   async function save(collection, id, data, merge) {
     if (!db) throw new Error('Firebase no inicializado');
-    const docRef = db.collection(collection).doc(id);
+    
+    // MODELO SAAS: Usar rutas multi-tenant
+    // Si el usuario está autenticado, guardar en su espacio: users/{userId}/{collection}/{id}
+    const user = auth?.currentUser;
+    let docRef;
+    
+    if (user && ['personal', 'asistencias', 'configuracion', 'alertas', 'logs'].includes(collection)) {
+      // Ruta multi-tenant: users/{userId}/{collection}/{id}
+      docRef = db.collection('users').doc(user.uid).collection(collection).doc(id);
+    } else {
+      // Ruta tradicional para compatibilidad
+      docRef = db.collection(collection).doc(id);
+    }
+    
     await docRef.set(data, { merge: !!merge });
     return { id: id, ...data };
   }
 
   async function remove(collection, id) {
     if (!db) throw new Error('Firebase no inicializado');
-    await db.collection(collection).doc(id).delete();
+    
+    // MODELO SAAS: Usar rutas multi-tenant
+    const user = auth?.currentUser;
+    let docRef;
+    
+    if (user && ['personal', 'asistencias', 'configuracion', 'alertas', 'logs'].includes(collection)) {
+      docRef = db.collection('users').doc(user.uid).collection(collection).doc(id);
+    } else {
+      docRef = db.collection(collection).doc(id);
+    }
+    
+    await docRef.delete();
   }
 
   function subscribe(collection, callback) {
     if (!db) return function () {};
 
-    const unsub = db.collection(collection).onSnapshot(
+    // MODELO SAAS: Usar rutas multi-tenant
+    const user = auth?.currentUser;
+    let collectionRef;
+    
+    if (user && ['personal', 'asistencias', 'configuracion', 'alertas', 'logs'].includes(collection)) {
+      // Ruta multi-tenant: users/{userId}/{collection}
+      collectionRef = db.collection('users').doc(user.uid).collection(collection);
+    } else {
+      // Ruta tradicional para compatibilidad
+      collectionRef = db.collection(collection);
+    }
+
+    const unsub = collectionRef.onSnapshot(
       (snapshot) => {
         const records = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
         try {
@@ -407,7 +453,16 @@
       return Promise.resolve(false);
     }
 
-    const configRef = db.collection('configuracion').doc('general');
+    // MODELO SAAS: Health check en espacio del usuario si está autenticado
+    const user = auth?.currentUser;
+    let configRef;
+    
+    if (user) {
+      configRef = db.collection('users').doc(user.uid).collection('configuracion').doc('general');
+    } else {
+      configRef = db.collection('configuracion').doc('general');
+    }
+
     return configRef.get()
       .then(() => {
         healthCheckData.latencyMs = Date.now() - start;
@@ -424,6 +479,99 @@
         _scheduleReconnect();
         return false;
       });
+  }
+
+  // ─── AUTENTICACIÓN SAAS (Registro automático) ───────────────────────────
+  async function registerUser(email, password, displayName) {
+    if (!auth) throw new Error('Firebase Auth no inicializado');
+    
+    try {
+      // Registrar usuario con email/password
+      const userCredential = await auth.createUserWithEmailAndPassword(email, password);
+      const user = userCredential.user;
+      
+      // Actualizar displayName
+      if (displayName) {
+        await user.updateProfile({ displayName });
+      }
+      
+      // Crear documento de usuario en Firestore
+      if (db) {
+        const userDoc = {
+          uid: user.uid,
+          email: user.email,
+          displayName: displayName || user.displayName || '',
+          emailVerified: user.emailVerified,
+          createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+          subscription: 'free', // Por defecto plan gratuito
+          isActive: true,
+        };
+        
+        await db.collection('users').doc(user.uid).set(userDoc);
+        
+        // Crear configuración inicial
+        const defaultConfig = {
+          Nombre_Obra: 'Mi Obra',
+          Encargado: displayName || 'Administrador',
+          Tolerancia_Minutos: 15,
+          createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+        };
+        
+        await db.collection('users').doc(user.uid).collection('configuracion').doc('general').set(defaultConfig);
+      }
+      
+      return { success: true, user: { uid: user.uid, email: user.email, displayName: user.displayName } };
+    } catch (error) {
+      console.error('[FirebaseClient] Error registrando usuario:', error);
+      throw error;
+    }
+  }
+
+  async function signInWithGoogle() {
+    if (!auth) throw new Error('Firebase Auth no inicializado');
+    
+    try {
+      const provider = new firebase.auth.GoogleAuthProvider();
+      const userCredential = await auth.signInWithPopup(provider);
+      const user = userCredential.user;
+      
+      // Verificar si existe documento de usuario
+      if (db) {
+        const userDocRef = db.collection('users').doc(user.uid);
+        const userDoc = await userDocRef.get();
+        
+        if (!userDoc.exists) {
+          // Crear documento para nuevo usuario Google
+          const newUserDoc = {
+            uid: user.uid,
+            email: user.email,
+            displayName: user.displayName || '',
+            emailVerified: user.emailVerified,
+            createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+            subscription: 'free',
+            isActive: true,
+            provider: 'google',
+          };
+          
+          await userDocRef.set(newUserDoc);
+          
+          // Crear configuración inicial
+          const defaultConfig = {
+            Nombre_Obra: 'Mi Obra',
+            Encargado: user.displayName || 'Administrador',
+            Tolerancia_Minutos: 15,
+            createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+          };
+          
+          await db.collection('users').doc(user.uid).collection('configuracion').doc('general').set(defaultConfig);
+        }
+      }
+      
+      return { success: true, user: { uid: user.uid, email: user.email, displayName: user.displayName } };
+    } catch (error) {
+      console.error('[FirebaseClient] Error en Google Sign-In:', error);
+      throw error;
+    }
   }
 
   /**
@@ -501,38 +649,24 @@
   }
 
   /**
-   * Inicio de sesión con una cuenta de Google real (OAuth popup).
-   *
-   * Google valida el correo/contraseña del usuario, así NO es necesario que la
-   * cuenta exista como usuario email/password en Firebase Auth: basta habilitar
-   * el proveedor "Google" en Firebase Console → Authentication → Sign-in method.
-   * Firestore rules ya tratan como operador a cualquier usuario autenticado
-   * (isAuthorizedOperator), por lo que el usuario Google puede leer y marcar.
-   *
-   * Errores devueltos con `code` para que la UI traduzca: popup-closed-by-user,
-   * cancelled-popup-request, popup-blocked, account-exists-with-different-credential.
-   * @returns {Promise<{success: boolean, user?: Object, error?: string, code?: string}>}
+   * Completa el flujo redirect de Google al volver a la app.
+   * Llamar una vez en el arranque.
+   * @returns {Promise<{success: boolean, user?: Object, handled: boolean, error?: string, code?: string}>}
    */
-  async function signInWithGoogle() {
-    if (!auth) return { success: false, error: 'Auth no inicializado', code: 'auth/internal-error' };
+  async function completeGoogleRedirect() {
+    if (!auth || typeof auth.getRedirectResult !== 'function') {
+      return { success: false, handled: false };
+    }
     try {
-      if (typeof auth.signInWithPopup !== 'function') {
-        return { success: false, error: 'El SDK de Auth no soporta signInWithPopup.', code: 'auth/operation-not-supported' };
-      }
       if (!authPersistenceReady) await _configureAuthPersistence();
-
-      const GoogleAuthProvider =
-        (firebase && firebase.auth && firebase.auth.GoogleAuthProvider) || null;
-      if (!GoogleAuthProvider) {
-        return { success: false, error: 'Proveedor Google no disponible en el SDK.', code: 'auth/provider-unavailable' };
+      const result = await auth.getRedirectResult();
+      if (result && result.user) {
+        _setState('connected');
+        return { success: true, handled: true, user: result.user };
       }
-
-      const credential = await auth.signInWithPopup(new GoogleAuthProvider());
-      _setState('connected');
-      return { success: true, user: credential.user };
+      return { success: true, handled: false };
     } catch (error) {
-      _setState('disconnected');
-      return { success: false, error: error.message, code: error.code };
+      return { success: false, handled: true, error: error.message, code: error.code };
     }
   }
 
@@ -584,12 +718,15 @@
     signInAnonymously,
     signInWithEmail,
     signInWithGoogle,
+    completeGoogleRedirect,
     signOut,
     getCurrentUser,
     onAuthStateChanged,
     getConfig,
     stop,
     reconnect,
+    // Nuevas funciones SAAS
+    registerUser,
   };
 
   // Auto-inicializar en cuanto el módulo se carga. Si falla por SDK/config,
