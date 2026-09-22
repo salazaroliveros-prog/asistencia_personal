@@ -50,7 +50,9 @@ service cloud.firestore {
     }
     
     function canManageWorkers() {
-      return isAdmin() || isManager();
+      // Cualquier sesión autenticada (operador de campo / correo / Google)
+      // puede registrar y editar personal. El borrado físico sigue siendo admin.
+      return isAuthorizedOperator() || isAdmin() || isManager();
     }
     
     function canMarkAttendance() {
@@ -84,9 +86,10 @@ service cloud.firestore {
     }
 
     function isValidDateValue(value) {
+      // Acepta Timestamp nativo, epoch ms, o ISO-8601 (20–40 chars: con/sin ms/Z)
       return value is timestamp ||
         (value is number && value > 0) ||
-        (value is string && value.size() >= 20 && value.size() <= 30);
+        (value is string && value.size() >= 10 && value.size() <= 40);
     }
     
     function isValidArray(value, minLength) {
@@ -107,7 +110,8 @@ service cloud.firestore {
         isValidString(data.DPI_CUI, 10, 20) &&
         isValidString(data.Puesto, 2, 50) &&
         isValidString(data.Telefono, 0, 20) &&
-        isValidString(data.WhatsApp, 0, 20) &&
+        // WhatsApp puede ser teléfono (+502…) o URL wa.me (hasta ~40 chars)
+        isValidString(data.WhatsApp, 0, 80) &&
         isValidString(data.Direccion, 0, 200) &&
         data.Estado in ['Activo', 'Inactivo', 'Eliminado', 'Suspendido'] &&
         isValidDateValue(data.Fecha_Registro);

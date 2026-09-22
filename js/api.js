@@ -34,11 +34,15 @@
   }
 
   function connected() {
+    const Persist = window.CPC && window.CPC.Persist;
+    if (Persist && typeof Persist.getWriteCapability === 'function') {
+      return Persist.getWriteCapability().ok;
+    }
     if (!FirebaseClient) return false;
     if (!FirebaseClient.isReady()) return false;
     const state = FirebaseClient.getConnectionState();
-    return (state === 'connected' || state === 'degraded') &&
-           Boolean(AppState.get('connected'));
+    const user = FirebaseClient.getCurrentUser && FirebaseClient.getCurrentUser();
+    return (state === 'connected' || state === 'degraded') && Boolean(user);
   }
 
   function updateConnection(value) {
@@ -51,22 +55,140 @@
   }
 
   function normalizeWorker(payload, previous) {
+    const Persist = window.CPC && window.CPC.Persist;
     const workerId = String(payload.id || (previous && previous.ID_Trabajador) || id('TRAB'));
     const prev = previous || {};
+    const rawWa = payload.whatsapp != null ? payload.whatsapp : prev.WhatsApp;
+    const whatsapp = Persist && Persist.normalizeWhatsApp
+      ? Persist.normalizeWhatsApp(rawWa)
+      : String(rawWa || '').replace(/\D/g, '').slice(0, 15);
+    const nombre = String(payload.nombre || prev.Nombre_Completo || '');
+    const dpi = String(payload.dpi || prev.DPI_CUI || '');
     return {
       ID_Trabajador: workerId,
-      Nombre_Completo: String(payload.nombre || prev.Nombre_Completo || ''),
-      DPI_CUI: String(payload.dpi || prev.DPI_CUI || ''),
+      Nombre_Completo: nombre,
+      DPI_CUI: dpi,
       Puesto: String(payload.puesto || prev.Puesto || ''),
-      Jefe_Inmediato: String(payload.jefe || prev.Jefe_Inmediato || ''),
-      Telefono: String(payload.telefono || prev.Telefono || ''),
-      WhatsApp: String(payload.whatsapp || prev.WhatsApp || ''),
-      Direccion: String(payload.direccion || prev.Direccion || ''),
-      Fotografia_URL: String(payload.fotografia || prev.Fotografia_URL || ''),
-      Codigo_QR_Data: prev.Codigo_QR_Data || JSON.stringify({ id: workerId, dpi: payload.dpi, nombre: payload.nombre }),
+      Jefe_Inmediato: String(payload.jefe != null ? payload.jefe : (prev.Jefe_Inmediato || '')),
+      Telefono: String(payload.telefono != null ? payload.telefono : (prev.Telefono || '')),
+      WhatsApp: whatsapp,
+      Direccion: String(payload.direccion != null ? payload.direccion : (prev.Direccion || '')),
+      Fotografia_URL: String(payload.fotografia != null ? payload.fotografia : (prev.Fotografia_URL || '')),
+      Codigo_QR_Data: prev.Codigo_QR_Data || JSON.stringify({ id: workerId, dpi, nombre }),
       Fecha_Registro: prev.Fecha_Registro || new Date().toISOString(),
       Estado: prev.Estado || 'Activo',
     };
+  }
+
+  /**
+   * Persiste un trabajador en caché local y opcionalmente encola sync.
+   * @param {object} worker
+   * @param {boolean} isEdit
+   * @param {object} payload
+   * @param {boolean} enqueueSync
+   */
+  function persistWorkerLocal(worker, isEdit, payload, enqueueSync) {
+    const personal = AppState.get('personal') || [];
+    const idx = personal.findIndex((w) => w.ID_Trabajador === worker.ID_Trabajador);
+    const updated = [...personal];
+    if (idx >= 0) updated[idx] = { ...updated[idx], ...worker };
+    else updated.push(worker);
+    AppState.set('personal', updated);
+    write(LS_KEYS.PERSONAL_CACHE, updated);
+    if (enqueueSync) {
+      enqueue(isEdit ? 'personal-update' : 'personal-create', { ...payload, id: worker.ID_Trabajador });
+    }
+  }
+
+  async function guardarTrabajador(payload) {
+    const Persist = window.CPC && window.CPC.Persist;
+    const isEdit = !!(payload.id && (AppState.get('personal') || []).find((w) => w.ID_Trabajador === payload.id));
+    const existing = isEdit ? (AppState.get('personal') || []).find((w) => w.ID_Trabajador === payload.id) : null;
+    const worker = normalizeWorker(payload, existing);
+
+    const capability = Persist && Persist.getWriteCapability
+      ? Persist.getWriteCapability()
+      : { ok: connected(), reason: 'Sin capacidad de escritura en nube.', code: 'offline' };
+
+    // Sin sesión / sin red: guardar local + cola, mensaje honesto
+    if (!capability.ok) {
+      persistWorkerLocal(worker, isEdit, payload, true);
+      const msg = capability.code === 'auth-required'
+        ? (isEdit
+          ? 'Guardado en este dispositivo. Inicia sesión en Ajustes para subirlo a la nube.'
+          : 'Registrado en este dispositivo. Inicia sesión en Ajustes para subirlo a la nube.')
+        : (isEdit ? 'Trabajador actualizado localmente (se sincronizará al conectar).' : 'Trabajador registrado localmente (se sincronizará al conectar).');
+      return Persist
+        ? Persist.localSuccess(worker, msg, true)
+        : { success: true, data: worker, offline: true, message: msg, mode: 'queued', needsAuth: capability.needsAuth };
+    }
+
+    try {
+      if (isEdit) {
+        const updateFields = {
+          ID_Trabajador:   worker.ID_Trabajador,
+          Nombre_Completo: worker.Nombre_Completo,
+          DPI_CUI:         worker.DPI_CUI,
+          Puesto:          worker.Puesto,
+          Jefe_Inmediato:  worker.Jefe_Inmediato,
+          Telefono:        worker.Telefono,
+          WhatsApp:        worker.WhatsApp,
+          Direccion:       worker.Direccion,
+          Fotografia_URL:  worker.Fotografia_URL,
+          Estado:          worker.Estado,
+          Fecha_Registro:  worker.Fecha_Registro,
+        };
+        await FirebaseClient.save('personal', worker.ID_Trabajador, updateFields, true);
+      } else {
+        await FirebaseClient.save('personal', worker.ID_Trabajador, worker, false);
+      }
+      // Refrescar caché local alineada con la nube
+      persistWorkerLocal(worker, isEdit, payload, false);
+      try {
+        await obtenerPersonal();
+      } catch (refreshErr) {
+        // El documento ya está en la nube y en caché local; no convertir éxito en fallo.
+        console.warn('[API] Post-save refresh omitido:', refreshErr && refreshErr.message);
+      }
+      const okMsg = isEdit ? 'Trabajador actualizado en la nube' : 'Trabajador registrado en la nube';
+      return Persist ? Persist.cloudSuccess(worker, okMsg) : { success: true, data: worker, message: okMsg, mode: 'cloud' };
+    } catch (error) {
+      console.error('[API] Error guardarTrabajador:', error);
+      const classified = Persist && Persist.classifyFirestoreError
+        ? Persist.classifyFirestoreError(error)
+        : { code: error.code || 'unknown', message: error.message || 'Error al guardar' };
+
+      // Red / permiso: no perder datos — local + cola, pero avisar con claridad
+      if (classified.code === 'unavailable' || classified.code === 'permission-denied' || classified.code === 'unauthenticated') {
+        persistWorkerLocal(worker, isEdit, payload, true);
+        return {
+          success: true,
+          data: worker,
+          offline: true,
+          mode: 'queued',
+          message: classified.code === 'permission-denied' || classified.code === 'unauthenticated'
+            ? `${isEdit ? 'Actualizado' : 'Registrado'} en este dispositivo. ${classified.message}`
+            : (isEdit ? 'Actualizado localmente (sin red). Se sincronizará automáticamente.' : 'Registrado localmente (sin red). Se sincronizará automáticamente.'),
+          code: classified.code,
+          needsAuth: classified.needsAuth,
+          needsRole: classified.needsRole,
+        };
+      }
+
+      if (classified.code === 'invalid-argument' || classified.code === 'failed-precondition') {
+        return Persist
+          ? Persist.blocked(classified.message, { code: classified.code })
+          : { success: false, error: classified.message, mode: 'blocked' };
+      }
+
+      return {
+        success: false,
+        mode: 'blocked',
+        error: classified.message,
+        message: classified.message,
+        code: classified.code,
+      };
+    }
   }
 
   function normalizeAttendance(payload) {
@@ -155,83 +277,7 @@
     }
   }
 
-  async function guardarTrabajador(payload) {
-    const isEdit = !!(payload.id && (AppState.get('personal') || []).find((w) => w.ID_Trabajador === payload.id));
-    const existing = isEdit ? (AppState.get('personal') || []).find((w) => w.ID_Trabajador === payload.id) : null;
-    const worker = normalizeWorker(payload, existing);
-    try {
-      if (connected()) {
-        // Firestore: create vs update tienen reglas distintas
-        if (isEdit) {
-          // update: solo campos permitidos por las reglas
-          const updateFields = {
-            ID_Trabajador:   worker.ID_Trabajador,
-            Nombre_Completo: worker.Nombre_Completo,
-            DPI_CUI:         worker.DPI_CUI,
-            Puesto:          worker.Puesto,
-            Jefe_Inmediato:  worker.Jefe_Inmediato,
-            Telefono:        worker.Telefono,
-            WhatsApp:        worker.WhatsApp,
-            Direccion:       worker.Direccion,
-            Fotografia_URL:  worker.Fotografia_URL,
-            Estado:          worker.Estado,
-          };
-          await FirebaseClient.save('personal', worker.ID_Trabajador, updateFields, true);
-        } else {
-          // create: documento completo
-          await FirebaseClient.save('personal', worker.ID_Trabajador, worker, false);
-        }
-        await obtenerPersonal();
-        return { success: true, data: worker, message: isEdit ? 'Trabajador actualizado' : 'Trabajador registrado' };
-      } else {
-        const personal = AppState.get('personal') || [];
-        const idx = personal.findIndex((w) => w.ID_Trabajador === worker.ID_Trabajador);
-        const updated = [...personal];
-        if (idx >= 0) updated[idx] = { ...updated[idx], ...worker }; else updated.push(worker);
-        AppState.set('personal', updated);
-        write(LS_KEYS.PERSONAL_CACHE, updated);
-        enqueue(isEdit ? 'personal-update' : 'personal-create', { ...payload, id: worker.ID_Trabajador });
-        return { success: true, data: worker, offline: true, message: isEdit ? 'Trabajador actualizado localmente' : 'Trabajador registrado localmente' };
-      }
-    } catch (error) {
-      console.error('[API] Error guardarTrabajador:', error);
-      
-      // Manejo específico de errores de Firebase
-      if (error.code === 'permission-denied') {
-        console.warn('[API] Permiso denegado, guardando localmente');
-        const personal = AppState.get('personal') || [];
-        const idx = personal.findIndex((w) => w.ID_Trabajador === worker.ID_Trabajador);
-        const updated = [...personal];
-        if (idx >= 0) updated[idx] = { ...updated[idx], ...worker }; else updated.push(worker);
-        AppState.set('personal', updated);
-        write(LS_KEYS.PERSONAL_CACHE, updated);
-        enqueue(isEdit ? 'personal-update' : 'personal-create', { ...payload, id: worker.ID_Trabajador });
-        return { success: true, data: worker, offline: true, message: isEdit ? 'Trabajador actualizado localmente (sin conexión)' : 'Trabajador registrado localmente (sin conexión)' };
-      }
-      
-      // Manejo de errores de red
-      if (error.code === 'unavailable' || error.code === 'network-request-failed') {
-        console.warn('[API] Error de red, guardando localmente');
-        const personal = AppState.get('personal') || [];
-        const idx = personal.findIndex((w) => w.ID_Trabajador === worker.ID_Trabajador);
-        const updated = [...personal];
-        if (idx >= 0) updated[idx] = { ...updated[idx], ...worker }; else updated.push(worker);
-        AppState.set('personal', updated);
-        write(LS_KEYS.PERSONAL_CACHE, updated);
-        enqueue(isEdit ? 'personal-update' : 'personal-create', { ...payload, id: worker.ID_Trabajador });
-        return { success: true, data: worker, offline: true, message: 'Error de conexión - datos guardados localmente' };
-      }
-      
-      // Manejo de errores de validación
-      if (error.code === 'invalid-argument' || error.code === 'failed-precondition') {
-        return { success: false, error: 'Datos inválidos: ' + error.message };
-      }
-      
-      // Error genérico
-      return { success: false, error: error.message || 'Error desconocido al guardar trabajador' };
-    }
-  }
-
+  // ─── Baja lógica de trabajador ───────────────────────────────────────────
   async function eliminarPersonal(workerId) {
     try {
       if (connected()) {
@@ -250,6 +296,7 @@
           Direccion:       existing.Direccion       || '',
           Fotografia_URL:  existing.Fotografia_URL  || '',
           Estado:          'Inactivo',
+          Fecha_Registro:  existing.Fecha_Registro  || new Date().toISOString(),
         };
         await FirebaseClient.save('personal', workerId, updateFields, true);
         await obtenerPersonal();
@@ -563,6 +610,18 @@
   async function syncOfflineQueue() {
     const queue = read(LS_KEYS.OFFLINE_QUEUE, []);
     if (queue.length === 0) return { success: true, enviadas: 0, errores: 0 };
+
+    // Sin sesión / sin red: no intentar (evita permission-denied en bucle)
+    if (!connected()) {
+      return {
+        success: false,
+        enviadas: 0,
+        errores: queue.length,
+        error: 'Se requiere sesión y conexión para sincronizar.',
+        needsAuth: true,
+      };
+    }
+
     const failed = [];
     let synced = 0;
     for (const item of queue) {
@@ -578,6 +637,7 @@
             DPI_CUI: worker.DPI_CUI, Puesto: worker.Puesto, Jefe_Inmediato: worker.Jefe_Inmediato,
             Telefono: worker.Telefono, WhatsApp: worker.WhatsApp, Direccion: worker.Direccion,
             Fotografia_URL: worker.Fotografia_URL, Estado: worker.Estado,
+            Fecha_Registro: worker.Fecha_Registro,
           };
           await FirebaseClient.save('personal', worker.ID_Trabajador, updateFields, true);
         } else if (item.type === 'personal-delete') {
@@ -595,10 +655,12 @@
               Direccion:       existingW.Direccion       || '',
               Fotografia_URL:  existingW.Fotografia_URL  || '',
               Estado:          'Inactivo',
+              Fecha_Registro:  existingW.Fecha_Registro  || new Date().toISOString(),
             };
             await FirebaseClient.save('personal', item.payload.id, delFields, true);
           } else {
-            await FirebaseClient.save('personal', item.payload.id, { Estado: 'Inactivo' }, true);
+            failed.push(item);
+            continue;
           }
         } else if (item.type === 'attendance-create') {
           const marcacion = normalizeAttendance(item.payload);

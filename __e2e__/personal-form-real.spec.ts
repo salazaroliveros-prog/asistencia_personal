@@ -191,7 +191,7 @@ test('ONLINE: registrar desde el formulario genera el trabajador (ID/QR) y lo gu
   expect(qr.nombre).toBe('Operario Real Test');
   expect(w.Estado).toBe('Activo');
   expect(w.Fecha_Registro).toBeTruthy();
-  expect(w.WhatsApp).toMatch(/^https:\/\/wa\.me\/502/);
+  expect(w.WhatsApp).toMatch(/^502\d{8}$/);
 });
 
 test('OFFLINE: registrar desde el formulario guarda en local, genera ID/QR y deja cola pendiente', async ({ page }) => {

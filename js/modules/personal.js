@@ -364,7 +364,7 @@ const ModuloPersonal = (() => {
     _setPuestoSelect(t.Puesto);
     setVal('p-jefe',      t.Jefe_Inmediato);
     setVal('p-telefono',  t.Telefono);
-    setVal('p-whatsapp',  t.WhatsApp);
+    setVal('p-whatsapp',  String(t.WhatsApp || '').replace(/\D/g, ''));
     setVal('p-direccion', t.Direccion);
 
     if (t.Fotografia_URL) {
@@ -441,81 +441,30 @@ const ModuloPersonal = (() => {
       return;
     }
 
-    // Construir link de WhatsApp si se proporcionó número
+    // WhatsApp: solo dígitos; Persist.normalizeWhatsApp aplica prefijo GT y límite.
+    // No construir wa.me aquí — las reglas de Firestore validan longitud y dígitos.
     if (payload.whatsapp) {
-      const numWA = payload.whatsapp.replace(/\D/g, '');
-      payload.whatsapp = `https://wa.me/502${numWA}`;
+      payload.whatsapp = String(payload.whatsapp).replace(/\D/g, '');
     }
 
-    // ── Modo offline: guardar localmente y encolar para sincronizarse al reconectar ──
-    if (AppState.get('backendMode') !== 'firestore' || !AppState.get('connected')) {
-      try {
-        const result = await API.guardarTrabajador(payload);
-        if (result && result.success) {
-          if (window.Logger) {
-            window.Logger.info('ModuloPersonal', 'Trabajador guardado localmente y colocado en cola de sincronización', {
-              isEdit: !!_editingId,
-            });
-          }
-          Alerts.success(result.message || 'Trabajador guardado localmente');
-          _cerrarModal('modal-personal');
-          _filtrarTabla();
-        } else {
-          if (window.Logger) {
-            window.Logger.error('ModuloPersonal', 'Error al guardar localmente', {
-              error: result && result.error,
-            });
-          }
-          Alerts.error((result && result.error) || 'Error al guardar localmente', 'Error');
-        }
-      } catch (err) {
-        if (window.ErrorHandler) {
-          const handled = window.ErrorHandler.handle(err, { context: 'guardarPersonalOffline' });
-          Alerts.error(handled.message, 'Error de conexión');
-        } else {
-          Alerts.error(err.message, 'Error de conexión');
-        }
-      }
-      return;
-    }
-
-    // ── Modo online: enviar a Firestore ─────────────────────────────────────────
-    const loader  = Alerts.loading(_editingId ? 'Actualizando trabajador...' : 'Registrando trabajador...');
+    const loader  = Alerts.loading(_editingId ? 'Guardando trabajador...' : 'Registrando trabajador...');
     const btnSave = document.getElementById('btn-guardar-personal');
     if (btnSave) btnSave.disabled = true;
 
     try {
-      let result;
-      if (_editingId) {
-        result = await API.actualizarPersonal(payload);
-      } else {
-        result = await API.registrarPersonal(payload);
-      }
-
+      const result = await API.guardarTrabajador(payload);
       loader.close();
-
-      if (result.success) {
-        if (window.Logger) {
-          window.Logger.info('ModuloPersonal', 'Trabajador guardado exitosamente en Firestore', { 
-            isEdit: !!_editingId,
-            workerId: payload.id,
-          });
-        }
-        Alerts.success(result.message || (_editingId ? 'Trabajador actualizado' : 'Trabajador registrado'));
-        _cerrarModal('modal-personal');
-        _filtrarTabla();
-      } else {
-        if (window.Logger) {
-          window.Logger.error('ModuloPersonal', 'Error al guardar en Firestore', { 
-            error: result.error, 
-          });
-        }
-        Alerts.error(result.error || 'Error al guardar', 'Error');
-      }
+      _notifyPersistResult(result, {
+        isEdit: !!_editingId,
+        onOk: () => {
+          _cerrarModal('modal-personal');
+          _filtrarTabla();
+        },
+      });
     } catch (err) {
       loader.close();
       if (window.Logger) {
-        window.Logger.error('ModuloPersonal', 'Excepción al guardar trabajador', { 
+        window.Logger.error('ModuloPersonal', 'Excepción al guardar trabajador', {
           error: err.message,
           stack: err.stack,
         });
@@ -529,6 +478,50 @@ const ModuloPersonal = (() => {
     } finally {
       if (btnSave) btnSave.disabled = false;
     }
+  }
+
+  /**
+   * Interpreta un PersistResult y muestra toast honesto (nube / local / cola / bloqueado).
+   * @param {object} result
+   * @param {{ isEdit?: boolean, onOk?: function }} opts
+   */
+  function _notifyPersistResult(result, opts) {
+    const options = opts || {};
+    if (!result) {
+      Alerts.error('Sin respuesta al guardar', 'Error');
+      return;
+    }
+
+    if (window.Logger) {
+      window.Logger.info('ModuloPersonal', 'Resultado de persistencia', {
+        success: result.success,
+        mode: result.mode,
+        needsAuth: result.needsAuth,
+        code: result.code,
+        isEdit: options.isEdit,
+      });
+    }
+
+    if (!result.success) {
+      Alerts.error(result.message || result.error || 'Error al guardar', 'No se pudo guardar');
+      return;
+    }
+
+    const mode = result.mode || (result.offline ? 'queued' : 'cloud');
+    const msg = result.message
+      || (options.isEdit ? 'Trabajador actualizado' : 'Trabajador registrado');
+
+    if (mode === 'cloud') {
+      Alerts.success(msg, 'Guardado en la nube');
+    } else if (result.needsAuth || result.needsRole) {
+      Alerts.warning(msg, 'Guardado en este dispositivo');
+    } else if (mode === 'queued' || mode === 'local') {
+      Alerts.warning(msg, mode === 'queued' ? 'Pendiente de sincronizar' : 'Solo en este dispositivo');
+    } else {
+      Alerts.success(msg);
+    }
+
+    if (typeof options.onOk === 'function') options.onOk();
   }
 
   // ─────────────────────────────────────────────────────────────────────────
