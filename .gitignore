@@ -59,10 +59,17 @@ android/
 ios/
 app-movil/
 
-# ── Playwright (navegadores y reportes locales) ──────────────────
+# ── Playwright (navegadores, reportes y salidas locales) ─────────
 .playwright-browsers/
 .playwright-mcp/
 playwright-report/
+test-results/
+!test-results/visual-baseline/
+!test-results/visual-baseline/**
+__e2e__/output/
+__e2e__/capturas/
+__e2e__/snapshots/
+__e2e__/*.log
 
 # ── Logs ─────────────────────────────────────────────────────────
 *.log
@@ -98,7 +105,6 @@ __tests__/take-screenshots.js
 __tests__/verify-*.js
 __tests__/check-*.js
 __tests__/pwa-scanner-integration.test.cjs
-__e2e__/
 
 # ── Documentación obsoleta ────────────────────────────────────────
 ATTENDANCE_SYSTEM_MANUAL.md
@@ -108,6 +114,3 @@ app-movil/tsconfig.tsbuildinfo
 
 # ── TypeScript build info ─────────────────────────────────────────
 *.tsbuildinfo
-
-.vercel
-.env*
