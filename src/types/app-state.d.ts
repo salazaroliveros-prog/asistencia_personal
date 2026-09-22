@@ -297,12 +297,59 @@ export interface MobileQRScannerContract {
 }
 
 /**
+ * Resultado unificado de persistencia (js/utils/persist.js + api.js).
+ */
+export type PersistMode = 'cloud' | 'local' | 'queued' | 'blocked';
+
+export interface PersistResult {
+  success: boolean;
+  mode: PersistMode;
+  data?: unknown;
+  message: string;
+  error?: string;
+  code?: string;
+  needsAuth?: boolean;
+  needsRole?: boolean;
+  offline?: boolean;
+}
+
+export interface WriteCapability {
+  ok: boolean;
+  reason?: string;
+  code?: string;
+  user?: unknown;
+  needsAuth?: boolean;
+}
+
+/** Contrato de `window.CPC.Persist` (js/utils/persist.js). */
+export interface PersistContract {
+  getWriteCapability(): WriteCapability;
+  classifyFirestoreError(error: { code?: string; message?: string } | null): {
+    code: string;
+    message: string;
+    needsAuth?: boolean;
+    needsRole?: boolean;
+  };
+  normalizeWhatsApp(value: string): string;
+  localSuccess(data: unknown, message: string, queued?: boolean): PersistResult;
+  cloudSuccess(data: unknown, message: string): PersistResult;
+  blocked(message: string, extra?: Record<string, unknown>): PersistResult;
+}
+
+/** Contrato de `window.CPC.FeedbackAudio` (js/utils/feedback-audio.js). */
+export interface FeedbackAudioContract {
+  create(): { beepSuccess(): void; beepError(): void } | null;
+}
+
+/**
  * Namespace de utilidades compartidas montado en `window.CPC` por
- * `js/utils/{string,date,photo}-helpers.js`, `validation-rules.js` y
- * `camera-session.js`.
+ * `js/utils/{string,date,photo}-helpers.js`, `validation-rules.js`,
+ * `camera-session.js`, `persist.js` y `feedback-audio.js`.
  */
 export interface CpcNamespace {
   CameraSession: CameraSessionContract;
+  Persist: PersistContract;
+  FeedbackAudio: FeedbackAudioContract;
   StringHelpers: {
     /** Escapa `& < > "` para insertar de forma segura en HTML. */
     escHtml(value: unknown): string;
@@ -371,6 +418,15 @@ declare global {
     MobileCameraOptimizer: MobileCameraOptimizerContract;
     /** Namespace de utilidades compartidas montadas en window.CPC.*. */
     CPC: CpcNamespace;
+    /** js/utils/update-manager.js — banner solo si hay deploy real. */
+    UpdateManager: {
+      init(): void;
+      checkForUpdates(): void;
+      showUpdateBanner(): void;
+      hideUpdateBanner(): void;
+      applyUpdate(): void;
+      dismissUpdate(): void;
+    };
     /** Versión de la aplicación (js/config.js). */
     APP_VERSION: string;
     /** Nombre de la aplicación (js/config.js). */

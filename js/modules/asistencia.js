@@ -476,125 +476,120 @@ const _ModuloAsistencia = (() => {
     await _enviarMarcacion(trabajador, tipo, horaOficial, estadoMarcacion, horasExtra);
   }
 
+  /**
+   * Envía una marcación a la API (con GPS opcional).
+   * @param {object} trabajador
+   * @param {string} tipo
+   * @param {string} horaOficial
+   * @param {string} estadoMarcacion
+   * @param {number} [horasExtra=0]
+   * @returns {Promise<void>}
+   */
   async function _enviarMarcacion(trabajador, tipo, horaOficial, estadoMarcacion, horasExtra = 0) {
     if (_marking) return;
     _marking = true;
 
-    const config = AppState.get('config');
-    const hoy    = AppState.today();
-
-    // Capture GPS location if enabled
-    let gpsData = null;
-    const gpsEnabled = config.GPS_Habilitado !== false; // Default to true
-    let geofenceStatus = null;
-
     try {
-    if (gpsEnabled && GPS.isAvailable()) {
-      try {
-        const position = await GPS.getCurrentPosition();
-        gpsData = {
-          latitude: position.latitude,
-          longitude: position.longitude,
-          accuracy: position.accuracy,
-        };
+      const config = AppState.get('config');
+      const hoy = AppState.today();
+      let gpsData = null;
+      let geofenceStatus = null;
+      const gpsEnabled = config.GPS_Habilitado !== false;
 
-        // Check geofence if configured
-        if (config.GPS_Centro_Lat && config.GPS_Centro_Lon) {
-          const geofenceCenter = {
-            latitude: parseFloat(config.GPS_Centro_Lat),
-            longitude: parseFloat(config.GPS_Centro_Lon),
+      if (gpsEnabled && GPS.isAvailable()) {
+        try {
+          const position = await GPS.getCurrentPosition();
+          gpsData = {
+            latitude: position.latitude,
+            longitude: position.longitude,
+            accuracy: position.accuracy,
           };
-          const radius = parseInt(config.GPS_Radio_Metros || DEFAULT_GEOFENCE_RADIUS, 10);
-          geofenceStatus = GPS.checkGeofence(position, geofenceCenter, radius);
 
-          // Warn if outside geofence (but still allow marking)
-          if (!geofenceStatus.inside && config.GPS_Requerir_Ubicacion === true) {
-            // Use custom confirmation instead of window.confirm
-            const confirmed = await Alerts.confirm(
-              `Estás a ${geofenceStatus.distance}m del sitio de obra (${radius}m permitido). ` +
-              '¿Deseas registrar la marcación de todas formas?',
-              'Fuera del área permitida',
-            );
-            if (!confirmed) {
-              Alerts.warning('Marcación cancelada por estar fuera del área permitida');
-              return;
+          if (config.GPS_Centro_Lat && config.GPS_Centro_Lon) {
+            const geofenceCenter = {
+              latitude: parseFloat(config.GPS_Centro_Lat),
+              longitude: parseFloat(config.GPS_Centro_Lon),
+            };
+            const radius = parseInt(config.GPS_Radio_Metros || DEFAULT_GEOFENCE_RADIUS, 10);
+            geofenceStatus = GPS.checkGeofence(position, geofenceCenter, radius);
+
+            if (!geofenceStatus.inside && config.GPS_Requerir_Ubicacion === true) {
+              const confirmed = await Alerts.confirm(
+                `Estás a ${geofenceStatus.distance}m del sitio de obra (${radius}m permitido). ` +
+                '¿Deseas registrar la marcación de todas formas?',
+                'Fuera del área permitida',
+              );
+              if (!confirmed) {
+                Alerts.warning('Marcación cancelada por estar fuera del área permitida');
+                return;
+              }
             }
           }
-        }
-      } catch (gpsError) {
-        console.warn('[Asistencia] Error capturando GPS:', gpsError.message);
-        // Continue without GPS - don't block attendance
-        if (config.GPS_Requerir_Ubicacion === true) {
-          Alerts.warning('No se pudo obtener la ubicación. Marcación no registrada.');
-          return;
+        } catch (gpsError) {
+          console.warn('[Asistencia] Error capturando GPS:', gpsError.message);
+          if (config.GPS_Requerir_Ubicacion === true) {
+            Alerts.warning('No se pudo obtener la ubicación. Marcación no registrada.');
+            return;
+          }
         }
       }
-    }
 
-    const payload = {
-      idTrabajador:     trabajador.ID_Trabajador,
-      nombreTrabajador: trabajador.Nombre_Completo,
-      fecha:            hoy,
-      tipoMarcacion:    tipo,
-      horaProgramada:   horaOficial,
-      estadoMarcacion:  estadoMarcacion,
-      minutosTolerancia: parseInt(config.Tolerancia_Minutos || 15, 10),
-      horasExtra:       horasExtra,
-      metodo:           _scannerActive || _pendingWorker ? 'Escaneo_QR' : 'Manual_Fisica',
-      obra:             config.Nombre_Obra || 'Obra Principal',
-      gpsData:          gpsData,
-      geofenceStatus:   geofenceStatus,
-    };
+      const payload = {
+        idTrabajador: trabajador.ID_Trabajador,
+        nombreTrabajador: trabajador.Nombre_Completo,
+        fecha: hoy,
+        tipoMarcacion: tipo,
+        horaProgramada: horaOficial,
+        estadoMarcacion: estadoMarcacion,
+        minutosTolerancia: parseInt(config.Tolerancia_Minutos || 15, 10),
+        horasExtra: horasExtra,
+        metodo: _scannerActive || _pendingWorker ? 'Escaneo_QR' : 'Manual_Fisica',
+        obra: config.Nombre_Obra || 'Obra Principal',
+        gpsData: gpsData,
+        geofenceStatus: geofenceStatus,
+      };
 
-    // Determinar método más preciso
-    const tab = document.querySelector('.tab.active');
-    if (tab) {
-      payload.metodo = tab.dataset.tab === 'qr-scanner' ? 'Escaneo_QR' : 'Manual_Fisica';
-    }
+      const tab = document.querySelector('.tab.active');
+      if (tab) {
+        payload.metodo = tab.dataset.tab === 'qr-scanner' ? 'Escaneo_QR' : 'Manual_Fisica';
+      }
 
-    const loader = Alerts.loading('Registrando marcación...');
+      const loader = Alerts.loading('Registrando marcación...');
 
-    try {
-      const result = await API.registrarMarcacion(payload);
-      loader.close();
+      try {
+        const result = await API.registrarMarcacion(payload);
+        loader.close();
 
-      if (result.success) {
-        // Feedback toast especial de marcación
-        Alerts.marcacion({
-          nombre:   trabajador.Nombre_Completo,
-          tipo,
-          horaReal: result.horaReal || `${String(new Date().getHours()).padStart(2, '0')}:${String(new Date().getMinutes()).padStart(2, '0')}`,
-          estado:   result.estadoMarcacion || estadoMarcacion,
-        });
-        if (result.offline || result.needsAuth) {
-          Alerts.warning(
-            result.message || 'Marcación en este dispositivo. Se sincronizará cuando haya sesión y red.',
-            result.needsAuth ? 'Pendiente de nube' : 'Modo local',
-          );
-        }
+        if (result.success) {
+          Alerts.marcacion({
+            nombre: trabajador.Nombre_Completo,
+            tipo,
+            horaReal: result.horaReal || `${String(new Date().getHours()).padStart(2, '0')}:${String(new Date().getMinutes()).padStart(2, '0')}`,
+            estado: result.estadoMarcacion || estadoMarcacion,
+          });
+          if (result.offline || result.needsAuth) {
+            Alerts.warning(
+              result.message || 'Marcación en este dispositivo. Se sincronizará cuando haya sesión y red.',
+              result.needsAuth ? 'Pendiente de nube' : 'Modo local',
+            );
+          }
 
-        // Vibrar
-        if (navigator.vibrate) navigator.vibrate([100, 50, 100]);
+          if (navigator.vibrate) navigator.vibrate([100, 50, 100]);
 
-        // Si fue guardado offline, API.registrarMarcacion ya actualizó AppState y cache.
-        // Renderizar directamente desde AppState para evitar duplicados.
-        if (result.offline) {
-          _renderTablaMarcaciones((AppState.get('asistencias') || []).filter((a) => a.Fecha === hoy));
+          if (result.offline) {
+            _renderTablaMarcaciones((AppState.get('asistencias') || []).filter((a) => a.Fecha === hoy));
+          } else {
+            await _cargarMarcaciones(hoy);
+          }
+
+          _limpiarEstadoPendiente();
         } else {
-          // Recargar tabla desde servidor
-          await _cargarMarcaciones(hoy);
+          Alerts.error(result.error || 'Error al registrar la marcación');
         }
-
-        // Limpiar UI
-        _limpiarEstadoPendiente();
-
-      } else {
-        Alerts.error(result.error || 'Error al registrar la marcación');
+      } catch (err) {
+        loader.close();
+        Alerts.error(err.message, 'Error de conexión');
       }
-    } catch (err) {
-      loader.close();
-      Alerts.error(err.message, 'Error de conexión');
-    }
     } finally {
       _marking = false;
     }

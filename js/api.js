@@ -54,11 +54,17 @@
     }
   }
 
+  /**
+   * Normaliza payload de trabajador al esquema Firestore.
+   * @param {object} payload
+   * @param {object} [previous]
+   * @returns {object}
+   */
   function normalizeWorker(payload, previous) {
     const Persist = window.CPC && window.CPC.Persist;
     const workerId = String(payload.id || (previous && previous.ID_Trabajador) || id('TRAB'));
     const prev = previous || {};
-    const rawWa = payload.whatsapp != null ? payload.whatsapp : prev.WhatsApp;
+    const rawWa = payload.whatsapp !== null && payload.whatsapp !== undefined ? payload.whatsapp : prev.WhatsApp;
     const whatsapp = Persist && Persist.normalizeWhatsApp
       ? Persist.normalizeWhatsApp(rawWa)
       : String(rawWa || '').replace(/\D/g, '').slice(0, 15);
@@ -69,11 +75,11 @@
       Nombre_Completo: nombre,
       DPI_CUI: dpi,
       Puesto: String(payload.puesto || prev.Puesto || ''),
-      Jefe_Inmediato: String(payload.jefe != null ? payload.jefe : (prev.Jefe_Inmediato || '')),
-      Telefono: String(payload.telefono != null ? payload.telefono : (prev.Telefono || '')),
+      Jefe_Inmediato: String(payload.jefe !== null && payload.jefe !== undefined ? payload.jefe : (prev.Jefe_Inmediato || '')),
+      Telefono: String(payload.telefono !== null && payload.telefono !== undefined ? payload.telefono : (prev.Telefono || '')),
       WhatsApp: whatsapp,
-      Direccion: String(payload.direccion != null ? payload.direccion : (prev.Direccion || '')),
-      Fotografia_URL: String(payload.fotografia != null ? payload.fotografia : (prev.Fotografia_URL || '')),
+      Direccion: String(payload.direccion !== null && payload.direccion !== undefined ? payload.direccion : (prev.Direccion || '')),
+      Fotografia_URL: String(payload.fotografia !== null && payload.fotografia !== undefined ? payload.fotografia : (prev.Fotografia_URL || '')),
       Codigo_QR_Data: prev.Codigo_QR_Data || JSON.stringify({ id: workerId, dpi, nombre }),
       Fecha_Registro: prev.Fecha_Registro || new Date().toISOString(),
       Estado: prev.Estado || 'Activo',
@@ -100,6 +106,29 @@
     }
   }
 
+  /**
+   * Guarda o actualiza un trabajador (nube / local / cola).
+   * @param {{
+   *   id?: string,
+   *   nombre?: string,
+   *   dpi?: string,
+   *   puesto?: string,
+   *   jefe?: string,
+   *   telefono?: string,
+   *   whatsapp?: string,
+   *   direccion?: string,
+   *   fotografia?: string,
+   * }} payload
+   * @returns {Promise<{
+   *   success: boolean,
+   *   mode?: 'cloud'|'local'|'queued'|'blocked',
+   *   message?: string,
+   *   data?: object,
+   *   offline?: boolean,
+   *   needsAuth?: boolean,
+   *   error?: string,
+   * }>}
+   */
   async function guardarTrabajador(payload) {
     const Persist = window.CPC && window.CPC.Persist;
     const isEdit = !!(payload.id && (AppState.get('personal') || []).find((w) => w.ID_Trabajador === payload.id));
