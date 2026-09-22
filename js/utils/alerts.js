@@ -8,7 +8,7 @@
 const Alerts = (() => {
   const DEFAULTS = {
     duration: 4500,   // ms antes de auto-cerrar
-    maxToasts: 5,     // máximo de toasts simultáneos
+    maxToasts: 3,     // evitar pila de toasts confusos
   };
 
   // Íconos por tipo (usando Lucide)
@@ -57,6 +57,10 @@ const Alerts = (() => {
     opts.type     = opts.type     || type;
     opts.duration = opts.duration !== undefined ? opts.duration : DEFAULTS.duration;
     opts.title    = opts.title    || DEFAULT_TITLES[opts.type] || '';
+
+    // Cerrar loaders huérfanos al mostrar un resultado (evita toasts fantasma)
+    const orphanLoaders = container.querySelectorAll('.loading-toast');
+    orphanLoaders.forEach((node) => _removeToast(node));
 
     // Evitar spam: mismo título+mensaje en < 2.5 s no crea otro toast
     const dedupeKey = `${opts.type}|${opts.title}|${opts.message || ''}`;

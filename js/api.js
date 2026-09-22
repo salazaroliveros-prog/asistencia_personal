@@ -331,14 +331,13 @@
   async function obtenerAsistencias(fecha = AppState.today()) {
     try {
       if (connected()) {
-        // Query eficiente con filtro where en Firestore
-        // NOTE: Este query requiere un índice compuesto en Firestore para el campo 'Fecha'.
-        // Si falla con "The query requires an index", créalo en la consola Firebase:
-        // https://console.firebase.google.com/v1/r/project/sistema-de-control-aee89/firestore/indexes
+        // Solo where Fecha== (equality). NO orderBy en servidor: evita índice
+        // compuesto Fecha+Hora_Real y el error en consola. Orden en cliente.
         const asistencias = await FirebaseClient.list(
-          'asistencias', 'Hora_Real', null,
+          'asistencias', null, null,
           [['Fecha', '==', fecha]],
         );
+        asistencias.sort((a, b) => String(a.Hora_Real || '').localeCompare(String(b.Hora_Real || '')));
         AppState.set('asistencias', asistencias);
         const existing = read(LS_KEYS.ATTENDANCE_CACHE, []).filter((a) => a.Fecha !== fecha);
         write(LS_KEYS.ATTENDANCE_CACHE, [...existing, ...asistencias]);
@@ -346,18 +345,24 @@
       } else {
         const cached = read(LS_KEYS.ATTENDANCE_CACHE, []);
         const filtered = cached.filter((a) => a.Fecha === fecha);
+        filtered.sort((a, b) => String(a.Hora_Real || '').localeCompare(String(b.Hora_Real || '')));
         AppState.set('asistencias', filtered);
         return { success: true, data: filtered, offline: true };
       }
     } catch (error) {
-      console.error('[API] Error obtenerAsistencias:', error);
-      // Manejo de error "index required": intentar query sin orderBy o usar caché
-      if (error.message && error.message.indexOf('requires an index') !== -1) {
-        console.warn('[API] Índice faltante en Firestore, usando caché local');
+      // No spamear consola con errores recuperables; caché local es suficiente.
+      if (error && (error.code === 'permission-denied' || /permission/i.test(error.message || ''))) {
+        console.warn('[API] obtenerAsistencias: sin permisos, usando caché local');
+      } else if (error && /requires an index/i.test(error.message || '')) {
+        console.warn('[API] obtenerAsistencias: índice no listo, usando caché local');
+      } else {
+        console.warn('[API] obtenerAsistencias falló, usando caché:', error && error.message);
       }
       const cached = read(LS_KEYS.ATTENDANCE_CACHE, []);
       const filtered = cached.filter((a) => a.Fecha === fecha);
-      return { success: true, data: filtered, offline: true, error: error.code };
+      filtered.sort((a, b) => String(a.Hora_Real || '').localeCompare(String(b.Hora_Real || '')));
+      AppState.set('asistencias', filtered);
+      return { success: true, data: filtered, offline: true, error: error.code || 'cache-fallback' };
     }
   }
 

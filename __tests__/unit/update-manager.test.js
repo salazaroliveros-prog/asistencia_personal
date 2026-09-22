@@ -1,11 +1,12 @@
 /**
  * Control Personal Campo — UpdateManager unit tests
- * Cubre la detección de actualización por marcador de versión del deploy:
+ *
+ * Semántica correcta:
  *   · sin marcador → sin alerta
- *   · primera visita → sin alerta, se graba la versión vista
- *   · deploy nuevo (versión distinta) → banner visible
- *   · misma versión → sin alerta
- *   · "Ahora no" → banner oculto durante 1 hora
+ *   · primera visita / misma versión en página → sin alerta (ya corre esa versión)
+ *   · página ya trae SHA nuevo vs seen viejo → sin alerta (seed, ya está actualizado)
+ *   · remoto distinto al running → banner (simulado vía _notifyIfRemoteNewer)
+ *   · "Ahora no" → banner oculto 1 hora
  */
 
 const fs = require('fs');
@@ -43,6 +44,7 @@ function makeSandbox(initialWindow = {}) {
     Math,
     Object,
     String,
+    Number,
     setTimeout,
     clearTimeout,
     fetch: () => Promise.resolve({ text: () => Promise.resolve('') }),
@@ -76,14 +78,15 @@ describe('UpdateManager — detección por marcador de versión', () => {
     expect(store.getItem('cpc_app_version_seen')).toBe('abc123');
   });
 
-  it('deploy nuevo (versión distinta) muestra el banner y graba la versión', () => {
+  it('página ya trae deploy nuevo: seed sin banner (usuario ya está actualizado)', () => {
     const sandbox = makeSandbox({ __APP_VERSION__: 'def456' });
     sandbox.localStorage.setItem('cpc_app_version_seen', 'abc123');
     const ctx = vm.createContext(sandbox);
     vm.runInContext(code, ctx);
     sandbox.window.UpdateManager.init();
 
-    expect(sandbox.document.getElementById('update-banner').hidden).toBe(false);
+    // Ya corre def456 → no pedir "recargar"; solo actualizar seen
+    expect(sandbox.document.getElementById('update-banner').hidden).toBe(true);
     expect(sandbox.localStorage.getItem('cpc_app_version_seen')).toBe('def456');
   });
 
@@ -96,19 +99,32 @@ describe('UpdateManager — detección por marcador de versión', () => {
     expect(sandbox.document.getElementById('update-banner').hidden).toBe(true);
   });
 
+  it('remoto distinto al running: sí muestra banner', () => {
+    const { UpdateManager, banner } = boot({ __APP_VERSION__: 'abc123' });
+    UpdateManager.init();
+    expect(banner.hidden).toBe(true);
+    UpdateManager._notifyIfRemoteNewer('def456');
+    expect(banner.hidden).toBe(false);
+  });
+
+  it('remoto igual al running: no muestra banner', () => {
+    const { UpdateManager, banner } = boot({ __APP_VERSION__: 'abc123' });
+    UpdateManager.init();
+    UpdateManager._notifyIfRemoteNewer('abc123');
+    expect(banner.hidden).toBe(true);
+  });
+
   it('"Ahora no" oculta el banner (dismiss 1 hora)', () => {
-    const sandbox = makeSandbox({ __APP_VERSION__: 'xyz789' });
-    sandbox.localStorage.setItem('cpc_app_version_seen', 'abc123');
+    const sandbox = makeSandbox({ __APP_VERSION__: 'abc123' });
     const ctx = vm.createContext(sandbox);
     vm.runInContext(code, ctx);
     const UM = sandbox.window.UpdateManager;
-    // dismiss() usa document.getElementById('update-btn'/'update-dismiss'); sin SW
-    // no se bindean, así que invocamos showUpdateBanner solo tras setear dismissed.
-    sandbox.document.getElementById('update-banner').hidden = false;
+    UM.init();
+    UM._notifyIfRemoteNewer('xyz789');
+    expect(sandbox.document.getElementById('update-banner').hidden).toBe(false);
     UM.dismissUpdate();
     expect(sandbox.localStorage.getItem('updateDismissedUntil')).toBeTruthy();
     expect(sandbox.document.getElementById('update-banner').hidden).toBe(true);
-    // Un segundo intento de mostrar el banner respeta el dismissal
     UM.showUpdateBanner();
     expect(sandbox.document.getElementById('update-banner').hidden).toBe(true);
   });

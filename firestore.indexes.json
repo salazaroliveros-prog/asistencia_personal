@@ -7,6 +7,15 @@
         { "fieldPath": "Fecha", "order": "ASCENDING" },
         { "fieldPath": "Hora_Real", "order": "ASCENDING" }
       ]
+    },
+    {
+      "collectionId": "asistencias",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "Fecha", "order": "ASCENDING" },
+        { "fieldPath": "Hora_Real", "order": "DESCENDING" }
+      ]
     }
-  ]
+  ],
+  "fieldOverrides": []
 }
