@@ -570,7 +570,7 @@
       return { success: true, user: { uid: user.uid, email: user.email, displayName: user.displayName } };
     } catch (error) {
       console.error('[FirebaseClient] Error en Google Sign-In:', error);
-      throw error;
+      return { success: false, error: (error && error.message) || 'Error en Google Sign-In' };
     }
   }
 

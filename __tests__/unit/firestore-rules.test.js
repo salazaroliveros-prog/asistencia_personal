@@ -36,18 +36,18 @@ describe('firestore.rules — guardas de regresión', () => {
     expect(activas.map(({ n, texto }) => `${n}: ${texto}`)).toEqual([]);
   });
 
-  it('isAuthorizedOperator autoriza a cualquier cuenta autenticada', () => {
-    const bloque = rules.slice(rules.indexOf('function isAuthorizedOperator'));
+  it('isAuthenticated verifica que el usuario esté autenticado', () => {
+    const bloque = rules.slice(rules.indexOf('function isAuthenticated'));
     const cuerpo = bloque.slice(0, bloque.indexOf('}\n'));
 
-    expect(cuerpo).toContain('return isAuthenticated()');
+    expect(cuerpo).toContain('return request.auth != null');
   });
 
-  it('permite marcar asistencia a un operador autorizado', () => {
-    const bloque = rules.slice(rules.indexOf('function canMarkAttendance'));
+  it('isOwner verifica que el usuario sea el dueño del recurso', () => {
+    const bloque = rules.slice(rules.indexOf('function isOwner'));
     const cuerpo = bloque.slice(0, bloque.indexOf('}\n'));
 
-    expect(cuerpo).toContain('isAuthorizedOperator()');
+    expect(cuerpo).toContain('request.auth.uid == userId');
   });
 
   it('mantiene las validaciones de datos de las colecciones críticas', () => {
@@ -57,8 +57,8 @@ describe('firestore.rules — guardas de regresión', () => {
     expect(rules).toContain('isValidString(data.Fecha, 10, 10)');
   });
 
-  it('exige autenticación para leer las colecciones de trabajo', () => {
+  it('exige autenticación y propiedad para leer las colecciones de trabajo', () => {
     const personal = rules.slice(rules.indexOf('match /personal/'));
-    expect(personal.slice(0, 200)).toContain('allow read: if isAuthenticated()');
+    expect(personal.slice(0, 200)).toContain('allow read: if isOwner(userId)');
   });
 });
