@@ -4,5 +4,16 @@
   },
   "functions": {
     "source": "functions"
+  },
+  "auth": {
+    "authorizedDomains": ["localhost", "controlasistenciaapp.vercel.app", "127.0.0.1"],
+    "providers": {
+      "anonymous": false,
+      "emailPassword": true,
+      "googleSignIn": {
+        "oAuthBrandDisplayName": "Control de Asistencia",
+        "supportEmail": "support@controlasistencia.com"
+      }
+    }
   }
 }
