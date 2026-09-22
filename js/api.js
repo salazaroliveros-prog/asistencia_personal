@@ -120,6 +120,16 @@
   async function obtenerPersonal() {
     try {
       if (connected()) {
+        // Verificar autenticación explícita antes de consultar.
+        // FirebaseClient no expone `.auth`; usar getCurrentUser().
+        const currentUser = FirebaseClient && typeof FirebaseClient.getCurrentUser === 'function'
+          ? FirebaseClient.getCurrentUser()
+          : null;
+        if (!currentUser) {
+          const cached = read(LS_KEYS.PERSONAL_CACHE, []);
+          AppState.set('personal', cached);
+          return { success: true, data: cached, offline: true, error: 'sin_autenticar' };
+        }
         const workers = await FirebaseClient.list('personal', 'Nombre_Completo');
         // Filtrar solo activos para la vista principal
         AppState.set('personal', workers);
@@ -133,8 +143,15 @@
       }
     } catch (error) {
       console.error('[API] Error obtenerPersonal:', error);
+      // Manejo específico de errores de Firebase
+      if (error.code === 'permission-denied') {
+        console.warn('[API] Permiso denegado en obtenerPersonal, usando caché local');
+      }
+      if (error.code === 'unavailable' || error.code === 'network-request-failed') {
+        console.warn('[API] Error de red en obtenerPersonal, usando caché local');
+      }
       const cached = read(LS_KEYS.PERSONAL_CACHE, []);
-      return { success: true, data: cached, offline: true };
+      return { success: true, data: cached, offline: true, error: error.code };
     }
   }
 
@@ -268,6 +285,9 @@
     try {
       if (connected()) {
         // Query eficiente con filtro where en Firestore
+        // NOTE: Este query requiere un índice compuesto en Firestore para el campo 'Fecha'.
+        // Si falla con "The query requires an index", créalo en la consola Firebase:
+        // https://console.firebase.google.com/v1/r/project/sistema-de-control-aee89/firestore/indexes
         const asistencias = await FirebaseClient.list(
           'asistencias', 'Hora_Real', null,
           [['Fecha', '==', fecha]],
@@ -284,9 +304,13 @@
       }
     } catch (error) {
       console.error('[API] Error obtenerAsistencias:', error);
+      // Manejo de error "index required": intentar query sin orderBy o usar caché
+      if (error.message && error.message.indexOf('requires an index') !== -1) {
+        console.warn('[API] Índice faltante en Firestore, usando caché local');
+      }
       const cached = read(LS_KEYS.ATTENDANCE_CACHE, []);
       const filtered = cached.filter((a) => a.Fecha === fecha);
-      return { success: true, data: filtered, offline: true };
+      return { success: true, data: filtered, offline: true, error: error.code };
     }
   }
 

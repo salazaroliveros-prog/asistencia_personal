@@ -20,7 +20,6 @@ const result = spawnSync(
     '--testPathPattern=__tests__/unit/',
     '--testEnvironment=node',
     '--no-coverage',
-    '--forceExit',
   ],
   {
     cwd: projectRoot,

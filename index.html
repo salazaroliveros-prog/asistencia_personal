@@ -1028,29 +1028,29 @@
                   <input type="text" id="firebase-project-id" class="input-glass" placeholder="mi-proyecto-firebase" aria-label="ID del proyecto Firebase" />
                 </div>
                 <label for="firebase-api-key" class="form-label">API Key de la aplicación web</label>
-                <input type="text" id="firebase-api-key" class="input-glass" autocomplete="off" />
+                <input type="text" id="firebase-api-key" class="input-glass" autocomplete="off" aria-label="API Key de la aplicación web" />
                 <label for="firebase-auth-domain" class="form-label">Dominio de autenticación</label>
-                <input type="text" id="firebase-auth-domain" class="input-glass" placeholder="mi-proyecto.firebaseapp.com" />
+                <input type="text" id="firebase-auth-domain" class="input-glass" placeholder="mi-proyecto.firebaseapp.com" aria-label="Dominio de autenticación" />
                 <label for="firebase-app-id" class="form-label">App ID</label>
-                <input type="text" id="firebase-app-id" class="input-glass" placeholder="1:123:web:abc" />
+                <input type="text" id="firebase-app-id" class="input-glass" placeholder="1:123:web:abc" aria-label="App ID" />
                 <div id="connection-status-detail" class="connection-status-detail" role="status" aria-live="polite">Modo local disponible</div>
               </div>
-              <div class="form-group">
+              <form id="form-firebase-auth" class="form-group" autocomplete="on" aria-label="Inicio de sesión Firebase">
                 <label for="firebase-auth-email" class="form-label">Correo de acceso Firebase</label>
-                <input type="email" id="firebase-auth-email" class="input-glass" autocomplete="username" placeholder="usuario autorizado" />
+                <input type="email" id="firebase-auth-email" class="input-glass" autocomplete="username" placeholder="usuario autorizado" aria-label="Correo de acceso Firebase" />
                 <label for="firebase-auth-password" class="form-label">Contraseña</label>
-                <input type="password" id="firebase-auth-password" class="input-glass" autocomplete="current-password" />
+                <input type="password" id="firebase-auth-password" class="input-glass" autocomplete="current-password" aria-label="Contraseña de Firebase" />
                 <p class="form-hint">La contraseña se envía directamente a Firebase Auth y nunca se guarda ni se muestra.</p>
-              </div>
-              <button type="button" id="btn-login-firebase" class="btn btn-primary btn-block">
-                <i data-lucide="log-in" aria-hidden="true"></i> Iniciar sesión segura
-              </button>
-              <button type="button" id="btn-login-google" class="btn btn-outline btn-block">
-                <i data-lucide="chrome" aria-hidden="true"></i> Ingresar con Google (Gmail)
-              </button>
-              <button type="button" id="btn-logout-firebase" class="btn btn-secondary btn-block" hidden>
-                <i data-lucide="log-out" aria-hidden="true"></i> Cerrar sesión Firebase
-              </button>
+                <button type="button" id="btn-login-firebase" class="btn btn-primary btn-block">
+                  <i data-lucide="log-in" aria-hidden="true"></i> Iniciar sesión segura
+                </button>
+                <button type="button" id="btn-login-google" class="btn btn-outline btn-block">
+                  <i data-lucide="chrome" aria-hidden="true"></i> Ingresar con Google (Gmail)
+                </button>
+                <button type="button" id="btn-logout-firebase" class="btn btn-secondary btn-block" hidden>
+                  <i data-lucide="log-out" aria-hidden="true"></i> Cerrar sesión Firebase
+                </button>
+              </form>
               <button type="button" id="btn-connect-firebase" class="btn btn-primary btn-block">
                 <i data-lucide="plug" aria-hidden="true"></i> Conectar Firestore
               </button>
@@ -1128,15 +1128,15 @@
                 <h3><i data-lucide="map-pin" aria-hidden="true"></i> GPS y Geocercas</h3>
               </div>
               <div class="form-group">
-                <label class="form-label">
-                  <input type="checkbox" id="cfg-gps-habilitado" checked />
+                <label class="form-label" for="cfg-gps-habilitado">
+                  <input type="checkbox" id="cfg-gps-habilitado" checked aria-label="Habilitar GPS en marcaciones" />
                   Habilitar GPS en marcaciones
                 </label>
                 <p class="text-muted text-sm">Captura ubicación al registrar asistencia</p>
               </div>
               <div class="form-group">
-                <label class="form-label">
-                  <input type="checkbox" id="cfg-gps-requerir" />
+                <label class="form-label" for="cfg-gps-requerir">
+                  <input type="checkbox" id="cfg-gps-requerir" aria-label="Requerir ubicación obligatoria" />
                   Requerir ubicación obligatoria
                 </label>
                 <p class="text-muted text-sm">Bloquea marcaciones sin GPS</p>
@@ -1317,11 +1317,11 @@
         <div class="historial-filtros glass-card historial-filtros-layout">
           <div class="historial-filtros-row">
             <div class="form-group historial-filtros-field">
-              <label class="form-label">Desde</label>
+              <label for="historial-fecha-inicio" class="form-label">Desde</label>
               <input type="date" id="historial-fecha-inicio" class="input-glass" aria-label="Fecha inicio historial" />
             </div>
             <div class="form-group historial-filtros-field">
-              <label class="form-label">Hasta</label>
+              <label for="historial-fecha-fin" class="form-label">Hasta</label>
               <input type="date" id="historial-fecha-fin" class="input-glass" aria-label="Fecha fin historial" />
             </div>
             <button type="button" id="btn-buscar-historial" class="btn btn-primary">
@@ -1776,8 +1776,8 @@
                 <div class="gas-instruction-content">
                   <p><strong>La URL de la Web App se guardará automáticamente:</strong></p>
                   <div class="gas-url-preview">
-                    <label>URL que se guardará:</label>
-                    <code id="gas-url-preview">https://script.google.com/macros/s/...</code>
+                    <span class="form-label" id="gas-url-preview-label">URL que se guardará:</span>
+                    <code id="gas-url-preview" aria-labelledby="gas-url-preview-label">https://script.google.com/macros/s/...</code>
                   </div>
                 </div>
               </div>

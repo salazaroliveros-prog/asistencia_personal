@@ -435,10 +435,12 @@
       _db   = firebase.firestore();
       _auth = firebase.auth();
 
-      // Persistencia offline de Firestore (funciona en PWA)
-      _db.enablePersistence?.({ synchronizeTabs: true }).catch((err) => {
-        console.warn('[FieldScanner] Persistencia no disponible:', err?.code || err?.message);
-      });
+      // No llamamos enablePersistence: en Firebase 12.x el build compat aún
+      // delega en enableMultiTabIndexedDbPersistence() y escribe un warn de
+      // deprecación en consola. La API nueva (persistentLocalCache) no está
+      // expuesta en compat. Offline se cubre con la cola/caché de la app.
+      // TODO: migrar a initializeFirestore({ localCache: persistentLocalCache(...) })
+      // cuando se pase al SDK modular.
 
       _updateStatusPill(true);
     } catch (error) {

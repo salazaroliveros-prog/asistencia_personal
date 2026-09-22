@@ -61,24 +61,41 @@ const versionScript = appVersion
   ? `<script>window.__APP_VERSION__ = "${String(appVersion).replace(/"/g, '')}";</script>\n`
   : '\n';
 
-// Inyectar en dist/index.html
-const indexHtmlPath = resolve(distDir, 'index.html');
-if (existsSync(indexHtmlPath)) {
-  let html = readFileSync(indexHtmlPath, 'utf8');
-  // Evitar doble inyección si ya existe el bloque (por vite transformIndexHtml)
+/**
+ * Inyecta __FIREBASE_ENV__ (y opcionalmente __APP_VERSION__) al inicio de <head>.
+ * @param {string} relativePath — ruta relativa a dist/
+ * @param {{ withVersion?: boolean }} options
+ */
+function injectIntoHtmlFile(relativePath, options = {}) {
+  const htmlPath = resolve(distDir, relativePath);
+  if (!existsSync(htmlPath)) {
+    console.warn(`[post-build] ${relativePath} no encontrado — omitiendo`);
+    return;
+  }
+
+  let html = readFileSync(htmlPath, 'utf8');
+  let changed = false;
+
+  // Debe ir al inicio de <head> para que firebase-config.js lo lea a tiempo.
   if (!html.includes('window.__FIREBASE_ENV__')) {
-    html = html.replace('</head>', `${script}\n</head>`);
-    writeFileSync(indexHtmlPath, html);
-    console.log('[post-build] Variables de entorno inyectadas en index.html');
+    html = html.replace(/<head([^>]*)>/i, `<head$1>\n    ${script}`);
+    changed = true;
+    console.log(`[post-build] Variables de entorno inyectadas en ${relativePath}`);
   } else {
-    console.log('[post-build] window.__FIREBASE_ENV__ ya presente en index.html — omitiendo inyección duplicada');
+    console.log(`[post-build] window.__FIREBASE_ENV__ ya presente en ${relativePath} — omitiendo duplicado`);
   }
-  // Inyectar el marcador de versión del deploy (para la alerta de actualización)
-  if (!html.includes('window.__APP_VERSION__')) {
+
+  if (options.withVersion && versionScript && !html.includes('window.__APP_VERSION__')) {
     html = html.replace('</head>', `${versionScript}</head>`);
-    writeFileSync(indexHtmlPath, html);
-    console.log(`[post-build] Marcador de versión inyectado: ${appVersion || '(sin marcador)'}`);
+    changed = true;
+    console.log(`[post-build] Marcador de versión inyectado en ${relativePath}: ${appVersion || '(sin marcador)'}`);
   }
-} else {
-  console.warn('[post-build] dist/index.html no encontrado — ejecutar "vite build" primero');
+
+  if (changed) {
+    writeFileSync(htmlPath, html);
+  }
 }
+
+// Páginas que cargan firebase-config.js y necesitan __FIREBASE_ENV__ antes.
+injectIntoHtmlFile('index.html', { withVersion: true });
+injectIntoHtmlFile('field-scanner.html');

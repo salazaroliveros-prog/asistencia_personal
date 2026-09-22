@@ -1247,7 +1247,9 @@ p {
    ───────────────────────────────────────────────────────────────────────────── */
 .update-banner {
   position: fixed;
-  top: 16px;
+  /* Anclado abajo para no tapar el topbar ni el botón de menú móvil */
+  top: auto;
+  bottom: 16px;
   right: 16px;
   left: 16px;
   max-width: 480px;
@@ -1263,7 +1265,27 @@ p {
   gap: var(--space-3);
   box-shadow: var(--glass-shadow);
   z-index: var(--z-toast);
-  animation: slideInDown 0.3s ease-out;
+  animation: slideInUp 0.3s ease-out;
+}
+
+/* Si el banner de instalación también está visible, apilar encima */
+body:has(#pwa-install-banner:not([hidden])) .update-banner:not([hidden]) {
+  bottom: calc(16px + 96px);
+}
+
+.update-banner[hidden] {
+  display: none !important;
+}
+
+@keyframes slideInUp {
+  from {
+    transform: translateY(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
 }
 
 @keyframes slideInDown {
@@ -1336,7 +1358,7 @@ p {
 
 @media (max-width: 479px) {
   .update-banner {
-    top: 12px;
+    bottom: 12px;
     right: 12px;
     left: 12px;
     padding: var(--space-2);

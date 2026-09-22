@@ -37,25 +37,67 @@ function _buildFirebaseEnv(env) {
 }
 
 /**
- * Plugin: inyecta window.__FIREBASE_ENV__ en index.html.
- * - En modo dev: mediante transformIndexHtml (sirve en tiempo real por Vite).
- * - En modo build: también mediante transformIndexHtml (antes de emitir).
- * Así, firebase-config.js puede leer las credenciales del .env en AMBOS modos.
+ * Inserta window.__FIREBASE_ENV__ al inicio de <head>.
+ * @param {string} html
+ * @param {Record<string,string>} firebaseEnv
+ * @returns {string}
+ */
+function _injectEnvScript(html, firebaseEnv) {
+  if (html.includes('window.__FIREBASE_ENV__')) return html;
+  const script = `<script>window.__FIREBASE_ENV__ = ${JSON.stringify(firebaseEnv)};</script>`;
+  return html.replace(/<head([^>]*)>/i, `<head$1>\n    ${script}`);
+}
+
+/**
+ * Plugin: inyecta window.__FIREBASE_ENV__ en index.html y field-scanner.html.
+ * - index.html: transformIndexHtml (dev + build)
+ * - field-scanner.html: middleware en dev/preview (se copia estático al dist;
+ *   el post-build scripts/inject-env.js lo cubre en producción)
  */
 function injectFirebaseEnv(mode) {
+  const env = loadEnv(mode, process.cwd(), '');
+  const firebaseEnv = _buildFirebaseEnv(env);
+  const hasAnyValue = Object.values(firebaseEnv).some((v) => v.length > 0);
+  if (!hasAnyValue) {
+    console.warn('[inject-firebase-env] No se encontraron variables VITE_FIREBASE_* en .env');
+  }
+
+  /** @param {import('vite').ViteDevServer['middlewares']} middlewares */
+  function attachHtmlInjector(middlewares) {
+    middlewares.use((req, res, next) => {
+      const url = (req.url || '').split('?')[0];
+      if (url !== '/field-scanner.html') {
+        next();
+        return;
+      }
+      try {
+        const filePath = resolve(__dirname, 'field-scanner.html');
+        if (!existsSync(filePath)) {
+          next();
+          return;
+        }
+        const html = _injectEnvScript(readFileSync(filePath, 'utf8'), firebaseEnv);
+        res.setHeader('Content-Type', 'text/html; charset=utf-8');
+        res.statusCode = 200;
+        res.end(html);
+      } catch (err) {
+        next(err);
+      }
+    });
+  }
+
   return {
     name: 'inject-firebase-env',
-    // transformIndexHtml se ejecuta tanto en dev como en build.
+    // transformIndexHtml se ejecuta tanto en dev como en build (solo entry points).
     transformIndexHtml(html) {
-      const env = loadEnv(mode, process.cwd(), '');
-      const firebaseEnv = _buildFirebaseEnv(env);
-      const hasAnyValue = Object.values(firebaseEnv).some((v) => v.length > 0);
-      if (!hasAnyValue) {
-        console.warn('[inject-firebase-env] No se encontraron variables VITE_FIREBASE_* en .env');
-      }
-      const script = `<script>window.__FIREBASE_ENV__ = ${JSON.stringify(firebaseEnv)};</script>`;
-      // Insertar justo antes de </head>
-      return html.replace('</head>', `${script}\n</head>`);
+      // Insertar al INICIO de <head>, antes de firebase-config.js.
+      return _injectEnvScript(html, firebaseEnv);
+    },
+    configureServer(server) {
+      attachHtmlInjector(server.middlewares);
+    },
+    configurePreviewServer(server) {
+      attachHtmlInjector(server.middlewares);
     },
   };
 }

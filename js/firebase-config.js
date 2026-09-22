@@ -57,15 +57,18 @@ const FirebaseConfigManager = (() => {
     ? window.FIREBASE_CONFIG
     : null;
 
-  // ─── Diagnóstico en consola ────────────────────────────────────────────────
-  if (window.__FIREBASE_ENV__) {
-    const envKeys = Object.values(window.__FIREBASE_ENV__).filter((v) => v && v.length > 0).length;
-    console.log(`[FirebaseConfig] window.__FIREBASE_ENV__ disponible con ${envKeys}/7 campos`);
-  } else {
-    console.warn('[FirebaseConfig] window.__FIREBASE_ENV__ NO disponible — usando config bundled');
-  }
-  if (storedConfig) {
-    console.log('[FirebaseConfig] Config guardada en localStorage encontrada');
+  // ─── Diagnóstico en consola (debug: no ensucia consola por defecto) ────────
+  // El fallback bundled es comportamiento esperado cuando no hay env inyectado.
+  if (typeof console !== 'undefined' && typeof console.debug === 'function') {
+    if (window.__FIREBASE_ENV__) {
+      const envKeys = Object.values(window.__FIREBASE_ENV__).filter((v) => v && v.length > 0).length;
+      console.debug(`[FirebaseConfig] window.__FIREBASE_ENV__ disponible con ${envKeys}/7 campos`);
+    } else {
+      console.debug('[FirebaseConfig] window.__FIREBASE_ENV__ no inyectado — usando config bundled');
+    }
+    if (storedConfig) {
+      console.debug('[FirebaseConfig] Config guardada en localStorage encontrada');
+    }
   }
 
   /**

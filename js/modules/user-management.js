@@ -10,9 +10,29 @@ const UserManagement = (() => {
   let currentUserClaims = null;
   
   // ─── Inicialización ───────────────────────────────────────────────────────
+  let _unsubConnection = null;
+
   function init() {
     _bindEvents();
-    _checkCurrentUserClaims();
+    // Arranque silencioso: sin sesión / modo local es estado normal, no un error.
+    _checkCurrentUserClaims({ silent: true });
+    _watchConnectionForClaims();
+  }
+
+  /**
+   * Cuando el cliente pasa a connected, reintenta leer claims una sola vez.
+   * Evita el warn falso de "no está listo" en arranque offline/local.
+   */
+  function _watchConnectionForClaims() {
+    if (!window.FirebaseClient || typeof window.FirebaseClient.onConnectionChange !== 'function') {
+      return;
+    }
+    if (_unsubConnection) return;
+    _unsubConnection = window.FirebaseClient.onConnectionChange((state) => {
+      if (state === 'connected' || state === 'degraded') {
+        _checkCurrentUserClaims({ silent: true });
+      }
+    });
   }
   
   // ─── Eventos ─────────────────────────────────────────────────────────────
@@ -22,7 +42,7 @@ const UserManagement = (() => {
     const btnCreateUser = document.getElementById('btn-create-user');
     
     if (btnCheckClaims) {
-      btnCheckClaims.addEventListener('click', _checkCurrentUserClaims);
+      btnCheckClaims.addEventListener('click', () => _checkCurrentUserClaims({ silent: false }));
     }
     
     if (btnLoadUsers) {
@@ -35,13 +55,25 @@ const UserManagement = (() => {
   }
   
   // ─── Verificar claims del usuario actual ─────────────────────────────────
-  async function _checkCurrentUserClaims() {
+  async function _checkCurrentUserClaims(options) {
+    const silent = !!(options && options.silent);
     try {
       // Usar FirebaseClient como puerta de acceso a Auth en lugar de
       // llamar window.firebase.auth() directamente, que falla si Firebase
       // App aún no fue inicializada.
-      if (!window.FirebaseClient || !window.FirebaseClient.isReady()) {
-        console.warn('[UserManagement] FirebaseClient no está listo todavía');
+      if (!window.FirebaseClient) {
+        if (!silent) {
+          console.warn('[UserManagement] FirebaseClient no disponible');
+          Alerts.warning('Cliente Firebase no disponible');
+        }
+        return;
+      }
+
+      // isReady() es false en 'disconnected' (modo local sin sesión): no es un error.
+      if (!window.FirebaseClient.isReady()) {
+        if (!silent) {
+          Alerts.warning('Conecta e inicia sesión en Firebase para verificar permisos.');
+        }
         return;
       }
 
@@ -66,13 +98,17 @@ const UserManagement = (() => {
         if (btnLoadUsers) {
           btnLoadUsers.disabled = !isAdmin;
         }
-        Alerts.info(isAdmin ? 'Permisos de administrador verificados.' : 'Sesión autenticada sin permisos de administrador.');
-      } else {
+        if (!silent) {
+          Alerts.info(isAdmin ? 'Permisos de administrador verificados.' : 'Sesión autenticada sin permisos de administrador.');
+        }
+      } else if (!silent) {
         Alerts.warning('Usuario no autenticado');
       }
     } catch (error) {
       console.error('[UserManagement] Error checking claims:', error);
-      Alerts.error('Error al verificar permisos: ' + error.message);
+      if (!silent) {
+        Alerts.error('Error al verificar permisos: ' + error.message);
+      }
     }
   }
   

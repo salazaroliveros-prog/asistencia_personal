@@ -86,12 +86,8 @@ async function initFirebase() {
   db = firebase.firestore();
   auth = firebase.auth();
 
-  // Habilitar offline persistence
-  db.enablePersistence({ synchronizeTabs: false }).catch(e => {
-    if (e.code !== "failed-precondition" && e.code !== "unimplemented") {
-      console.warn("Firestore persistence error:", e.code);
-    }
-  });
+  // Sin enablePersistence: el SDK compat 12.x emite warn de deprecación y no
+  // expone persistentLocalCache. Este HTML redirige a field-scanner.html.
 
   // Iniciar sesión anónima para cumplir con las reglas de Firestore
   try {

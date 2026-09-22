@@ -33,6 +33,13 @@ const _ModuloAjustes = (() => {
     if (btnLogin)        btnLogin.addEventListener('click', _iniciarSesionFirebase);
     if (btnLoginGoogle)  btnLoginGoogle.addEventListener('click', _iniciarSesionGoogle);
     if (btnLogout)       btnLogout.addEventListener('click', _cerrarSesionFirebase);
+    const formAuth = document.getElementById('form-firebase-auth');
+    if (formAuth) {
+      formAuth.addEventListener('submit', (e) => {
+        e.preventDefault();
+        _iniciarSesionFirebase();
+      });
+    }
     if (btnFirebase)     btnFirebase.addEventListener('click', _conectarFirebase);
     if (btnLocal)        btnLocal.addEventListener('click', _usarModoLocal);
     if (btnGasAssistant) btnGasAssistant.addEventListener('click', () => {
