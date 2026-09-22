@@ -7,6 +7,7 @@
  */
 const { resolve } = require('node:path');
 const { existsSync, readFileSync, writeFileSync } = require('node:fs');
+const { execSync } = require('node:child_process');
 
 // Intentar cargar dotenv si está disponible.
 // Se busca .env.local primero (prioridad en Vite), luego .env como fallback.
@@ -45,6 +46,21 @@ if (!hasValues) {
 
 const script = `<script>window.__FIREBASE_ENV__ = ${JSON.stringify(firebaseEnv)};</script>`;
 
+// Construir el marcador de versión del deploy.
+// En Vercel se usa el commit SHA del deploy; si no existe (fallback) se intenta
+// el git local; si tampoco hay git, no se inyecta marcador (detección omitida).
+let appVersion = process.env.VERCEL_GIT_COMMIT_SHA;
+if (!appVersion) {
+  try {
+    appVersion = String(execSync('git rev-parse --short HEAD', { stdio: ['ignore', 'pipe', 'ignore'] })).trim();
+  } catch (e) {
+    appVersion = '';
+  }
+}
+const versionScript = appVersion
+  ? `<script>window.__APP_VERSION__ = "${String(appVersion).replace(/"/g, '')}";</script>\n`
+  : '\n';
+
 // Inyectar en dist/index.html
 const indexHtmlPath = resolve(distDir, 'index.html');
 if (existsSync(indexHtmlPath)) {
@@ -56,6 +72,12 @@ if (existsSync(indexHtmlPath)) {
     console.log('[post-build] Variables de entorno inyectadas en index.html');
   } else {
     console.log('[post-build] window.__FIREBASE_ENV__ ya presente en index.html — omitiendo inyección duplicada');
+  }
+  // Inyectar el marcador de versión del deploy (para la alerta de actualización)
+  if (!html.includes('window.__APP_VERSION__')) {
+    html = html.replace('</head>', `${versionScript}</head>`);
+    writeFileSync(indexHtmlPath, html);
+    console.log(`[post-build] Marcador de versión inyectado: ${appVersion || '(sin marcador)'}`);
   }
 } else {
   console.warn('[post-build] dist/index.html no encontrado — ejecutar "vite build" primero');
