@@ -67,6 +67,27 @@ const ModuloPersonal = (() => {
     const fotoInput = document.getElementById('foto-input');
     if (fotoInput) fotoInput.addEventListener('change', _handleFotoUpload);
 
+    // Limpiar errores inline al corregir campos (evita mensajes stale tras un intento fallido)
+    const nombreInput = document.getElementById('p-nombre');
+    if (nombreInput) {
+      nombreInput.addEventListener('input', () => {
+        const v = nombreInput.value.trim();
+        if (v.length >= 3 && /^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s'-]+$/.test(v)) _clearError('p-nombre-error');
+      });
+    }
+    const dpiLive = document.getElementById('p-dpi');
+    if (dpiLive) {
+      dpiLive.addEventListener('input', () => {
+        if ((dpiLive.value.replace(/\D/g, '') || '').length === 13) _clearError('p-dpi-error');
+      });
+    }
+    const puestoLive = document.getElementById('p-puesto');
+    if (puestoLive) {
+      puestoLive.addEventListener('change', () => {
+        if (_resolverPuesto()) _clearError('p-puesto-error');
+      });
+    }
+
     // ── Botón "Tomar Foto" — abre la cámara ────────────────────────────────
     const btnTomarFoto = document.getElementById('btn-tomar-foto');
     if (btnTomarFoto) btnTomarFoto.addEventListener('click', () => _abrirCamara());
@@ -979,10 +1000,16 @@ const ModuloPersonal = (() => {
   function _validateForm() {
     let valid = true;
 
-    // Nombre
+    // Nombre — mismo criterio que Validators.validateNombre
     const nombre = document.getElementById('p-nombre')?.value.trim();
-    if (!nombre || nombre.length < 3) {
+    if (!nombre) {
+      _showError('p-nombre-error', 'El nombre es requerido');
+      valid = false;
+    } else if (nombre.length < 3) {
       _showError('p-nombre-error', 'El nombre debe tener al menos 3 caracteres');
+      valid = false;
+    } else if (!/^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s'-]+$/.test(nombre)) {
+      _showError('p-nombre-error', 'El nombre solo puede contener letras, espacios y caracteres comunes');
       valid = false;
     } else {
       _clearError('p-nombre-error');

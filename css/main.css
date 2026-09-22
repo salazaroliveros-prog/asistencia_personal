@@ -1264,8 +1264,16 @@ p {
   align-items: center;
   gap: var(--space-3);
   box-shadow: var(--glass-shadow);
-  z-index: var(--z-toast);
+  /* Por debajo de modales (--z-modal: 1000): si usa --z-toast (2000) tapa
+     el footer del modal y bloquea Guardar / Cancelar. */
+  z-index: calc(var(--z-modal) - 10);
   animation: slideInUp 0.3s ease-out;
+}
+
+/* Con un modal abierto, el banner no debe competir visualmente ni recibir clics */
+body:has(.modal-overlay:not([hidden])) .update-banner:not([hidden]) {
+  opacity: 0.35;
+  pointer-events: none;
 }
 
 /* Si el banner de instalación también está visible, apilar encima */

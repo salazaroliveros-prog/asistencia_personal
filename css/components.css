@@ -2310,10 +2310,16 @@ input[type="month"].input-glass {
   align-items: center;
   gap: var(--space-3);
   box-shadow: var(--shadow-lg);
-  z-index: 9000;
+  /* Debajo de modales para no bloquear Guardar / formularios */
+  z-index: calc(var(--z-modal) - 10);
   max-width: 420px;
   width: 90vw;
   animation: slideUpFade 0.3s ease;
+}
+
+body:has(.modal-overlay:not([hidden])) .pwa-install-banner:not([hidden]) {
+  opacity: 0.35;
+  pointer-events: none;
 }
 
 /* El display:flex anterior anula el atributo [hidden]; sin esta regla la "X"
