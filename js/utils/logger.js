@@ -15,7 +15,9 @@ const Logger = (() => {
     FATAL: 4,
   };
   
-  const CURRENT_LEVEL = LOG_LEVELS.DEBUG; // Cambiar a INFO en producción
+  const CURRENT_LEVEL = (typeof location !== 'undefined' && /localhost|127\.0\.0\.1/.test(location.hostname))
+    ? LOG_LEVELS.DEBUG
+    : LOG_LEVELS.INFO;
   const MAX_LOG_ENTRIES = 1000; // Máximo de logs en memoria
   const LOG_STORAGE_KEY = 'cpc_app_logs';
   
@@ -96,6 +98,29 @@ const Logger = (() => {
   }
   
   // ─── Función interna de logging ───────────────────────────────────────────
+  /**
+   * Obtiene el uid del usuario sin lanzar si Firebase no está inicializado.
+   * Preferir FirebaseClient; fallback a firebase.apps solo si hay app activa.
+   * @returns {string|undefined}
+   */
+  function _safeCurrentUserId() {
+    try {
+      if (typeof window === 'undefined') return undefined;
+      if (window.FirebaseClient && typeof window.FirebaseClient.getCurrentUser === 'function') {
+        const user = window.FirebaseClient.getCurrentUser();
+        return (user && user.uid) || undefined;
+      }
+      const fb = window.firebase;
+      if (fb && Array.isArray(fb.apps) && fb.apps.length > 0 && typeof fb.auth === 'function') {
+        const user = fb.auth().currentUser;
+        return (user && user.uid) || undefined;
+      }
+    } catch (_) {
+      /* Sin app / sin sesión: el logger no debe romper la UI */
+    }
+    return undefined;
+  }
+
   function _log(level, category, message, data) {
     const levelValue = LOG_LEVELS[level];
     
@@ -123,10 +148,11 @@ const Logger = (() => {
       }
     }
     
-    // Agregar ID de usuario si está disponible
-    if (typeof window !== 'undefined' && window.firebase && window.firebase.auth && window.firebase.auth().currentUser) {
-      entry.userId = window.firebase.auth().currentUser.uid;
-    }
+    // Agregar ID de usuario si está disponible — NUNCA llamar firebase.auth()
+    // sin app: el SDK lanza "No Firebase App '[DEFAULT]'" y rompe flujos
+    // (p. ej. guardar personal) porque Logger.info se ejecuta al inicio.
+    const userId = _safeCurrentUserId();
+    if (userId) entry.userId = userId;
     
     // Agregar a logs en memoria
     logEntries.push(entry);

@@ -245,6 +245,9 @@ const _ModuloAjustes = (() => {
   }
 
   function _usarModoLocal() {
+    if (typeof window._teardownRealtimeSubscriptions === 'function') {
+      window._teardownRealtimeSubscriptions();
+    }
     FirebaseClient.stop();
     AppState.set('backendMode', 'local');
     AppState.set('connected', false);

@@ -768,6 +768,21 @@ function _initRealtimeSubscriptions() {
   _initAsistenciasRealtime();
 }
 
+function _teardownRealtimeSubscriptions() {
+  if (_personalRealtimeUnsub) {
+    try { _personalRealtimeUnsub(); } catch (_) { /* ignore */ }
+    _personalRealtimeUnsub = null;
+  }
+  _personalRealtimeLast = '';
+  if (_asistenciasRealtimeUnsub) {
+    try { _asistenciasRealtimeUnsub(); } catch (_) { /* ignore */ }
+    _asistenciasRealtimeUnsub = null;
+  }
+  _asistenciasRealtimeLast = '';
+}
+// Expuesto para Ajustes → modo local y tests
+window._teardownRealtimeSubscriptions = _teardownRealtimeSubscriptions;
+
 // ─────────────────────────────────────────────────────────────────────────────
 // SPLASH SCREEN
 // ─────────────────────────────────────────────────────────────────────────────
@@ -872,10 +887,16 @@ function _initSyncIndicator() {
       if (queue.length > 0) {
         _autoSync();
       }
-      // Reiniciar suscripciones real-time (cubre login tardío / reconexión)
+      // Reiniciar suscripciones real-time (cubre login tardío / reconexión).
+      // Primero teardown por si quedaron refs a listeners muertos tras stop().
+      if (typeof _teardownRealtimeSubscriptions === 'function') {
+        _teardownRealtimeSubscriptions();
+      }
       if (typeof _initRealtimeSubscriptions === 'function') {
         _initRealtimeSubscriptions();
       }
+    } else if (typeof _teardownRealtimeSubscriptions === 'function') {
+      _teardownRealtimeSubscriptions();
     }
     _updateSyncUI();
   });
@@ -1022,14 +1043,29 @@ function _initRealtimeRefresh() {
 // MANEJO DE ERRORES GLOBALES
 // ─────────────────────────────────────────────────────────────────────────────
 window.addEventListener('unhandledrejection', (event) => {
-  console.error('[App] Promesa rechazada no manejada:', event.reason);
-  // Solo mostrar toast para errores significativos
-  if (event.reason && event.reason.message && !event.reason.message.includes('fetch')) {
-    Alerts.error(event.reason.message || 'Error inesperado', 'Error');
+  const reason = event.reason;
+  const msg = (reason && reason.message) ? String(reason.message) : String(reason || '');
+  // Ruido conocido del SDK al apagar listeners / sin app: no toast ni spam
+  if (
+    /No Firebase App/i.test(msg)
+    || /shutting down/i.test(msg)
+    || (reason && reason.code === 'aborted')
+  ) {
+    event.preventDefault();
+    return;
+  }
+  console.error('[App] Promesa rechazada no manejada:', reason);
+  if (reason && reason.message && !reason.message.includes('fetch')) {
+    Alerts.error(reason.message || 'Error inesperado', 'Error');
   }
   event.preventDefault();
 });
 
 window.addEventListener('error', (event) => {
+  const msg = String(event.message || '');
+  if (/No Firebase App/i.test(msg) || /shutting down/i.test(msg)) {
+    event.preventDefault();
+    return;
+  }
   console.error('[App] Error global:', event.message, event.filename, event.lineno);
 });

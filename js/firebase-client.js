@@ -44,6 +44,8 @@
   let authPersistenceReady = false;
   let _initialized = false;
   let _listeners = []; // suscriptores a cambios de conexión
+  /** @type {Array<Function>} */
+  const _snapshotUnsubs = []; // onSnapshot activos — hay que liberarlos antes de delete/stop
 
   function _configureAuthPersistence() {
     const persistence = firebase && firebase.auth && firebase.auth.Auth && firebase.auth.Auth.Persistence && firebase.auth.Auth.Persistence.LOCAL;
@@ -283,10 +285,45 @@
 
   function subscribe(collection, callback) {
     if (!db) return function () {};
-    return db.collection(collection).onSnapshot((snapshot) => {
-      const records = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
-      callback(records);
-    });
+
+    const unsub = db.collection(collection).onSnapshot(
+      (snapshot) => {
+        const records = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
+        try {
+          callback(records);
+        } catch (err) {
+          console.error('[FirebaseClient] Error en callback de subscribe:', collection, err);
+        }
+      },
+      (error) => {
+        // Al apagar / recrear Firestore el SDK aborta listeners activos.
+        // No es un fallo de la app: no ensuciar consola ni disparar uncaught.
+        const code = error && error.code;
+        const msg = String((error && error.message) || '');
+        if (
+          code === 'aborted'
+          || code === 'cancelled'
+          || /shutting down/i.test(msg)
+        ) {
+          return;
+        }
+        console.warn('[FirebaseClient] Snapshot error:', collection, code || msg);
+      },
+    );
+
+    _snapshotUnsubs.push(unsub);
+    return function unsubscribe() {
+      try { unsub(); } catch (_) { /* ya liberado */ }
+      const idx = _snapshotUnsubs.indexOf(unsub);
+      if (idx >= 0) _snapshotUnsubs.splice(idx, 1);
+    };
+  }
+
+  function _unsubscribeAllSnapshots() {
+    while (_snapshotUnsubs.length) {
+      const unsub = _snapshotUnsubs.pop();
+      try { unsub(); } catch (_) { /* ignore */ }
+    }
   }
 
   // ─── Configuración ──────────────────────────────────────────────────
@@ -307,6 +344,10 @@
     }
 
     try {
+      // Liberar listeners ANTES de borrar la app — evita
+      // "Uncaught Error in snapshot listener: aborted / shutting down"
+      _unsubscribeAllSnapshots();
+
       if (app && typeof app.delete === 'function') {
         await app.delete();
       }
@@ -395,6 +436,9 @@
    */
   function _refreshDb() {
     if (typeof firebase === 'undefined' || !firebase.firestore) return;
+    // Los onSnapshot viven en la instancia anterior: hay que liberarlos
+    // antes de sustituir `db` o el SDK abortará con "shutting down".
+    _unsubscribeAllSnapshots();
     db = app ? firebase.firestore(app) : firebase.firestore();
   }
 
@@ -478,8 +522,7 @@
       if (!authPersistenceReady) await _configureAuthPersistence();
 
       const GoogleAuthProvider =
-        (firebase && firebase.auth && firebase.auth.GoogleAuthProvider) ||
-        (firebase && firebase.auth && firebase.auth() && firebase.auth().GoogleAuthProvider);
+        (firebase && firebase.auth && firebase.auth.GoogleAuthProvider) || null;
       if (!GoogleAuthProvider) {
         return { success: false, error: 'Proveedor Google no disponible en el SDK.', code: 'auth/provider-unavailable' };
       }
@@ -513,11 +556,14 @@
 
   // ─── Stop / cleanup (preserva configuración para reconnect) ─────────
   function stop() {
+    _unsubscribeAllSnapshots();
     stopHealthCheck();
     if (reconnectTimer) clearTimeout(reconnectTimer);
     reconnectAttempts = 0;
     _listeners = [];
     _initialized = false;
+    // No borramos la app: reconnect() puede reutilizarla. El estado idle
+    // indica "modo local" / sin sesión operativa.
     _setState('idle');
   }
 
