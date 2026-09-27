@@ -33,6 +33,12 @@ const _ModuloAjustes = (() => {
     if (btnCapturarUbicacion) btnCapturarUbicacion.addEventListener('click', _capturarUbicacionActual);
     if (btnSaveGPS)           btnSaveGPS.addEventListener('click', _guardarConfigGPS);
 
+    // ─── Configuración SMTP ─────────────────────────────────────────────────
+    const btnTestSMTP = document.getElementById('btn-test-smtp');
+    const btnSaveSMTP = document.getElementById('btn-save-smtp');
+    if (btnTestSMTP) btnTestSMTP.addEventListener('click', _probarConexionSMTP);
+    if (btnSaveSMTP) btnSaveSMTP.addEventListener('click', _guardarConfigSMTP);
+
     // ─── Auditoría Escáner de Campo ───────────────────────────────────────
     const btnLoadAudit    = document.getElementById('btn-load-scanner-audit');
     const btnClearAudit   = document.getElementById('btn-clear-scanner-audit');
@@ -111,6 +117,40 @@ const _ModuloAjustes = (() => {
     _setInput('cfg-gps-centro-lat', config.GPS_Centro_Lat);
     _setInput('cfg-gps-centro-lon', config.GPS_Centro_Lon);
     _setInput('cfg-gps-radio',      config.GPS_Radio_Metros || 200);
+
+    // Cargar configuración SMTP desde AppState o variables de entorno
+    let smtpConfig = config.SMTP_Config;
+    
+    // Si no hay configuración en AppState, intentar cargar desde variables de entorno
+    if (!smtpConfig && typeof import.meta !== 'undefined' && import.meta.env) {
+      const envConfig = {
+        host: import.meta.env.VITE_SMTP_HOST,
+        port: import.meta.env.VITE_SMTP_PORT,
+        user: import.meta.env.VITE_SMTP_USER,
+        password: import.meta.env.VITE_SMTP_PASSWORD,
+        from: import.meta.env.VITE_SMTP_FROM,
+        fromName: import.meta.env.VITE_SMTP_FROM_NAME,
+        secure: import.meta.env.VITE_SMTP_SECURE === 'true'
+      };
+      
+      // Solo usar configuración de entorno si todos los campos requeridos están presentes
+      if (envConfig.host && envConfig.port && envConfig.user && envConfig.password) {
+        smtpConfig = envConfig;
+      }
+    }
+
+    if (smtpConfig) {
+      _setInput('cfg-smtp-host', smtpConfig.host);
+      _setInput('cfg-smtp-port', smtpConfig.port);
+      _setInput('cfg-smtp-user', smtpConfig.user);
+      _setInput('cfg-smtp-from', smtpConfig.from);
+      _setInput('cfg-smtp-from-name', smtpConfig.fromName);
+      _setCheckbox('cfg-smtp-secure', smtpConfig.secure !== false);
+      // No cargamos la contraseña por seguridad, a menos que venga de variables de entorno
+      if (smtpConfig.password && typeof import.meta !== 'undefined' && import.meta.env?.VITE_SMTP_PASSWORD) {
+        _setInput('cfg-smtp-password', smtpConfig.password);
+      }
+    }
 
     if (config.Logo_Base64) _mostrarLogoPreview(config.Logo_Base64);
   }
@@ -728,6 +768,159 @@ const _ModuloAjustes = (() => {
     a.click();
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
+  }
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // CONFIGURACIÓN SMTP
+  // ─────────────────────────────────────────────────────────────────────────
+
+  /**
+   * Prueba la conexión SMTP con las credenciales proporcionadas
+   */
+  async function _probarConexionSMTP() {
+    const host = document.getElementById('cfg-smtp-host')?.value?.trim();
+    const port = document.getElementById('cfg-smtp-port')?.value?.trim();
+    const user = document.getElementById('cfg-smtp-user')?.value?.trim();
+    const password = document.getElementById('cfg-smtp-password')?.value;
+    const secure = document.getElementById('cfg-smtp-secure')?.checked;
+
+    // Validar campos requeridos
+    if (!host || !port || !user || !password) {
+      Alerts.error('Por favor completa todos los campos de configuración SMTP.');
+      return;
+    }
+
+    // Validar puerto
+    const portNum = parseInt(port, 10);
+    if (isNaN(portNum) || portNum < 1 || portNum > 65535) {
+      Alerts.error('El puerto debe ser un número entre 1 y 65535.');
+      return;
+    }
+
+    // Validar formato de email
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(user)) {
+      Alerts.error('El usuario debe ser una dirección de correo válida.');
+      return;
+    }
+
+    const statusEl = document.getElementById('smtp-status');
+    if (statusEl) {
+      statusEl.className = 'gps-status info';
+      statusEl.textContent = '📧 Probando conexión SMTP...';
+      statusEl.style.display = 'block';
+    }
+
+    try {
+      // Verificar si el usuario está autenticado en Firebase
+      if (!window.FirebaseClient?.getCurrentUser()) {
+        Alerts.error('Debes estar autenticado para probar la conexión SMTP.');
+        if (statusEl) {
+          statusEl.className = 'gps-status error';
+          statusEl.textContent = '❌ Error: No autenticado';
+        }
+        return;
+      }
+
+      // Llamar a la Firebase Function para probar conexión
+      const testFunction = window.firebase?.functions?.()?.httpsCallable?.('testSMTPConnection');
+      if (!testFunction) {
+        throw new Error('Firebase Functions no disponible');
+      }
+
+      const result = await testFunction({
+        host,
+        port,
+        user,
+        password,
+        secure
+      });
+
+      if (result.data.success) {
+        if (statusEl) {
+          statusEl.className = 'gps-status success';
+          statusEl.textContent = `✅ Conexión exitosa: ${user}`;
+        }
+        Alerts.success('Conexión SMTP establecida correctamente.');
+      } else {
+        throw new Error(result.data.message || 'Error desconocido');
+      }
+    } catch (error) {
+      console.error('Error al probar conexión SMTP:', error);
+      if (statusEl) {
+        statusEl.className = 'gps-status error';
+        statusEl.textContent = `❌ Error: ${error.message}`;
+      }
+      Alerts.error(error.message, 'Error de conexión SMTP');
+    }
+  }
+
+  /**
+   * Guarda la configuración SMTP
+   */
+  async function _guardarConfigSMTP() {
+    const host = document.getElementById('cfg-smtp-host')?.value?.trim();
+    const port = document.getElementById('cfg-smtp-port')?.value?.trim();
+    const user = document.getElementById('cfg-smtp-user')?.value?.trim();
+    const password = document.getElementById('cfg-smtp-password')?.value;
+    const from = document.getElementById('cfg-smtp-from')?.value?.trim() || user;
+    const fromName = document.getElementById('cfg-smtp-from-name')?.value?.trim() || 'Control Personal Campo';
+    const secure = document.getElementById('cfg-smtp-secure')?.checked;
+
+    // Validar campos requeridos
+    if (!host || !port || !user || !password) {
+      Alerts.error('Por favor completa todos los campos de configuración SMTP.');
+      return;
+    }
+
+    // Validar puerto
+    const portNum = parseInt(port, 10);
+    if (isNaN(portNum) || portNum < 1 || portNum > 65535) {
+      Alerts.error('El puerto debe ser un número entre 1 y 65535.');
+      return;
+    }
+
+    // Validar formato de email
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(user)) {
+      Alerts.error('El usuario debe ser una dirección de correo válida.');
+      return;
+    }
+
+    if (from && !emailRegex.test(from)) {
+      Alerts.error('La dirección de envío debe ser una dirección de correo válida.');
+      return;
+    }
+
+    const smtpConfig = {
+      host,
+      port: portNum,
+      user,
+      password, // Guardamos la contraseña encriptada o como texto plano (nota: no ideal para producción)
+      from,
+      fromName,
+      secure
+    };
+
+    // Guardar localmente
+    const newConfig = { ...AppState.get('config'), SMTP_Config: smtpConfig };
+    AppState.set('config', newConfig);
+    localStorage.setItem(LS_KEYS.CONFIG, JSON.stringify(newConfig));
+
+    // Sincronizar con Firestore si está conectado
+    if (AppState.get('backendMode') === 'firestore' && AppState.get('connected')) {
+      const loader = Alerts.loading('Guardando configuración SMTP...');
+      try {
+        await API.guardarConfiguracion({ SMTP_Config: smtpConfig });
+        loader.close();
+        Alerts.success('Configuración SMTP guardada y sincronizada con Firestore.');
+      } catch (err) {
+        loader.close();
+        Alerts.warning('Guardado localmente. Error de sincronización: ' + err.message);
+      }
+    } else {
+      Alerts.success('Configuración SMTP guardada localmente.');
+    }
   }
 
   // ─────────────────────────────────────────────────────────────────────────

@@ -1248,6 +1248,59 @@
               </button>
             </div>
 
+            <!-- Configuración de Correo SMTP -->
+            <div class="glass-card ajuste-card">
+              <div class="card-header">
+                <h3><i data-lucide="mail" aria-hidden="true"></i> Configuración de Correo SMTP</h3>
+              </div>
+              <div class="form-group">
+                <label for="cfg-smtp-host" class="form-label">Servidor SMTP</label>
+                <input type="text" id="cfg-smtp-host" class="input-glass" placeholder="smtp.gmail.com" aria-label="Servidor SMTP" />
+                <p class="text-muted text-sm">Ej: smtp.gmail.com para Gmail, smtp.office365.com para Outlook</p>
+              </div>
+              <div class="form-group">
+                <label for="cfg-smtp-port" class="form-label">Puerto SMTP</label>
+                <input type="number" id="cfg-smtp-port" class="input-glass" placeholder="587" min="1" max="65535" aria-label="Puerto SMTP" />
+                <p class="text-muted text-sm">Ej: 587 (TLS) o 465 (SSL)</p>
+              </div>
+              <div class="form-group">
+                <label for="cfg-smtp-user" class="form-label">Usuario / Correo Electrónico</label>
+                <input type="email" id="cfg-smtp-user" class="input-glass" placeholder="tu.correo@gmail.com" aria-label="Usuario SMTP (correo electrónico)" />
+                <p class="text-muted text-sm">Tu dirección de correo completo para autenticación</p>
+              </div>
+              <div class="form-group">
+                <label for="cfg-smtp-password" class="form-label">Contraseña / App Password</label>
+                <input type="password" id="cfg-smtp-password" class="input-glass" placeholder="Tu contraseña o App Password" aria-label="Contraseña SMTP" autocomplete="current-password" />
+                <p class="text-muted text-sm">Para Gmail usa una <a href="https://support.google.com/accounts/answer/185833" target="_blank" rel="noopener noreferrer">App Password</a> si tienes 2FA activado</p>
+              </div>
+              <div class="form-group">
+                <label for="cfg-smtp-from" class="form-label">Dirección de Envío (From)</label>
+                <input type="email" id="cfg-smtp-from" class="input-glass" placeholder="tu.correo@gmail.com" aria-label="Dirección de correo de envío" />
+                <p class="text-muted text-sm">Dirección que aparecerá como remitente de los correos</p>
+              </div>
+              <div class="form-group">
+                <label for="cfg-smtp-from-name" class="form-label">Nombre del Remitente</label>
+                <input type="text" id="cfg-smtp-from-name" class="input-glass" placeholder="Control Personal Campo" aria-label="Nombre del remitente" />
+                <p class="text-muted text-sm">Nombre que aparecerá en los correos enviados</p>
+              </div>
+              <div class="form-group">
+                <label class="form-label" for="cfg-smtp-secure">
+                  <input type="checkbox" id="cfg-smtp-secure" checked aria-label="Usar conexión segura TLS/SSL" />
+                  Usar conexión segura (TLS/SSL)
+                </label>
+                <p class="text-muted text-sm">Recomendado para seguridad</p>
+              </div>
+              <div id="smtp-status" class="gps-status" role="status" aria-live="polite"></div>
+              <div class="form-actions">
+                <button type="button" id="btn-test-smtp" class="btn btn-secondary">
+                  <i data-lucide="send" aria-hidden="true"></i> Probar Conexión
+                </button>
+                <button type="button" id="btn-save-smtp" class="btn btn-primary">
+                  <i data-lucide="save" aria-hidden="true"></i> Guardar Configuración SMTP
+                </button>
+              </div>
+            </div>
+
             <!-- Auditoría Escáner de Campo -->
             <div class="glass-card ajuste-card">
               <div class="card-header">

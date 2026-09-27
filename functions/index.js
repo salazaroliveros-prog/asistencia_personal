@@ -1,5 +1,6 @@
 const functions = require('firebase-functions');
 const admin = require('firebase-admin');
+const nodemailer = require('nodemailer');
 
 admin.initializeApp();
 
@@ -326,5 +327,141 @@ exports.healthCheck = functions.https.onRequest(async (req, res) => {
       timestamp: new Date().toISOString(),
       error: error.message
     });
+  }
+});
+
+// ─────────────────────────────────────────────────────────────────────────
+// FUNCIONES SMTP PARA ENVÍO DE CORREOS
+// ─────────────────────────────────────────────────────────────────────────
+
+/**
+ * Prueba la conexión SMTP con las credenciales proporcionadas
+ */
+exports.testSMTPConnection = functions.https.onCall(async (data, context) => {
+  // Verificar autenticación
+  if (!context.auth) {
+    throw new functions.https.HttpsError(
+      'unauthenticated',
+      'Usuario no autenticado'
+    );
+  }
+
+  const { host, port, user, password, secure } = data;
+
+  // Validar campos requeridos
+  if (!host || !port || !user || !password) {
+    throw new functions.https.HttpsError(
+      'invalid-argument',
+      'Host, puerto, usuario y contraseña son requeridos'
+    );
+  }
+
+  try {
+    // Crear transporte SMTP
+    const transporter = nodemailer.createTransport({
+      host,
+      port: parseInt(port, 10),
+      secure: secure === true || secure === 'true', // true para 465, false para otros puertos
+      auth: {
+        user,
+        pass: password
+      },
+      tls: {
+        rejectUnauthorized: false // Solo para pruebas, no usar en producción
+      }
+    });
+
+    // Verificar conexión
+    await transporter.verify();
+
+    console.log(`SMTP connection test successful for user: ${user}`);
+
+    return {
+      success: true,
+      message: 'Conexión SMTP exitosa',
+      host,
+      port,
+      user
+    };
+  } catch (error) {
+    console.error('SMTP connection test failed:', error);
+    throw new functions.https.HttpsError(
+      'internal',
+      `Error de conexión SMTP: ${error.message}`
+    );
+  }
+});
+
+/**
+ * Envía un correo electrónico usando la configuración SMTP
+ */
+exports.sendEmail = functions.https.onCall(async (data, context) => {
+  // Verificar autenticación
+  if (!context.auth) {
+    throw new functions.https.HttpsError(
+      'unauthenticated',
+      'Usuario no autenticado'
+    );
+  }
+
+  const { 
+    smtpConfig, 
+    to, 
+    subject, 
+    text, 
+    html,
+    from,
+    fromName
+  } = data;
+
+  // Validar campos requeridos
+  if (!smtpConfig || !to || !subject) {
+    throw new functions.https.HttpsError(
+      'invalid-argument',
+      'Configuración SMTP, destinatario y asunto son requeridos'
+    );
+  }
+
+  try {
+    // Crear transporte SMTP
+    const transporter = nodemailer.createTransport({
+      host: smtpConfig.host,
+      port: parseInt(smtpConfig.port, 10),
+      secure: smtpConfig.secure === true || smtpConfig.secure === 'true',
+      auth: {
+        user: smtpConfig.user,
+        pass: smtpConfig.password
+      },
+      tls: {
+        rejectUnauthorized: false
+      }
+    });
+
+    // Configurar opciones del correo
+    const mailOptions = {
+      from: from ? `"${fromName || 'Control Personal Campo'}" <${from}>` : `"${fromName || 'Control Personal Campo'}" <${smtpConfig.user}>`,
+      to,
+      subject,
+      text: text || '',
+      html: html || text || ''
+    };
+
+    // Enviar correo
+    const info = await transporter.sendMail(mailOptions);
+
+    console.log(`Email sent successfully to ${to}: ${info.messageId}`);
+
+    return {
+      success: true,
+      messageId: info.messageId,
+      to,
+      subject
+    };
+  } catch (error) {
+    console.error('Error sending email:', error);
+    throw new functions.https.HttpsError(
+      'internal',
+      `Error al enviar correo: ${error.message}`
+    );
   }
 });
