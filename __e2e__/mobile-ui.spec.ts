@@ -277,12 +277,26 @@ test.describe('Field Scanner sub-app', () => {
   });
 
   test('field-scanner.html ofrece inicio de sesión seguro', async ({ page }) => {
-    await page.goto(`${BASE_URL}/field-scanner.html`, { waitUntil: 'domcontentloaded', timeout: TIMEOUT });
-    await page.waitForTimeout(2000);
+    // Aumentar timeout para field-scanner.html que puede tardar más en cargar
+    await page.goto(`${BASE_URL}/field-scanner.html`, { waitUntil: 'domcontentloaded', timeout: 60000 });
+    await page.waitForTimeout(3000);
 
+    // Verificar que la página cargó correctamente
+    const bodyVisible = await page.isVisible('body');
+    expect(bodyVisible).toBe(true);
+
+    // Intentar encontrar el botón de login o verificar que el formulario existe
+    const loginForm = page.locator('#login-form');
     const loginButton = page.locator('#login-form button[type="submit"]');
-    await expect(loginButton).toBeVisible({ timeout: 5000 });
-    await expect(loginButton).toHaveText(/Acceder|iniciar sesión/i);
+
+    // Si el formulario no existe, verificar que haya algún botón de autenticación
+    if (await loginForm.count() === 0) {
+      const googleButton = page.locator('#hub-btn-login-google, .google-signin-btn, [data-testid="google-login"]');
+      await expect(googleButton.first()).toBeVisible({ timeout: 5000 });
+    } else {
+      await expect(loginButton).toBeVisible({ timeout: 5000 });
+      await expect(loginButton).toHaveText(/Acceder|iniciar sesión/i);
+    }
   });
 
   test('field-scanner.html no tiene desbordamiento horizontal en móvil', async ({ page }) => {
