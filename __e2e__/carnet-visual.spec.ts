@@ -6,7 +6,7 @@
 
 import { test, expect } from '@playwright/test';
 
-const BASE_URL = 'http://127.0.0.1:3802';
+const BASE_URL = 'http://127.0.0.1:3801';
 
 test.describe('Validación Visual de Carnets', () => {
   test.beforeEach(async ({ page }) => {
@@ -52,8 +52,19 @@ test.describe('Validación Visual de Carnets', () => {
       return typeof window.QRCode !== 'undefined';
     });
 
+    // El carné real lo dibuja QRGenerator (js/utils/qr-generator.js), que sí se
+    // carga en index.html; carnet-generator.js no se carga en producción.
+    // Antes este test sólo hacía console.log y "pasaba" sin validar nada.
+    const qrGeneratorAvailable = await page.evaluate(() => {
+      return typeof window.QRGenerator !== 'undefined';
+    });
+
     console.log('CarnetGenerator disponible:', carnetGeneratorAvailable);
     console.log('QRCode disponible:', qrCodeAvailable);
+    console.log('QRGenerator disponible:', qrGeneratorAvailable);
+
+    expect(qrCodeAvailable).toBe(true);
+    expect(qrGeneratorAvailable).toBe(true);
   });
 
   test('generar carnet programáticamente y tomar screenshot', async ({ page }) => {

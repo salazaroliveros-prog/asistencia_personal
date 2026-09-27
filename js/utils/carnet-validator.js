@@ -168,16 +168,16 @@ const CarnetValidator = (() => {
    * @returns {Object} Resultado del escaneo simulado
    */
   function simulateQRScan(worker) {
-    const qrData = {
-      id: worker.ID_Trabajador,
+    // Mismo payload que graba el carné real ({ id, dpi }). Simular con otro
+    // formato validaba algo distinto de lo que se imprime.
+    const qrText = JSON.stringify({
+      id:  worker.ID_Trabajador,
       dpi: worker.DPI_CUI,
-      nombre: worker.Nombre_Completo,
-      puesto: worker.Puesto,
-    };
+    });
 
     return {
       success: true,
-      qrData: JSON.stringify(qrData),
+      qrData: qrText,
       worker,
       timestamp: Date.now(),
     };

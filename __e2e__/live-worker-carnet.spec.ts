@@ -6,7 +6,7 @@
 
 import { test, expect } from '@playwright/test';
 
-const BASE_URL = 'http://127.0.0.1:3802';
+const BASE_URL = 'http://127.0.0.1:3801';
 
 test.describe('Prueba en Vivo - Crear Trabajador y Validar Carnet', () => {
   test.beforeEach(async ({ page }) => {

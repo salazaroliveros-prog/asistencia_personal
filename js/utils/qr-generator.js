@@ -73,20 +73,61 @@ const QRGenerator = (() => {
     }
 
     try {
-      // Nivel M soporta hasta 1269 chars (vs 800 del nivel H)
+      // qrcodejs dibuja cada módulo con un tamaño ENTERO de píxeles
+      // (Math.round(lado / módulos)) y el canvas mide exactamente `lado`. Con
+      // { id, dpi } el QR es de 33x33 módulos: 130/33 = 3,94 ⇒ usa 4px por
+      // módulo (132px) y RECORTA 2px la última columna/fila, dejando esos
+      // módulos a la mitad. Por eso se calcula primero el número de módulos y
+      // se dibuja el carné en un tamaño múltiplo exacto (132px para 33
+      // módulos): ningún módulo queda cortado y se mantiene 1px CSS = 1px
+      // real (sin reescalado borroso).
+      let lado = 130;
+      try {
+        const sonda = new QRCode(document.createElement('div'), {
+          text:         qrData,
+          width:        130,
+          height:       130,
+          correctLevel: QRCode.CorrectLevel.M,
+        });
+        const nucleo = sonda && sonda._oQRCode;
+        const modulos = nucleo && typeof nucleo.getModuleCount === 'function' ? nucleo.getModuleCount() : 0;
+        if (modulos > 0) {
+          const pxPorModulo = Math.max(1, Math.round(130 / modulos));
+          lado = modulos * pxPorModulo;
+        }
+      } catch (_) { /* se conserva el tamaño por defecto */ }
+
+      container.innerHTML = '';
+
+      // Nivel M: con el payload { id, dpi } el QR queda en versión 4 (33x33
+      // módulos), así que la capacidad extra del nivel H no aporta nada y sí
+      // encarecería el símbolo. Nivel M mantiene buena tolerancia a daños.
       new QRCode(container, {
         text:         qrData,
-        width:        130,
-        height:       130,
+        width:        lado,
+        height:       lado,
         colorDark:    '#003459',
         colorLight:   '#FFFFFF',
         correctLevel: QRCode.CorrectLevel.M,
       });
 
-      // Ocultar la <img> de fallback, dejar visible el <canvas>
-      const img = container.querySelector('img');
-      if (img) img.style.display = 'none';
-
+      // qrcodejs inserta SIEMPRE dos nodos: el <canvas> y una <img> de respaldo
+      // con el mismo QR (data URL). El CSS
+      //   .carne-qr canvas, .carne-qr img { display: block !important; }
+      // anula cualquier display:none, así que "ocultar" el respaldo no funcionaba:
+      // el carné mostraba DOS códigos QR (en pantalla, en el PNG descargado y en
+      // la impresión) y un lector no podía decodificarlos
+      // ("No MultiFormat Readers were able to detect the code").
+      // Solución: eliminar el respaldo y dejar un único QR (el <canvas>).
+      const canvas = container.querySelector('canvas');
+      if (canvas) {
+        container.querySelectorAll('img').forEach((img) => img.remove());
+        canvas.style.setProperty('display', 'block', 'important');
+        // El CSS fija 130px !important; se respeta el tamaño exacto calculado
+        // para no reescalar el símbolo.
+        canvas.style.setProperty('width', lado + 'px', 'important');
+        canvas.style.setProperty('height', lado + 'px', 'important');
+      }
     } catch (err) {
       console.error('[QRGenerator] Error generando QR:', err);
       container.innerHTML = '<p style="color:#666;font-size:11px;text-align:center">Error al generar QR</p>';
@@ -103,14 +144,20 @@ const QRGenerator = (() => {
 
     try {
       const data = JSON.parse(rawText);
-      // Validar que tenga los campos esperados
-      if (data.id && (data.dpi || data.nombre)) {
-        return data;
+      // El ID es la clave del trabajador: con que venga es suficiente. DPI y
+      // nombre son opcionales (hay trabajadores sin DPI importados o de datos
+      // antiguos) y exigirlos hacía que el QR de su carné se rechazara aquí con
+      // "QR no reconocido" aunque el escáner de campo sí lo leyera.
+      if (data && (data.id || data.ID_Trabajador)) {
+        const id = data.id || data.ID_Trabajador;
+        return { ...data, id };
       }
     } catch {
-      // Podría ser solo el ID directamente
-      if (typeof rawText === 'string' && rawText.startsWith('TRAB-')) {
-        return { id: rawText };
+      // Podría ser solo el ID directamente (formato histórico del sistema o
+      // cualquier texto que el escáner de campo también acepte como ID).
+      const texto = String(rawText).trim();
+      if (texto.startsWith('TRAB-') || /^[A-Z0-9-]{5,}$/.test(texto)) {
+        return { id: texto };
       }
     }
 

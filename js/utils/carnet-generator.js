@@ -11,12 +11,19 @@ const CarnetGenerator = (() => {
    * @returns {Promise<string>} Data URL del QR code
    */
   async function generateWorkerQR(trabajador) {
-    const qrData = {
-      id: trabajador.ID_Trabajador,
+    // Payload canónico del sistema, idéntico al que dibuja el carné del modal
+    // (js/utils/qr-generator.js → renderCarneQR): { id, dpi }.
+    //  - Se omite el nombre completo a propósito: no aporta nada al escaneo y
+    //    alarga el payload, lo que sube la versión del QR y reduce el tamaño de
+    //    cada módulo (peor lectura en campo). Nombre y puesto se recuperan con
+    //    el ID desde AppState/Firestore.
+    //  - NO usar el ID en texto plano: con ese formato el QR deja de ser válido
+    //    para IDs que no empiecen por "TRAB-" y se pierde el respaldo por DPI
+    //    que usan los buscadores de trabajador.
+    const qrText = JSON.stringify({
+      id:  trabajador.ID_Trabajador,
       dpi: trabajador.DPI_CUI,
-      nombre: trabajador.Nombre_Completo,
-      puesto: trabajador.Puesto,
-    };
+    });
 
     return new Promise((resolve, reject) => {
       if (typeof QRCode === 'undefined') {
@@ -26,7 +33,7 @@ const CarnetGenerator = (() => {
 
       try {
         const qr = new QRCode(document.createElement('div'), {
-          text: JSON.stringify(qrData),
+          text: qrText,
           width: 150,
           height: 150,
           colorDark: '#000000',
