@@ -6,7 +6,37 @@
 
 version: 2
 updates:
+ - package-ecosystem: "npm"
+   directory: "/"
+   schedule:
+     interval: "weekly"
+     day: "monday"
+     time: "09:00"
+   open-pull-requests-limit: 10
+   versioning-strategy: increase
+   ignore:
+   - dependency-name: "firebase"
+     versions: ["13.x", "14.x", "15.x"]
+   - dependency-name: "@capacitor/*"
+     versions: ["5.x"]
+   groups:
+     firebase-dependencies:
+       patterns:
+       - "firebase*"
+       - "@firebase/*"
+     capacitor-dependencies:
+       patterns:
+       - "@capacitor/*"
+     build-tools:
+       patterns:
+       - "vite*"
+       - "eslint*"
+       - "prettier*"
+       - "typescript*"
+
  - package-ecosystem: "devcontainers"
    directory: "/"
    schedule:
-     interval: weekly
+     interval: "weekly"
+     day: "monday"
+     time: "09:00"
