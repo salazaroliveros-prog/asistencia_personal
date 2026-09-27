@@ -54,7 +54,7 @@ service cloud.firestore {
     
     function isValidAttendanceData(data) {
       return data.keys().hasAll([
-        'ID_Marcacion', 'ID_Registro', 'ID_Trabajador', 'Nombre_Trabajador', 
+        'ID_Marcacion', 'ID_Registro', 'ID_Trabajador', 'Nombre_Trabajador',
         'Fecha', 'Tipo_Marcacion', 'Hora_Real', 'Estado_Marcacion', 'Timestamp'
       ]) &&
         isValidString(data.ID_Marcacion, 1, 50) &&
@@ -65,7 +65,11 @@ service cloud.firestore {
         data.Tipo_Marcacion in ['Entrada', 'Salida_Receso', 'Regreso_Receso', 'Salida_Obra', 'Entrada_Extra'] &&
         isValidString(data.Hora_Real, 5, 8) &&
         data.Estado_Marcacion in ['A Tiempo', 'Puntual', 'Tolerancia', 'Atraso', 'Ausencia'] &&
-        isValidTimestamp(data.Timestamp);
+        isValidTimestamp(data.Timestamp) &&
+        (data.Horas_Extra is number || data.Horas_Extra == null) &&
+        (data.GPS_Latitud is number || data.GPS_Latitud == null) &&
+        (data.GPS_Longitud is number || data.GPS_Longitud == null) &&
+        (data.GPS_Accuracy is number || data.GPS_Accuracy == null);
     }
     
     function isValidConfiguracion(data) {
@@ -109,8 +113,8 @@ service cloud.firestore {
       // ─────────────────────────────────────────────────────────────────────
       match /personal/{workerId} {
         allow read: if isOwner(userId);
-        allow create: if isOwner(userId) && isValidWorkerData(request.resource.data);
-        allow update: if isOwner(userId) && isValidWorkerData(request.resource.data);
+        allow create: if isOwner(userId) && isValidWorkerData(request.resource.data) && request.resource.data.keys().size() <= 20;
+        allow update: if isOwner(userId) && isValidWorkerData(request.resource.data) && request.resource.data.keys().size() <= 20;
         allow delete: if isOwner(userId);
       }
       
@@ -119,8 +123,8 @@ service cloud.firestore {
       // ─────────────────────────────────────────────────────────────────────
       match /asistencias/{attendanceId} {
         allow read: if isOwner(userId);
-        allow create: if isOwner(userId) && isValidAttendanceData(request.resource.data);
-        allow update: if isOwner(userId) && isValidAttendanceData(request.resource.data);
+        allow create: if isOwner(userId) && isValidAttendanceData(request.resource.data) && request.resource.data.keys().size() <= 25;
+        allow update: if isOwner(userId) && isValidAttendanceData(request.resource.data) && request.resource.data.keys().size() <= 25;
         allow delete: if isOwner(userId);
       }
       

@@ -271,6 +271,7 @@
   <script src="js/utils/module-cleanup.js" type="text/javascript"></script>
   <script src="js/utils/firebase-auth-validator.js" type="text/javascript"></script>
   <script src="js/utils/advanced-validators.js" type="text/javascript"></script>
+  <script src="js/utils/locale-manager.js" type="text/javascript"></script>
   <script src="js/modules/dashboard.js" type="text/javascript"></script>
   <script src="js/modules/personal.js" type="text/javascript"></script>
   <script src="js/modules/asistencia.js" type="text/javascript"></script>
@@ -1227,7 +1228,7 @@
                 <label for="cfg-gps-centro-lat" class="form-label">Latitud del Centro de Obra</label>
                 <div class="input-with-action">
                   <input type="number" id="cfg-gps-centro-lat" class="input-glass" step="any" placeholder="14.634915" aria-label="Latitud del centro de obra" />
-                  <button type="button" id="btn-capturar-ubicacion" class="btn btn-secondary" title="Capturar ubicación actual">
+                  <button type="button" id="btn-capturar-ubicacion" class="btn btn-secondary" aria-label="Capturar ubicación actual GPS" title="Capturar ubicación actual">
                     <i data-lucide="crosshair" aria-hidden="true"></i>
                   </button>
                 </div>
@@ -1264,7 +1265,7 @@
                   <button type="button" id="btn-export-scanner-audit" class="btn btn-secondary btn-sm">
                     <i data-lucide="download" aria-hidden="true"></i> Exportar CSV
                   </button>
-                  <button type="button" id="btn-clear-scanner-audit" class="btn btn-danger btn-sm">
+                  <button type="button" id="btn-clear-scanner-audit" class="btn btn-danger btn-sm" aria-label="Limpiar registro de auditoría de escáner">
                     Limpiar log local
                   </button>
                 </div>

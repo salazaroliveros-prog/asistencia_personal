@@ -13,6 +13,8 @@
  * @version 1.5.1
  */
 
+/* global LocaleManager */
+
 (() => {
   'use strict';
 
@@ -837,7 +839,10 @@
     let horaReal = String(marcacion.Hora_Real || '').trim();
     if (horaReal.length > 8) horaReal = horaReal.substring(0, 8);
     if (horaReal.length < 5) {
-      horaReal = new Date().toLocaleTimeString('es-GT', { hour12: false }).substring(0, 5);
+      const timeStr = window.LocaleManager
+        ? LocaleManager.formatTime(new Date(), { hour12: false })
+        : new Date().toLocaleTimeString('es-GT', { hour12: false });
+      horaReal = timeStr.substring(0, 5);
     }
     return {
       ID_Marcacion:     idMarc,

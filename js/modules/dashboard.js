@@ -5,6 +5,8 @@
  * @version 1.5.0
  */
 
+/* global LocaleManager */
+
 const _ModuloDashboard = (() => {
 
   // ─── Helpers globales ─────────────────────────────────────────────────────
@@ -352,7 +354,10 @@ const _ModuloDashboard = (() => {
     const tsEl = document.getElementById('turno-last-update');
     if (tsEl) {
       const now = new Date();
-      tsEl.textContent = `Actualizado: ${now.toLocaleTimeString('es-GT', { hour: '2-digit', minute: '2-digit' })}`;
+      const timeStr = window.LocaleManager
+        ? LocaleManager.formatTime(now)
+        : now.toLocaleTimeString('es-GT', { hour: '2-digit', minute: '2-digit' });
+      tsEl.textContent = `Actualizado: ${timeStr}`;
     }
 
     _renderTurnoFiltrado();
