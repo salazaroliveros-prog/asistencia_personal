@@ -124,7 +124,7 @@ Durante esta auditoría se sincronizaron los 3 archivos corregidos en `dist/js/u
 | `js/utils/carnet-generator.js` | `generateWorkerQR` vuelve al payload canónico `JSON.stringify({ id, dpi })`. |
 | `js/utils/carnet-validator.js` | `simulateQRScan` genera el mismo payload canónico (antes ID plano). |
 | `__e2e__/carnet-qr-audit.spec.ts` | **Nuevo.** 5 tests de auditoría: matriz exacta, decode del canvas, decode del PNG descargado, interop de las 3 rutas de escaneo, escaneabilidad/quiet zone. |
-| `dist/js/utils/*` (3 archivos) | Sincronizados manualmente para que `vite preview` sirviera el código corregido (artefacto ignorado por git; se regenera con `npm run build`). |
+| `dist/js/utils/*` (3 archivos) | `npm run build` regeneró `dist/` desde las fuentes; se comprobó que copia los tres archivos byte a byte (`fc /b` → idénticos), de modo que ya no hay parcheo manual. |
 
 ---
 
@@ -143,6 +143,26 @@ Durante esta auditoría se sincronizaron los 3 archivos corregidos en `dist/js/u
 | ESLint (`js/utils/qr-generator.js`, `carnet-generator.js`, `carnet-validator.js`) | **sin errores ni warnings** |
 | Compatibilidad con specs existentes | `live-mobile-smoke.spec.ts` y `live-production-audit.spec.ts` usan el selector `#carne-qr-container canvas, img` → siguen cumpliendo (el canvas permanece) |
 
+### Build, CI y despliegue (commit `d463c2e`)
+
+| Comprobación | Resultado |
+|---|---|
+| `npm run typecheck` | sin errores |
+| `npm run lint` (`--max-warnings 50`) | **0 errores**, 3 warnings preexistentes en `js/modules/ajustes.js` |
+| `npm test` | **117/117 PASS** (13 suites) |
+| `npm run build` (vite + inject-env) | OK; `dist/` regenerado y sincronizado con las fuentes |
+| `npx playwright test __e2e__/carnet-qr-audit.spec.ts` tras el build | **5/5 PASS** (24.7 s) |
+| `__e2e__/carnet-visual.spec.ts` (5 tests) | **5/5 PASS** |
+| `__e2e__/live-worker-carnet.spec.ts` (2 tests) | **2/2 PASS** |
+| GitHub Actions · CI run [36359817095](https://github.com/salazaroliveros-prog/asistencia_personal/actions/runs/36359817095) | **success**: TypeScript Check 19 s, Unit Tests 22 s, Lint 20 s, Build 23 s, Validate PWA 46 s (artefacto `dist-d463c2e…`) |
+| Vercel · deployment `dpl_DcQ25e7zgKrvs6yttPqBNB1dy9Wi` | **Ready** (Production, 15 s) |
+| Vercel · alias de producción | `https://controlasistenciaapp.vercel.app` |
+| HTTP en producción (`index.html`, `js/utils/qr-generator.js`, `field-scanner.html`) | **200 · 200 · 200** |
+| Marcador de versión del deploy | `window.__APP_VERSION__ = "d463c2ef18db8107187b4f7dbb25366854253324"` (SHA del commit) |
+| MD5 del `qr-generator.js` servido en producción vs. blob del commit `d463c2e` en GitHub | `e0cd06a377b82db2c0109606aa03dd2f` = `e0cd06a377b82db2c0109606aa03dd2f` → **byte-idénticos** |
+
+> Nota sobre los finales de línea: el archivo local (Windows) usa CRLF y el build de Vercel (Linux) usa LF, por eso el MD5 del `dist/` local no coincide con el del deploy; contra el blob de git la coincidencia es exacta.
+
 ### Evidencia gráfica
 
 - `__e2e__/screenshots/carnet-audit-completo.png` — carné completo con **un solo** QR centrado.
@@ -152,7 +172,7 @@ Durante esta auditoría se sincronizaron los 3 archivos corregidos en `dist/js/u
 
 ## 6. Pendientes y recomendaciones
 
-1. **Ejecutar `npm run build`** y volver a correr la auditoría contra el `dist` regenerado (evita que el `dist` parcheado a mano quede desincronizado de las fuentes).
+1. ~~**Ejecutar `npm run build`** y volver a correr la auditoría contra el `dist` regenerado~~ — **Hecho (27/09/2026)**: `dist/` regenerado desde las fuentes, auditoría repetida (5/5) y cambios desplegados en producción con CI en verde.
 2. **`border-radius` del canvas del QR → 0** (H5) para maximizar el margen de lectura en campo.
 3. **Unificar el payload en una sola constante** (por ejemplo `API.buildQrData`) usada por el carné, `CarnetGenerator` y `CarnetValidator`, para que no vuelvan a divergir los tres productores.
 4. **Revisar qué hacer con `carnet-generator.js` / `carnet-validator.js`**: hoy no se cargan en las páginas de producción; o se integran (cargándolos en `index.html`) o se documentan como utilidades sólo de pruebas.
