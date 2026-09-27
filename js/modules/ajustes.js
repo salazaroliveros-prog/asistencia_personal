@@ -122,15 +122,15 @@ const _ModuloAjustes = (() => {
     let smtpConfig = config.SMTP_Config;
     
     // Si no hay configuración en AppState, intentar cargar desde variables de entorno
-    if (!smtpConfig && typeof import.meta !== 'undefined' && import.meta.env) {
+    if (!smtpConfig && window.__SMTP_ENV__) {
       const envConfig = {
-        host: import.meta.env.VITE_SMTP_HOST,
-        port: import.meta.env.VITE_SMTP_PORT,
-        user: import.meta.env.VITE_SMTP_USER,
-        password: import.meta.env.VITE_SMTP_PASSWORD,
-        from: import.meta.env.VITE_SMTP_FROM,
-        fromName: import.meta.env.VITE_SMTP_FROM_NAME,
-        secure: import.meta.env.VITE_SMTP_SECURE === 'true'
+        host: window.__SMTP_ENV__.host,
+        port: window.__SMTP_ENV__.port,
+        user: window.__SMTP_ENV__.user,
+        password: window.__SMTP_ENV__.password,
+        from: window.__SMTP_ENV__.from,
+        fromName: window.__SMTP_ENV__.fromName,
+        secure: window.__SMTP_ENV__.secure === 'true'
       };
       
       // Solo usar configuración de entorno si todos los campos requeridos están presentes
@@ -147,7 +147,7 @@ const _ModuloAjustes = (() => {
       _setInput('cfg-smtp-from-name', smtpConfig.fromName);
       _setCheckbox('cfg-smtp-secure', smtpConfig.secure !== false);
       // No cargamos la contraseña por seguridad, a menos que venga de variables de entorno
-      if (smtpConfig.password && typeof import.meta !== 'undefined' && import.meta.env?.VITE_SMTP_PASSWORD) {
+      if (smtpConfig.password && window.__SMTP_ENV__?.password) {
         _setInput('cfg-smtp-password', smtpConfig.password);
       }
     }

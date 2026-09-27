@@ -46,6 +46,19 @@ if (!hasValues) {
 
 const script = `<script>window.__FIREBASE_ENV__ = ${JSON.stringify(firebaseEnv)};</script>`;
 
+// Construir el objeto de configuración SMTP desde process.env
+const smtpEnv = {
+  host:     process.env.VITE_SMTP_HOST     || '',
+  port:     process.env.VITE_SMTP_PORT     || '',
+  user:     process.env.VITE_SMTP_USER     || '',
+  password: process.env.VITE_SMTP_PASSWORD || '',
+  from:     process.env.VITE_SMTP_FROM     || '',
+  fromName: process.env.VITE_SMTP_FROM_NAME || '',
+  secure:   process.env.VITE_SMTP_SECURE   || '',
+};
+
+const smtpScript = `<script>window.__SMTP_ENV__ = ${JSON.stringify(smtpEnv)};</script>`;
+
 // Construir el marcador de versión del deploy.
 // En Vercel se usa el commit SHA del deploy; si no existe (fallback) se intenta
 // el git local; si tampoco hay git, no se inyecta marcador (detección omitida).
@@ -83,6 +96,13 @@ function injectIntoHtmlFile(relativePath, options = {}) {
     console.log(`[post-build] Variables de entorno inyectadas en ${relativePath}`);
   } else {
     console.log(`[post-build] window.__FIREBASE_ENV__ ya presente en ${relativePath} — omitiendo duplicado`);
+  }
+
+  // Inyectar variables SMTP si están disponibles
+  if (!html.includes('window.__SMTP_ENV__')) {
+    html = html.replace(/<head([^>]*)>/i, `<head$1>\n    ${smtpScript}`);
+    changed = true;
+    console.log(`[post-build] Variables SMTP inyectadas en ${relativePath}`);
   }
 
   if (options.withVersion && versionScript && !html.includes('window.__APP_VERSION__')) {
