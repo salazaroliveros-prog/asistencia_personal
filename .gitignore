@@ -75,6 +75,7 @@ __e2e__/output-live/
 __e2e__/output-live-mobile/
 __e2e__/capturas/
 __e2e__/snapshots/
+__e2e__/screenshots/
 __e2e__/*.log
 
 # ── Logs ─────────────────────────────────────────────────────────
