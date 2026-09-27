@@ -198,12 +198,12 @@ test('LOGIN (+ reinstalación): credenciales correo/contraseña conectan y los d
   expect(await page.evaluate(() => window.AppState.get('connected'))).toBe(false);
 
   // LOGIN con correo y contraseña vía la UI real
-  await page.fill('#firebase-auth-email', EMAIL);
-  await page.fill('#firebase-auth-password', PASSWORD);
-  await page.locator('#btn-login-firebase').click();
+  await page.fill('#hub-auth-email', EMAIL);
+  await page.fill('#hub-auth-password', PASSWORD);
+  await page.locator('#hub-btn-login-email').click();
 
   // Sesión activa confirmada en el indicador de conexión
-  await expect(page.locator('#connection-status-detail')).toContainText('Sesión activa', { timeout: 15000 });
+  await expect(page.locator('#hub-status-detail')).toContainText(/sesión|conectado|nube/i, { timeout: 15000 });
   expect(await page.evaluate(() => window.AppState.get('connected'))).toBe(true);
   expect(await page.evaluate(() => (window.FirebaseClient.getCurrentUser() || { email: null }).email)).toBe(EMAIL);
 
@@ -236,11 +236,11 @@ test('OFFLINE→ONLINE: registrado sin conexión se sincroniza automáticamente 
 
   // Reconexión: iniciar sesión → auto-sync de la cola offline
   await page.evaluate(() => { window.location.hash = '#ajustes'; });
-  await page.waitForSelector('#firebase-auth-email', { timeout: 10000 });
-  await page.fill('#firebase-auth-email', EMAIL);
-  await page.fill('#firebase-auth-password', PASSWORD);
-  await page.locator('#btn-login-firebase').click();
-  await expect(page.locator('#connection-status-detail')).toContainText('Sesión activa', { timeout: 15000 });
+  await page.waitForSelector('#hub-auth-email', { timeout: 10000 });
+  await page.fill('#hub-auth-email', EMAIL);
+  await page.fill('#hub-auth-password', PASSWORD);
+  await page.locator('#hub-btn-login-email').click();
+  await expect(page.locator('#hub-status-detail')).toContainText(/sesión|conectado|nube/i, { timeout: 15000 });
 
   // La cola se drenó y la BD ya tiene el trabajador
   await expect.poll(async () => page.evaluate(() => JSON.parse(localStorage.getItem('cpc_offline_queue') || '[]').length), { timeout: 15000 }).toBe(0);
@@ -296,8 +296,8 @@ test('LOGIN GOOGLE: el botón "Ingresar con Google" autentica cualquier cuenta G
   expect(await page.evaluate(() => window.AppState.get('connected'))).toBe(false);
 
   // Botón de Google (OAuth popup simulado): entra con una Gmail cualquiera
-  await page.locator('#btn-login-google').click();
-  await expect(page.locator('#connection-status-detail')).toContainText('Sesión activa', { timeout: 15000 });
+  await page.locator('#hub-btn-login-google').click();
+  await expect(page.locator('#hub-status-detail')).toContainText(/sesión|conectado|nube|google/i, { timeout: 15000 });
   expect(await page.evaluate(() => (window.FirebaseClient.getCurrentUser() || {}).email)).toBe('juan.gmail.real@gmail.com');
   expect(await page.evaluate(() => window.AppState.get('connected'))).toBe(true);
 

@@ -1571,6 +1571,93 @@ input[type="month"].input-glass {
   display: block;
 }
 
+/* Connection Hub */
+.hub-card--span {
+  grid-column: 1 / -1;
+}
+
+.hub-chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 10px;
+  border-radius: var(--radius-full);
+  font-size: var(--text-xs);
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  border: 1px solid var(--glass-border);
+  background: rgba(var(--color-surface-rgb), 0.35);
+  color: var(--color-text-muted);
+}
+
+.hub-chip--ok {
+  color: var(--color-accent-green);
+  border-color: rgba(var(--color-accent-green-rgb), 0.45);
+  background: rgba(var(--color-accent-green-rgb), 0.12);
+}
+
+.hub-chip--warn {
+  color: var(--color-accent-amber);
+  border-color: rgba(var(--color-accent-amber-rgb), 0.45);
+  background: rgba(var(--color-accent-amber-rgb), 0.12);
+}
+
+.hub-chip--local {
+  color: var(--color-secondary);
+  border-color: rgba(var(--color-secondary-rgb), 0.35);
+}
+
+.hub-status-detail {
+  margin: 0 0 var(--space-3);
+  color: var(--color-text-secondary);
+  font-size: var(--text-sm);
+  line-height: 1.4;
+}
+
+.hub-status-detail.is-error { color: var(--color-accent-red); }
+.hub-status-detail.is-ok { color: var(--color-accent-green); }
+
+.hub-user-line {
+  margin: 0 0 var(--space-3);
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+}
+
+.hub-auth-actions,
+.hub-quick-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin-top: var(--space-3);
+}
+
+.hub-auth-actions .btn,
+.hub-quick-actions .btn {
+  flex: 1 1 auto;
+  min-width: 140px;
+  justify-content: center;
+}
+
+.hub-advanced-toggle {
+  margin-top: var(--space-4);
+  width: 100%;
+  justify-content: flex-start;
+  gap: var(--space-2);
+}
+
+.hub-advanced-panel {
+  margin-top: var(--space-3);
+  padding-top: var(--space-3);
+  border-top: 1px solid var(--glass-border-light);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.hub-advanced-panel[hidden] {
+  display: none !important;
+}
+
 /* Upload de logo */
 .logo-upload-area {
   border: 2px dashed var(--glass-border);

@@ -288,7 +288,7 @@ test('LIVE audit — recorrido completo como usuario', async ({ page, context })
   // ── Ajustes: inputs y botones ──────────────────────────────────────────
   await go(page, 'ajustes');
   const inputs = [
-    'firebase-auth-email', 'firebase-auth-password',
+    'hub-auth-email', 'hub-auth-password',
     'cfg-nombre-obra', 'cfg-encargado',
     'cfg-hora-entrada', 'cfg-hora-salida-obra',
     'cfg-gps-centro-lat', 'cfg-gps-centro-lon', 'cfg-gps-radio',
@@ -327,7 +327,7 @@ test('LIVE audit — recorrido completo como usuario', async ({ page, context })
   }
 
   for (const id of [
-    'btn-use-local', 'btn-load-scanner-audit', 'btn-qr-scanner-instalacion',
+    'hub-btn-local', 'btn-load-scanner-audit', 'btn-qr-scanner-instalacion',
     'btn-export-backup', 'btn-export-trabajadores', 'btn-export-asistencias',
     'btn-check-claims', 'btn-open-gas-assistant',
   ]) {
@@ -350,10 +350,10 @@ test('LIVE audit — recorrido completo como usuario', async ({ page, context })
   }
 
   // Login vacío → validación
-  const loginBtn = page.locator('#btn-login-firebase');
+  const loginBtn = page.locator('#hub-btn-login-email');
   if (await loginBtn.count()) {
-    await page.fill('#firebase-auth-email', '');
-    await page.fill('#firebase-auth-password', '');
+    await page.fill('#hub-auth-email', '');
+    await page.fill('#hub-auth-password', '');
     await loginBtn.click();
     await page.waitForTimeout(600);
     const t = ((await page.locator('#toast-container .toast').first().textContent().catch(() => '')) || '');

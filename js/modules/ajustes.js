@@ -1,17 +1,8 @@
 /**
  * CONTROL PERSONAL CAMPO — modules/ajustes.js
- * Módulo de configuración: Firestore, general, horarios, GPS, logo y backup.
- * @version 1.5.0
- *
- * Correcciones aplicadas:
- *  #1 _iniciarSesionFirebase — valida email/password vacíos antes del SDK
- *  #2 _conectarFirebase — desactiva botón durante conexión (anti-doble-clic)
- *  #3 _guardarGeneral — Nombre_Obra es campo requerido
- *  #4 _guardarConfigGPS — GPS_Radio_Metros se guarda como Number
- *  #5 _guardarConfigGPS — GPS_Centro_Lat/Lon se guardan como Float
- *  #6 _importarBackup — restaura asistencias del backup si existen
- *  #7 _limpiarAuditoriaScanner — pide confirmación antes de borrar
- *  #8 _iniciarSesionFirebase — llama a _actualizarEstadoConexion tras login
+ * Configuración de obra: general, horarios, GPS, logo, backup y escáner.
+ * Auth / Firestore viven en ConnectionHub (connection-hub.js).
+ * @version 2.0.0
  */
 
 const _ModuloAjustes = (() => {
@@ -27,32 +18,6 @@ const _ModuloAjustes = (() => {
   function _bindEvents() {
     if (_eventsBound) return;
     _eventsBound = true;
-    const btnFirebase    = document.getElementById('btn-connect-firebase');
-    const btnLocal       = document.getElementById('btn-use-local');
-    const btnLogin       = document.getElementById('btn-login-firebase');
-    const btnLoginGoogle = document.getElementById('btn-login-google');
-    const btnLogout      = document.getElementById('btn-logout-firebase');
-    const btnGasAssistant = document.getElementById('btn-open-gas-assistant');
-
-    if (btnLogin)        btnLogin.addEventListener('click', _iniciarSesionFirebase);
-    if (btnLoginGoogle)  btnLoginGoogle.addEventListener('click', _iniciarSesionGoogle);
-    if (btnLogout)       btnLogout.addEventListener('click', _cerrarSesionFirebase);
-    const formAuth = document.getElementById('form-firebase-auth');
-    if (formAuth) {
-      formAuth.addEventListener('submit', (e) => {
-        e.preventDefault();
-        _iniciarSesionFirebase();
-      });
-    }
-    if (btnFirebase)     btnFirebase.addEventListener('click', _conectarFirebase);
-    if (btnLocal)        btnLocal.addEventListener('click', _usarModoLocal);
-    if (btnGasAssistant) btnGasAssistant.addEventListener('click', () => {
-      if (window.GasAssistant) {
-        window.GasAssistant.open();
-      } else {
-        Alerts.error('Módulo de asistente GAS no disponible', 'Error');
-      }
-    });
 
     // ─── Configuración General ────────────────────────────────────────────
     const btnSaveGeneral = document.getElementById('btn-save-general');
@@ -88,7 +53,6 @@ const _ModuloAjustes = (() => {
     if (logoInput)  logoInput.addEventListener('change', _handleLogoUpload);
     if (btnSaveLogo) btnSaveLogo.addEventListener('click', _guardarLogo);
 
-    // Drag & Drop del logo
     if (logoDropArea) {
       logoDropArea.addEventListener('click', () => logoInput?.click());
       logoDropArea.addEventListener('keydown', (e) => {
@@ -128,37 +92,26 @@ const _ModuloAjustes = (() => {
   }
 
   // ─────────────────────────────────────────────────────────────────────────
-  // CARGAR CONFIGURACIÓN LOCAL
+  // CARGAR CONFIGURACIÓN LOCAL (obra — no auth)
   // ─────────────────────────────────────────────────────────────────────────
   function _cargarConfigLocal() {
-    const config   = AppState.get('config') || DEFAULT_CONFIG;
-    const fbConfig = FirebaseClient.getConfig();
+    const config = AppState.get('config') || DEFAULT_CONFIG;
 
-    // Credenciales Firebase
-    _setInput('firebase-project-id',  fbConfig.projectId);
-    _setInput('firebase-api-key',     fbConfig.apiKey);
-    _setInput('firebase-auth-domain', fbConfig.authDomain);
-    _setInput('firebase-app-id',      fbConfig.appId);
-
-    // General
     _setInput('cfg-nombre-obra',  config.Nombre_Obra);
     _setInput('cfg-encargado',    config.Encargado);
     _setInput('cfg-tolerancia',   config.Tolerancia_Minutos);
 
-    // Horarios
     _setInput('cfg-hora-entrada',        config.Hora_Entrada        || '07:00');
     _setInput('cfg-hora-salida-receso',  config.Hora_Salida_Receso  || '10:00');
     _setInput('cfg-hora-regreso-receso', config.Hora_Regreso_Receso || '10:30');
     _setInput('cfg-hora-salida-obra',    config.Hora_Salida_Obra    || '17:00');
 
-    // GPS
     _setCheckbox('cfg-gps-habilitado', config.GPS_Habilitado !== false);
     _setCheckbox('cfg-gps-requerir',   config.GPS_Requerir_Ubicacion === true);
     _setInput('cfg-gps-centro-lat', config.GPS_Centro_Lat);
     _setInput('cfg-gps-centro-lon', config.GPS_Centro_Lon);
     _setInput('cfg-gps-radio',      config.GPS_Radio_Metros || 200);
 
-    // Logo
     if (config.Logo_Base64) _mostrarLogoPreview(config.Logo_Base64);
   }
 
@@ -170,331 +123,6 @@ const _ModuloAjustes = (() => {
   function _setInput(id, value) {
     const el = document.getElementById(id);
     if (el && value !== undefined && value !== null) el.value = value;
-  }
-
-  // ─────────────────────────────────────────────────────────────────────────
-  // CONEXIÓN FIREBASE — Botón "Conectar Firestore"
-  // Fix #2: desactiva el botón durante la operación async para evitar doble clic
-  // ─────────────────────────────────────────────────────────────────────────
-  async function _conectarFirebase() {
-    const btn = document.getElementById('btn-connect-firebase');
-    const statusEl = document.getElementById('connection-status-detail');
-
-    // Fix #2: bloquear botón mientras conecta
-    if (btn) btn.disabled = true;
-
-    const config = {
-      ...FirebaseClient.getConfig(),
-      projectId:  document.getElementById('firebase-project-id')?.value.trim(),
-      apiKey:     document.getElementById('firebase-api-key')?.value.trim(),
-      authDomain: document.getElementById('firebase-auth-domain')?.value.trim(),
-      appId:      document.getElementById('firebase-app-id')?.value.trim(),
-    };
-
-    // Validar configuración antes de intentar conexión
-    const validation = window.validateFirebaseConfig
-      ? window.validateFirebaseConfig(config)
-      : { valid: true };
-    if (!validation.valid) {
-      Alerts.error(validation.error || 'Completa ID del proyecto, API Key, dominio de autenticación y App ID.');
-      if (btn) btn.disabled = false;
-      return;
-    }
-
-    if (!FirebaseClient.isConfigured(config)) {
-      Alerts.error('Completa ID del proyecto, API Key, dominio de autenticación y App ID.');
-      if (btn) btn.disabled = false;
-      return;
-    }
-
-    if (statusEl) statusEl.textContent = '⏳ Conectando con Firestore…';
-
-    try {
-      const result = await FirebaseClient.configure(config);
-      if (result.success) {
-        // El estado de conexión no se fuerza: lo dicta FirebaseClient
-        // (onAuthStateChanged + health check). Forzarlo aquí mostraba
-        // "Firestore en línea" sin sesión, cuando las reglas deniegan escrituras.
-        _sincronizarEstadoConexion();
-        _actualizarEstadoConexion();
-        if (AppState.get('connected')) {
-          Alerts.success('Firestore conectado y sincronización en tiempo real activa.');
-          // Cargar datos iniciales desde Firestore en background
-          API.obtenerPersonal().catch((err) => console.warn('[Ajustes] Error cargando personal tras conexión:', err.message));
-          API.obtenerConfiguracion().catch((err) => console.warn('[Ajustes] Error cargando config tras conexión:', err.message));
-        } else {
-          Alerts.info('Configuración aceptada. Inicia sesión para escribir en Firestore; mientras tanto la app trabaja en modo local.');
-        }
-      } else {
-        AppState.set('backendMode', 'local');
-        AppState.set('connected', false);
-        if (statusEl) {
-          statusEl.className = 'connection-status-detail error';
-          statusEl.textContent = `❌ ${result.error || 'No se pudo conectar.'}`;
-        }
-        Alerts.error(result.error || 'No se pudo conectar con Firestore.');
-      }
-    } catch (error) {
-      AppState.set('backendMode', 'local');
-      AppState.set('connected', false);
-      if (statusEl) {
-        statusEl.className = 'connection-status-detail error';
-        statusEl.textContent = `❌ Error: ${error.message}`;
-      }
-      Alerts.error('Error al conectar con Firestore: ' + error.message);
-    } finally {
-      // Fix #2: reactivar botón siempre
-      if (btn) btn.disabled = false;
-    }
-  }
-
-  function _usarModoLocal() {
-    if (typeof window._teardownRealtimeSubscriptions === 'function') {
-      window._teardownRealtimeSubscriptions();
-    }
-    FirebaseClient.stop();
-    AppState.set('backendMode', 'local');
-    AppState.set('connected', false);
-    const statusEl = document.getElementById('connection-status-detail');
-    if (statusEl) {
-      statusEl.className = 'connection-status-detail';
-      statusEl.textContent = '💾 Modo local activo en este dispositivo.';
-    }
-    Alerts.success('Modo local activado. Tus datos se conservarán en este dispositivo.');
-  }
-
-  // ─────────────────────────────────────────────────────────────────────────
-  // SESIÓN FIREBASE — Botón "Iniciar sesión segura"
-  // Fix #1: valida email/password vacíos antes de llamar al SDK
-  // Fix #8: llama a _actualizarEstadoConexion() tras login exitoso
-  // ─────────────────────────────────────────────────────────────────────────
-  async function _iniciarSesionFirebase() {
-    const email    = document.getElementById('firebase-auth-email')?.value.trim();
-    const password = document.getElementById('firebase-auth-password')?.value || '';
-    const statusEl = document.getElementById('connection-status-detail');
-    const btnLogin = document.getElementById('btn-login-firebase');
-
-    // Fix #1: validar campos vacíos con mensajes en español antes del SDK
-    if (!email) {
-      Alerts.error('El correo electrónico es obligatorio.');
-      document.getElementById('firebase-auth-email')?.focus();
-      return;
-    }
-    if (!password) {
-      Alerts.error('La contraseña es obligatoria.');
-      document.getElementById('firebase-auth-password')?.focus();
-      return;
-    }
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-      Alerts.error('El correo electrónico no tiene un formato válido.');
-      document.getElementById('firebase-auth-email')?.focus();
-      return;
-    }
-
-    // Deshabilitar botón durante autenticación (anti-doble-clic)
-    if (btnLogin) btnLogin.disabled = true;
-    if (statusEl) statusEl.textContent = '⏳ Autenticando…';
-
-    try {
-      const result = await FirebaseClient.signInWithEmail(email, password);
-      if (!result.success) throw new Error(result.error || 'Credenciales rechazadas.');
-
-      // Limpiar contraseña del DOM inmediatamente por seguridad
-      const pwdInput = document.getElementById('firebase-auth-password');
-      if (pwdInput) pwdInput.value = '';
-
-      AppState.set('connected', true);
-      AppState.set('backendMode', 'firestore');
-
-      // Fix #8: usar _actualizarEstadoAuth Y _actualizarEstadoConexion centralizado
-      _actualizarEstadoAuth();
-      _actualizarEstadoConexion();
-      // Verificar conexión y cargar datos
-      await API.ping();
-      // API.ping() → checkHealth() confirma el estado real; se refleja en el store.
-      _sincronizarEstadoConexion();
-      _actualizarEstadoConexion();
-      await Promise.all([API.obtenerPersonal(), API.obtenerConfiguracion()]);
-
-      Alerts.success('Sesión persistente de Firestore iniciada.');
-    } catch (error) {
-      AppState.set('connected', false);
-      // Traducir errores comunes de Firebase Auth al español
-      const msg = _traducirErrorAuth(error.message || error.code || '');
-      if (statusEl) {
-        statusEl.className = 'connection-status-detail error';
-        statusEl.textContent = `❌ ${msg}`;
-      }
-      Alerts.error(msg, 'Error de autenticación');
-    } finally {
-      if (btnLogin) btnLogin.disabled = false;
-    }
-  }
-
-  /**
-   * Traduce los mensajes de error de Firebase Auth al español.
-   * @param {string} msg - Mensaje de error del SDK
-   * @returns {string} Mensaje en español
-   */
-  function _traducirErrorAuth(msg) {
-    const lower = msg.toLowerCase();
-    if (lower.includes('popup-closed-by-user') || lower.includes('popup closed') || lower.includes('cancelled-popup')) {
-      return 'Autenticación cancelada.';
-    }
-    if (lower.includes('popup-blocked')) {
-      return 'El navegador bloqueó la ventana de Google. Permite ventanas emergentes e inténtalo de nuevo.';
-    }
-    if (lower.includes('account-exists-with-different-credential') || lower.includes('account exists with different')) {
-      return 'Ya existe una cuenta con ese correo. Inicia sesión con "Iniciar sesión segura" (correo y contraseña) o vincula la cuenta en Firebase Console.';
-    }
-    if (lower.includes('user-not-found') || lower.includes('no user record') || lower.includes('email not found'))
-      return 'No existe una cuenta con ese correo electrónico en Firebase Auth.';
-    if (lower.includes('wrong-password') || lower.includes('invalid-password'))
-      return 'Contraseña incorrecta. Verifica tus credenciales.';
-    if (lower.includes('invalid-credential') || lower.includes('invalid credential'))
-      return 'Correo o contraseña no válidos. La cuenta debe existir como operador en Firebase Auth (crea la del administrador con scripts/setup-operator-account.js) o usa "Ingresar con Google".';
-    if (lower.includes('too-many-requests') || lower.includes('too many'))
-      return 'Demasiados intentos fallidos. Espera unos minutos antes de intentarlo de nuevo.';
-    if (lower.includes('user-disabled'))
-      return 'Esta cuenta ha sido desactivada. Contacta al administrador.';
-    if (lower.includes('network') || lower.includes('unavailable'))
-      return 'Sin conexión a internet. Verifica tu red e inténtalo de nuevo.';
-    if (lower.includes('invalid-email'))
-      return 'El formato del correo electrónico no es válido.';
-    if (lower.includes('email-already-in-use'))
-      return 'Ya existe una cuenta con este correo electrónico.';
-    // Mensaje genérico si no se reconoce el error
-    return 'No se pudo iniciar sesión. Verifica tus credenciales e inténtalo de nuevo.';
-  }
-
-  /**
-   * Inicio de sesión con cuenta de Google (OAuth popup). Google valida el
-   * correo/contraseña real del usuario, por lo que NO necesita estar registrado
-   * como usuario email/password en Firebase Auth (solo el proveedor "Google"
-   * habilitado en Firebase Console → Authentication → Sign-in method).
-   */
-  async function _iniciarSesionGoogle() {
-    const statusEl = document.getElementById('connection-status-detail');
-    const btnGoogle = document.getElementById('btn-login-google');
-
-    if (btnGoogle) btnGoogle.disabled = true;
-    if (statusEl) statusEl.textContent = '⏳ Esperando autenticación de Google…';
-
-    try {
-      const result = await FirebaseClient.signInWithGoogle();
-      if (!result.success) {
-        const code = (result.code || '').toLowerCase();
-        if (code.includes('cancelled')) {
-          if (statusEl) statusEl.textContent = '⏸ Autenticación con Google cancelada.';
-          return;
-        }
-        AppState.set('connected', false);
-        const msg = _traducirErrorAuth(result.code || result.error || '');
-        if (statusEl) {
-          statusEl.className = 'connection-status-detail error';
-          statusEl.textContent = `❌ ${msg}`;
-        }
-        Alerts.error(msg, 'Error de autenticación');
-        return;
-      }
-
-      AppState.set('connected', true);
-      AppState.set('backendMode', 'firestore');
-      _actualizarEstadoAuth();
-      _actualizarEstadoConexion();
-      await API.ping();
-      _sincronizarEstadoConexion();
-      _actualizarEstadoConexion();
-      await Promise.all([API.obtenerPersonal(), API.obtenerConfiguracion()]);
-      Alerts.success('Sesión de Google iniciada.');
-    } catch (error) {
-      AppState.set('connected', false);
-      const msg = _traducirErrorAuth(error.message || error.code || '');
-      if (statusEl) {
-        statusEl.className = 'connection-status-detail error';
-        statusEl.textContent = `❌ ${msg}`;
-      }
-      Alerts.error(msg, 'Error de autenticación');
-    } finally {
-      if (btnGoogle) btnGoogle.disabled = false;
-    }
-  }
-
-  /**
-   * Sincroniza el store (AppState) con el estado real del cliente Firebase.
-   *
-   * Única fuente de verdad: FirebaseClient.getConnectionState(). Evita que la UI
-   * muestre "Firestore en línea" mientras las reglas siguen denegando escrituras
-   * (p. ej. tras conectar sin haber iniciado sesión).
-   * @returns {void}
-   */
-  function _sincronizarEstadoConexion() {
-    const state  = FirebaseClient.getConnectionState ? FirebaseClient.getConnectionState() : 'idle';
-    const online = state === 'connected' || state === 'degraded';
-    AppState.set('backendMode', online ? 'firestore' : 'local');
-    AppState.set('connected', online);
-  }
-
-  async function _cerrarSesionFirebase() {
-    const btnLogout = document.getElementById('btn-logout-firebase');
-    if (btnLogout) btnLogout.disabled = true;
-
-    try {
-      await FirebaseClient.signOut();
-      _sincronizarEstadoConexion();
-      _actualizarEstadoAuth();
-      const statusEl = document.getElementById('connection-status-detail');
-      if (statusEl) {
-        statusEl.className = 'connection-status-detail';
-        statusEl.textContent = '💾 Sesión cerrada; modo local activo.';
-      }
-    } finally {
-      if (btnLogout) btnLogout.disabled = false;
-    }
-  }
-
-  /**
-   * Actualiza la visibilidad de los botones login/logout según el usuario activo.
-   */
-  function _actualizarEstadoAuth() {
-    const user   = FirebaseClient.getCurrentUser?.();
-    const login  = document.getElementById('btn-login-firebase');
-    const loginGoogle = document.getElementById('btn-login-google');
-    const logout = document.getElementById('btn-logout-firebase');
-    const email  = document.getElementById('firebase-auth-email');
-    if (login)        login.hidden        = Boolean(user);
-    if (loginGoogle)  loginGoogle.hidden  = Boolean(user);
-    if (logout)       logout.hidden       = !user;
-    if (email && user?.email) email.value = user.email;
-  }
-
-  /**
-   * Actualiza el indicador de estado de conexión.
-   * Refleja el estado real: sesión activa, conectado, configurado, o modo local.
-   */
-  function _actualizarEstadoConexion() {
-    const statusEl = document.getElementById('connection-status-detail');
-    if (!statusEl) return;
-
-    const mode         = AppState.get('backendMode');
-    const connected    = AppState.get('connected');
-    const user         = FirebaseClient.getCurrentUser?.();
-    const config       = FirebaseClient.getConfig();
-    const isConfigured = FirebaseClient.isConfigured ? FirebaseClient.isConfigured(config) : false;
-
-    if (mode === 'firestore' && connected && user) {
-      statusEl.className   = 'connection-status-detail success';
-      statusEl.textContent = `✅ Sesión activa: ${user.email || 'usuario'} — proyecto: ${config.projectId}`;
-    } else if (mode === 'firestore' && connected) {
-      statusEl.className   = 'connection-status-detail success';
-      statusEl.textContent = `✅ Firestore conectado: ${config.projectId}`;
-    } else if (isConfigured) {
-      statusEl.className   = 'connection-status-detail';
-      statusEl.textContent = `🔌 Configuración cargada (${config.projectId}) — pulse "Iniciar sesión" para conectar`;
-    } else {
-      statusEl.className   = 'connection-status-detail';
-      statusEl.textContent = '💾 Modo local activo en este dispositivo';
-    }
   }
 
   // ─────────────────────────────────────────────────────────────────────────
@@ -1110,14 +738,12 @@ const _ModuloAjustes = (() => {
    */
   async function cargar() {
     _cargarConfigLocal();
-    _actualizarEstadoAuth();
-    _actualizarEstadoConexion();
+    if (window.ConnectionHub) window.ConnectionHub.cargar();
 
-    // Si hay conexión activa, sincronizar configuración desde Firestore
     if (AppState.get('backendMode') === 'firestore' && AppState.get('connected')) {
       try {
         await API.obtenerConfiguracion();
-        _cargarConfigLocal(); // Re-poblar formulario con datos remotos actualizados
+        _cargarConfigLocal();
       } catch (err) {
         console.warn('[Ajustes] No se pudo sincronizar configuración:', err.message);
       }

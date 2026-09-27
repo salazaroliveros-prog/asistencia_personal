@@ -17,6 +17,10 @@ node_modules/
 functions/node_modules/
 .qa-deps/
 
+# ── Copias de seguridad locales de scripts (no son código del producto) ──
+js/*.backup
+logout
+
 # ── Build / dist ─────────────────────────────────────────────────
 dist/
 

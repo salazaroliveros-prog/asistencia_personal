@@ -60,7 +60,7 @@ function realMockInitScript(arg: { mode: 'online' | 'offline'; __SEED__: unknown
       limit() { return q; },
       doc(id: string) {
         const holder = { col: id };
-        return {
+        const docRef: any = {
           get: async () => {
             const d = (readFs()[colName] || []).find((x: any) => x.id === holder.col);
             return { exists: !!d, data: () => (d ? { ...d.data } : null) };
@@ -80,7 +80,14 @@ function realMockInitScript(arg: { mode: 'online' | 'offline'; __SEED__: unknown
             writeFs(s);
             reemitSnapshots();
           },
+          update: async (data: any) => docRef.set(data, { merge: true }),
         };
+        // MODELO MULTI-TENANT: la app resuelve db.collection('users')
+        // .doc(uid).collection(colección).doc(id). El mock ignora el prefijo
+        // de tenant y sirve la misma "base" para que las aserciones sigan
+        // siendo válidas.
+        docRef.collection = (child: string) => makeQuery(child);
+        return docRef;
       },
       onSnapshot(cb: any) {
         (window.__e2eFsCbs[colName] = window.__e2eFsCbs[colName] || []).push(cb);
@@ -89,6 +96,14 @@ function realMockInitScript(arg: { mode: 'online' | 'offline'; __SEED__: unknown
         return () => {
           window.__e2eFsCbs[colName] = (window.__e2eFsCbs[colName] || []).filter((c: any) => c !== cb);
         };
+      },
+      // get(): lo usa FirebaseClient.list() (get() + docs.map(d => d.data())).
+      async get() {
+        const docs = evaluateDocs(colName).map((r: any) => ({
+          id: r.ID_Trabajador || r.id,
+          data: () => ({ ...r }),
+        }));
+        return { docs, empty: docs.length === 0 };
       },
     };
     return q;
@@ -141,7 +156,7 @@ async function abrirYEsperar(page: Page, modo: 'online' | 'offline') {
   await page.setViewportSize({ width: 1280, height: 720 });
   await page.addInitScript(realMockInitScript as any, { mode: modo, __SEED__: SEED });
   await page.goto(`${BASE_URL}/index.html#personal`, { waitUntil: 'domcontentloaded' });
-  await expect(page.locator('#personal-tbody tr')).toHaveCount(4, { timeout: 20000 });
+  await expect(page.locator('#personal-tbody tr')).toHaveCount(4, { timeout: 12000 });
 }
 
 async function registrarDesdeFormulario(page: Page, nombre: string, dpi: string, puesto: string, whatsapp?: string) {

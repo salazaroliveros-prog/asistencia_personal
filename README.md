@@ -252,9 +252,14 @@ npm start              # build + vista previa en el puerto 3801
 
 npm test               # pruebas unitarias (node __tests__/run-tests.mjs)
 npm run test:html      # verificación estática del HTML
-npm run test:e2e       # suite Playwright (65 pruebas, __e2e__/)
+npm run test:e2e       # suite E2E local determinista (Playwright, __e2e__)
+npm run test:e2e:integral     # recorrido integral de escritorio (config propia)
+npm run test:e2e:qr           # cámara + QR con cámara virtual (config propia)
+npm run test:e2e:live         # auditoría contra el deploy real (LIVE_URL)
+npm run test:e2e:live-mobile  # smoke Pixel 7 / iPhone 14 / iPad (LIVE_URL)
+npm run test:e2e:list  # inventario de specs sin ejecutarlos
 npm run typecheck      # tsc --noEmit sobre src/
-npm run verify         # typecheck + tests + build
+npm run verify         # lint + typecheck + tests + build
 
 npm run cap:sync             # build + cap sync (Android/iOS)
 npm run cap:build:android    # APK debug (requiere Android SDK)
@@ -266,12 +271,23 @@ npm run cap:build:android    # APK debug (requiere Android SDK)
 |-------|-----------|------------|
 | Unitarias | `__tests__/unit/**/*.test.js` (Jest) | Lógica de dominio y utilidades |
 | HTML/estáticas | `__tests__/verify-html.js` | IDs y *handlers* referenciados en `index.html` |
-| E2E móvil | `__e2e__/mobile-ui.spec.ts` | Layout móvil, navegación, tablas, modales |
-| E2E regresión | `__e2e__/comprehensive-manual-test.spec.ts` | Recorrido funcional + capturas base |
-| E2E correcciones | `__e2e__/verify-fixes.spec.ts` | Sin desborde horizontal, drawer, tema, ergonomía |
+| E2E local | `__e2e__/*.spec.ts` (`npm run test:e2e`) | UI móvil, asistencia, personal, actualización, login con *mocks* |
+| E2E integral | `playwright.integral.config.ts` | Recorrido completo escritorio (trabajadores, asistencias, reportes) |
+| E2E cámara/QR | `playwright.qr-camera.config.ts` | Cámara virtual + QR real decodificado, puestos personalizados |
+| E2E live | `playwright.live.config.ts` | Auditoría contra el deploy de producción (`LIVE_URL`) |
+| E2E live móvil | `playwright.live-mobile.config.ts` | Smoke en Pixel 7 / iPhone 14 / iPad sobre producción |
 
-Playwright usa el proyecto `mobile` (390×844, táctil) y añade casos de escritorio
-(1280×800) dentro del mismo *spec* mediante `test.use`.
+Playwright usa el proyecto `mobile` (390×844, táctil) en la suite local y añade
+casos de escritorio (1280×800) dentro del mismo *spec* mediante `test.use`.
+
+`playwright.config.ts` (suite local) excluye con `testIgnore` los specs que
+requieren el deploy real, cámara simulada o servicios externos: esos se ejecutan
+solo con su config dedicada. Así `npm run test:e2e` es determinista y no toca
+producción.
+
+Los specs que necesitan un backend Firebase real (`verificar-login-sync.spec.ts`,
+`personal-realtime.spec.ts`) se **saltan** por defecto y se activan con
+`E2E_FIREBASE=1` + credenciales en `.env.local`.
 
 ---
 
@@ -279,9 +295,39 @@ Playwright usa el proyecto `mobile` (390×844, táctil) y añade casos de escrit
 
 | Destino | Configuración | Notas |
 |---------|---------------|-------|
-| **Vercel** | `vercel.json` | `installCommand: npm ci --include=dev` (el build necesita Vite, que es devDependency), CSP estricta con permiso para los CDN de respaldo, cabeceras de caché por carpeta y *rewrites* a `index.html` |
+| **Vercel** | `vercel.json` | `installCommand: npm install`, `buildCommand: npm install && npm run build`, `outputDirectory: dist` y cabeceras de seguridad (`X-Content-Type-Options`, `Referrer-Policy`, `X-Frame-Options`). La CSP vive en `index.html` (meta) |
 | **Firebase Hosting** | `firebase.json` | Hosting + reglas de Firestore/Storage + functions |
 | **Android / iOS** | `capacitor.config.json` | Copia `dist/` al proyecto nativo |
+
+### 7.1 Vercel: despliegue automático desde `main`
+
+`vercel.json` define `buildCommand: npm install && npm run build` y
+`outputDirectory: dist`: **cada push a `main` dispara un deploy de producción**
+sin pasos manuales. El build ejecuta `vite build` y luego `scripts/inject-env.js`,
+que inyecta al inicio de `dist/index.html`:
+
+- `window.__FIREBASE_ENV__` con las variables `VITE_FIREBASE_*` del proyecto de
+  Vercel (si no están definidas, la app usa la config empaquetada de
+  `js/firebase-config.js`).
+- `window.__APP_VERSION__` con `VERCEL_GIT_COMMIT_SHA` (respaldo: SHA local de
+  git). Ese marcador es el que usa `js/utils/update-manager.js` para detectar un
+  deploy nuevo mientras la app está abierta y mostrar el banner de actualización.
+
+Variables de entorno requeridas en Vercel (Production y Preview):
+
+| Variable | Origen |
+|----------|--------|
+| `VITE_FIREBASE_API_KEY` | Consola Firebase → Configuración del proyecto |
+| `VITE_FIREBASE_AUTH_DOMAIN` | idem |
+| `VITE_FIREBASE_PROJECT_ID` | idem |
+| `VITE_FIREBASE_STORAGE_BUCKET` | idem |
+| `VITE_FIREBASE_MESSAGING_SENDER_ID` | idem |
+| `VITE_FIREBASE_APP_ID` | idem |
+| `VITE_FIREBASE_MEASUREMENT_ID` | idem (opcional) |
+
+Comprobación post-deploy: abrir la app y verificar en consola que
+`window.__APP_VERSION__` coincide con el SHA del commit desplegado
+(`git rev-parse --short HEAD`).
 
 ---
 

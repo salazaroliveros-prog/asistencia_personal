@@ -226,6 +226,30 @@ const ModuloAuth = (() => {
     }
   }
 
+  /**
+   * Actualiza el badge de conexión del sidebar SIN destruir su markup.
+   * El punto (`.connection-dot`) y el texto (`#connection-text`) viven en
+   * index.html y los refresca `app.js::_initConnectionBadge`; escribir
+   * `badge.textContent` los eliminaría y dejaría el indicador muerto.
+   * @param {boolean} online — true si la sesión queda conectada a la nube
+   */
+  function _setSidebarBadge(online) {
+    const badge = document.querySelector('.connection-badge');
+    if (!badge) return;
+
+    const dot  = badge.querySelector('.connection-dot');
+    const text = badge.querySelector('#connection-text');
+
+    if (dot) {
+      dot.classList.toggle('connected',    online);
+      dot.classList.toggle('disconnected', !online);
+    }
+    if (text) text.textContent = online ? 'Firestore' : 'Modo local';
+
+    badge.classList.toggle('connected',  online);
+    badge.classList.toggle('local-mode', !online);
+  }
+
   function _showAuthenticatedState(user) {
     // Ocultar botones de login
     const authButtons = document.getElementById('auth-buttons');
@@ -243,12 +267,7 @@ const ModuloAuth = (() => {
     if (userDisplayName) userDisplayName.textContent = user.displayName || '';
     
     // Actualizar badge de conexión
-    const badge = document.querySelector('.connection-badge');
-    if (badge) {
-      badge.textContent = 'Conectado';
-      badge.classList.add('connected');
-      badge.classList.remove('local-mode');
-    }
+    _setSidebarBadge(true);
 
     // Actualizar estado en connection hub
     const hubStatusChip = document.getElementById('hub-status-chip');
@@ -274,12 +293,7 @@ const ModuloAuth = (() => {
     if (authStatus) authStatus.classList.add('hidden');
     
     // Actualizar badge de conexión
-    const badge = document.querySelector('.connection-badge');
-    if (badge) {
-      badge.textContent = 'Modo local';
-      badge.classList.remove('connected');
-      badge.classList.add('local-mode');
-    }
+    _setSidebarBadge(false);
 
     // Actualizar estado en connection hub
     const hubStatusChip = document.getElementById('hub-status-chip');

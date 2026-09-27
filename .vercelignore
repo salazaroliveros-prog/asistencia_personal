@@ -49,6 +49,8 @@ docs/
 
 # ── Logs ──────────────────────────────────────────────────────────
 *.log
+*.backup
+logout
 
 # ── dist (Vercel lo genera, no lo necesita en el repo) ────────────
 dist/

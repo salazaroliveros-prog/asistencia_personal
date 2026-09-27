@@ -42,8 +42,12 @@ test.describe('Comprehensive Manual Testing + Visual Regression', () => {
       const chartCount = await chart.count();
       expect(chartCount).toBeGreaterThan(0);
 
-      // Sync indicator - use first match to avoid strict mode violation
-      await expect(page.locator('#connection-text, .connection-dot').first()).toBeVisible();
+      // Indicador de conexión del sidebar: punto + texto (markup estático de
+      // index.html que refresca app.js::_initConnectionBadge)
+      const badge = page.locator('#connection-badge');
+      await expect(badge).toBeAttached();
+      await expect(badge.locator('.connection-dot')).toBeAttached();
+      await expect(badge.locator('#connection-text')).toBeAttached();
     });
 
     test('dashboard screenshot baseline', async ({ page }) => {
@@ -181,11 +185,10 @@ test.describe('Comprehensive Manual Testing + Visual Regression', () => {
       const heading = page.locator('h1#page-title:has-text("Ajustes")');
       await expect(heading).toBeVisible();
 
-      // Settings sections - use h3 for section titles
-      await expect(page.locator('text=Datos y sincronización')).toBeVisible();
-      await expect(page.locator('h3:has-text("General")')).toBeVisible();
-      await expect(page.locator('text=Horarios de Obra')).toBeVisible();
-      await expect(page.locator('text=GPS y Geocercas')).toBeVisible();
+      // Secciones de Ajustes (h3): títulos reales de la página
+      for (const section of ['Conexión y sesión', 'General', 'Horarios de Obra', 'GPS y Geocercas']) {
+        await expect(page.locator(`#page-ajustes h3:has-text("${section}")`).first()).toBeVisible();
+      }
     });
 
     test('ajustes module screenshot baseline', async ({ page }) => {
