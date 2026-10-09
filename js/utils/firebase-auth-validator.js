@@ -1,6 +1,6 @@
 /**
  * FIREBASE AUTH VALIDATOR - Valida tokens y maneja expiración
- * CONTROL PERSONAL CAMPO v1.5.1
+ * CONTROL PERSONAL CAMPO v1.5.0
  * 
  * Previene uso de tokens expirados y refresca automáticamente
  */
@@ -140,21 +140,20 @@
     async handleTokenExpired() {
       try {
         const FirebaseClient = window.FirebaseClient;
-        if (FirebaseClient?.logout) {
-          await FirebaseClient.logout();
+        if (FirebaseClient?.signOut) {
+          await FirebaseClient.signOut();
         }
 
         // Mostrar alerter al usuario
         if (window.Alerts?.error) {
           window.Alerts.error(
-            'Tu sesión ha expirado',
-            'Por favor, inicia sesión nuevamente.',
+            'Tu sesión ha expirado. Por favor, inicia sesión nuevamente.',
           );
         } else {
           alert('Tu sesión ha expirado. Por favor, inicia sesión nuevamente.');
         }
 
-        // Redirigir a login
+        // Redirigir a ajustes para re-login
         window.location.hash = '#ajustes';
       } catch (error) {
         console.error('[FirebaseAuthValidator] Error en handleTokenExpired:', error);

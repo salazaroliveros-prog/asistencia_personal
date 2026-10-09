@@ -822,19 +822,26 @@ const _ModuloAjustes = (() => {
         return;
       }
 
-      // Llamar a la Firebase Function para probar conexión
-      const testFunction = window.firebase?.functions?.()?.httpsCallable?.('testSMTPConnection');
+      // Cloud Functions requiere plan Blaze. Si no está disponible, informar
+      // claramente en lugar de mostrar un error genérico.
+      const functionsInstance = window.firebase?.functions?.();
+      const testFunction = functionsInstance?.httpsCallable?.('testSMTPConnection');
+
       if (!testFunction) {
-        throw new Error('Firebase Functions no disponible');
+        if (statusEl) {
+          statusEl.className = 'gps-status info';
+          statusEl.textContent = '⚠️ Cloud Functions no disponible (requiere plan Blaze)';
+        }
+        Alerts.warning(
+          'La prueba SMTP requiere Cloud Functions (plan Blaze de Firebase). ' +
+          'Tu proyecto está en el plan Spark. Puedes guardar la configuración igualmente — ' +
+          'el envío de correos funcionará cuando Cloud Functions esté habilitado.',
+          'SMTP — Funciones no disponibles',
+        );
+        return;
       }
 
-      const result = await testFunction({
-        host,
-        port,
-        user,
-        password,
-        secure
-      });
+      const result = await testFunction({ host, port, user, password, secure });
 
       if (result.data.success) {
         if (statusEl) {
@@ -847,11 +854,30 @@ const _ModuloAjustes = (() => {
       }
     } catch (error) {
       console.error('Error al probar conexión SMTP:', error);
-      if (statusEl) {
-        statusEl.className = 'gps-status error';
-        statusEl.textContent = `❌ Error: ${error.message}`;
+
+      // Distinguir error de Functions no disponible vs error real de SMTP
+      const isFunctionsUnavailable =
+        error.message?.includes('Functions no disponible') ||
+        error.code === 'functions/not-found' ||
+        error.code === 'functions/unavailable' ||
+        /failed to fetch|network|unavailable/i.test(error.message || '');
+
+      if (isFunctionsUnavailable) {
+        if (statusEl) {
+          statusEl.className = 'gps-status info';
+          statusEl.textContent = '⚠️ Cloud Functions no disponible — configura el plan Blaze';
+        }
+        Alerts.warning(
+          'No se pudo contactar Cloud Functions. La prueba SMTP requiere el plan Blaze de Firebase.',
+          'SMTP — Sin Cloud Functions',
+        );
+      } else {
+        if (statusEl) {
+          statusEl.className = 'gps-status error';
+          statusEl.textContent = `❌ Error: ${error.message}`;
+        }
+        Alerts.error(error.message || 'Error al probar conexión SMTP', 'Error SMTP');
       }
-      Alerts.error(error.message, 'Error de conexión SMTP');
     }
   }
 
