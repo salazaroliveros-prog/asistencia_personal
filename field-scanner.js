@@ -450,14 +450,19 @@
   }
 
   function _subscribeRealtime() {
-    if (!_db) return;
-    // _onLoginSuccess lo invocan tanto _handleLogin como onAuthStateChanged para
-    // la misma sesión; sin cancelar el listener previo se acumularía uno por
-    // cada inicio de sesión y sólo el último se liberaría al salir.
+    if (!_db || !_auth) return;
+    // Cancelar suscripción anterior para evitar listeners acumulados
     if (_unsubscribe) { _unsubscribe(); _unsubscribe = null; }
+
+    const user = _auth.currentUser;
+    if (!user) return;
+
     try {
       const hoy = _today();
-      _unsubscribe = _db.collection('asistencias')
+      // MODELO SAAS: escuchar en users/{userId}/asistencias/
+      _unsubscribe = _db
+        .collection('users').doc(user.uid)
+        .collection('asistencias')
         .where('Fecha', '==', hoy)
         .limit(50)
         .onSnapshot(
@@ -465,7 +470,7 @@
             const records = snapshot.docs.map((doc) => ({ ID_Marcacion: doc.id, ...doc.data() }));
             _renderFeed(records);
           },
-          (error) => console.error('[FieldScanner] Error suscripción:', error),
+          (error) => console.error('[FieldScanner] Error suscripción realtime:', error),
         );
     } catch (error) {
       console.error('[FieldScanner] No se pudo suscribir:', error);
@@ -748,25 +753,29 @@
   }
 
   async function _buscarTrabajadorFirestore(qrData) {
-    if (!_db) return null;
+    if (!_db || !_auth) return null;
+    const user = _auth.currentUser;
+    if (!user) return null;
     try {
+      // MODELO SAAS: buscar en users/{userId}/personal/
+      const personalRef = _db.collection('users').doc(user.uid).collection('personal');
       let snap;
       if (qrData.id) {
-        snap = await _db.collection('personal').where('ID_Trabajador', '==', qrData.id).limit(1).get();
+        snap = await personalRef.where('ID_Trabajador', '==', qrData.id).limit(1).get();
       } else if (qrData.dpi) {
         const dpi = String(qrData.dpi).replace(/\D/g, '');
-        snap = await _db.collection('personal').where('DPI_CUI', '==', dpi).limit(1).get();
+        snap = await personalRef.where('DPI_CUI', '==', dpi).limit(1).get();
       }
       if (!snap || snap.empty) return null;
       const trabajador = snap.docs[0].data();
-      // Actualizar cache local para búsquedas futuras
+      // Actualizar cache local para búsquedas futuras offline
       try {
         const cache = JSON.parse(localStorage.getItem('cpc_personal_cache') || '[]');
         if (!cache.find((p) => p.ID_Trabajador === trabajador.ID_Trabajador)) {
           cache.push(trabajador);
           localStorage.setItem('cpc_personal_cache', JSON.stringify(cache));
         }
-      } catch (_) { /* silenciar */ }
+      } catch (_) { /* silenciar en modo privado */ }
       return trabajador;
     } catch (err) {
       console.error('[FieldScanner] Error buscando trabajador en Firestore:', err);
@@ -960,6 +969,9 @@
 
   async function _enviarMarcacionFirestore(payload) {
     if (!_db) throw new Error('Firebase no disponible');
+    const user = _auth?.currentUser;
+    if (!user) throw new Error('Sin sesión activa — inicia sesión nuevamente');
+
     const horaReal = new Date().toLocaleTimeString('es-GT', { hour12: false }).substring(0, 5);
     // ID determinista: idempotente ante doble lectura del mismo QR
     const id = `${payload.ID_Trabajador}_${payload.Fecha}_${payload.Tipo_Marcacion}`.replace(/[^A-Za-z0-9_-]/g, '_');
@@ -977,15 +989,21 @@
       Horas_Extra:       0,
       Ubicacion_Obra:    payload.Ubicacion_Obra || '',
       Timestamp:         Date.now(),
+      GPS_Latitud:       payload.GPS_Latitud  ?? null,
+      GPS_Longitud:      payload.GPS_Longitud ?? null,
+      GPS_Accuracy:      payload.GPS_Accuracy ?? null,
     };
-    if (payload.GPS_Latitud  !== undefined) record.GPS_Latitud  = payload.GPS_Latitud;
-    if (payload.GPS_Longitud !== undefined) record.GPS_Longitud = payload.GPS_Longitud;
 
-    const ref = _db.collection('asistencias').doc(id);
+    // MODELO SAAS: escribir en users/{userId}/asistencias/
+    const ref = _db
+      .collection('users').doc(user.uid)
+      .collection('asistencias').doc(id);
+
     await _db.runTransaction(async (transaction) => {
       const snap = await transaction.get(ref);
       if (!snap.exists) transaction.set(ref, record, { merge: false });
     });
+
     _saveAuditLog({ ...record, Nombre_Trabajador: payload.Nombre_Trabajador });
     return id;
   }
