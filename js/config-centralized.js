@@ -1,9 +1,10 @@
 /**
  * CONFIGURACIÓN CENTRALIZADA
- * CONTROL PERSONAL CAMPO v1.5.1
+ * CONTROL PERSONAL CAMPO v1.5.0
  * 
- * Único punto de verdad para todas las configuraciones
- * Evita duplicación de valores hardcodeados
+ * Único punto de verdad para todas las configuraciones complementarias.
+ * No duplica los valores de config.js (AppState, DEFAULT_CONFIG) sino que
+ * añade constantes de UI, timeouts, límites y colores de puestos.
  */
 
 (() => {
@@ -13,7 +14,7 @@
     // ── APLICACIÓN ──
     app: {
       name: 'CONTROL PERSONAL CAMPO',
-      version: '1.5.1',
+      version: '1.5.0',
       environment: 'production',
     },
 

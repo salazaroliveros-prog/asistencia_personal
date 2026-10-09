@@ -1026,16 +1026,28 @@ const ModuloPersonal = (() => {
   }
 
   function _actualizarFotoPreview(src) {
-    const preview = document.getElementById('foto-preview');
+    const preview      = document.getElementById('foto-preview');
+    const placeholder  = document.getElementById('foto-placeholder');
+    const btnEliminar  = document.getElementById('btn-eliminar-foto');
+
+    /* La visibilidad se controla con el atributo `hidden`, no con
+       `style.display`: main.css declara `[hidden] { display: none !important }`
+       y ese !important gana a cualquier display inline. Antes se ponía
+       `display:block` dejando el atributo puesto, así que la foto recién
+       subida/capturada nunca aparecía en el formulario ([hidden] la tapaba). */
     if (preview) {
       if (src) {
         preview.src = src;
-        preview.style.display = 'block';
+        preview.hidden = false;
       } else {
-        preview.src = '';
-        preview.style.display = 'none';
+        preview.removeAttribute('src');
+        preview.hidden = true;
       }
     }
+
+    // Con foto → se oculta el marcador y aparece el botón de eliminar.
+    if (placeholder) placeholder.hidden = !src;
+    if (btnEliminar) btnEliminar.hidden = !src;
   }
 
   // ─────────────────────────────────────────────────────────────────────────

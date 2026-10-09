@@ -1,6 +1,6 @@
 /**
  * SISTEMA DE LOGGING CENTRALIZADO
- * CONTROL PERSONAL CAMPO v1.5.1
+ * CONTROL PERSONAL CAMPO v1.5.0
  * 
  * Reemplaza console.log/error/warn con logging consistente
  * Integrable con Sentry y otros servicios

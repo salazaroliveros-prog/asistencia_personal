@@ -92,6 +92,7 @@
   },
   "jest": {
     "testEnvironment": "node",
+    "forceExit": true,
     "testMatch": [
       "<rootDir>/__tests__/unit/**/*.test.js"
     ],

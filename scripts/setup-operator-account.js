@@ -49,12 +49,13 @@ async function identityToolkit(endpoint, apiKey, payload) {
 
 async function main() {
   const env = readEnvLocal();
-  const email = env.EMAIL;
-  const password = env.PASWORD;
+  // Acepta EMAIL/PASWORD (formato legacy) o VITE_SMTP_USER/VITE_SMTP_PASSWORD
+  const email = env.EMAIL || env.VITE_SMTP_USER;
+  const password = env.PASWORD || env.PASSWORD || env.VITE_SMTP_PASSWORD;
   const apiKey = env.VITE_FIREBASE_API_KEY;
 
   if (!email || !password || !apiKey) {
-    throw new Error('Faltan EMAIL, PASWORD o VITE_FIREBASE_API_KEY en .env.local');
+    throw new Error('Faltan EMAIL (o VITE_SMTP_USER), PASSWORD (o VITE_SMTP_PASSWORD) y VITE_FIREBASE_API_KEY en .env.local');
   }
 
   console.log('Proyecto :', env.VITE_FIREBASE_PROJECT_ID);

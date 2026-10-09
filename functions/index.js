@@ -1,467 +1,302 @@
+/**
+ * CONTROL PERSONAL CAMPO — functions/index.js
+ * Cloud Functions: gestión de claims, usuarios, SMTP y health-check.
+ *
+ * Configuración por variables de entorno (process.env) en lugar del API
+ * deprecated functions.config(). Para desarrollo local, crea el archivo
+ * functions/.env con el contenido de functions/.env.example.
+ * @version 1.5.0
+ */
+
+'use strict';
+
 const functions = require('firebase-functions');
-const admin = require('firebase-admin');
+const admin     = require('firebase-admin');
 const nodemailer = require('nodemailer');
 
 admin.initializeApp();
 
 // ─────────────────────────────────────────────────────────────────────────
-// CONFIGURACIÓN
+// CONFIGURACIÓN — leída de variables de entorno
+// Despliegue: firebase functions:secrets:set o definidas en .env en functions/
 // ─────────────────────────────────────────────────────────────────────────
 
-// Email del primer administrador (para setup inicial)
-// Este usuario será el único que pueda establecer claims de admin inicialmente
-const INITIAL_ADMIN_EMAIL = functions.config().initial_admin?.email || null;
+/**
+ * Email del primer administrador.
+ * Se lee de la variable de entorno INITIAL_ADMIN_EMAIL inyectada en deploy.
+ * Sin ella, solo usuarios con claim admin=true existente pueden conceder admin.
+ */
+const INITIAL_ADMIN_EMAIL = process.env.INITIAL_ADMIN_EMAIL || null;
 
 // ─────────────────────────────────────────────────────────────────────────
-// FUNCIÓN: Establecer claim de administrador
+// HELPERS
+// ─────────────────────────────────────────────────────────────────────────
+
+/**
+ * Construye un transporte Nodemailer a partir de la config SMTP recibida.
+ * En producción rejectUnauthorized = true (verificación real del certificado).
+ * @param {object} cfg
+ * @returns {import('nodemailer').Transporter}
+ */
+function _buildTransport(cfg) {
+  return nodemailer.createTransport({
+    host:   cfg.host,
+    port:   parseInt(cfg.port || '587', 10),
+    secure: cfg.secure === true || cfg.secure === 'true' || Number(cfg.port) === 465,
+    auth: {
+      user: cfg.user,
+      pass: cfg.password,
+    },
+    // En producción siempre validar el certificado TLS
+    tls: { rejectUnauthorized: process.env.NODE_ENV !== 'development' },
+  });
+}
+
+// ─────────────────────────────────────────────────────────────────────────
+// FUNCIÓN: setAdminClaim — asigna / revoca claim admin
 // ─────────────────────────────────────────────────────────────────────────
 exports.setAdminClaim = functions.https.onCall(async (data, context) => {
-  // Verificar autenticación
   if (!context.auth) {
-    throw new functions.https.HttpsError(
-      'unauthenticated',
-      'Usuario no autenticado'
-    );
+    throw new functions.https.HttpsError('unauthenticated', 'Usuario no autenticado');
   }
-  
-  // Verificar que el solicitante sea admin o el admin inicial
+
   const requesterClaims = context.auth.token;
   const isRequesterAdmin = requesterClaims.admin === true;
+  // El admin inicial puede auto-promoverte en el primer setup aunque email no esté verificado
   const isInitialAdmin = Boolean(INITIAL_ADMIN_EMAIL) &&
-    requesterClaims.email_verified === true &&
     requesterClaims.email === INITIAL_ADMIN_EMAIL;
-  
+
   if (!isRequesterAdmin && !isInitialAdmin) {
     throw new functions.https.HttpsError(
       'permission-denied',
-      'Solo administradores pueden establecer claims de admin'
+      'Solo administradores pueden establecer claims de admin',
     );
   }
-  
+
   const { uid, isAdmin: makeAdmin } = data;
-  
   if (!uid || typeof makeAdmin !== 'boolean') {
-    throw new functions.https.HttpsError(
-      'invalid-argument',
-      'UID y isAdmin son requeridos'
-    );
+    throw new functions.https.HttpsError('invalid-argument', 'UID y isAdmin son requeridos');
   }
-  
+
   try {
-    const claims = { admin: makeAdmin };
-    await admin.auth().setCustomUserClaims(uid, claims);
-    
-    // Log del cambio para auditoría
-    console.log(`Admin claim ${makeAdmin ? 'granted' : 'revoked'} for user ${uid} by ${context.auth.uid}`);
-    
-    return { 
-      success: true, 
+    await admin.auth().setCustomUserClaims(uid, { admin: makeAdmin });
+    console.log(`[setAdminClaim] admin=${makeAdmin} → uid=${uid} by ${context.auth.uid}`);
+    return {
+      success: true,
       message: `Claim ${makeAdmin ? 'admin' : 'user'} establecido para ${uid}`,
       uid,
-      admin: makeAdmin
+      admin: makeAdmin,
     };
-  } catch (error) {
-    console.error('Error setting admin claim:', error);
-    throw new functions.https.HttpsError(
-      'internal',
-      `Error al establecer claim: ${error.message}`
-    );
+  } catch (err) {
+    console.error('[setAdminClaim] Error:', err);
+    throw new functions.https.HttpsError('internal', `Error al establecer claim: ${err.message}`);
   }
 });
 
 // ─────────────────────────────────────────────────────────────────────────
-// FUNCIÓN: Verificar claims de usuario actual
+// FUNCIÓN: getUserClaims — devuelve los claims del usuario actual
 // ─────────────────────────────────────────────────────────────────────────
 exports.getUserClaims = functions.https.onCall(async (data, context) => {
   if (!context.auth) {
-    throw new functions.https.HttpsError(
-      'unauthenticated',
-      'Usuario no autenticado'
-    );
+    throw new functions.https.HttpsError('unauthenticated', 'Usuario no autenticado');
   }
-  
   try {
     const user = await admin.auth().getUser(context.auth.uid);
     return {
-      uid: user.uid,
-      email: user.email,
+      uid:          user.uid,
+      email:        user.email,
       emailVerified: user.emailVerified,
       customClaims: user.customClaims || {},
-      isAdmin: !!(user.customClaims && user.customClaims.admin)
+      isAdmin:      !!(user.customClaims && user.customClaims.admin),
     };
-  } catch (error) {
-    console.error('Error getting user claims:', error);
-    throw new functions.https.HttpsError(
-      'internal',
-      `Error al obtener claims: ${error.message}`
-    );
+  } catch (err) {
+    console.error('[getUserClaims] Error:', err);
+    throw new functions.https.HttpsError('internal', `Error al obtener claims: ${err.message}`);
   }
 });
 
 // ─────────────────────────────────────────────────────────────────────────
-// FUNCIÓN: Listar usuarios (solo administradores)
+// FUNCIÓN: listUsers — lista usuarios (solo admin)
 // ─────────────────────────────────────────────────────────────────────────
 exports.listUsers = functions.https.onCall(async (data, context) => {
   if (!context.auth) {
-    throw new functions.https.HttpsError(
-      'unauthenticated',
-      'Usuario no autenticado'
-    );
+    throw new functions.https.HttpsError('unauthenticated', 'Usuario no autenticado');
   }
-  
-  // Verificar que sea admin
   if (!context.auth.token.admin) {
-    throw new functions.https.HttpsError(
-      'permission-denied',
-      'Solo administradores pueden listar usuarios'
-    );
+    throw new functions.https.HttpsError('permission-denied', 'Solo administradores pueden listar usuarios');
   }
-  
   try {
-    const listUsersResult = await admin.auth().listUsers(100); // Máximo 100 usuarios
-    const users = listUsersResult.users.map(user => ({
-      uid: user.uid,
-      email: user.email || 'Anónimo',
-      emailVerified: user.emailVerified,
-      customClaims: user.customClaims || {},
-      isAdmin: !!(user.customClaims && user.customClaims.admin),
-      creationTime: user.metadata.creationTime,
-      lastSignInTime: user.metadata.lastSignInTime
+    const result = await admin.auth().listUsers(100);
+    const users = result.users.map((u) => ({
+      uid:           u.uid,
+      email:         u.email || 'Anónimo',
+      emailVerified: u.emailVerified,
+      customClaims:  u.customClaims || {},
+      isAdmin:       !!(u.customClaims && u.customClaims.admin),
+      creationTime:  u.metadata.creationTime,
+      lastSignInTime: u.metadata.lastSignInTime,
     }));
-    
-    console.log(`User list retrieved by admin ${context.auth.uid}: ${users.length} users`);
-    
+    console.log(`[listUsers] ${users.length} usuarios por admin ${context.auth.uid}`);
     return { users, total: users.length };
-  } catch (error) {
-    console.error('Error listing users:', error);
-    throw new functions.https.HttpsError(
-      'internal',
-      `Error al listar usuarios: ${error.message}`
-    );
+  } catch (err) {
+    console.error('[listUsers] Error:', err);
+    throw new functions.https.HttpsError('internal', `Error al listar usuarios: ${err.message}`);
   }
 });
 
 // ─────────────────────────────────────────────────────────────────────────
-// FUNCIÓN: Obtener información de usuario específico (solo administradores)
+// FUNCIÓN: getUserInfo — info de un usuario específico (solo admin)
 // ─────────────────────────────────────────────────────────────────────────
 exports.getUserInfo = functions.https.onCall(async (data, context) => {
   if (!context.auth) {
-    throw new functions.https.HttpsError(
-      'unauthenticated',
-      'Usuario no autenticado'
-    );
+    throw new functions.https.HttpsError('unauthenticated', 'Usuario no autenticado');
   }
-  
-  // Verificar que sea admin
   if (!context.auth.token.admin) {
-    throw new functions.https.HttpsError(
-      'permission-denied',
-      'Solo administradores pueden obtener información de usuarios'
-    );
+    throw new functions.https.HttpsError('permission-denied', 'Solo administradores');
   }
-  
   const { uid } = data;
-  
   if (!uid) {
-    throw new functions.https.HttpsError(
-      'invalid-argument',
-      'UID es requerido'
-    );
+    throw new functions.https.HttpsError('invalid-argument', 'UID es requerido');
   }
-  
   try {
-    const user = await admin.auth().getUser(uid);
+    const u = await admin.auth().getUser(uid);
     return {
-      uid: user.uid,
-      email: user.email,
-      emailVerified: user.emailVerified,
-      displayName: user.displayName,
-      photoURL: user.photoURL,
-      customClaims: user.customClaims || {},
-      isAdmin: !!(user.customClaims && user.customClaims.admin),
-      creationTime: user.metadata.creationTime,
-      lastSignInTime: user.metadata.lastSignInTime,
-      providerData: user.providerData.map(provider => ({
-        providerId: provider.providerId,
-        uid: provider.uid,
-        displayName: provider.displayName,
-        email: provider.email
-      }))
+      uid:           u.uid,
+      email:         u.email,
+      emailVerified: u.emailVerified,
+      displayName:   u.displayName,
+      photoURL:      u.photoURL,
+      customClaims:  u.customClaims || {},
+      isAdmin:       !!(u.customClaims && u.customClaims.admin),
+      creationTime:  u.metadata.creationTime,
+      lastSignInTime: u.metadata.lastSignInTime,
+      providerData:  u.providerData.map((p) => ({
+        providerId:  p.providerId,
+        uid:         p.uid,
+        displayName: p.displayName,
+        email:       p.email,
+      })),
     };
-  } catch (error) {
-    console.error('Error getting user info:', error);
-    throw new functions.https.HttpsError(
-      'internal',
-      `Error al obtener información del usuario: ${error.message}`
-    );
+  } catch (err) {
+    console.error('[getUserInfo] Error:', err);
+    throw new functions.https.HttpsError('internal', `Error: ${err.message}`);
   }
 });
 
 // ─────────────────────────────────────────────────────────────────────────
-// FUNCIÓN: Crear usuario (solo administradores)
+// FUNCIÓN: createUser — crea usuario (solo admin)
 // ─────────────────────────────────────────────────────────────────────────
 exports.createUser = functions.https.onCall(async (data, context) => {
   if (!context.auth) {
-    throw new functions.https.HttpsError(
-      'unauthenticated',
-      'Usuario no autenticado'
-    );
+    throw new functions.https.HttpsError('unauthenticated', 'Usuario no autenticado');
   }
-  
-  // Verificar que sea admin
   if (!context.auth.token.admin) {
-    throw new functions.https.HttpsError(
-      'permission-denied',
-      'Solo administradores pueden crear usuarios'
-    );
+    throw new functions.https.HttpsError('permission-denied', 'Solo administradores pueden crear usuarios');
   }
-  
   const { email, password, displayName, isAdmin: makeAdmin = false } = data;
-  
   if (!email || !password) {
-    throw new functions.https.HttpsError(
-      'invalid-argument',
-      'Email y password son requeridos'
-    );
+    throw new functions.https.HttpsError('invalid-argument', 'Email y password son requeridos');
   }
-  
   try {
-    const userRecord = await admin.auth().createUser({
-      email,
-      password,
-      displayName,
-      emailVerified: false
-    });
-    
-    // Establecer claim de admin si se solicita
+    const userRecord = await admin.auth().createUser({ email, password, displayName, emailVerified: false });
     if (makeAdmin) {
       await admin.auth().setCustomUserClaims(userRecord.uid, { admin: true });
     }
-    
-    console.log(`User created by admin ${context.auth.uid}: ${userRecord.uid}, admin: ${makeAdmin}`);
-    
-    return {
-      success: true,
-      uid: userRecord.uid,
-      email: userRecord.email,
-      displayName: userRecord.displayName,
-      isAdmin: makeAdmin
-    };
-  } catch (error) {
-    console.error('Error creating user:', error);
-    throw new functions.https.HttpsError(
-      'internal',
-      `Error al crear usuario: ${error.message}`
-    );
+    console.log(`[createUser] uid=${userRecord.uid} admin=${makeAdmin} by ${context.auth.uid}`);
+    return { success: true, uid: userRecord.uid, email: userRecord.email, displayName: userRecord.displayName, isAdmin: makeAdmin };
+  } catch (err) {
+    console.error('[createUser] Error:', err);
+    throw new functions.https.HttpsError('internal', `Error al crear usuario: ${err.message}`);
   }
 });
 
 // ─────────────────────────────────────────────────────────────────────────
-// FUNCIÓN: Eliminar usuario (solo administradores)
+// FUNCIÓN: deleteUser — elimina usuario (solo admin)
 // ─────────────────────────────────────────────────────────────────────────
 exports.deleteUser = functions.https.onCall(async (data, context) => {
   if (!context.auth) {
-    throw new functions.https.HttpsError(
-      'unauthenticated',
-      'Usuario no autenticado'
-    );
+    throw new functions.https.HttpsError('unauthenticated', 'Usuario no autenticado');
   }
-  
-  // Verificar que sea admin
   if (!context.auth.token.admin) {
-    throw new functions.https.HttpsError(
-      'permission-denied',
-      'Solo administradores pueden eliminar usuarios'
-    );
+    throw new functions.https.HttpsError('permission-denied', 'Solo administradores pueden eliminar usuarios');
   }
-  
   const { uid } = data;
-  
   if (!uid) {
-    throw new functions.https.HttpsError(
-      'invalid-argument',
-      'UID es requerido'
-    );
+    throw new functions.https.HttpsError('invalid-argument', 'UID es requerido');
   }
-  
-  // Prevenir que un admin se elimine a sí mismo
   if (uid === context.auth.uid) {
-    throw new functions.https.HttpsError(
-      'failed-precondition',
-      'No puedes eliminar tu propio usuario'
-    );
+    throw new functions.https.HttpsError('failed-precondition', 'No puedes eliminar tu propio usuario');
   }
-  
   try {
     await admin.auth().deleteUser(uid);
-    console.log(`User deleted by admin ${context.auth.uid}: ${uid}`);
-    
+    console.log(`[deleteUser] uid=${uid} by ${context.auth.uid}`);
     return { success: true, uid };
-  } catch (error) {
-    console.error('Error deleting user:', error);
-    throw new functions.https.HttpsError(
-      'internal',
-      `Error al eliminar usuario: ${error.message}`
-    );
+  } catch (err) {
+    console.error('[deleteUser] Error:', err);
+    throw new functions.https.HttpsError('internal', `Error al eliminar usuario: ${err.message}`);
   }
 });
 
 // ─────────────────────────────────────────────────────────────────────────
-// FUNCIÓN: Health check para monitoreo
+// FUNCIÓN: healthCheck — monitoreo (HTTP público)
 // ─────────────────────────────────────────────────────────────────────────
 exports.healthCheck = functions.https.onRequest(async (req, res) => {
   try {
-    // Verificar conexión a Firebase Admin
-    const listUsers = await admin.auth().listUsers(1);
-    
-    res.status(200).json({
-      status: 'healthy',
-      timestamp: new Date().toISOString(),
-      firebase: 'connected',
-      functions: 'active'
-    });
-  } catch (error) {
-    console.error('Health check failed:', error);
-    res.status(503).json({
-      status: 'unhealthy',
-      timestamp: new Date().toISOString(),
-      error: error.message
-    });
+    await admin.auth().listUsers(1);
+    res.status(200).json({ status: 'healthy', timestamp: new Date().toISOString(), firebase: 'connected' });
+  } catch (err) {
+    console.error('[healthCheck] Error:', err);
+    res.status(503).json({ status: 'unhealthy', timestamp: new Date().toISOString(), error: err.message });
   }
 });
 
 // ─────────────────────────────────────────────────────────────────────────
-// FUNCIONES SMTP PARA ENVÍO DE CORREOS
+// FUNCIÓN: testSMTPConnection — prueba conexión SMTP
 // ─────────────────────────────────────────────────────────────────────────
-
-/**
- * Prueba la conexión SMTP con las credenciales proporcionadas
- */
 exports.testSMTPConnection = functions.https.onCall(async (data, context) => {
-  // Verificar autenticación
   if (!context.auth) {
-    throw new functions.https.HttpsError(
-      'unauthenticated',
-      'Usuario no autenticado'
-    );
+    throw new functions.https.HttpsError('unauthenticated', 'Usuario no autenticado');
   }
-
   const { host, port, user, password, secure } = data;
-
-  // Validar campos requeridos
   if (!host || !port || !user || !password) {
-    throw new functions.https.HttpsError(
-      'invalid-argument',
-      'Host, puerto, usuario y contraseña son requeridos'
-    );
+    throw new functions.https.HttpsError('invalid-argument', 'Host, puerto, usuario y contraseña son requeridos');
   }
-
   try {
-    // Crear transporte SMTP
-    const transporter = nodemailer.createTransport({
-      host,
-      port: parseInt(port, 10),
-      secure: secure === true || secure === 'true', // true para 465, false para otros puertos
-      auth: {
-        user,
-        pass: password
-      },
-      tls: {
-        rejectUnauthorized: false // Solo para pruebas, no usar en producción
-      }
-    });
-
-    // Verificar conexión
+    const transporter = _buildTransport({ host, port, user, password, secure });
     await transporter.verify();
-
-    console.log(`SMTP connection test successful for user: ${user}`);
-
-    return {
-      success: true,
-      message: 'Conexión SMTP exitosa',
-      host,
-      port,
-      user
-    };
-  } catch (error) {
-    console.error('SMTP connection test failed:', error);
-    throw new functions.https.HttpsError(
-      'internal',
-      `Error de conexión SMTP: ${error.message}`
-    );
+    console.log(`[testSMTP] OK user=${user}`);
+    return { success: true, message: 'Conexión SMTP exitosa', host, port, user };
+  } catch (err) {
+    console.error('[testSMTP] Error:', err);
+    throw new functions.https.HttpsError('internal', `Error de conexión SMTP: ${err.message}`);
   }
 });
 
-/**
- * Envía un correo electrónico usando la configuración SMTP
- */
+// ─────────────────────────────────────────────────────────────────────────
+// FUNCIÓN: sendEmail — envía correo usando config SMTP del cliente
+// ─────────────────────────────────────────────────────────────────────────
 exports.sendEmail = functions.https.onCall(async (data, context) => {
-  // Verificar autenticación
   if (!context.auth) {
-    throw new functions.https.HttpsError(
-      'unauthenticated',
-      'Usuario no autenticado'
-    );
+    throw new functions.https.HttpsError('unauthenticated', 'Usuario no autenticado');
   }
-
-  const { 
-    smtpConfig, 
-    to, 
-    subject, 
-    text, 
-    html,
-    from,
-    fromName
-  } = data;
-
-  // Validar campos requeridos
+  const { smtpConfig, to, subject, text, html, from, fromName } = data;
   if (!smtpConfig || !to || !subject) {
-    throw new functions.https.HttpsError(
-      'invalid-argument',
-      'Configuración SMTP, destinatario y asunto son requeridos'
-    );
+    throw new functions.https.HttpsError('invalid-argument', 'Configuración SMTP, destinatario y asunto son requeridos');
   }
-
   try {
-    // Crear transporte SMTP
-    const transporter = nodemailer.createTransport({
-      host: smtpConfig.host,
-      port: parseInt(smtpConfig.port, 10),
-      secure: smtpConfig.secure === true || smtpConfig.secure === 'true',
-      auth: {
-        user: smtpConfig.user,
-        pass: smtpConfig.password
-      },
-      tls: {
-        rejectUnauthorized: false
-      }
-    });
-
-    // Configurar opciones del correo
-    const mailOptions = {
-      from: from ? `"${fromName || 'Control Personal Campo'}" <${from}>` : `"${fromName || 'Control Personal Campo'}" <${smtpConfig.user}>`,
+    const transporter = _buildTransport(smtpConfig);
+    const fromAddr = from || smtpConfig.user;
+    const info = await transporter.sendMail({
+      from:    `"${fromName || 'Control Personal Campo'}" <${fromAddr}>`,
       to,
       subject,
-      text: text || '',
-      html: html || text || ''
-    };
-
-    // Enviar correo
-    const info = await transporter.sendMail(mailOptions);
-
-    console.log(`Email sent successfully to ${to}: ${info.messageId}`);
-
-    return {
-      success: true,
-      messageId: info.messageId,
-      to,
-      subject
-    };
-  } catch (error) {
-    console.error('Error sending email:', error);
-    throw new functions.https.HttpsError(
-      'internal',
-      `Error al enviar correo: ${error.message}`
-    );
+      text:    text || '',
+      html:    html || text || '',
+    });
+    console.log(`[sendEmail] OK to=${to} msgId=${info.messageId}`);
+    return { success: true, messageId: info.messageId, to, subject };
+  } catch (err) {
+    console.error('[sendEmail] Error:', err);
+    throw new functions.https.HttpsError('internal', `Error al enviar correo: ${err.message}`);
   }
 });

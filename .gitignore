@@ -50,6 +50,21 @@ q-dev-chat-*.md
 docs/superpowers/
 docs/AUDITORIA_INTEGRAL_*.md
 
+# ── Archivos temporales de desarrollo / agentes ───────────────────
+tmp-*.js
+tmp-*.log
+tmp-*.out
+tmp-*.cmd
+tmp-*.txt
+_tmp_*.log
+_tmp_*.cmd
+_vite_probe.log
+vite-diag.log
+firebase-debug.log
+carnet-test.html
+commit_message_fix.txt
+*.backup
+
 # ── IDE / Editor ─────────────────────────────────────────────────
 .vscode/
 *.suo

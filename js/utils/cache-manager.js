@@ -1,7 +1,7 @@
 /**
  * CONTROL PERSONAL CAMPO — utils/cache-manager.js
  * Gestión de cuota de localStorage (fuente única de la advertencia de espacio).
- * @version 1.6.0
+ * @version 1.5.0
  */
 
 const CacheManager = (() => {

@@ -1033,6 +1033,24 @@ input[type="month"].input-glass {
 }
 
 .carne-card {
+  /* El carné es una tarjeta SIEMPRE oscura (se imprime y se lleva puesta), así
+     que sus tokens de color se fijan a los del tema oscuro. Sin esto, en el
+     tema claro de la app el texto del carné quedaba azul oscuro sobre fondo
+     oscuro y el panel del QR pasaba a rgba(15, 43, 71, 0.95): sin zona de
+     silencio clara alrededor del símbolo, ningún lector podía detectar el
+     código (verificado con Html5Qrcode.scanFileV2: "No MultiFormat Readers
+     were able to detect the code"). */
+  --color-text-primary:   #FFFFFF;
+  --color-text-secondary: rgba(255, 255, 255, 0.82);
+  --color-text-muted:     rgba(255, 255, 255, 0.68);
+  --color-surface-rgb:    255, 255, 255;
+  --glass-bg:             rgba(255, 255, 255, 0.08);
+  --glass-border:         rgba(255, 255, 255, 0.22);
+  --glass-border-light:   rgba(255, 255, 255, 0.12);
+
+  /* El color se declara aquí (no solo el token): el nombre del trabajador no
+     tiene color propio y heredaría el de <body>, ya resuelto con el tema. */
+  color: var(--color-text-primary);
   width: 320px;
   max-width: calc(100vw - 64px);
   background: linear-gradient(145deg, rgba(var(--color-dark-rgb), 0.95), rgba(var(--color-primary-rgb), 0.90));
@@ -1143,7 +1161,11 @@ input[type="month"].input-glass {
   justify-content: center;
   align-items: center;
   padding: var(--space-4) var(--space-5);
-  background: rgba(var(--color-surface-rgb), 0.95);
+  /* Panel SIEMPRE blanco: es la zona de silencio del símbolo. Con
+     rgba(var(--color-surface-rgb), 0.95) el tema claro dejaba este panel en
+     azul oscuro y el QR (módulos #003459) quedaba ilegible para cualquier
+     lector: el canvas no incluye zona de silencio propia. */
+  background: #FFFFFF;
   border-top: 1px solid var(--glass-border-light);
   border-bottom: 1px solid var(--glass-border-light);
   min-height: 150px;
@@ -1152,7 +1174,9 @@ input[type="month"].input-glass {
 
 .carne-qr canvas,
 .carne-qr img {
-  border-radius: var(--radius-sm);
+  /* Sin esquinas redondeadas: redondear el canvas recorta los módulos de las
+     cuatro esquinas del símbolo (el QR se dibuja a sangre en el canvas). */
+  border-radius: 0;
   display: block !important;
   width: 130px !important;
   height: 130px !important;

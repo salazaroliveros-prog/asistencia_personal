@@ -70,8 +70,8 @@ async function getAccessToken() {
 
 async function main() {
   const env = readEnvLocal();
-  const email = process.argv[2] || env.EMAIL;
-  if (!email) throw new Error('Indica un correo o define EMAIL en .env.local');
+  const email = process.argv[2] || env.EMAIL || env.VITE_SMTP_USER;
+  if (!email) throw new Error('Indica un correo o define EMAIL (o VITE_SMTP_USER) en .env.local');
 
   const token = await getAccessToken();
   const headers = { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' };

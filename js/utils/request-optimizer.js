@@ -1,7 +1,7 @@
 /**
  * CONTROL PERSONAL CAMPO — utils/request-optimizer.js
  * Request optimization: debouncing compartido (fuente única).
- * @version 1.6.0
+ * @version 1.5.0
  */
 
 const RequestOptimizer = (() => {

@@ -108,38 +108,10 @@
     }
   </script>
 
-  <!-- ═══════════════════ FIREBASE AUTH (Modular para SaaS) ═══════════════════ -->
-  <script type="module">
-    import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
-    import { getAuth, GoogleAuthProvider, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
-    
-    // Configuración Firebase
-    const firebaseConfig = {
-      apiKey: "AIzaSyDriDh1SC5_8T1rx5EmgFi0pUEKUGQU5xg",
-      authDomain: "sistema-de-control-aee89.firebaseapp.com",
-      projectId: "sistema-de-control-aee89",
-      storageBucket: "sistema-de-control-aee89.firebasestorage.app",
-      messagingSenderId: "265655332442",
-      appId: "1:265655332442:web:c4e8617741e3b916987263"
-    };
-    
-    // Inicializar Firebase solo una vez
-    if (!window.firebaseApp) {
-      window.firebaseApp = initializeApp(firebaseConfig);
-    }
-    
-    // Inicializar Auth
-    window.firebaseAuth = getAuth(window.firebaseApp);
-    window.firebaseGoogleAuthProvider = GoogleAuthProvider;
-    window.firebaseAuthMethods = {
-      createUserWithEmailAndPassword,
-      signInWithEmailAndPassword,
-      signOut,
-      onAuthStateChanged
-    };
-    
-    console.log('[Firebase Auth] SDK modular inicializado correctamente');
-  </script>
+  <!-- Firebase Auth se maneja por el SDK compat v12 cargado más abajo
+       (vendor/firebase/firebase-auth-compat.js + firebase-client.js).
+       El bloque modular v10 fue eliminado para evitar el conflicto de doble
+       instancia de Firebase y la fuga de credenciales en el HTML. -->
 
   <!-- ═══════════════════ PDF - Exportación ═══════════════════ -->
   <!-- jsPDF + jsPDF AutoTable para reportes PDF (local + CDN fallback) -->
@@ -278,6 +250,7 @@
   <script src="js/modules/campo.js" type="text/javascript"></script>
   <script src="js/modules/reportes.js" type="text/javascript"></script>
   <script src="js/modules/connection-hub.js" type="text/javascript"></script>
+  <script src="js/modules/auth.js" type="text/javascript"></script>
   <script src="js/modules/ajustes.js" type="text/javascript"></script>
   <script src="js/modules/user-management.js" type="text/javascript"></script>
   <script src="js/modules/backup-manager.js" type="text/javascript"></script>
