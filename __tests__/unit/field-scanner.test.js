@@ -33,7 +33,7 @@ function parseQRData(text) {
 }
 
 /** Devuelve la fecha de hoy como YYYY-MM-DD */
-function today() {
+function _today() {
   const n = new Date();
   return `${n.getFullYear()}-${String(n.getMonth()+1).padStart(2,'0')}-${String(n.getDate()).padStart(2,'0')}`;
 }
@@ -94,7 +94,7 @@ function validateSession(user, AUTHORIZED_OPERATOR_EMAILS = [], REQUIRE_VERIFIED
 }
 
 /** Construye el record completo de una marcación */
-function buildAttendanceRecord(payload, horaReal, uid) {
+function buildAttendanceRecord(payload, horaReal, _uid) {
   const id = buildMarcacionId(payload.ID_Trabajador, payload.Fecha, payload.Tipo_Marcacion);
   return {
     ID_Marcacion:      id,
@@ -549,7 +549,7 @@ describe('field-scanner.js — verificación de código fuente (rutas SaaS)', ()
   });
 
   test('verifica que el usuario está autenticado antes de escribir', () => {
-    expect(src).toContain("_auth?.currentUser");
+    expect(src).toContain('_auth?.currentUser');
     expect(src).toContain('Sin sesión activa');
   });
 

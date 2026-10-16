@@ -580,7 +580,12 @@ function _initRefreshButton() {
       if (module && typeof module.cargar === 'function') {
         try {
           await module.cargar();
-          Alerts.info('Datos actualizados');
+          // Solo mostrar confirmación si hay conexión real a Firestore.
+          // En modo local el refresh solo relée el mismo localStorage —
+          // no hay nada nuevo que anunciar y el toast resulta ruidoso.
+          if (AppState.get('backendMode') === 'firestore' && AppState.get('connected')) {
+            Alerts.success('Datos sincronizados con la nube', 'Actualizado');
+          }
         } catch (err) {
           Alerts.error(err.message, 'Error al actualizar');
         }

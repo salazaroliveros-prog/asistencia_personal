@@ -10,11 +10,14 @@
  *   1. El correo debe estar VERIFICADO (`emailVerified === true`), porque
  *      `firestore.rules` → `isAuthorizedOperator()` exige
  *      `request.auth.token.email_verified == true` para escribir en
- *      `asistencias`. Si falta este requisito el login parece correcto pero
- *      toda marcación falla con `permission-denied`.
+ *      `asistencias`, `personal`, `configuracion`, `alertas` y `logs`.
  *   2. (Opcional) Si `AUTHORIZED_OPERATOR_EMAILS` está vacío (por defecto)
  *      se permite ANY usuario verificado. Para restringir a un operador
  *      concreto añade su email a la lista.
+ *
+ *  El modo estricto (`REQUIRE_VERIFIED_EMAIL = true`) rechaza el login de
+ *  cuentas no verificadas antes de intentar escribir, evitando errores
+ *  `permission-denied` en tiempo de ejecución.
  *
  * @version 2.3.0
  */
@@ -46,18 +49,16 @@
 
   // Exigir correo verificado (`emailVerified`) para operar el escáner.
   //
-  // false (por defecto): basta una cuenta válida de Firebase Auth. Es lo que
-  //   necesitan las cuentas creadas a mano en Firebase Console, que NO llegan
-  //   verificadas; con `true` el login se rechaza y parece "no me deja entrar".
-  // true: modo estricto; obliga a que el operador abra el enlace de
-  //   verificación antes de poder marcar.
-  //
-  // Si se activa, `firestore.rules → isAuthorizedOperator()` debe exigir
-  // también `request.auth.token.email_verified == true`.
+  // true (por defecto, v2.3.0): `firestore.rules` → `isAuthorizedOperator()`
+  //   exige `request.auth.token.email_verified == true` para escribir, así que
+  //   el login de cuentas no verificadas se rechaza aquí con un mensaje claro
+  //   en lugar de fallar con `permission-denied` al marcar.
+  // false: permite cualquier cuenta de Firebase Auth (útil solo en
+  //   desarrollo o si se relajan las reglas de Firestore).
   //
   // Se declara con `let` para que los tests puedan alternar ambos modos con
   // `window.FieldScanner.__setRequireVerifiedEmail(true|false)`.
-  let REQUIRE_VERIFIED_EMAIL = false;
+  let REQUIRE_VERIFIED_EMAIL = true;
 
   const MARK_TYPES = [
     { tipo: 'Entrada',        cls: 'campo-mark-entry',  icono: 'log-in',          horaKey: 'Hora_Entrada',        fallback: '07:00' },
@@ -715,15 +716,26 @@
   }
 
   function _parseQRData(text) {
+    if (!text) return null;
     try {
       const data = JSON.parse(text);
-      if (data && data.id) return data;
+      if (data && typeof data === 'object') {
+        const id = data.id || data.ID_Trabajador || data.workerId;
+        const dpi = data.dpi || data.DPI_CUI;
+        if (id || dpi) {
+          return { ...data, id: id ? String(id).trim() : '', dpi: dpi ? String(dpi).trim() : '' };
+        }
+      }
     } catch (_) { /* no es JSON */ }
-    if (text && /^[A-Z0-9-]+$/.test(text) && text.length >= 5) return { id: text };
+    const trimmed = String(text).trim();
+    if (trimmed.length >= 3 && /^[A-Za-z0-9_-]+$/.test(trimmed)) {
+      return { id: trimmed };
+    }
     return null;
   }
 
   async function _buscarTrabajadorPorQR(qrData) {
+    if (!qrData) return null;
     // 1. AppState (app principal en mismo tab)
     const personal = (window.AppState?.get('personal')) || [];
     if (Array.isArray(personal) && personal.length) {
@@ -741,19 +753,24 @@
   }
 
   function _buscarEnLista(lista, qrData) {
-    if (qrData.dpi) {
-      const norm = String(qrData.dpi).replace(/\D/g, '');
-      const f = lista.find((p) => (p.DPI_CUI || '').replace(/\D/g, '') === norm);
+    if (!Array.isArray(lista) || !qrData) return null;
+    if (qrData.id) {
+      const targetId = String(qrData.id).trim().toLowerCase();
+      const f = lista.find((p) => p.ID_Trabajador === qrData.id || String(p.ID_Trabajador || '').trim().toLowerCase() === targetId);
       if (f) return f;
     }
-    if (qrData.id) {
-      return lista.find((p) => p.ID_Trabajador === qrData.id) || null;
+    if (qrData.dpi) {
+      const norm = String(qrData.dpi).replace(/\D/g, '');
+      if (norm) {
+        const f = lista.find((p) => (p.DPI_CUI || '').replace(/\D/g, '') === norm);
+        if (f) return f;
+      }
     }
     return null;
   }
 
   async function _buscarTrabajadorFirestore(qrData) {
-    if (!_db || !_auth) return null;
+    if (!_db || !_auth || !qrData) return null;
     const user = _auth.currentUser;
     if (!user) return null;
     try {
@@ -762,9 +779,12 @@
       let snap;
       if (qrData.id) {
         snap = await personalRef.where('ID_Trabajador', '==', qrData.id).limit(1).get();
-      } else if (qrData.dpi) {
+      }
+      if ((!snap || snap.empty) && qrData.dpi) {
         const dpi = String(qrData.dpi).replace(/\D/g, '');
-        snap = await personalRef.where('DPI_CUI', '==', dpi).limit(1).get();
+        if (dpi) {
+          snap = await personalRef.where('DPI_CUI', '==', dpi).limit(1).get();
+        }
       }
       if (!snap || snap.empty) return null;
       const trabajador = snap.docs[0].data();

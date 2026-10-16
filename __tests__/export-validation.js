@@ -112,12 +112,12 @@ const ExportValidation = (() => {
     
     log('Logo Institucional', 'INFO', 'Soporte para logo personalizado en header');
     log('Nombre Obra', 'INFO', 'Nombre de obra configurable en header y footer');
-    log('Encargado', 'INFO': 'Nombre del encargado incluido en metadatos');
+    log('Encargado', 'INFO', 'Nombre del encargado incluido en metadatos');
     log('Confidencialidad', 'INFO', 'Marca de confidencialidad en header y footer');
     log('Paginación', 'INFO', 'Número de página en cada página');
     log('Versión Sistema', 'INFO', 'Versión del sistema en footer');
     log('Fecha Generación', 'INFO', 'Fecha y hora de generación en footer');
-    log('Documento Oficial', 'INFO': 'Etiqueta de documento oficial en footer');
+    log('Documento Oficial', 'INFO', 'Etiqueta de documento oficial en footer');
     
     // ─────────────────────────────────────────────────────────────────────────
     // 6. VALIDACIÓN DE FUNCIONALIDADES

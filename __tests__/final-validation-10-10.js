@@ -113,7 +113,7 @@ const FinalValidation = (() => {
     log('ARIA Labels', 'INFO', 'ARIA labels implementados');
     log('Keyboard Navigation', 'INFO', 'Navegación por teclado funcional');
     log('Screen Reader Support', 'INFO', 'Soporte para screen readers');
-    log('Focus Indicators', 'INFO': 'Focus visible indicators');
+    log('Focus Indicators', 'INFO', 'Focus visible indicators');
     log('Color Contrast', 'INFO', 'Contraste de colores WCAG AA');
     log('Reduced Motion', 'INFO', 'Respeto a prefers-reduced-motion');
     
@@ -128,7 +128,7 @@ const FinalValidation = (() => {
     
     log('Logging Estructurado', 'INFO', 'Logging con 5 niveles (DEBUG, INFO, WARN, ERROR, FATAL)');
     log('Persistencia de Logs', 'INFO', 'Logs guardados en localStorage');
-    log('Error Classification', 'INFO': 'Clasificación automática de errores');
+    log('Error Classification', 'INFO', 'Clasificación automática de errores');
     log('Recovery Automática', 'INFO', 'Intentos de recuperación automática');
     log('Health Metrics', 'INFO', 'Métricas de salud del sistema');
     

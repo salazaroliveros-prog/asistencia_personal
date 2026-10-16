@@ -276,13 +276,13 @@ const FreePlanValidation = (() => {
       console.log('\n📱 MOBILE SCANNER INSTRUCTIONS:');
       console.log('  1. Open field-scanner.html on mobile device');
       console.log('  2. Configure Firebase connection in settings');
-       3. Scan worker QR codes');
-        console.log('  4. Attendance data syncs to Firestore automatically');
-      console.log('   console.log('📋 DASHBOARD ADMIN INSTRUCTIONS:');
+      console.log('  3. Scan worker QR codes');
+      console.log('  4. Attendance data syncs to Firestore automatically');
+      console.log('\n📋 DASHBOARD ADMIN INSTRUCTIONS:');
       console.log('  1. Open main application on desktop/tablet');
       console.log('  2. Configure Firebase connection');
-       console.log('  3. View real-time updates in Dashboard');
-      console.log('   console.log('  4. Monitor attendance and worker status live');
+      console.log('  3. View real-time updates in Dashboard');
+      console.log('  4. Monitor attendance and worker status live');
     } else {
       console.log('\n⚠️ Some checks failed. Review the details above.');
     }

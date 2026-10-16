@@ -78,7 +78,7 @@ const ConnectionHub = (() => {
     if (!FirebaseClient.completeGoogleRedirect) return;
     const result = await FirebaseClient.completeGoogleRedirect();
     if (result.handled && result.success && result.user) {
-      Alerts.success('Sesión de Google iniciada.');
+      // auth.js maneja la notificación de éxito de Google — no duplicar aquí
       await _afterLoginSuccess();
     } else if (result.handled && !result.success) {
       Alerts.error(_translateAuthError(result.code || result.error || ''), 'Google Sign-In');
@@ -253,7 +253,7 @@ const ConnectionHub = (() => {
       if (!result.success) throw new Error(result.error || result.code || 'Credenciales rechazadas');
       const pwd = document.getElementById('hub-auth-password');
       if (pwd) pwd.value = '';
-      Alerts.success('Sesión iniciada.');
+      // auth.js ya muestra "¡Bienvenido de nuevo!" — no duplicar el toast aquí
       await _afterLoginSuccess();
     } catch (err) {
       const msg = _translateAuthError(err.message || err.code || '');
@@ -286,7 +286,7 @@ const ConnectionHub = (() => {
         Alerts.error(msg, 'Google');
         return;
       }
-      Alerts.success('Sesión de Google iniciada.');
+      // auth.js ya muestra "¡Bienvenido! Sesión iniciada con Google." — no duplicar aquí
       await _afterLoginSuccess();
     } catch (err) {
       const msg = _translateAuthError(err.message || err.code || '');
@@ -304,7 +304,7 @@ const ConnectionHub = (() => {
     try {
       window._teardownRealtimeSubscriptions?.();
       await FirebaseClient.signOut();
-      Alerts.success('Sesión cerrada. Modo local activo.');
+      // auth.js muestra "Sesión cerrada. Modo local activo." — no duplicar aquí
     } finally {
       if (btn) btn.disabled = false;
       _refreshUI();

@@ -1,35 +1,45 @@
 /**
  * ESCÁNER DE CAMPO — field-scanner-sw.js
  * Service Worker para la sub-app de escaneo QR en campo.
- * @version 2.2.0
+ * @version 2.3.0
  */
 
-const CACHE_NAME    = 'field-scanner-v2.2.0';
-const CACHE_DYNAMIC = 'field-scanner-dynamic-v2.2.0';
+const CACHE_NAME    = 'field-scanner-v2.3.0';
+const CACHE_DYNAMIC = 'field-scanner-dynamic-v2.3.0';
 
 // Assets locales del escáner de campo.
 // La estrategia es Cache-First, así que todo lo que la página necesita debe
-// estar aquí: si falta, la primera carga sin conexión se queda sin estilos.
-// Se añadieron las hojas que field-scanner.html ya cargaba
-// (glassmorphism.css y campo-login.css) y la UI post-login (campo-scanner.css).
+// estar aquí: si falta, la primera carga sin conexión se queda sin estilos o scripts.
 const STATIC_ASSETS = [
   '/',
   '/field-scanner.html',
   '/field-scanner.js',
   '/field-scanner-manifest.json',
+  '/field-scanner-favicon.svg',
+  '/pwa/icons/icon-192.png',
+  '/pwa/icons/icon-512.png',
   '/css/main.css',
   '/css/glassmorphism.css',
   '/css/campo.css',
   '/css/campo-login.css',
   '/css/campo-scanner.css',
-  // Vendor local (html5-qrcode se sirve desde /vendor/)
+  // Vendor local
+  '/vendor/firebase/firebase-app-compat.js',
+  '/vendor/firebase/firebase-auth-compat.js',
+  '/vendor/firebase/firebase-firestore-compat.js',
   '/vendor/html5-qrcode.min.js',
   '/vendor/lucide.min.js',
+  // JS utilidades y config
+  '/js/firebase-config.js',
+  '/js/utils/camera-session.js',
+  '/js/utils/feedback-audio.js',
+  '/js/utils/mobile-camera-optimizer.js',
+  '/js/utils/mobile-qr-scanner.js',
 ];
 
 // ─── INSTALL ─────────────────────────────────────────────────────────────────
 self.addEventListener('install', (event) => {
-  console.log('[FieldSW] Instalando v2.2.0...');
+  console.log('[FieldSW] Instalando v2.3.0...');
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) =>
       Promise.all(
@@ -47,7 +57,7 @@ self.addEventListener('install', (event) => {
 
 // ─── ACTIVATE ────────────────────────────────────────────────────────────────
 self.addEventListener('activate', (event) => {
-  console.log('[FieldSW] Activando v2.2.0...');
+  console.log('[FieldSW] Activando v2.3.0...');
   const VALID = [CACHE_NAME, CACHE_DYNAMIC];
   event.waitUntil(
     caches.keys().then((keys) =>

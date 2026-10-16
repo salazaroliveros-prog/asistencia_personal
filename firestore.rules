@@ -10,6 +10,12 @@ service cloud.firestore {
       return request.auth != null;
     }
     
+    /** Operador autorizado: sesión activa Y correo verificado. */
+    function isAuthorizedOperator() {
+      return request.auth != null
+          && request.auth.token.email_verified == true;
+    }
+    
     function isOwner(userId) {
       return request.auth != null && request.auth.uid == userId;
     }
@@ -113,9 +119,9 @@ service cloud.firestore {
       // ─────────────────────────────────────────────────────────────────────
       match /personal/{workerId} {
         allow read: if isOwner(userId);
-        allow create: if isOwner(userId) && isValidWorkerData(request.resource.data) && request.resource.data.keys().size() <= 20;
-        allow update: if isOwner(userId) && isValidWorkerData(request.resource.data) && request.resource.data.keys().size() <= 20;
-        allow delete: if isOwner(userId);
+        allow create: if isOwner(userId) && isAuthorizedOperator() && isValidWorkerData(request.resource.data) && request.resource.data.keys().size() <= 20;
+        allow update: if isOwner(userId) && isAuthorizedOperator() && isValidWorkerData(request.resource.data) && request.resource.data.keys().size() <= 20;
+        allow delete: if isOwner(userId) && isAuthorizedOperator();
       }
       
       // ─────────────────────────────────────────────────────────────────────
@@ -123,9 +129,9 @@ service cloud.firestore {
       // ─────────────────────────────────────────────────────────────────────
       match /asistencias/{attendanceId} {
         allow read: if isOwner(userId);
-        allow create: if isOwner(userId) && isValidAttendanceData(request.resource.data) && request.resource.data.keys().size() <= 25;
-        allow update: if isOwner(userId) && isValidAttendanceData(request.resource.data) && request.resource.data.keys().size() <= 25;
-        allow delete: if isOwner(userId);
+        allow create: if isOwner(userId) && isAuthorizedOperator() && isValidAttendanceData(request.resource.data) && request.resource.data.keys().size() <= 25;
+        allow update: if isOwner(userId) && isAuthorizedOperator() && isValidAttendanceData(request.resource.data) && request.resource.data.keys().size() <= 25;
+        allow delete: if isOwner(userId) && isAuthorizedOperator();
       }
       
       // ─────────────────────────────────────────────────────────────────────
@@ -133,8 +139,8 @@ service cloud.firestore {
       // ─────────────────────────────────────────────────────────────────────
       match /configuracion/{configId} {
         allow read: if isOwner(userId);
-        allow create, update: if isOwner(userId) && isValidConfiguracion(request.resource.data);
-        allow delete: if isOwner(userId);
+        allow create, update: if isOwner(userId) && isAuthorizedOperator() && isValidConfiguracion(request.resource.data);
+        allow delete: if isOwner(userId) && isAuthorizedOperator();
       }
       
       // ─────────────────────────────────────────────────────────────────────
@@ -142,14 +148,14 @@ service cloud.firestore {
       // ─────────────────────────────────────────────────────────────────────
       match /alertas/{alertId} {
         allow read: if isOwner(userId);
-        allow create: if isOwner(userId) && 
+        allow create: if isOwner(userId) && isAuthorizedOperator() &&
           request.resource.data.keys().size() <= 15 &&
           isValidAlerta(request.resource.data);
-        allow update: if isOwner(userId) &&
+        allow update: if isOwner(userId) && isAuthorizedOperator() &&
           request.resource.data.diff(resource.data).affectedKeys()
             .hasOnly(['Revisada', 'revisada']) &&
           (request.resource.data.Revisada == true || request.resource.data.revisada == true);
-        allow delete: if isOwner(userId);
+        allow delete: if isOwner(userId) && isAuthorizedOperator();
       }
       
       // ─────────────────────────────────────────────────────────────────────
@@ -157,7 +163,7 @@ service cloud.firestore {
       // ─────────────────────────────────────────────────────────────────────
       match /logs/{logId} {
         allow read: if isOwner(userId);
-        allow create: if isOwner(userId);
+        allow create: if isOwner(userId) && isAuthorizedOperator();
         allow update, delete: if false;
       }
     }

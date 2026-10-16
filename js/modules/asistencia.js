@@ -15,7 +15,16 @@ const _ModuloAsistencia = (() => {
   let _audio             = null;
   let _marking           = false; // Evita doble clic → marcaciones duplicadas
   let _eventsBound       = false;
+  let _useMobileScanner  = false; // Usar MobileQRScanner en móvil (igual que field-scanner.js)
   const DEFAULT_GEOFENCE_RADIUS = 200; // meters
+
+  function _isMobileEnv() {
+    return window.MobileCameraOptimizer?.isMobile?.() === true;
+  }
+
+  function _useMobileQRScanner() {
+    return _isMobileEnv() && !!window.MobileQRScanner;
+  }
 
   // ─── Inicialización ───────────────────────────────────────────────────────
   /**
@@ -59,6 +68,13 @@ const _ModuloAsistencia = (() => {
     if (btnStart)  btnStart.addEventListener('click', () => _iniciarScanner());
     if (btnStop)   btnStop.addEventListener('click',  _detenerScanner);
     if (btnSwitch) btnSwitch.addEventListener('click', async () => {
+      if (_useMobileScanner && window.MobileQRScanner?.switchCamera) {
+        try {
+          const res = await window.MobileQRScanner.switchCamera();
+          if (res && res.camera) _scanFacingMode = res.camera;
+          return;
+        } catch (_) { /* caer a reinicio */ }
+      }
       _scanFacingMode = _scanFacingMode === 'environment' ? 'user' : 'environment';
       await _iniciarScanner();
     });
@@ -182,6 +198,35 @@ const _ModuloAsistencia = (() => {
   }
 
   async function _iniciarScanner(options = {}) {
+    // En móvil real usar el escáner optimizado (igual que field-scanner.js);
+    // en escritorio seguir con CameraSession (constraints suaves, mejor webcam).
+    if (_useMobileQRScanner()) {
+      _useMobileScanner = true;
+      const btnStart = document.getElementById('btn-start-scan');
+      const btnStop  = document.getElementById('btn-stop-scan');
+      try {
+        _setScanStatus('Iniciando cámara móvil optimizada…');
+        const result = await window.MobileQRScanner.start({
+          elementId: 'qr-reader',
+          onSuccess: _onQRSuccess,
+          onError:   _onQRError,
+          cameraOptions: { facingMode: _scanFacingMode, ...options },
+        });
+        if (!result) return;
+        _scannerActive = true;
+        if (btnStart) btnStart.hidden = true;
+        if (btnStop)  btnStop.hidden  = false;
+        _setScanStatus('Cámara móvil activa');
+        return;
+      } catch (err) {
+        _useMobileScanner = false;
+        _setScanStatus('Cámara no disponible');
+        Alerts.warning('No se pudo iniciar el escáner móvil. ' + (err && err.message || ''), 'Cámara no disponible');
+        // Caer a CameraSession como fallback
+      }
+    }
+    _useMobileScanner = false;
+
     const session = _cameraSession();
     if (typeof Html5Qrcode === 'undefined' || !session) {
       Alerts.error('El escáner QR no está disponible. Verifica los recursos.', 'Error');
@@ -223,6 +268,19 @@ const _ModuloAsistencia = (() => {
   }
 
   async function _detenerScanner() {
+    if (_useMobileScanner) {
+      _useMobileScanner = false;
+      try { await window.MobileQRScanner.stop(); } catch (_) { /* ignorar */ }
+      _scanner = null;
+      _scannerActive = false;
+      const btnStart = document.getElementById('btn-start-scan');
+      const btnStop  = document.getElementById('btn-stop-scan');
+      if (btnStart) btnStart.hidden = false;
+      if (btnStop)  btnStop.hidden  = true;
+      _removeScanTorchButton();
+      _setScanStatus('');
+      return;
+    }
     if (_qrController) await _qrController.stop();
     _scanner = null;
     _scannerActive = false;
@@ -243,14 +301,22 @@ const _ModuloAsistencia = (() => {
     btn.className = 'btn btn-ghost btn-lg';
     btn.setAttribute('aria-label', 'Activar/desactivar flash');
     btn.innerHTML = '<i data-lucide="flashlight" aria-hidden="true"></i> Flash';
-    btn.hidden = !(_qrController && _qrController.supportsTorch());
+    const _torchSupported = () => _useMobileScanner
+      ? window.MobileQRScanner?.supportsTorch?.() === true
+      : !!(_qrController && _qrController.supportsTorch?.());
+    btn.hidden = !_torchSupported();
     btn.addEventListener('click', async () => {
-      if (!_qrController || !_qrController.supportsTorch()) {
-        Alerts.warning('Flash no disponible en este dispositivo');
-        return;
-      }
-      const on = await _qrController.toggleTorch();
-      btn.innerHTML = `<i data-lucide="${on ? 'flashlight-off' : 'flashlight'}" aria-hidden="true"></i> ${on ? 'Apagar flash' : 'Flash'}`;
+      try {
+        let on;
+        if (_useMobileScanner) {
+          on = await window.MobileQRScanner.toggleTorch();
+        } else if (_qrController && _qrController.supportsTorch?.()) {
+          on = await _qrController.toggleTorch();
+        } else {
+          Alerts.warning('Flash no disponible en este dispositivo');
+          return;
+        }
+        btn.innerHTML = `<i data-lucide="${on ? 'flashlight-off' : 'flashlight'}" aria-hidden="true"></i> ${on ? 'Apagar flash' : 'Flash'}`;
       if (window.lucide) lucide.createIcons({ nodes: [btn] });
     });
     container.appendChild(btn);
@@ -561,18 +627,18 @@ const _ModuloAsistencia = (() => {
         loader.close();
 
         if (result.success) {
+          // Un solo toast: si es offline se indica en el mensaje para no
+          // apilar dos notificaciones simultáneas que confunden al operador.
+          const horaReal = result.horaReal || `${String(new Date().getHours()).padStart(2, '0')}:${String(new Date().getMinutes()).padStart(2, '0')}`;
+          const offlineNote = (result.offline || result.needsAuth)
+            ? (result.needsAuth ? ' · Pendiente de nube' : ' · Guardado localmente')
+            : '';
           Alerts.marcacion({
             nombre: trabajador.Nombre_Completo,
             tipo,
-            horaReal: result.horaReal || `${String(new Date().getHours()).padStart(2, '0')}:${String(new Date().getMinutes()).padStart(2, '0')}`,
+            horaReal: horaReal + offlineNote,
             estado: result.estadoMarcacion || estadoMarcacion,
           });
-          if (result.offline || result.needsAuth) {
-            Alerts.warning(
-              result.message || 'Marcación en este dispositivo. Se sincronizará cuando haya sesión y red.',
-              result.needsAuth ? 'Pendiente de nube' : 'Modo local',
-            );
-          }
 
           if (navigator.vibrate) navigator.vibrate([100, 50, 100]);
 

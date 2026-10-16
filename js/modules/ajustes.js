@@ -130,7 +130,7 @@ const _ModuloAjustes = (() => {
         password: window.__SMTP_ENV__.password,
         from: window.__SMTP_ENV__.from,
         fromName: window.__SMTP_ENV__.fromName,
-        secure: window.__SMTP_ENV__.secure === 'true'
+        secure: window.__SMTP_ENV__.secure === 'true',
       };
       
       // Solo usar configuración de entorno si todos los campos requeridos están presentes
@@ -925,7 +925,7 @@ const _ModuloAjustes = (() => {
       password, // Guardamos la contraseña encriptada o como texto plano (nota: no ideal para producción)
       from,
       fromName,
-      secure
+      secure,
     };
 
     // Guardar localmente

@@ -889,10 +889,14 @@ const _ModuloDashboard = (() => {
     try {
       const result = await API.obtenerAlertas();
       if (result.success) {
-        _renderAlertas(result.data);
+        // Filtrar las ya revisadas — la API devuelve todas sin distinción
+        const pendientes = (result.data || []).filter(
+          (a) => a.Revisada !== true && a.revisada !== true,
+        );
+        _renderAlertas(pendientes);
         const badge = document.getElementById('alerts-badge');
         if (badge) {
-          const count = result.data.length;
+          const count = pendientes.length;
           badge.textContent = count;
           badge.hidden = count === 0;
         }
@@ -926,15 +930,41 @@ const _ModuloDashboard = (() => {
     }
 
     container.innerHTML = alertas.slice(0, 10).map((a) => {
-      const nombreTrab = a.ID_Trabajador ? (personalMap[a.ID_Trabajador] || a.ID_Trabajador) : '';
+      // Schema real de Firestore: { ID_Alerta, Tipo, Mensaje, Timestamp, Revisada }
+      // Soporte de fallback para documentos legacy con campos en minúscula
+      const alertId   = a.ID_Alerta || a.id || a._id || '';
+      const tipo      = a.Tipo      || a.tipo      || '—';
+      const mensaje   = a.Mensaje   || a.mensaje   || '';
+      const ts        = a.Timestamp || a.timestamp;
+      const nombreTrab = a.ID_Trabajador
+        ? (personalMap[a.ID_Trabajador] || a.ID_Trabajador)
+        : '';
+
+      // Formatear timestamp (epoch ms) → hora legible
+      let horaStr = '';
+      if (ts) {
+        try {
+          const d = new Date(typeof ts === 'number' ? ts : Number(ts));
+          horaStr = d.toLocaleTimeString('es-GT', { hour: '2-digit', minute: '2-digit' });
+        } catch (_) { /* ignorar ts inválido */ }
+      }
+
+      // La línea de detalle muestra: nombre del trabajador (si aplica) y hora
+      const detalleParts = [
+        nombreTrab,
+        mensaje,
+        horaStr,
+      ].filter(Boolean);
+      const detalle = detalleParts.join(' — ');
+
       return `
-      <div class="alert-item" data-id="${window.CPC.StringHelpers.escHtml(a.ID_Alerta)}">
+      <div class="alert-item" data-id="${window.CPC.StringHelpers.escHtml(alertId)}">
         <i data-lucide="alert-circle"></i>
         <div class="alert-text">
-          <div class="alert-title">${window.CPC.StringHelpers.escHtml(a.Tipo_Incidencia || '--')}</div>
-          <div class="alert-detail">${window.CPC.StringHelpers.escHtml(nombreTrab)}${a.Fecha_Hora ? ` — ${window.CPC.StringHelpers.escHtml(a.Fecha_Hora)}` : ''}</div>
+          <div class="alert-title">${window.CPC.StringHelpers.escHtml(tipo)}</div>
+          ${detalle ? `<div class="alert-detail">${window.CPC.StringHelpers.escHtml(detalle)}</div>` : ''}
         </div>
-        <button class="alert-dismiss" data-id="${window.CPC.StringHelpers.escHtml(a.ID_Alerta)}" aria-label="Marcar alerta como revisada">
+        <button class="alert-dismiss" data-id="${window.CPC.StringHelpers.escHtml(alertId)}" aria-label="Marcar alerta como revisada">
           <i data-lucide="check"></i>
         </button>
       </div>`;
@@ -959,12 +989,15 @@ const _ModuloDashboard = (() => {
 
   async function _marcarTodasAlertas() {
     const alertas = AppState.get('alertas') || [];
-    if (alertas.length === 0) return;
-    const confirmed = await Alerts.confirm(`¿Marcar las ${alertas.length} alertas como revisadas?`);
+    // Solo contar las pendientes (no las ya revisadas)
+    const pendientes = alertas.filter((a) => a.Revisada !== true && a.revisada !== true);
+    if (pendientes.length === 0) return;
+    const confirmed = await Alerts.confirm(`¿Marcar las ${pendientes.length} alertas como revisadas?`);
     if (!confirmed) return;
     const loader = Alerts.loading('Procesando alertas...');
     try {
-      await Promise.allSettled(alertas.map((a) => API.marcarAlertaRevisada(a.ID_Alerta)));
+      // Usar ID_Alerta con fallback a id/_id para compatibilidad con Firestore SDK
+      await Promise.allSettled(pendientes.map((a) => API.marcarAlertaRevisada(a.ID_Alerta || a.id || a._id)));
       loader.close();
       Alerts.success('Todas las alertas marcadas como revisadas');
       await _cargarAlertas();
